@@ -607,11 +607,11 @@
                 </div>
                 <div>
                   <div style="font-size:.72rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Start time</div>
-                  <input type="time" id="ws-series-time-start" style="font-size:.84rem;padding:6px 8px;" oninput="wsSeriesAutoEnd(this)">
+                  <input type="time" id="ws-series-time-start" value="19:00" style="font-size:.84rem;padding:6px 8px;" oninput="wsSeriesAutoEnd(this)">
                 </div>
                 <div>
                   <div style="font-size:.72rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">End time</div>
-                  <input type="time" id="ws-series-time-end" style="font-size:.84rem;padding:6px 8px;">
+                  <input type="time" id="ws-series-time-end" value="20:30" style="font-size:.84rem;padding:6px 8px;">
                 </div>
               </div>
 
@@ -999,7 +999,13 @@
           <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin-bottom:14px;">
             <div>
               <div style="font-size:.7rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Floor opens</div>
-              <input type="time" id="ss-dn-start" style="font-size:.84rem;padding:6px 8px;border:1.5px solid #ddd;border-radius:6px;width:100%;box-sizing:border-box;">
+              <input type="time" id="ss-dn-start" value="22:00" style="font-size:.84rem;padding:6px 8px;border:1.5px solid #ddd;border-radius:6px;width:100%;box-sizing:border-box;">
+              <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;">
+                <span style="font-size:.68rem;color:#bbb;align-self:center;">Quick:</span>
+                <button type="button" class="wc-chip" style="font-size:.68rem;padding:2px 8px;" onclick="document.getElementById('ss-dn-start').value='21:00'">21:00</button>
+                <button type="button" class="wc-chip" style="font-size:.68rem;padding:2px 8px;" onclick="document.getElementById('ss-dn-start').value='21:30'">21:30</button>
+                <button type="button" class="wc-chip" style="font-size:.68rem;padding:2px 8px;" onclick="document.getElementById('ss-dn-start').value='22:00'">22:00</button>
+              </div>
             </div>
             <span style="font-size:.8rem;color:#ccc;text-align:center;margin-top:18px;">→</span>
             <div>
@@ -1049,16 +1055,16 @@
           </div>
 
           <!-- Genres + optional second DJ -->
-          <div id="ss-music-shared" style="display:none;">
+          <div id="ss-music-shared">
             <div style="margin-bottom:12px;">
-              <div class="wc-section-label" style="margin-bottom:6px;">Music genres / styles played</div>
+              <div class="wc-section-label" style="margin-bottom:6px;">Dance styles the DJ will play</div>
               <div class="wc-chips" id="ss-genre-chips" style="flex-wrap:wrap;margin-bottom:8px;"></div>
               <div style="display:flex;gap:6px;align-items:center;">
                 <input type="text" id="ss-genre-custom" placeholder="Add another genre…"
                   style="font-size:.82rem;padding:5px 8px;border:1.5px solid #ddd;border-radius:6px;flex:1;"
                   onkeydown="if(event.key==='Enter'){event.preventDefault();ssAddCustomGenre();}">
                 <button type="button" class="wc-btn-add-slot" style="margin-top:0;white-space:nowrap;padding:6px 12px;"
-                  onclick="ssAddCustomGenre()">+ Add</button>
+                  onclick="ssAddCustomGenre()">+ Add style</button>
               </div>
             </div>
 
@@ -1930,7 +1936,7 @@ const WC_DAYS   = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'
 
 // ─── CO-TEACHER OPTIONS ──────────────────────────────────────────────
 const COTEACHER_OPTIONS = [
-  'Alex (Alexandru Papaianopol)',
+  'Alex',
   'Ioanna',
   'Lenka Badriyah',
   'Sonja KikiZomba',
@@ -3297,9 +3303,9 @@ function wsAddSession() {
     <span style="font-size:.76rem;font-weight:700;color:#999;white-space:nowrap;">Day ${idx}</span>
     <input type="date" class="ws-session-date" style="font-size:.84rem;">
     <div style="display:flex;align-items:center;gap:4px;">
-      <input type="time" class="ws-session-start" style="font-size:.84rem;flex:1;" oninput="wsAutoEnd(this)">
+      <input type="time" class="ws-session-start" value="19:00" style="font-size:.84rem;flex:1;" oninput="wsAutoEnd(this)">
       <span style="color:#aaa;">→</span>
-      <input type="time" class="ws-session-end"   style="font-size:.84rem;flex:1;">
+      <input type="time" class="ws-session-end"   value="20:30" style="font-size:.84rem;flex:1;">
     </div>
     <button type="button" class="wc-btn-remove" onclick="wsRemoveSession(this)" title="Remove">✕</button>
   `;
@@ -4307,17 +4313,16 @@ const SS_WORKSHOP_LEVELS = [
   'Intermediate & up',
 ];
 
-// Music genre chips
+// Dance styles played during the dance night — teachers can add others via the custom field
 const SS_MUSIC_GENRES = [
-  'Salsa Cubana','Salsa on2 / Mambo','Bachata Sensual','Bachata Tradicional',
-  'Kizomba','Semba','Tarraxo','Urban Kiz','Zouk',
-  'Merengue','Cha-cha','Timba','Afrobeats',
+  'Cuban Salsa','Bachata','Kizomba','Merengue','Sevillanas','Semba','Tarraxo','Argentine Tango',
 ];
 
 // Default pricing tiers (labels only — no prices pre-filled)
 const SS_DEFAULT_TIERS = [
   '2 workshops + dance night',
   '1 workshop + dance night',
+  'dance night only',
 ];
 
 // ── State ──────────────────────────────────────────────────────────────
@@ -4464,7 +4469,7 @@ function ssShowProgrammeStep() {
   ssMusicType      = null;
   ssSelectedGenres = [];
   document.querySelectorAll('#ss-music-type-chips .wc-chip').forEach(b => b.classList.remove('selected'));
-  ['ss-music-guest','ss-music-teacher','ss-music-shared'].forEach(id => {
+  ['ss-music-guest','ss-music-teacher'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
@@ -4701,7 +4706,7 @@ function ssSetMusicType(type, btn) {
 
   document.getElementById('ss-music-guest').style.display   = type === 'guest-dj'   ? '' : 'none';
   document.getElementById('ss-music-teacher').style.display = type === 'teacher-dj' ? '' : 'none';
-  document.getElementById('ss-music-shared').style.display  = ''; // always visible once a type is chosen
+  // ss-music-shared (genres + 2nd DJ) is always visible — no toggle needed
 }
 
 function ssFilterTeacherDJ(q) {
