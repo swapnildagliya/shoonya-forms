@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Festival Submission — Shoonya Dance Centre</title>
+<style>
+  :root { --yellow:#F5C842; --purple:#6B3FA0; --dark:#1a1a1a; --border:#ddd; --red:#c0392b; --light:#f9f9f9; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Helvetica Neue',Arial,sans-serif; background:#f2f2f2; color:var(--dark); line-height:1.6; }
+
+  header { background:var(--dark); color:#fff; padding:16px 28px; display:flex; align-items:center; justify-content:space-between; }
+  header div h1 { font-size:1rem; font-weight:800; letter-spacing:.5px; }
+  header div span { font-size:.78rem; color:#aaa; }
+  .admin-toggle { background:none; border:1.5px solid #555; color:#aaa; font-size:.72rem; padding:5px 13px; border-radius:20px; cursor:pointer; }
+  .admin-toggle:hover { border-color:var(--yellow); color:var(--yellow); }
+
+  .hero { background:var(--yellow); padding:24px 28px; text-align:center; }
+  .hero h2 { font-size:1.5rem; font-weight:900; text-transform:uppercase; letter-spacing:1px; }
+  .hero p { margin-top:5px; font-size:.88rem; color:#555; }
+  .notice { background:var(--purple); color:#fff; padding:9px 28px; font-size:.8rem; text-align:center; }
+
+  .container { max-width:760px; margin:26px auto; padding:0 14px 80px; }
+
+  /* Admin panel */
+  #admin-panel { background:#fff8e1; border:2px dashed var(--yellow); border-radius:10px; padding:20px 24px; margin-bottom:18px; display:none; }
+  #admin-panel .panel-title { font-size:.78rem; font-weight:800; text-transform:uppercase; letter-spacing:.8px; color:#8a6200; border-bottom:2px solid #e8b800; padding-bottom:8px; margin-bottom:14px; }
+  #admin-panel label { font-size:.75rem; color:#555; display:block; margin-bottom:3px; }
+  .admin-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+  .btn-admin-save { background:var(--yellow); color:#1a1a1a; border:none; border-radius:7px; font-size:.8rem; font-weight:800; padding:8px 18px; cursor:pointer; margin-top:8px; }
+
+  .card { background:#fff; border-radius:10px; padding:22px 26px; margin-bottom:18px; box-shadow:0 2px 8px rgba(0,0,0,.07); }
+  .card-title { font-size:.78rem; font-weight:800; text-transform:uppercase; letter-spacing:.8px; color:var(--purple); border-bottom:2px solid var(--yellow); padding-bottom:8px; margin-bottom:18px; }
+
+  .field { margin-bottom:14px; }
+  .field label { display:block; font-size:.8rem; font-weight:700; margin-bottom:4px; }
+  .field label .req { color:var(--red); margin-left:2px; }
+  .hint { font-size:.73rem; color:#888; margin-top:3px; }
+  .info-box { background:#f0ebff; border-left:3px solid var(--purple); padding:9px 13px; border-radius:0 6px 6px 0; font-size:.78rem; color:#555; margin-bottom:14px; }
+
+  input[type=text],input[type=email],input[type=number],input[type=time],input[type=date],select,textarea {
+    width:100%; padding:8px 11px; border:1.5px solid var(--border); border-radius:6px;
+    font-size:.86rem; font-family:inherit; color:var(--dark); transition:border .15s;
+  }
+  input:focus,select:focus,textarea:focus { outline:none; border-color:var(--purple); }
+  select { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23555' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:30px; }
+
+  .row-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+
+  .btn-rm { background:none; border:none; color:#ccc; font-size:.95rem; cursor:pointer; padding:2px 5px; }
+  .btn-rm:hover { color:var(--red); }
+  .btn-add-row { background:var(--yellow); border:none; border-radius:8px; font-size:.82rem; font-weight:700; padding:9px 16px; cursor:pointer; width:100%; margin-top:8px; }
+  .btn-add-row:hover { background:#e8b800; }
+
+  /* Programme slot cards */
+  .slot-card { background:var(--light); border:1.5px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:10px; position:relative; }
+  .slot-card .slot-header { display:grid; grid-template-columns:160px 75px 75px 1fr 28px; gap:7px; align-items:center; margin-bottom:8px; }
+  .slot-card .slot-row2 { display:grid; grid-template-columns:1fr 1fr 110px 130px; gap:7px; margin-bottom:8px; }
+  .slot-card .slot-desc-toggle { background:none; border:none; font-size:.74rem; color:var(--purple); cursor:pointer; font-weight:700; padding:0; margin-bottom:6px; }
+  .slot-card .slot-desc { display:none; }
+  .slot-card .slot-desc.open { display:block; }
+  .slot-card select, .slot-card input[type=text], .slot-card input[type=time], .slot-card textarea { font-size:.78rem; padding:5px 8px; }
+  .slot-label { font-size:.69rem; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:#aaa; margin-bottom:2px; }
+
+  /* Artist / DJ cards */
+  .person-card { background:var(--light); border:1.5px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:10px; position:relative; }
+  .person-card h4 { font-size:.78rem; font-weight:800; color:var(--purple); text-transform:uppercase; letter-spacing:.4px; margin-bottom:10px; }
+  .person-card .btn-rm-card { position:absolute; top:10px; right:12px; background:none; border:none; color:#ccc; cursor:pointer; font-size:.9rem; }
+  .person-card .btn-rm-card:hover { color:var(--red); }
+
+  /* Pricing tiers */
+  .price-tier { background:var(--light); border:1.5px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:10px; position:relative; }
+  .price-tier-name { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
+  .price-tier-name input { font-weight:700; font-size:.86rem; }
+  .price-tier-prices { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+  .price-tier-prices label { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:#888; display:block; margin-bottom:2px; }
+  .price-tier-prices input { text-align:right; font-size:.86rem; }
+  .price-tier-desc input { width:100%; margin-bottom:8px; font-size:.8rem; color:#666; }
+
+  /* Group discount */
+  .group-discount { background:#f0ebff; border:1.5px solid var(--purple); border-radius:8px; padding:14px 16px; margin-top:14px; }
+  .group-discount h4 { font-size:.78rem; font-weight:800; color:var(--purple); text-transform:uppercase; letter-spacing:.4px; margin-bottom:10px; }
+  .group-discount .row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+
+  /* Upload */
+  .upload-zone { border:2px dashed var(--border); border-radius:8px; padding:18px; text-align:center; cursor:pointer; transition:border .15s,background .15s; }
+  .upload-zone:hover { border-color:var(--purple); background:#f8f5ff; }
+  .upload-zone input { display:none; }
+  .upload-zone .ico { font-size:1.6rem; margin-bottom:5px; }
+  .upload-zone p { font-size:.79rem; color:#888; }
+  .upload-zone .warn { color:var(--red); font-weight:600; font-size:.74rem; margin-top:5px; display:none; }
+  .up-preview { display:flex; flex-wrap:wrap; gap:7px; margin-top:9px; }
+  .up-preview img { width:80px; height:80px; object-fit:cover; border-radius:6px; border:2px solid var(--border); }
+
+  /* Submit */
+  .btn-submit { background:var(--purple); color:#fff; border:none; border-radius:10px; font-size:.95rem; font-weight:800; padding:14px 36px; cursor:pointer; width:100%; text-transform:uppercase; letter-spacing:.5px; transition:background .15s; }
+  .btn-submit:hover { background:#5a3388; }
+
+  /* Modal */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:100; align-items:center; justify-content:center; padding:14px; }
+  .modal-overlay.open { display:flex; }
+  .modal { background:#fff; border-radius:12px; padding:24px; max-width:680px; width:100%; max-height:90vh; overflow-y:auto; }
+  .modal h3 { font-size:1rem; font-weight:800; margin-bottom:5px; }
+  .modal p { font-size:.8rem; color:#666; margin-bottom:16px; }
+  .out-block { background:#f8f8f8; border:1.5px solid var(--border); border-radius:8px; padding:12px; font-family:monospace; font-size:.76rem; white-space:pre-wrap; max-height:260px; overflow-y:auto; line-height:1.7; }
+  .btn-copy { background:var(--yellow); border:none; border-radius:7px; font-size:.78rem; font-weight:700; padding:7px 14px; cursor:pointer; margin-top:7px; }
+  .btn-copy:hover { background:#e8b800; }
+  .btn-copy.copied { background:#2ecc71; color:#fff; }
+  .modal-close { background:none; border:1.5px solid var(--border); border-radius:7px; font-size:.8rem; font-weight:700; padding:9px 20px; cursor:pointer; margin-top:16px; width:100%; }
+
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Shoonya Dance Centre</h1>
+    <span>Festival Submission Form</span>
+  </div>
+  <button class="admin-toggle" onclick="toggleAdmin()">⚙ Admin</button>
+</header>
+<div class="hero">
+  <h2>Festival Submission</h2>
+  <p>Fill in the details below. We'll handle website, calendar and social media.</p>
+</div>
+<div class="notice">Questions? Email us at <strong>info@shoonyadance.com</strong></div>
+
+<div class="container">
+
+<!-- Admin Panel -->
+<div id="admin-panel">
+  <div class="panel-title">⚙ Admin Configuration — Admin Only</div>
+  <div style="font-size:.73rem;color:#888;margin-bottom:14px;">Hidden from organisers. Settings are saved in the browser.</div>
+  <div class="admin-row">
+    <div><label>Multi-class / Student discount (%)</label><input type="number" id="adm-disc" placeholder="12" /></div>
+    <div><label>UITPAS discount (%)</label><input type="number" id="adm-uitpas" placeholder="80" /></div>
+  </div>
+  <button class="btn-admin-save" onclick="saveAdminConfig()">Save Settings</button>
+  <span id="admin-saved-msg" style="font-size:.74rem;color:#2ecc71;margin-left:10px;display:none;">Saved!</span>
+</div>
+
+  <!-- Section 1: Organiser -->
+  <div class="card">
+    <div class="card-title">1 — Organiser</div>
+
+    <div class="row-2">
+      <div class="field">
+        <label>First Name <span class="req">*</span></label>
+        <input type="text" id="first-name" placeholder="e.g. Maria" />
+      </div>
+      <div class="field">
+        <label>Last Name <span class="req">*</span></label>
+        <input type="text" id="last-name" placeholder="e.g. Dupont" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Display / Stage Name</label>
+      <input type="text" id="display-name" placeholder="e.g. El Sol — shown on promotions if different from legal name" />
+      <div class="hint">Leave blank to use your legal name.</div>
+    </div>
+
+    <div class="field">
+      <label>Email <span class="req">*</span></label>
+      <input type="email" id="email" placeholder="your@email.com" />
+    </div>
+  </div>
+
+  <!-- Section 2: Festival Details -->
+  <div class="card">
+    <div class="card-title">2 — Festival Details</div>
+
+    <div class="field">
+      <label>Festival Name <span class="req">*</span></label>
+      <input type="text" id="festival-name" placeholder="e.g. Shoonya Salsa Weekend" />
+    </div>
+
+    <div class="field">
+      <label>Tagline / Subtitle</label>
+      <input type="text" id="tagline" placeholder="e.g. Three days of dance, music and community" />
+    </div>
+
+    <div class="row-2">
+      <div class="field">
+        <label>Start Date <span class="req">*</span></label>
+        <input type="date" id="date-start" onchange="buildDayTabs()" />
+      </div>
+      <div class="field">
+        <label>End Date <span class="req">*</span></label>
+        <input type="date" id="date-end" onchange="buildDayTabs()" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Dance Style(s) <span class="req">*</span></label>
+      <input type="text" id="dance-styles" placeholder="e.g. Salsa, Bachata, Kizomba" />
+      <div class="hint">List all styles featured at this festival.</div>
+    </div>
+
+    <div class="row-2">
+      <div class="field">
+        <label>Venue / Location</label>
+        <input type="text" id="venue" placeholder="e.g. Shoonya Dance Centre, Stapelplein 41, Ghent" />
+        <div class="hint">Leave blank if held at Shoonya as usual.</div>
+      </div>
+      <div class="field">
+        <label>Teaching Language(s)</label>
+        <select id="language">
+          <option value="">— Select —</option>
+          <option>English</option>
+          <option>Dutch (NL)</option>
+          <option>French (FR)</option>
+          <option>English + Dutch</option>
+          <option>English + French</option>
+          <option>Multilingual</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Dress Code</label>
+      <input type="text" id="dress-code" placeholder="e.g. Real dance shoes, socks, or barefoot" />
+    </div>
+  </div>
+
+  <!-- Section 3: Programme -->
+  <div class="card">
+    <div class="card-title">3 — Programme</div>
+    <div class="info-box">Add every activity — workshops, social dances, performances, DJ sets. For workshops, expand the description field to add what participants will learn.</div>
+
+    <div id="day-tabs-wrap" class="hidden">
+      <div id="day-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;"></div>
+    </div>
+
+    <div id="programme-slots"></div>
+    <button class="btn-add-row" onclick="addProgrammeSlot()">+ Add Slot</button>
+  </div>
+
+  <!-- Section 4: Teachers & Artists -->
+  <div class="card">
+    <div class="card-title">4 — Teachers & Artists</div>
+    <div class="info-box">Add every guest teacher or artist performing at the festival. Regular Shoonya teachers can be skipped unless they need a bio update.</div>
+
+    <div id="teachers-list"></div>
+    <button class="btn-add-row" onclick="addTeacherCard()">+ Add Teacher / Artist</button>
+  </div>
+
+  <!-- Section 5: DJs -->
+  <div class="card">
+    <div class="card-title">5 — DJs <span style="font-weight:400;font-size:.78rem;color:#aaa;text-transform:none;letter-spacing:0;">(optional)</span></div>
+
+    <div id="djs-list"></div>
+    <button class="btn-add-row" onclick="addDjCard()">+ Add DJ</button>
+  </div>
+
+  <!-- Section 6: Pricing -->
+  <div class="card">
+    <div class="card-title">6 — Pricing</div>
+    <div class="info-box">Add one tier per pass or ticket type. Include what each pass covers in the description — this goes directly on the website pricing table.</div>
+
+    <div id="price-tiers"></div>
+    <button class="btn-add-row" onclick="addPriceTier()" style="margin-top:4px;">+ Add Pricing Tier</button>
+
+    <div class="row-2" style="margin-top:14px;">
+      <div class="field">
+        <label>Early Bird Deadline</label>
+        <input type="date" id="early-bird-deadline" />
+      </div>
+      <div class="field">
+        <label>Free Entry Note</label>
+        <input type="text" id="free-entry-note" placeholder="e.g. Free for children under 12" />
+      </div>
+    </div>
+
+    <div class="group-discount">
+      <h4>Group Discount (optional)</h4>
+      <div class="row-3">
+        <div class="field">
+          <label style="font-size:.75rem;font-weight:700;display:block;margin-bottom:3px;">Minimum Group Size</label>
+          <input type="number" id="group-min" placeholder="e.g. 5" min="2" />
+        </div>
+        <div class="field">
+          <label style="font-size:.75rem;font-weight:700;display:block;margin-bottom:3px;">Group Price per Person (€)</label>
+          <input type="number" id="group-price" placeholder="e.g. 180" min="0" />
+        </div>
+        <div class="field">
+          <label style="font-size:.75rem;font-weight:700;display:block;margin-bottom:3px;">Extra Perk</label>
+          <input type="text" id="group-perk" placeholder="e.g. 1 free pass for group leader" />
+        </div>
+      </div>
+    </div>
+
+    <div class="info-box" style="margin-top:14px;">
+      All Shoonya members get a discounted price on all passes and single workshops.
+      An <strong id="uitpas-pct-label">80%</strong> social tariff applies with UITPAS.
+    </div>
+  </div>
+
+  <!-- Section 7: Description -->
+  <div class="card">
+    <div class="card-title">7 — Description</div>
+
+    <div class="field">
+      <label>Festival Description <span class="req">*</span></label>
+      <textarea id="description" rows="6" placeholder="What's this festival about? What can attendees expect? What makes it special?"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Practical Info</label>
+      <textarea id="practical" rows="3" placeholder="e.g. Registration required / No partner needed / Beginner-friendly / Food and drinks available…"></textarea>
+    </div>
+
+    <div class="field">
+      <label>Any other notes for us?</label>
+      <textarea id="notes" rows="3" placeholder="Setup requirements, special requests, anything we should know…"></textarea>
+    </div>
+  </div>
+
+  <!-- Section 8: Images -->
+  <div class="card">
+    <div class="card-title">8 — Images (Optional)</div>
+    <div class="info-box">Only needed if you have new images. Skip if you've shared them before.</div>
+
+    <div class="field">
+      <label>Festival Banner / Promotional Image</label>
+      <div class="upload-zone" onclick="document.getElementById('banner-input').click()">
+        <input type="file" id="banner-input" accept="image/*" onchange="handleUpload(this,'banner-preview','banner-warn',1200)" />
+        <div class="ico">🎪</div>
+        <p>Click to upload a festival banner<br><span style="font-size:.73rem;">Minimum 1200px wide recommended</span></p>
+        <div class="warn" id="banner-warn">⚠ Image appears low resolution — minimum 1200px wide recommended.</div>
+      </div>
+      <div class="up-preview" id="banner-preview"></div>
+    </div>
+
+    <div class="field">
+      <label>Additional Images</label>
+      <div class="upload-zone" onclick="document.getElementById('extra-input').click()">
+        <input type="file" id="extra-input" accept="image/*" multiple onchange="handleMultiUpload(this,'extra-preview')" />
+        <div class="ico">📸</div>
+        <p>Click to upload additional images (artist photos, past editions…)<br><span style="font-size:.73rem;">You can select multiple files</span></p>
+      </div>
+      <div class="up-preview" id="extra-preview"></div>
+    </div>
+  </div>
+
+  <button class="btn-submit" onclick="submitForm()">Submit Festival →</button>
+
+</div><!-- /container -->
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>✅ Submission Ready</h3>
+    <p id="modal-instruction">Copy the text below and email it to <strong>info@shoonyadance.com</strong>. We'll take care of the rest!</p>
+    <div class="out-block" id="modal-output"></div>
+    <button class="btn-copy" id="copy-btn" onclick="copyOutput()">Copy to Clipboard</button>
+    <div id="sheetStatus" style="display:none;margin-top:10px;font-size:.8rem;color:#27ae60;font-weight:700;"></div>
+    <br>
+    <button class="modal-close" onclick="document.getElementById('modal').classList.remove('open')">Close</button>
+  </div>
+</div>
+
+<script src="../config.js"></script>
+<script src="../login-panel.js"></script>
+<script>
+// ── APPS SCRIPT BACKEND ─────────────────────────────────────────────────────
+
+
+function sendToSheet(submissionText, submittedBy, title, email) {
+  if (!APPS_SCRIPT_URL) return;
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ eventType: 'festival', submittedBy, title, email, submissionText })
+  }).then(() => {
+    const msg = document.getElementById('sheetStatus');
+    if (msg) { msg.style.display = 'block'; msg.textContent = '✅ Saved to Google Sheets & notification sent!'; }
+  }).catch(err => {
+    const msg = document.getElementById('sheetStatus');
+    if (msg) { msg.style.display = 'block'; msg.textContent = '⚠️ Could not save to sheet.'; msg.style.color = '#c0392b'; }
+  });
+}
+
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+let CONFIG = { classDiscount: 12, uitpasDiscount: 80 };
+
+function loadConfig() {
+  const saved = localStorage.getItem('shoonya_festival_config');
+  if (saved) { try { CONFIG = Object.assign(CONFIG, JSON.parse(saved)); } catch(e){} }
+  const discEl = document.getElementById('adm-disc');
+  const uitEl  = document.getElementById('adm-uitpas');
+  if (discEl) discEl.value = CONFIG.classDiscount;
+  if (uitEl)  uitEl.value  = CONFIG.uitpasDiscount;
+  document.getElementById('disc-pct-label').textContent  = CONFIG.classDiscount + '%';
+  document.getElementById('uitpas-pct-label').textContent = CONFIG.uitpasDiscount + '%';
+}
+
+function saveAdminConfig() {
+  CONFIG.classDiscount  = parseFloat(document.getElementById('adm-disc').value)   || 12;
+  CONFIG.uitpasDiscount = parseFloat(document.getElementById('adm-uitpas').value) || 80;
+  localStorage.setItem('shoonya_festival_config', JSON.stringify(CONFIG));
+  document.getElementById('disc-pct-label').textContent  = CONFIG.classDiscount + '%';
+  document.getElementById('uitpas-pct-label').textContent = CONFIG.uitpasDiscount + '%';
+  const msg = document.getElementById('admin-saved-msg');
+  msg.style.display = 'inline';
+  setTimeout(() => msg.style.display = 'none', 2000);
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────────────────────
+function toggleAdmin() {
+  const panel = document.getElementById('admin-panel');
+  const isOpen = panel.style.display === 'block';
+  if (isOpen) {
+    panel.style.display = 'none';
+  } else {
+    const pw = prompt('Admin password:');
+    if (pw !== 'shoonya2026') { alert('Incorrect password.'); return; }
+    loadConfig();
+    panel.style.display = 'block';
+    panel.scrollIntoView({ behavior:'smooth' });
+  }
+}
+
+// ── DAY LABELS ────────────────────────────────────────────────────────────────
+let festivalDays = []; // array of { label, date }
+
+function buildDayTabs() {
+  const s = document.getElementById('date-start').value;
+  const e = document.getElementById('date-end').value;
+  if (!s || !e || s > e) return;
+  festivalDays = [];
+  const cur = new Date(s + 'T12:00:00');
+  const end = new Date(e + 'T12:00:00');
+  let i = 1;
+  while (cur <= end) {
+    festivalDays.push({
+      label: `Day ${i} — ${cur.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}`,
+      date: cur.toISOString().slice(0,10)
+    });
+    cur.setDate(cur.getDate() + 1);
+    i++;
+  }
+  // Rebuild day selects in existing rows
+  document.querySelectorAll('.day-select').forEach(sel => {
+    const cur = sel.value;
+    sel.innerHTML = dayOptions();
+    sel.value = cur;
+  });
+  // Show day tabs hint
+  const wrap = document.getElementById('day-tabs-wrap');
+  if (festivalDays.length) {
+    wrap.classList.remove('hidden');
+    document.getElementById('day-tabs').innerHTML = festivalDays.map(d =>
+      `<span style="background:#f0ebff;border:1.5px solid var(--purple);border-radius:20px;padding:3px 11px;font-size:.74rem;color:var(--purple);">${d.label}</span>`
+    ).join('');
+  }
+}
+
+function dayOptions(selected='') {
+  if (!festivalDays.length) return '<option value="">— Add dates first —</option>';
+  return festivalDays.map(d =>
+    `<option value="${d.date}"${d.date===selected?' selected':''}>${d.label}</option>`
+  ).join('');
+}
+
+// ── PROGRAMME SLOTS ───────────────────────────────────────────────────────────
+const ACTIVITY_TYPES = ['Workshop','Social Dance','DJ Set','Performance','Opening Party','Closing Party','Technique Lab','Community Class','Other'];
+const LEVELS = ['All Levels','Beginner','Open Level','Intermediate','Advanced'];
+const STUDIOS = ['Ananta','Ananta 1','Ananta 2','Art Deco','Art Deco 1','Art Deco 2','Studio Aakash (2nd Floor)','Main Stage','Outdoor'];
+let slotCount = 0;
+
+function addProgrammeSlot() {
+  slotCount++;
+  const id = slotCount;
+  const container = document.getElementById('programme-slots');
+  const div = document.createElement('div');
+  div.className = 'slot-card';
+  div.id = `slot-${id}`;
+  div.innerHTML = `
+    <div class="slot-header">
+      <div>
+        <div class="slot-label">Day</div>
+        <select class="day-select">${dayOptions()}</select>
+      </div>
+      <div>
+        <div class="slot-label">Start</div>
+        <input type="time" class="slot-start"/>
+      </div>
+      <div>
+        <div class="slot-label">End</div>
+        <input type="time" class="slot-end"/>
+      </div>
+      <div>
+        <div class="slot-label">Activity Type</div>
+        <select class="slot-type">${ACTIVITY_TYPES.map(t=>`<option>${t}</option>`).join('')}</select>
+      </div>
+      <button class="btn-rm" onclick="document.getElementById('slot-${id}').remove()" style="align-self:flex-end;margin-bottom:2px;">✕</button>
+    </div>
+    <div class="slot-row2">
+      <div>
+        <div class="slot-label">Title / Topic</div>
+        <input type="text" class="slot-title" placeholder="e.g. The Martial Grace of Mayurbhanj Chhau"/>
+      </div>
+      <div>
+        <div class="slot-label">Teacher / DJ / Artist</div>
+        <input type="text" class="slot-teacher" placeholder="e.g. Chris & Jana"/>
+      </div>
+      <div>
+        <div class="slot-label">Level</div>
+        <select class="slot-level"><option value="">—</option>${LEVELS.map(l=>`<option>${l}</option>`).join('')}</select>
+      </div>
+      <div>
+        <div class="slot-label">Studio / Room</div>
+        <select class="slot-studio"><option value="">— Studio —</option>${STUDIOS.map(s=>`<option>${s}</option>`).join('')}</select>
+      </div>
+    </div>
+    <button class="slot-desc-toggle" onclick="toggleSlotDesc(${id})">＋ Add workshop description</button>
+    <div class="slot-desc" id="slot-desc-${id}">
+      <div class="slot-label" style="margin-bottom:4px;">Workshop Description</div>
+      <textarea class="slot-description" rows="3" placeholder="What will participants learn or experience? What makes this session special? This text appears on the website listing."></textarea>
+    </div>
+  `;
+  container.appendChild(div);
+}
+
+function toggleSlotDesc(id) {
+  const desc = document.getElementById(`slot-desc-${id}`);
+  const btn = desc.previousElementSibling;
+  const isOpen = desc.classList.toggle('open');
+  btn.textContent = isOpen ? '－ Hide description' : '＋ Add workshop description';
+}
+
+// ── TEACHER CARDS ─────────────────────────────────────────────────────────────
+let teacherCount = 0;
+
+function addTeacherCard() {
+  teacherCount++;
+  const id = teacherCount;
+  const list = document.getElementById('teachers-list');
+  const div = document.createElement('div');
+  div.className = 'person-card';
+  div.id = `teacher-card-${id}`;
+  div.innerHTML = `
+    <h4>Teacher / Artist ${id}</h4>
+    <button class="btn-rm-card" onclick="document.getElementById('teacher-card-${id}').remove()">✕</button>
+    <div class="row-2">
+      <div class="field"><label>First Name</label><input type="text" class="tc-first" placeholder="e.g. Maria" /></div>
+      <div class="field"><label>Last Name</label><input type="text" class="tc-last" placeholder="e.g. Dupont" /></div>
+    </div>
+    <div class="row-2">
+      <div class="field"><label>Display / Stage Name</label><input type="text" class="tc-display" placeholder="e.g. El Sol" /></div>
+      <div class="field"><label>Dance Style(s)</label><input type="text" class="tc-style" placeholder="e.g. Cuban Salsa, Rueda" /></div>
+    </div>
+    <div class="field"><label>Short Bio</label><textarea class="tc-bio" rows="3" placeholder="Brief bio for the website — training, background, what makes their teaching special…"></textarea></div>
+    <div class="field"><label>Website / Social Media</label><input type="text" class="tc-link" placeholder="https://instagram.com/handle" /></div>
+  `;
+  list.appendChild(div);
+}
+
+// ── DJ CARDS ──────────────────────────────────────────────────────────────────
+let djCount = 0;
+
+function addDjCard() {
+  djCount++;
+  const id = djCount;
+  const list = document.getElementById('djs-list');
+  const div = document.createElement('div');
+  div.className = 'person-card';
+  div.id = `dj-card-${id}`;
+  div.innerHTML = `
+    <h4>DJ ${id}</h4>
+    <button class="btn-rm-card" onclick="document.getElementById('dj-card-${id}').remove()">✕</button>
+    <div class="row-2">
+      <div class="field"><label>DJ Name / Handle</label><input type="text" class="dj-name" placeholder="e.g. DJ Marco" /></div>
+      <div class="field"><label>Music Styles</label><input type="text" class="dj-styles" placeholder="e.g. Kizomba, Semba, Ghettozouk" /></div>
+    </div>
+    <div class="field"><label>Short Bio <span style="font-weight:400;color:#aaa;">(optional)</span></label><textarea class="dj-bio" rows="2" placeholder="Optional — only needed for guest DJs or featured sets"></textarea></div>
+  `;
+  list.appendChild(div);
+}
+
+// ── PRICING TIERS ─────────────────────────────────────────────────────────────
+let tierCount = 0;
+function addPriceTier(label='', desc='', regular='', earlybird='', member='') {
+  tierCount++;
+  const id = tierCount;
+  const container = document.getElementById('price-tiers');
+  const div = document.createElement('div');
+  div.className = 'price-tier';
+  div.id = `tier-${id}`;
+  div.innerHTML = `
+    <div class="price-tier-name">
+      <input type="text" class="tier-label" value="${label}" placeholder="Pass / Ticket type (e.g. Full Festival Pass)" style="flex:1;font-weight:700;"/>
+      <button class="btn-rm" onclick="document.getElementById('tier-${id}').remove()">✕</button>
+    </div>
+    <div class="price-tier-desc">
+      <input type="text" class="tier-desc" value="${desc}" placeholder="What's included (e.g. All main workshops Fri–Sun, Community Class, Opening Party)" />
+    </div>
+    <div class="price-tier-prices">
+      <div>
+        <label>Regular (€)</label>
+        <input type="number" class="tier-regular" value="${regular}" placeholder="€" min="0" step="0.5"/>
+      </div>
+      <div>
+        <label>Early Bird (€)</label>
+        <input type="number" class="tier-early" value="${earlybird}" placeholder="€" min="0" step="0.5"/>
+      </div>
+      <div>
+        <label>Shoonya Member (€)</label>
+        <input type="number" class="tier-member" value="${member}" placeholder="€" min="0" step="0.5"/>
+      </div>
+    </div>
+  `;
+  container.appendChild(div);
+}
+
+// ── IMAGE UPLOAD ──────────────────────────────────────────────────────────────
+function handleUpload(input, previewId, warnId, minPx) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      document.getElementById(warnId).style.display = img.width < minPx ? 'block' : 'none';
+    };
+    img.src = e.target.result;
+    const prev = document.getElementById(previewId);
+    prev.innerHTML = '';
+    const imgEl = document.createElement('img');
+    imgEl.src = e.target.result;
+    prev.appendChild(imgEl);
+  };
+  reader.readAsDataURL(file);
+}
+
+function handleMultiUpload(input, previewId) {
+  const prev = document.getElementById(previewId);
+  Array.from(input.files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const imgEl = document.createElement('img');
+      imgEl.src = e.target.result;
+      prev.appendChild(imgEl);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function val(id) { return (document.getElementById(id).value || '').trim(); }
+
+function fmtDate(dateStr) {
+  if (!dateStr) return '—';
+  return new Date(dateStr + 'T12:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────────────────────
+function submitForm() {
+  const required = [
+    ['first-name','First Name'],['last-name','Last Name'],['email','Email'],
+    ['festival-name','Festival Name'],['date-start','Start Date'],['date-end','End Date'],
+    ['dance-styles','Dance Style(s)'],['description','Festival Description']
+  ];
+  for (const [id, label] of required) {
+    if (!val(id)) { alert(`Please fill in: ${label}`); document.getElementById(id).focus(); return; }
+  }
+  if (val('date-start') > val('date-end')) { alert('End date must be after start date.'); return; }
+
+  const progSlots = document.querySelectorAll('#programme-slots .slot-card');
+  if (!progSlots.length) { alert('Please add at least one programme slot.'); return; }
+
+  const firstName   = val('first-name');
+  const lastName    = val('last-name');
+  const displayName = val('display-name') || `${firstName} ${lastName}`;
+  const uitpasPct   = CONFIG.uitpasDiscount || 80;
+
+  const lines = [];
+  lines.push('═══════════════════════════════════════════════════════');
+  lines.push('  SHOONYA DANCE CENTRE — FESTIVAL SUBMISSION');
+  lines.push('═══════════════════════════════════════════════════════');
+  lines.push('');
+
+  // Organiser
+  lines.push('▌ ORGANISER');
+  lines.push(`  Legal Name:  ${firstName} ${lastName}`);
+  if (val('display-name')) lines.push(`  Display Name: ${displayName}`);
+  lines.push(`  Email:       ${val('email')}`);
+  lines.push('');
+
+  // Festival
+  lines.push('▌ FESTIVAL');
+  lines.push(`  Name:        ${val('festival-name')}`);
+  if (val('tagline')) lines.push(`  Tagline:     ${val('tagline')}`);
+  lines.push(`  Dates:       ${fmtDate(val('date-start'))} → ${fmtDate(val('date-end'))}`);
+  lines.push(`  Style(s):    ${val('dance-styles')}`);
+  if (val('venue')) lines.push(`  Venue:       ${val('venue')}`);
+  if (val('language')) lines.push(`  Language:    ${val('language')}`);
+  if (val('dress-code')) lines.push(`  Dress Code:  ${val('dress-code')}`);
+  lines.push('');
+
+  // Programme — grouped by day
+  lines.push('▌ PROGRAMME');
+  const slots = [];
+  progSlots.forEach(card => {
+    slots.push({
+      day:     card.querySelector('.day-select').value,
+      start:   card.querySelector('.slot-start').value,
+      end:     card.querySelector('.slot-end').value,
+      type:    card.querySelector('.slot-type').value,
+      title:   card.querySelector('.slot-title').value.trim(),
+      teacher: card.querySelector('.slot-teacher').value.trim(),
+      level:   card.querySelector('.slot-level').value,
+      studio:  card.querySelector('.slot-studio').value,
+      desc:    card.querySelector('.slot-description').value.trim(),
+    });
+  });
+  const byDay = {};
+  slots.forEach(s => {
+    const key = s.day || 'Unassigned';
+    if (!byDay[key]) byDay[key] = [];
+    byDay[key].push(s);
+  });
+  const dayOrder = festivalDays.length ? festivalDays.map(d => d.date) : Object.keys(byDay);
+  [...dayOrder, 'Unassigned'].forEach(dayKey => {
+    if (!byDay[dayKey]) return;
+    const dayObj = festivalDays.find(d => d.date === dayKey);
+    lines.push(`  ${dayObj ? dayObj.label.toUpperCase() : 'UNASSIGNED'}`);
+    byDay[dayKey].sort((a,b) => (a.start||'').localeCompare(b.start||'')).forEach(s => {
+      const time = s.start ? `${s.start}${s.end?' – '+s.end:''}` : '';
+      const parts = [time, s.type, s.title, s.teacher, s.level, s.studio].filter(Boolean);
+      lines.push(`    ${parts.join(' | ')}`);
+      if (s.desc) lines.push(`      → ${s.desc}`);
+    });
+    lines.push('');
+  });
+
+  // Teachers
+  const teacherCards = document.querySelectorAll('#teachers-list .person-card');
+  if (teacherCards.length) {
+    lines.push('▌ TEACHERS & ARTISTS');
+    teacherCards.forEach((card, i) => {
+      const first   = card.querySelector('.tc-first')?.value.trim()   || '';
+      const last    = card.querySelector('.tc-last')?.value.trim()    || '';
+      const display = card.querySelector('.tc-display')?.value.trim() || '';
+      const style   = card.querySelector('.tc-style')?.value.trim()   || '';
+      const bio     = card.querySelector('.tc-bio')?.value.trim()     || '';
+      const link    = card.querySelector('.tc-link')?.value.trim()    || '';
+      if (!first && !last && !display) return;
+      lines.push(`  ${i+1}. ${display || (first+' '+last).trim()}`);
+      if (display && (first||last)) lines.push(`     Legal Name: ${(first+' '+last).trim()}`);
+      if (style)   lines.push(`     Style(s):   ${style}`);
+      if (bio)     lines.push(`     Bio:        ${bio}`);
+      if (link)    lines.push(`     Link:       ${link}`);
+    });
+    lines.push('');
+  }
+
+  // DJs
+  const djCards = document.querySelectorAll('#djs-list .person-card');
+  if (djCards.length) {
+    lines.push('▌ DJs');
+    djCards.forEach((card, i) => {
+      const name   = card.querySelector('.dj-name')?.value.trim()   || '';
+      const styles = card.querySelector('.dj-styles')?.value.trim() || '';
+      const bio    = card.querySelector('.dj-bio')?.value.trim()    || '';
+      if (!name) return;
+      lines.push(`  ${i+1}. ${name}`);
+      if (styles) lines.push(`     Music: ${styles}`);
+      if (bio)    lines.push(`     Bio:   ${bio}`);
+    });
+    lines.push('');
+  }
+
+  // Pricing
+  const priceTiers = document.querySelectorAll('#price-tiers .price-tier');
+  if (priceTiers.length) {
+    lines.push('▌ PRICING');
+    priceTiers.forEach(tier => {
+      const label   = tier.querySelector('.tier-label').value.trim();
+      const desc    = tier.querySelector('.tier-desc').value.trim();
+      const regular = tier.querySelector('.tier-regular').value.trim();
+      const early   = tier.querySelector('.tier-early').value.trim();
+      const member  = tier.querySelector('.tier-member').value.trim();
+      if (!label && !regular) return;
+      lines.push(`  ${label || 'Ticket'}:`);
+      if (desc)    lines.push(`    Includes:    ${desc}`);
+      if (regular) lines.push(`    Regular:     €${regular}`);
+      if (early)   lines.push(`    Early Bird:  €${early}`);
+      if (member)  lines.push(`    Members:     €${member}`);
+    });
+    const eb = val('early-bird-deadline');
+    if (eb) lines.push(`  Early Bird Deadline: ${fmtDate(eb)}`);
+    if (val('free-entry-note')) lines.push(`  Free entry: ${val('free-entry-note')}`);
+    // Group discount
+    const gMin   = val('group-min');
+    const gPrice = val('group-price');
+    const gPerk  = val('group-perk');
+    if (gMin && gPrice) {
+      lines.push(`  Group Discount: Groups of ${gMin}+ → €${gPrice} per person${gPerk ? ' + '+gPerk : ''}`);
+    }
+    lines.push(`  ${uitpasPct}% social tariff with UITPAS`);
+    lines.push('');
+  }
+
+  // Description
+  lines.push('▌ DESCRIPTION');
+  lines.push(val('description').split('\n').map(l=>'  '+l).join('\n'));
+  if (val('practical')) {
+    lines.push('');
+    lines.push('▌ PRACTICAL INFO');
+    lines.push(val('practical').split('\n').map(l=>'  '+l).join('\n'));
+  }
+  if (val('notes')) {
+    lines.push('');
+    lines.push('▌ NOTES');
+    lines.push(val('notes').split('\n').map(l=>'  '+l).join('\n'));
+  }
+
+  lines.push('');
+  lines.push('═══════════════════════════════════════════════════════');
+  lines.push(`Submitted: ${new Date().toLocaleString('en-GB')}`);
+  lines.push('═══════════════════════════════════════════════════════');
+
+  const submissionText = lines.join('\n');
+  document.getElementById('modal-output').textContent = submissionText;
+  if (APPS_SCRIPT_URL) {
+    const instr = document.getElementById('modal-instruction');
+    if (instr) { instr.innerHTML = '✅ Submitted automatically — saved to Google Sheets and Shoonya has been notified. Keep a copy below if needed:'; instr.style.color = '#27ae60'; }
+  }
+  document.getElementById('modal').classList.add('open');
+
+  sendToSheet(submissionText, displayName, val('festival-name'), val('email'));
+}
+
+function copyOutput() {
+  const text = document.getElementById('modal-output').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy to Clipboard'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+loadConfig();
+addPriceTier('Full Festival Pass', 'All main workshops + Community Class + Opening Party', '', '', '');
+addPriceTier('Day Pass', '', '', '', '');
+addPriceTier('Single Workshop', '90 min class', '', '', '');
+addProgrammeSlot();
+</script>
+</body>
+</html>
