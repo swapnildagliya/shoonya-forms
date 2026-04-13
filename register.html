@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teacher Registration — Shoonya Dance Centre</title>
+<style>
+/* ── Base ── */
+:root {
+  --yellow: #F5C842;
+  --purple: #6B3FA0;
+  --purple-light: #f0ebff;
+  --dark: #1a1a1a;
+  --mid: #555;
+  --border: #e0e0e0;
+  --radius: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  background: #f5f5f5;
+  color: var(--dark);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 24px 16px 60px;
+}
+
+/* ── Header ── */
+.header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.logo-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--dark);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+.logo-dot {
+  width: 8px; height: 8px;
+  background: var(--yellow);
+  border-radius: 50%;
+}
+.header h1 {
+  font-size: 1.45rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+.header p {
+  color: var(--mid);
+  font-size: 0.88rem;
+  margin-top: 6px;
+}
+
+/* ── Card ── */
+.card {
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 420px;
+}
+
+/* ── Step indicator ── */
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 24px;
+}
+.step-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.3s;
+}
+.step-dot.active { background: var(--purple); }
+.step-dot.done   { background: var(--yellow); }
+.step-line {
+  width: 28px; height: 2px;
+  background: var(--border);
+  transition: background 0.3s;
+}
+.step-line.done { background: var(--yellow); }
+
+/* ── Screen titles ── */
+.screen-title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+.screen-sub {
+  font-size: 0.83rem;
+  color: var(--mid);
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+/* ── Form fields ── */
+.field { margin-bottom: 14px; }
+label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--mid);
+  margin-bottom: 5px;
+}
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"] {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--dark);
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+input:focus {
+  outline: none;
+  border-color: var(--purple);
+}
+input.error { border-color: #e74c3c; }
+
+/* ── Code input ── */
+.code-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 8px 0 4px;
+}
+.code-digit {
+  width: 44px; height: 52px;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  -webkit-appearance: none;
+  padding: 0;
+}
+.code-digit:focus {
+  outline: none;
+  border-color: var(--purple);
+}
+
+/* ── PIN input ── */
+.pin-row {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.pin-digit {
+  width: 48px; height: 56px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  -webkit-appearance: none;
+  padding: 0;
+  letter-spacing: 0;
+}
+.pin-digit:focus {
+  outline: none;
+  border-color: var(--purple);
+}
+.pin-mask { -webkit-text-security: disc; }
+
+/* ── Button ── */
+.btn {
+  width: 100%;
+  padding: 13px;
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+  margin-top: 18px;
+  transition: background 0.2s, opacity 0.2s;
+  letter-spacing: 0.02em;
+}
+.btn:hover:not(:disabled) { background: #5a3388; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Error / info ── */
+.msg {
+  font-size: 0.82rem;
+  padding: 10px 12px;
+  border-radius: 7px;
+  margin-top: 12px;
+  display: none;
+  line-height: 1.5;
+}
+.msg.error   { background: #fdecea; color: #c0392b; display: block; }
+.msg.success { background: #e8f5e9; color: #1e7e34; display: block; }
+.msg.info    { background: var(--purple-light); color: var(--purple); display: block; }
+
+/* ── Resend link ── */
+.resend {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--mid);
+  margin-top: 14px;
+}
+.resend a {
+  color: var(--purple);
+  cursor: pointer;
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+/* ── PIN hint ── */
+.pin-hint {
+  font-size: 0.78rem;
+  color: var(--mid);
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* ── Success screen ── */
+.success-icon {
+  width: 64px; height: 64px;
+  background: var(--yellow);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  margin: 0 auto 18px;
+}
+.success-screen { text-align: center; }
+.success-screen h2 {
+  font-size: 1.2rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+.success-screen p {
+  font-size: 0.88rem;
+  color: var(--mid);
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+.success-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 22px;
+}
+.btn-outline {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  color: var(--purple);
+  border: 2px solid var(--purple);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-outline:hover { background: var(--purple); color: #fff; }
+
+/* ── Already registered ── */
+.already {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--mid);
+  margin-top: 18px;
+}
+.already a { color: var(--purple); font-weight: 700; text-decoration: none; }
+
+/* ── Loader ── */
+.spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+<script src="./config.js"></script>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-bar"><span class="logo-dot"></span>Shoonya Dance Centre</div>
+  <h1>Teacher Registration</h1>
+  <p>Set up your account to submit events</p>
+</div>
+
+<!-- ─── Step indicator ─── -->
+<div class="steps" id="stepIndicator">
+  <div class="step-dot active" id="dot1"></div>
+  <div class="step-line"       id="line1"></div>
+  <div class="step-dot"        id="dot2"></div>
+  <div class="step-line"       id="line2"></div>
+  <div class="step-dot"        id="dot3"></div>
+</div>
+
+<!-- ─── Card ─── -->
+<div class="card">
+
+  <!-- Screen 1: Invite + Details -->
+  <div id="screen1">
+    <div class="screen-title">Welcome!</div>
+    <div class="screen-sub">Enter the invite code from your WhatsApp group, then your details.</div>
+
+    <div class="field">
+      <label>Invite Code</label>
+      <input type="text" id="inviteCode" placeholder="e.g. ShoonyaTeam2026" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Your Name</label>
+      <input type="text" id="name" placeholder="As it appears on the website" autocomplete="name">
+    </div>
+    <div class="field">
+      <label>Your Email</label>
+      <input type="email" id="email" placeholder="The email you want to use to log in" autocomplete="email">
+    </div>
+
+    <div class="msg" id="msg1"></div>
+    <button class="btn" id="btn1" onclick="submitStep1()">Send Verification Code</button>
+
+    <p class="already">Already registered? <a href="javascript:void(0)" onclick="goToLogin()">Log in here</a></p>
+  </div>
+
+  <!-- Screen 2: Code + PIN -->
+  <div id="screen2" style="display:none">
+    <div class="screen-title">Check your email</div>
+    <div class="screen-sub" id="codeSub">We sent a 6-digit code to <strong id="emailDisplay"></strong>. Enter it below, then choose a PIN.</div>
+
+    <label style="text-align:center;display:block;margin-bottom:8px;">Verification Code</label>
+    <div class="code-row">
+      <input class="code-digit" type="number" maxlength="1" id="c1" oninput="codeInput(this,null,'c2')" onkeydown="codeKey(event,this,null,'c2')">
+      <input class="code-digit" type="number" maxlength="1" id="c2" oninput="codeInput(this,'c1','c3')" onkeydown="codeKey(event,this,'c1','c3')">
+      <input class="code-digit" type="number" maxlength="1" id="c3" oninput="codeInput(this,'c2','c4')" onkeydown="codeKey(event,this,'c2','c4')">
+      <input class="code-digit" type="number" maxlength="1" id="c4" oninput="codeInput(this,'c3','c5')" onkeydown="codeKey(event,this,'c3','c5')">
+      <input class="code-digit" type="number" maxlength="1" id="c5" oninput="codeInput(this,'c4','c6')" onkeydown="codeKey(event,this,'c4','c6')">
+      <input class="code-digit" type="number" maxlength="1" id="c6" oninput="codeInput(this,'c5',null)" onkeydown="codeKey(event,this,'c5',null)">
+    </div>
+
+    <div style="margin-top:22px;">
+      <label style="text-align:center;display:block;margin-bottom:8px;">Choose a PIN (4–6 digits)</label>
+      <div class="pin-row" id="pinRow">
+        <input class="pin-digit pin-mask" type="number" maxlength="1" id="p1" oninput="pinInput(this,null,'p2')" onkeydown="pinKey(event,this,null,'p2')">
+        <input class="pin-digit pin-mask" type="number" maxlength="1" id="p2" oninput="pinInput(this,'p1','p3')" onkeydown="pinKey(event,this,'p1','p3')">
+        <input class="pin-digit pin-mask" type="number" maxlength="1" id="p3" oninput="pinInput(this,'p2','p4')" onkeydown="pinKey(event,this,'p2','p4')">
+        <input class="pin-digit pin-mask" type="number" maxlength="1" id="p4" oninput="pinInput(this,'p3',null)" onkeydown="pinKey(event,this,'p3',null)">
+      </div>
+      <div class="pin-hint">This PIN is what you'll use to log in. Keep it safe.</div>
+    </div>
+
+    <div class="msg" id="msg2"></div>
+    <button class="btn" id="btn2" onclick="submitStep2()">Create My Account</button>
+
+    <div class="resend">Didn't get the email? <a onclick="resendCode()">Resend code</a></div>
+  </div>
+
+  <!-- Screen 3: Success -->
+  <div id="screen3" style="display:none">
+    <div class="success-screen">
+      <div class="success-icon">🎉</div>
+      <h2>You're in, <span id="successName"></span>!</h2>
+      <p>Your Shoonya teacher account is ready.</p>
+      <p>Use your email and PIN to log in on any of our submission forms or your profile page.</p>
+      <div class="success-links">
+        <a class="btn" href="smart-form/index.html">Submit an Event →</a>
+        <a class="btn-outline" href="profile.html">View My Profile</a>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /card -->
+
+<script>
+// ── Config ──────────────────────────────────────────────
+// APPS_SCRIPT_URL loaded from config.js
+
+// ── State ───────────────────────────────────────────────
+let registeredEmail = '';
+let registeredName  = '';
+
+// ── Step 1: Send verification code ──────────────────────
+async function submitStep1() {
+  const inviteCode = document.getElementById('inviteCode').value.trim();
+  const name       = document.getElementById('name').value.trim();
+  const email      = document.getElementById('email').value.trim().toLowerCase();
+  const btn        = document.getElementById('btn1');
+  const msg        = document.getElementById('msg1');
+
+  clearMsg('msg1');
+
+  if (!inviteCode) return showMsg('msg1', 'error', 'Please enter the invite code.');
+  if (!name)       return showMsg('msg1', 'error', 'Please enter your name.');
+  if (!email || !email.includes('@')) return showMsg('msg1', 'error', 'Please enter a valid email address.');
+
+  if (!APPS_SCRIPT_URL) {
+    // Demo mode
+    showMsg('msg1', 'info', '(Demo) Code sent! For real use, paste your Apps Script URL.');
+    registeredEmail = email;
+    registeredName  = name;
+    setTimeout(() => goToScreen(2), 1000);
+    return;
+  }
+
+  setLoading(btn, true, 'Sending code…');
+
+  try {
+    const result = await appsScriptPost({
+      action: 'register',
+      inviteCode,
+      name,
+      email
+    });
+
+    if (result.ok) {
+      registeredEmail = email;
+      registeredName  = name;
+      goToScreen(2);
+    } else {
+      showMsg('msg1', 'error', result.error || 'Something went wrong. Please try again.');
+    }
+  } catch (err) {
+    showMsg('msg1', 'error', 'Connection error. Please check your internet and try again.');
+  } finally {
+    setLoading(btn, false, 'Send Verification Code');
+  }
+}
+
+// ── Step 2: Verify code + set PIN ───────────────────────
+async function submitStep2() {
+  const code = getCode();
+  const pin  = getPin();
+  const btn  = document.getElementById('btn2');
+
+  clearMsg('msg2');
+
+  if (code.length < 6) return showMsg('msg2', 'error', 'Please enter the full 6-digit code.');
+  if (pin.length < 4)  return showMsg('msg2', 'error', 'Please choose a PIN (4 digits minimum).');
+
+  if (!APPS_SCRIPT_URL) {
+    // Demo mode
+    document.getElementById('successName').textContent = registeredName.split(' ')[0];
+    goToScreen(3);
+    return;
+  }
+
+  setLoading(btn, true, 'Creating account…');
+
+  try {
+    const result = await appsScriptPost({
+      action: 'verifyCode',
+      email:  registeredEmail,
+      name:   registeredName,
+      code,
+      pin
+    });
+
+    if (result.ok) {
+      document.getElementById('successName').textContent =
+        (result.name || registeredName).split(' ')[0];
+      // Save session so profile.html auto-loads after registration
+      if (result.profile) {
+        try {
+          localStorage.setItem('shoonya_session', JSON.stringify({ profile: result.profile, pin }));
+        } catch (e) {}
+      }
+      goToScreen(3);
+    } else {
+      showMsg('msg2', 'error', result.error || 'Something went wrong. Please try again.');
+    }
+  } catch (err) {
+    showMsg('msg2', 'error', 'Connection error. Please try again.');
+  } finally {
+    setLoading(btn, false, 'Create My Account');
+  }
+}
+
+// ── Resend code ─────────────────────────────────────────
+async function resendCode() {
+  if (!APPS_SCRIPT_URL) return showMsg('msg2', 'info', '(Demo) Code resent!');
+  clearMsg('msg2');
+
+  try {
+    const result = await appsScriptPost({
+      action:     'register',
+      inviteCode: INVITE_CODE_CACHE,
+      name:       registeredName,
+      email:      registeredEmail
+    });
+    if (result.ok) {
+      showMsg('msg2', 'info', 'New code sent to ' + registeredEmail);
+    } else {
+      showMsg('msg2', 'error', result.error || 'Could not resend. Please start again.');
+    }
+  } catch (err) {
+    showMsg('msg2', 'error', 'Connection error.');
+  }
+}
+
+// Cache invite code for resend
+let INVITE_CODE_CACHE = '';
+document.getElementById('inviteCode').addEventListener('input', function() {
+  INVITE_CODE_CACHE = this.value.trim();
+});
+
+// ── Navigation ───────────────────────────────────────────
+function goToScreen(n) {
+  document.getElementById('screen1').style.display = n === 1 ? '' : 'none';
+  document.getElementById('screen2').style.display = n === 2 ? '' : 'none';
+  document.getElementById('screen3').style.display = n === 3 ? '' : 'none';
+  document.getElementById('stepIndicator').style.display = n === 3 ? 'none' : '';
+
+  if (n === 2) {
+    document.getElementById('emailDisplay').textContent = registeredEmail;
+    updateSteps(2);
+    setTimeout(() => document.getElementById('c1').focus(), 100);
+  }
+  if (n === 3) {
+    updateSteps(3);
+  }
+}
+
+function updateSteps(current) {
+  // dot1, line1, dot2, line2, dot3
+  const dots  = [1,2,3].map(i => document.getElementById('dot' + i));
+  const lines = [1,2].map(i => document.getElementById('line' + i));
+
+  dots.forEach(d => d.className  = 'step-dot');
+  lines.forEach(l => l.className = 'step-line');
+
+  for (let i = 0; i < 3; i++) {
+    if (i + 1 < current)  dots[i].classList.add('done');
+    if (i + 1 === current) dots[i].classList.add('active');
+  }
+  for (let i = 0; i < 2; i++) {
+    if (i + 1 < current) lines[i].classList.add('done');
+  }
+}
+
+function goToLogin() {
+  // Forms use login panels inline; redirect to weekly class as default entry
+  window.location.href = 'smart-form/index.html';
+}
+
+// ── Code digit input handling ────────────────────────────
+function codeInput(el, prevId, nextId) {
+  const val = el.value.replace(/\D/g, '');
+  el.value = val ? val[val.length - 1] : '';
+  if (el.value && nextId) document.getElementById(nextId).focus();
+  if (!el.value && prevId) {} // handled in keydown
+}
+
+function codeKey(e, el, prevId, nextId) {
+  if (e.key === 'Backspace' && !el.value && prevId) {
+    document.getElementById(prevId).focus();
+  }
+  if (e.key === 'ArrowLeft'  && prevId) document.getElementById(prevId).focus();
+  if (e.key === 'ArrowRight' && nextId) document.getElementById(nextId).focus();
+}
+
+function getCode() {
+  return ['c1','c2','c3','c4','c5','c6'].map(id => document.getElementById(id).value).join('');
+}
+
+// ── PIN digit input handling ─────────────────────────────
+function pinInput(el, prevId, nextId) {
+  const val = el.value.replace(/\D/g, '');
+  el.value = val ? val[val.length - 1] : '';
+  if (el.value && nextId) document.getElementById(nextId).focus();
+}
+
+function pinKey(e, el, prevId, nextId) {
+  if (e.key === 'Backspace' && !el.value && prevId) {
+    document.getElementById(prevId).focus();
+  }
+  if (e.key === 'ArrowLeft'  && prevId) document.getElementById(prevId).focus();
+  if (e.key === 'ArrowRight' && nextId) document.getElementById(nextId).focus();
+}
+
+function getPin() {
+  return ['p1','p2','p3','p4'].map(id => document.getElementById(id).value).join('');
+}
+
+// ── Apps Script fetch ────────────────────────────────────
+// No Content-Type header → treated as text/plain → avoids CORS preflight
+async function appsScriptPost(payload) {
+  const response = await fetch(APPS_SCRIPT_URL, {
+    method:   'POST',
+    redirect: 'follow',
+    body:     JSON.stringify(payload)
+  });
+  const text = await response.text();
+  // Apps Script sometimes wraps response; extract JSON
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error('Unexpected response from server');
+  return JSON.parse(match[0]);
+}
+
+// ── UI helpers ───────────────────────────────────────────
+function showMsg(id, type, text) {
+  const el = document.getElementById(id);
+  el.className = 'msg ' + type;
+  el.textContent = text;
+}
+function clearMsg(id) {
+  const el = document.getElementById(id);
+  el.className = 'msg';
+  el.textContent = '';
+}
+function setLoading(btn, loading, label) {
+  btn.disabled = loading;
+  btn.innerHTML = loading
+    ? '<span class="spinner"></span>' + label
+    : label;
+}
+</script>
+</body>
+</html>
