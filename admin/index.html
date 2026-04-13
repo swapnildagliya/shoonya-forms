@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Shoonya Dance Centre</title>
+<style>
+  :root { --purple:#6B3FA0; --yellow:#F2C029; --bg:#faf9fc; --card:#fff; --border:#e8e0f5; --text:#1a1a1a; --muted:#888; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); line-height:1.6; }
+
+  /* Lock screen */
+  #lock { position:fixed; inset:0; background:var(--purple); display:flex; align-items:center; justify-content:center; z-index:999; }
+  .lock-box { background:#fff; border-radius:16px; padding:40px 36px; width:340px; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,.25); }
+  .lock-box h1 { font-size:1rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--purple); margin-bottom:4px; }
+  .lock-box p { font-size:.78rem; color:var(--muted); margin-bottom:20px; }
+  .lock-box input { width:100%; padding:11px 14px; border:2px solid var(--border); border-radius:8px; font-size:.9rem; text-align:center; outline:none; }
+  .lock-box input:focus { border-color:var(--purple); }
+  .lock-box button { margin-top:14px; width:100%; padding:11px; background:var(--purple); color:#fff; border:none; border-radius:8px; font-size:.85rem; font-weight:700; cursor:pointer; }
+  .lock-box button:hover { background:#5a3490; }
+  .lock-err { color:#e74c3c; font-size:.78rem; margin-top:10px; display:none; }
+
+  /* Header */
+  header { background:var(--purple); color:#fff; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:50; }
+  header h1 { font-size:.88rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; }
+  header .nav-links { display:flex; gap:14px; align-items:center; }
+  header a { color:rgba(255,255,255,.75); text-decoration:none; font-size:.78rem; font-weight:600; }
+  header a:hover { color:#fff; }
+  .logout-btn { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); padding:5px 14px; border-radius:6px; color:#fff; font-size:.72rem; font-weight:700; cursor:pointer; }
+
+  /* Main layout */
+  main { max-width:1100px; margin:0 auto; padding:24px 20px 60px; }
+  .page-title { font-size:1.1rem; font-weight:800; color:var(--purple); margin-bottom:4px; }
+  .page-sub { font-size:.8rem; color:var(--muted); margin-bottom:24px; }
+
+  /* Cards */
+  .card { background:var(--card); border:1.5px solid var(--border); border-radius:12px; padding:20px 22px; margin-bottom:18px; }
+  .card-title { font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.8px; color:var(--purple); border-bottom:2px solid var(--border); padding-bottom:8px; margin-bottom:14px; display:flex; align-items:center; justify-content:space-between; }
+  .card-title .badge { background:var(--purple); color:#fff; font-size:.62rem; padding:2px 8px; border-radius:10px; font-weight:700; }
+
+  /* Tables */
+  table { width:100%; border-collapse:collapse; font-size:.82rem; }
+  th { background:#f8f4ff; color:var(--purple); font-weight:700; text-align:left; padding:8px 12px; font-size:.7rem; text-transform:uppercase; letter-spacing:.5px; }
+  td { padding:8px 12px; border-top:1px solid #f0ecf5; }
+  tr:hover td { background:#fdfbff; }
+  .price { font-weight:700; color:var(--text); }
+  .price-student { color:#2e7d32; }
+  .price-uitpas { color:#1565c0; }
+  .date-range { font-weight:600; }
+
+  /* Semester section */
+  .sem-header { display:flex; align-items:center; gap:12px; margin-bottom:14px; flex-wrap:wrap; }
+  .sem-name { font-size:.95rem; font-weight:800; color:var(--text); }
+  .sem-badge { font-size:.65rem; font-weight:700; padding:3px 10px; border-radius:12px; }
+  .sem-badge.active { background:#d4edda; color:#155724; }
+  .sem-badge.upcoming { background:#fff3cd; color:#856404; }
+  .sem-badge.past { background:#f5f5f5; color:#888; }
+
+  /* Key dates grid */
+  .dates-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; margin-bottom:14px; }
+  .date-item { background:#f8f4ff; border-radius:8px; padding:10px 14px; }
+  .date-item .label { font-size:.65rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--purple); margin-bottom:2px; }
+  .date-item .value { font-size:.84rem; font-weight:600; }
+
+  /* Holiday bands */
+  .holiday-band { display:flex; align-items:center; justify-content:space-between; padding:8px 14px; border-radius:8px; margin-bottom:6px; font-size:.8rem; font-weight:600; }
+  .holiday-band.herfs { background:#fff3e0; color:#e65100; }
+  .holiday-band.kerst { background:#e3f2fd; color:#1565c0; }
+  .holiday-band.krokus { background:#fce4ec; color:#c62828; }
+  .holiday-band.paas { background:#f1f8e9; color:#558b2f; }
+
+  /* Quick links */
+  .quick-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .qlink { display:inline-flex; align-items:center; gap:5px; background:var(--purple); color:#fff; text-decoration:none; font-size:.72rem; font-weight:700; padding:7px 14px; border-radius:8px; }
+  .qlink:hover { background:#5a3490; }
+
+  /* Discount rules */
+  .rule { display:flex; align-items:flex-start; gap:10px; margin-bottom:10px; padding:10px 14px; background:#f8f4ff; border-radius:8px; }
+  .rule-icon { font-size:1.1rem; flex-shrink:0; }
+  .rule-text { font-size:.82rem; }
+  .rule-text strong { color:var(--purple); }
+
+  /* Print */
+  @media print {
+    #lock { display:none !important; }
+    header { position:static; }
+    .card { break-inside:avoid; }
+    .logout-btn, .quick-links { display:none; }
+  }
+
+  @media (max-width:600px) {
+    .dates-grid { grid-template-columns:1fr; }
+    main { padding:16px 12px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Lock Screen -->
+<div id="lock">
+  <div class="lock-box">
+    <h1>Shoonya Admin</h1>
+    <p>Enter the admin password to continue.</p>
+    <input type="password" id="lock-pw" placeholder="Password" autocomplete="off" onkeydown="if(event.key==='Enter')unlock()">
+    <button onclick="unlock()">Enter</button>
+    <div class="lock-err" id="lock-err">Incorrect password. Try again.</div>
+  </div>
+</div>
+
+<!-- Header -->
+<header>
+  <h1>Shoonya Dance Centre — Admin</h1>
+  <div class="nav-links">
+    <a href="../smart-form/index.html">Smart Form</a>
+    <a href="../profile.html">Profile</a>
+    <a href="../Festival/index.html">Festival Form</a>
+    <button class="logout-btn" onclick="lockOut()">Lock</button>
+  </div>
+</header>
+
+<main id="dashboard" style="display:none;">
+
+  <div class="page-title">Dashboard</div>
+  <div class="page-sub">School year 2026–2027 · Semester configuration, pricing, and key dates. Last updated 13 April 2026.</div>
+
+  <!-- ─── QUICK LINKS ──────────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">Quick Links</div>
+    <div class="quick-links">
+      <a class="qlink" href="https://docs.google.com/spreadsheets/d/1QIgRIZhm1ycJT8zsdKtDcfBV56Hhqp5lkdYdtPHuNrI" target="_blank">📊 Weekly Classes Sheet</a>
+      <a class="qlink" href="https://docs.google.com/spreadsheets/d/17O6LhGvm65I5Kktzk9YSXCFb7upb_Y--3NWxkUi5qhU" target="_blank">📊 Workshops Sheet</a>
+      <a class="qlink" href="https://docs.google.com/spreadsheets/d/1xR5Yb6D4vqoX3vY_z0bxvNRi1O5Ir8cECCLQuNeIJZU" target="_blank">📊 Social Events Sheet</a>
+      <a class="qlink" href="https://docs.google.com/spreadsheets/d/1e6AQU_xOY5f1gBch_yAWsJtw4TsoRUdJJpgDUm0u_oo" target="_blank">👥 Teachers Sheet</a>
+      <a class="qlink" href="https://script.google.com/home" target="_blank">⚙️ Apps Script</a>
+      <a class="qlink" href="https://github.com/swapnildagliya/shoonya-forms" target="_blank">💻 GitHub Repo</a>
+    </div>
+  </div>
+
+  <!-- ─── DISCOUNT RULES ──────────────────────────────────── -->
+  <div class="card">
+    <div class="card-title">Discount Rules</div>
+    <div class="rule">
+      <div class="rule-icon">🎓</div>
+      <div class="rule-text"><strong>Student / Multi-class: 12% off</strong> — for students under 25 or enrolled in 2+ weekly classes. Price <strong>rounded UP</strong> to nearest euro (Math.ceil).</div>
+    </div>
+    <div class="rule">
+      <div class="rule-icon">🎫</div>
+      <div class="rule-text"><strong>UiTPAS (kansentarief): 80% off</strong> — pay 20% of full price. Must be <strong>EXACT</strong>, never rounded. Formula: full_price × 0.2</div>
+    </div>
+    <div class="rule">
+      <div class="rule-icon">📐</div>
+      <div class="rule-text"><strong>Prorated pricing</strong> (late joiners): full_price × (remaining / total sessions), <strong>rounded UP</strong> to nearest euro.</div>
+    </div>
+    <div class="rule">
+      <div class="rule-icon">🆓</div>
+      <div class="rule-text"><strong>Free trial week</strong>: first week of each semester. Students can attend free — no registration required, just show up if class isn't full.</div>
+    </div>
+    <div class="rule">
+      <div class="rule-icon">📝</div>
+      <div class="rule-text"><strong>Registration closes</strong> 3 weeks after the semester begins.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- SEMESTER 1 -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="card">
+    <div class="card-title">
+      Semester 1 — Sep 2026 – Jan 2027
+      <span class="badge">16 sessions</span>
+    </div>
+
+    <div class="dates-grid">
+      <div class="date-item"><div class="label">Semester Start</div><div class="value">Mon 14 Sep 2026</div></div>
+      <div class="date-item"><div class="label">Semester End</div><div class="value">Fri 30 Jan 2027</div></div>
+      <div class="date-item"><div class="label">Free Trial Week</div><div class="value">14–19 Sep 2026</div></div>
+      <div class="date-item"><div class="label">Registration Closes</div><div class="value">~5 Oct 2026</div></div>
+      <div class="date-item"><div class="label">Opendeurdag</div><div class="value">Sun 13 Sep 2026</div></div>
+      <div class="date-item"><div class="label">Catch-up Week</div><div class="value">1–7 Feb 2027</div></div>
+    </div>
+
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--purple);margin-bottom:8px;">School Holidays</div>
+    <div class="holiday-band herfs">🍂 Herfstvakantie <span>1–8 Nov 2026</span></div>
+    <div class="holiday-band kerst">🎄 Kerstvakantie <span>20 Dec 2026 – 10 Jan 2027</span></div>
+
+    <div style="margin-top:16px;">
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--purple);margin-bottom:8px;">Pricing</div>
+      <table>
+        <thead>
+          <tr><th>Duration</th><th>Full Price</th><th>Student (12%↑)</th><th>UiTPAS (exact)</th><th>Per Session</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>30 min <span style="font-size:.7rem;color:var(--muted);">Ballet Pointes</span></td><td class="price">€116</td><td style="color:#aaa;">— (no student)</td><td class="price-uitpas">€23.20</td><td>€7.25</td></tr>
+          <tr><td>60 min</td><td class="price">€198</td><td class="price-student">€175</td><td class="price-uitpas">€39.60</td><td>€12.38</td></tr>
+          <tr><td>70 min <span style="font-size:.7rem;color:var(--muted);">tap dance</span></td><td class="price">€223</td><td class="price-student">€197</td><td class="price-uitpas">€44.60</td><td>€13.94</td></tr>
+          <tr><td>75 min <span style="font-size:.7rem;color:var(--muted);">lindy hop</span></td><td class="price">€231</td><td class="price-student">€204</td><td class="price-uitpas">€46.20</td><td>€14.44</td></tr>
+          <tr><td>90 min <span style="font-size:.7rem;color:var(--muted);">African, ballet, burlesque</span></td><td class="price">€248</td><td class="price-student">€219</td><td class="price-uitpas">€49.60</td><td>€15.50</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- SEMESTER 2 -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="card">
+    <div class="card-title">
+      Semester 2 — Feb – Jun 2027
+      <span class="badge">15 sessions</span>
+    </div>
+
+    <div class="dates-grid">
+      <div class="date-item"><div class="label">Semester Start</div><div class="value">Mon 15 Feb 2027</div></div>
+      <div class="date-item"><div class="label">Semester End</div><div class="value">Sat 12 Jun 2027</div></div>
+      <div class="date-item"><div class="label">Free Trial Week</div><div class="value">15–20 Feb 2027</div></div>
+      <div class="date-item"><div class="label">Registration Closes</div><div class="value">~8 Mar 2027</div></div>
+      <div class="date-item"><div class="label">Opendeurdag 1</div><div class="value">Sat 31 Jan 2027</div></div>
+      <div class="date-item"><div class="label">Opendeurdag 2</div><div class="value">Sun 13 Jun 2027</div></div>
+      <div class="date-item"><div class="label">Catch-up Week</div><div class="value">14–19 Jun 2027</div></div>
+    </div>
+
+    <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--purple);margin-bottom:8px;">School Holidays</div>
+    <div class="holiday-band krokus">❄️ Krokusvakantie <span>8–14 Feb 2027 (before semester)</span></div>
+    <div class="holiday-band paas">🌷 Paasvakantie <span>28 Mar – 11 Apr 2027</span></div>
+
+    <div style="margin-top:16px;">
+      <div style="font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--purple);margin-bottom:8px;">Pricing</div>
+      <table>
+        <thead>
+          <tr><th>Duration</th><th>Full Price</th><th>Student (12%↑)</th><th>UiTPAS (exact)</th><th>Per Session</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>30 min <span style="font-size:.7rem;color:var(--muted);">Ballet Pointes</span></td><td class="price">€109</td><td style="color:#aaa;">— (no student)</td><td class="price-uitpas">€21.80</td><td>€7.27</td></tr>
+          <tr><td>60 min</td><td class="price">€186</td><td class="price-student">€164</td><td class="price-uitpas">€37.20</td><td>€12.40</td></tr>
+          <tr><td>70 min <span style="font-size:.7rem;color:var(--muted);">tap dance</span></td><td class="price">€209</td><td class="price-student">€184</td><td class="price-uitpas">€41.80</td><td>€13.93</td></tr>
+          <tr><td>75 min <span style="font-size:.7rem;color:var(--muted);">lindy hop</span></td><td class="price">€216</td><td class="price-student">€191</td><td class="price-uitpas">€43.20</td><td>€14.40</td></tr>
+          <tr><td>90 min <span style="font-size:.7rem;color:var(--muted);">African, ballet, burlesque</span></td><td class="price">€232</td><td class="price-student">€205</td><td class="price-uitpas">€46.40</td><td>€15.47</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- SPECIAL EVENTS -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="card">
+    <div class="card-title">Special Events</div>
+    <div class="dates-grid">
+      <div class="date-item"><div class="label">Opendeurdag (end of year)</div><div class="value">Sun 14 Jun 2026</div></div>
+      <div class="date-item"><div class="label">Zomerstage 2027</div><div class="value">3–9 Jul 2027</div></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- DURATION TIERS REFERENCE -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="card">
+    <div class="card-title">Class Durations at Shoonya</div>
+    <table>
+      <thead><tr><th>Duration</th><th>Classes</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>30 min</td><td>Ballet Pointes</td><td>Specialised — no student discount. UiTPAS applies.</td></tr>
+        <tr><td>60 min</td><td>Most classes (yoga, salsa, bachata, bollywood…)</td><td>Standard duration</td></tr>
+        <tr><td>70 min</td><td>Tap dance</td><td>Own pricing tier</td></tr>
+        <tr><td>75 min</td><td>Lindy hop (from 2026–2027)</td><td>Own pricing tier (separate from 70 min)</td></tr>
+        <tr><td>90 min</td><td>African dance, ballet open level, ballet foundations, burlesque</td><td>Extended classes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <!-- GOOGLE SHEET IDs -->
+  <!-- ═══════════════════════════════════════════════════════════ -->
+  <div class="card">
+    <div class="card-title">System Reference</div>
+    <table>
+      <thead><tr><th>Resource</th><th>ID / URL</th></tr></thead>
+      <tbody>
+        <tr><td>Weekly Classes Sheet</td><td style="font-family:monospace;font-size:.72rem;word-break:break-all;">1QIgRIZhm1ycJT8zsdKtDcfBV56Hhqp5lkdYdtPHuNrI</td></tr>
+        <tr><td>Workshops Sheet</td><td style="font-family:monospace;font-size:.72rem;word-break:break-all;">17O6LhGvm65I5Kktzk9YSXCFb7upb_Y--3NWxkUi5qhU</td></tr>
+        <tr><td>Social Events Sheet</td><td style="font-family:monospace;font-size:.72rem;word-break:break-all;">1xR5Yb6D4vqoX3vY_z0bxvNRi1O5Ir8cECCLQuNeIJZU</td></tr>
+        <tr><td>Festivals Sheet</td><td style="font-family:monospace;font-size:.72rem;word-break:break-all;">1eI-yJsdY40HS7_zzgRWm5YfQki_R1sk8AHf1Ed186WA</td></tr>
+        <tr><td>Teachers Sheet</td><td style="font-family:monospace;font-size:.72rem;word-break:break-all;">1e6AQU_xOY5f1gBch_yAWsJtw4TsoRUdJJpgDUm0u_oo</td></tr>
+        <tr><td>Apps Script Endpoint</td><td style="font-family:monospace;font-size:.72rem;word-break:break-all;">AKfycbzagQ6DrQzKsNzscEDlXxzMCOLTtJ1MloGm866pkK_Jv3aguggMRlOdr-c_QX0S5zxa</td></tr>
+        <tr><td>GitHub Pages</td><td style="font-family:monospace;font-size:.72rem;">swapnildagliya.github.io/shoonya-forms/</td></tr>
+        <tr><td>Admin Email</td><td>info@shoonyadance.com</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<script>
+const ADMIN_PW = 'shoonya2026';
+
+function unlock() {
+  const pw = document.getElementById('lock-pw').value;
+  if (pw === ADMIN_PW) {
+    document.getElementById('lock').style.display = 'none';
+    document.getElementById('dashboard').style.display = '';
+    sessionStorage.setItem('shoonya_admin', '1');
+  } else {
+    document.getElementById('lock-err').style.display = '';
+    document.getElementById('lock-pw').value = '';
+    document.getElementById('lock-pw').focus();
+  }
+}
+
+function lockOut() {
+  sessionStorage.removeItem('shoonya_admin');
+  document.getElementById('lock').style.display = '';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('lock-pw').value = '';
+}
+
+// Auto-unlock if already authenticated this session
+if (sessionStorage.getItem('shoonya_admin') === '1') {
+  document.getElementById('lock').style.display = 'none';
+  document.getElementById('dashboard').style.display = '';
+}
+</script>
+</body>
+</html>
