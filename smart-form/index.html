@@ -9,7 +9,7 @@
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'Helvetica Neue',Arial,sans-serif; background:#f2f2f2; color:var(--dark); line-height:1.6; }
 
-  header { background:var(--dark); color:#fff; padding:10px 20px; display:flex; align-items:center; justify-content:space-between; gap:10px; position:sticky; top:0; z-index:100; }
+  header { background:var(--dark); color:#fff; padding:10px 20px; display:flex; align-items:center; justify-content:space-between; gap:10px; position:sticky; top:0; z-index:99; }
   header h1 { font-size:.9rem; font-weight:800; letter-spacing:.5px; flex:1; }
 
   /* Header nav buttons */
@@ -1996,7 +1996,7 @@ const SEMESTER_CONFIG = {
       end:        '2027-01-30',
       sessions:   16,
       trialWeek:  '2026-09-14', // first week: free trial for students (teacher still teaches)
-      opendeurdag:'2026-09-13',
+      opendeurdag:['2026-06-14', '2026-09-13'], // Jun 14 = end-of-year open day; Sep 13 = pre-semester open day
       catchUpWeek:{ start: '2027-02-01', end: '2027-02-07' },
       breaks: [
         { name: 'Herfstvakantie', start: '2026-11-01', end: '2026-11-08' },
@@ -2821,20 +2821,26 @@ function cwcBuildDateGrid(style, levels) {
   let infoHtml = '';
 
   // ── Opendeurdag ──
-  if (sem && sem.opendeurdag) {
-    const opDate = new Date(sem.opendeurdag + 'T12:00:00');
-    const opLabel = DOW[opDate.getDay()] + ' ' + opDate.getDate() + ' ' + MON[opDate.getMonth()] + ' ' + opDate.getFullYear();
-    infoHtml += `
-    <div style="border:1.5px solid #d4c5f5;border-radius:10px;padding:14px 16px;margin-bottom:12px;">
-      <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#6B3FA0;margin-bottom:6px;">🚪 ${t('opendeur-avail')}</div>
-      <div style="font-size:.85rem;font-weight:600;color:#333;margin-bottom:10px;">📆 ${opLabel}</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button type="button" class="cwc-avail-btn" id="cwc-opendeur-yes"
-          onclick="cwcSetOpendeurAvail('${sem.opendeurdag}', true)">${t('yes-available')}</button>
-        <button type="button" class="cwc-avail-btn" id="cwc-opendeur-no"
-          onclick="cwcSetOpendeurAvail('${sem.opendeurdag}', false)">${t('not-available')}</button>
-      </div>
-    </div>`;
+  const opDates = sem && sem.opendeurdag
+    ? (Array.isArray(sem.opendeurdag) ? sem.opendeurdag : [sem.opendeurdag])
+    : [];
+  if (opDates.length) {
+    infoHtml += `<div style="border:1.5px solid #d4c5f5;border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+      <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#6B3FA0;margin-bottom:6px;">🚪 ${t('opendeur-avail')}</div>`;
+    opDates.forEach(function(dateIso) {
+      const opDate  = new Date(dateIso + 'T12:00:00');
+      const opLabel = DOW[opDate.getDay()] + ' ' + opDate.getDate() + ' ' + MON[opDate.getMonth()] + ' ' + opDate.getFullYear();
+      const safeId  = dateIso.replace(/-/g, '');
+      infoHtml += `
+      <div style="font-size:.85rem;font-weight:600;color:#333;margin-bottom:8px;margin-top:8px;">📆 ${opLabel}</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+        <button type="button" class="cwc-avail-btn" id="cwc-opendeur-yes-${safeId}"
+          onclick="cwcSetOpendeurAvail('${dateIso}', true)">${t('yes-available')}</button>
+        <button type="button" class="cwc-avail-btn" id="cwc-opendeur-no-${safeId}"
+          onclick="cwcSetOpendeurAvail('${dateIso}', false)">${t('not-available')}</button>
+      </div>`;
+    });
+    infoHtml += `</div>`;
   }
 
   // ── Free trial week ──
@@ -2884,10 +2890,11 @@ function cwcGetBreakForGap(lastDate, currentDate, breaks) {
 
 function cwcSetOpendeurAvail(date, isAvailable) {
   cwcOpendeurAvailability[date] = isAvailable;
-  const yesBtn = document.getElementById('cwc-opendeur-yes');
-  const noBtn = document.getElementById('cwc-opendeur-no');
-  if (yesBtn) yesBtn.classList.toggle('selected', isAvailable);
-  if (noBtn) noBtn.classList.toggle('selected', !isAvailable);
+  const safeId = date.replace(/-/g, '');
+  const yesBtn = document.getElementById('cwc-opendeur-yes-' + safeId);
+  const noBtn  = document.getElementById('cwc-opendeur-no-'  + safeId);
+  if (yesBtn) yesBtn.classList.toggle('selected',  isAvailable);
+  if (noBtn)  noBtn.classList.toggle('selected', !isAvailable);
 }
 
 function cwcToggleDate(iso, chip) {
@@ -4259,10 +4266,14 @@ function navGoProfile() {
     }
     return;
   }
-  // Not logged in — scroll to login panel if on page, otherwise redirect
+  // Not logged in — scroll to login panel and open drawer
   const panel = document.getElementById('shoonya-login-panel');
   if (panel) {
-    panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(function () {
+      var d = document.getElementById('slp-drawer');
+      if (d && !d.classList.contains('open')) slpToggleDrawer();
+    }, 400);
   } else {
     window.location.href = '../profile.html';
   }
