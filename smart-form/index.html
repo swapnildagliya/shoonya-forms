@@ -3748,17 +3748,17 @@ function selectType(type, cardEl) {
   document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
   cardEl.classList.add('selected');
 
+  // All types require login — redirect to login panel if not logged in
+  if (!loggedInProfile) {
+    scrollToLogin();
+    return;
+  }
+
   setTimeout(() => {
     if (type === 'weekly-class') {
       showScreen('weekly');
-      if (loggedInProfile) {
-        document.getElementById('wc-login-required').style.display = 'none';
-        wcShowStyleStep();
-      } else {
-        document.getElementById('wc-login-required').style.display = '';
-        document.getElementById('wc-step-style').style.display     = 'none';
-        document.getElementById('wc-step-schedule').style.display  = 'none';
-      }
+      document.getElementById('wc-login-required').style.display = 'none';
+      wcShowStyleStep();
     } else if (type === 'workshop') {
       showScreen('workshop');
       wsShowFormatStep();
@@ -3773,7 +3773,20 @@ function selectType(type, cardEl) {
   }, 180);
 }
 
+// Shared helper — scroll to login panel and open drawer
+function scrollToLogin() {
+  const panel = document.getElementById('shoonya-login-panel');
+  if (panel) {
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(function () {
+      var d = document.getElementById('slp-drawer');
+      if (d && !d.classList.contains('open')) slpToggleDrawer();
+    }, 400);
+  }
+}
+
 function goToFestivalForm() {
+  if (!loggedInProfile) { scrollToLogin(); return; }
   window.location.href = FESTIVAL_FORM_URL;
 }
 
@@ -4267,13 +4280,8 @@ function navGoProfile() {
     return;
   }
   // Not logged in — scroll to login panel and open drawer
-  const panel = document.getElementById('shoonya-login-panel');
-  if (panel) {
-    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setTimeout(function () {
-      var d = document.getElementById('slp-drawer');
-      if (d && !d.classList.contains('open')) slpToggleDrawer();
-    }, 400);
+  if (document.getElementById('shoonya-login-panel')) {
+    scrollToLogin();
   } else {
     window.location.href = '../profile.html';
   }
