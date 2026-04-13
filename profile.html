@@ -292,22 +292,38 @@ textarea { resize: vertical; line-height: 1.6; }
 .toast.success { background: var(--success); }
 .toast.error   { background: #c0392b; }
 
-/* ── Associated events ── */
+/* ── Submissions list ── */
+.sub-group-label {
+  font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--purple); margin: 14px 0 8px;
+}
+.sub-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 14px; background: #fafafa;
+  border: 1px solid var(--border); border-radius: 8px;
+  font-size: 0.84rem; margin-bottom: 8px;
+}
+.sub-item:last-child { margin-bottom: 0; }
+.sub-type-badge {
+  font-size: 0.68rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.5px; background: var(--purple); color: #fff;
+  padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+}
+.sub-type-badge.weekly  { background: #27ae60; }
+.sub-type-badge.social  { background: #e67e22; }
+.sub-type-badge.workshop { background: #2980b9; }
+.sub-body { flex: 1; }
+.sub-title { font-weight: 700; color: var(--dark); margin-bottom: 2px; }
+.sub-meta  { font-size: 0.76rem; color: var(--light); line-height: 1.5; }
+
+/* ── Associated events (legacy) ── */
 .event-list { display: flex; flex-direction: column; gap: 8px; }
 .event-item {
   display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px;
-  background: #fafafa;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  font-size: 0.85rem;
+  padding: 10px 12px; background: #fafafa;
+  border: 1px solid var(--border); border-radius: 8px; font-size: 0.85rem;
 }
-.event-dot {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--purple);
-  flex-shrink: 0;
-}
+.event-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--purple); flex-shrink: 0; }
 .event-name { font-weight: 700; flex: 1; }
 .event-type { font-size: 0.75rem; color: var(--light); }
 .event-fixed { font-size: 0.72rem; color: var(--light); font-style: italic; }
@@ -551,13 +567,13 @@ textarea { resize: vertical; line-height: 1.6; }
     </div>
   </div>
 
-  <!-- Associated events -->
+  <!-- My Submissions -->
   <div class="section-card">
     <div class="section-header">
-      <span class="section-title">My Events at Shoonya</span>
+      <span class="section-title">My Submissions</span>
     </div>
     <div id="events-list">
-      <div class="empty-state">No events linked yet.<br>Events appear here once Swapnil links them to your profile.</div>
+      <div class="empty-state">Loading…</div>
     </div>
   </div>
 
@@ -713,33 +729,76 @@ function renderDetailsRead() {
   instaEl.className   = 'field-val' + (profile.instagram ? '' : ' empty');
 }
 
-function renderEvents() {
+async function renderEvents() {
   const container = document.getElementById('events-list');
-  let events = [];
-  try { events = JSON.parse(profile.associated_events || '[]'); } catch {}
+  container.innerHTML = '<div class="empty-state">Loading your submissions…</div>';
 
-  if (!events.length) {
-    container.innerHTML = `<div class="empty-state">No events linked yet.<br>Events appear here once Swapnil links them to your profile.</div>`;
-    return;
+  try {
+    const url = (typeof APPS_SCRIPT_URL !== 'undefined' ? APPS_SCRIPT_URL : '')
+      + '?action=getTeacherSubmissions&email=' + encodeURIComponent(profile.email || '');
+    const res  = await fetch(url, { redirect: 'follow' });
+    const text = await res.text();
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('Bad response');
+    const result = JSON.parse(match[0]);
+
+    if (!result.ok || !result.submissions || !result.submissions.length) {
+      container.innerHTML = '<div class="empty-state">No submissions yet.<br>Hit "Submit Event" to add your first class or event.</div>';
+      return;
+    }
+
+    // Group: upcoming (start_date >= today) vs past
+    const today = new Date().toISOString().slice(0, 10);
+    const upcoming = result.submissions.filter(s => s.start_date >= today);
+    const past     = result.submissions.filter(s => s.start_date < today || !s.start_date);
+
+    container.innerHTML = '';
+
+    function renderGroup(label, items) {
+      if (!items.length) return;
+      const groupLabel = document.createElement('div');
+      groupLabel.className = 'sub-group-label';
+      groupLabel.textContent = label;
+      container.appendChild(groupLabel);
+
+      items.forEach(s => {
+        const badgeClass = s.type === 'weekly-class' ? 'weekly' : s.type === 'social-event' ? 'social' : 'workshop';
+        const badgeText  = s.type === 'weekly-class' ? 'Weekly class' : s.type === 'social-event' ? 'Social night' : 'Workshop';
+
+        const metaParts = [];
+        if (s.semester)      metaParts.push(s.semester);
+        if (s.day_time)      metaParts.push(s.day_time);
+        if (s.total_classes) metaParts.push(s.total_classes + ' classes');
+        if (s.level)         metaParts.push(s.level);
+        if (s.start_date && !s.semester) metaParts.push(fmtDate(s.start_date));
+
+        const item = document.createElement('div');
+        item.className = 'sub-item';
+        item.innerHTML = `
+          <span class="sub-type-badge ${badgeClass}">${badgeText}</span>
+          <div class="sub-body">
+            <div class="sub-title">${escHtmlP(s.title)}</div>
+            ${metaParts.length ? `<div class="sub-meta">${escHtmlP(metaParts.join(' · '))}</div>` : ''}
+          </div>`;
+        container.appendChild(item);
+      });
+    }
+
+    renderGroup('Upcoming & current', upcoming);
+    renderGroup('Past submissions', past);
+
+  } catch (err) {
+    container.innerHTML = '<div class="empty-state">Could not load submissions. Please refresh.</div>';
   }
+}
 
-  container.innerHTML = '';
-  const list = document.createElement('div');
-  list.className = 'event-list';
-
-  events.forEach(ev => {
-    const item = document.createElement('div');
-    item.className = 'event-item';
-    item.innerHTML = `
-      <div class="event-dot"></div>
-      <div class="event-name">${ev.name || ev.title || 'Unnamed event'}</div>
-      <div class="event-type">${ev.type || ''}</div>
-      ${ev.fixed ? '<div class="event-fixed">set by Shoonya</div>' : ''}
-    `;
-    list.appendChild(item);
-  });
-
-  container.appendChild(list);
+function fmtDate(iso) {
+  if (!iso) return '';
+  const parts = iso.split('-');
+  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : iso;
+}
+function escHtmlP(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 // ── Edit / Cancel ─────────────────────────────────────────
