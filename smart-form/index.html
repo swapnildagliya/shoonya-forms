@@ -486,14 +486,7 @@
       <div id="cwc-no-semester" style="display:none;font-size:.82rem;color:#e07000;padding:10px 0;">
         ⚠️ Semester dates not yet configured. Ask the admin to update <code>SEMESTER_CONFIG</code> in the form.
       </div>
-      <div id="cwc-dates-grid" class="cwc-dates-grid"></div>
-      <div id="cwc-price-bar" class="cwc-price-bar" style="display:none;">
-        <span>📅</span><strong id="cwc-count-label">— classes</strong>
-        <span class="cwc-price-dot">·</span>
-        <strong id="cwc-price-label">—</strong>
-        <span class="cwc-price-dot">·</span>
-        <span style="font-weight:400;font-size:.8rem;"><span id="cwc-student-lbl" data-lbl="student-price">student</span> <strong id="cwc-price-student">—</strong></span>
-      </div>
+      <div id="cwc-schedule-container"></div>
 
       <!-- Next step -->
       <div class="cwc-divider"></div>
@@ -1630,7 +1623,8 @@ let wcLevelCount    = 0;
 let cwcCurrentData    = null; // { style, levels, langs, payload }
 let cwcDescApproved   = false;
 let cwcAvailFull      = true;  // kept for legacy; date grid replaces this
-let cwcExcludedDates  = new Set(); // ISO date strings the teacher toggled red
+let cwcExcludedDates  = {};   // { dayKey: Set() } — per-day excluded dates
+let cwcDayGroupMeta   = [];  // [{ dayKey, totalDates }] — for per-day price recalc
 let cwcSelectedAge    = '12+';
 let cwcPartnerReq     = false;
 let cwcSelectedCoTeachers = []; // Array of co-teacher names
@@ -2024,7 +2018,7 @@ const SEMESTER_CONFIG = {
       start:      '2027-02-15',
       end:        '2027-06-12',
       sessions:   15,
-      opendeurdag:'2027-01-31',
+      opendeurdag:['2027-01-31', '2027-06-13'], // Jan 31 = pre-semester open day; Jun 13 = end-of-year open day
       catchUpWeek:{ start: '2027-06-14', end: '2027-06-19' },
       breaks: [
         { name: 'Paasvakantie', start: '2027-03-28', end: '2027-04-11' },
@@ -2745,36 +2739,38 @@ function cwcFormatDateRange(startIso, endIso) {
 }
 
 function cwcBuildDateGrid(style, levels) {
-  // Collect unique days from all schedule slots
-  const dayNames = [];
-  (levels || []).forEach(lv =>
+  // Group levels by teaching day — each day gets its own date grid + price bar
+  // This fixes the multi-day bug where e.g. Thu + Wed showed 32 combined sessions
+  const dayGroups = []; // [{ dayName, levels: [{level, slot}], dates: [] }]
+  (levels || []).forEach(lv => {
     (lv.slots || []).forEach(s => {
-      if (s.day && !dayNames.includes(s.day)) dayNames.push(s.day);
-    })
-  );
+      if (!s.day) return;
+      let group = dayGroups.find(g => g.dayName === s.day);
+      if (!group) {
+        group = { dayName: s.day, levels: [], slots: [] };
+        dayGroups.push(group);
+      }
+      group.levels.push(lv.level);
+      group.slots.push(s);
+    });
+  });
 
-  const sem      = cwcGetActiveSemester();
-  const dates    = cwcGetSemesterDates(dayNames);
-  const grid     = document.getElementById('cwc-dates-grid');
-  const noSem    = document.getElementById('cwc-no-semester');
-  const priceBar = document.getElementById('cwc-price-bar');
+  const sem       = cwcGetActiveSemester();
+  const container = document.getElementById('cwc-schedule-container');
+  const noSem     = document.getElementById('cwc-no-semester');
 
-  cwcExcludedDates = new Set();
+  cwcExcludedDates = {};   // Changed to object: { dayKey: Set() }
+  cwcDayGroupMeta  = [];   // [{ dayKey, totalDates }] — for price recalc
   cwcOpendeurAvailability = {};
-  grid.innerHTML = '';
+  container.innerHTML = '';
 
   // Remove any existing info section (prevents duplication on re-entry)
   const existingInfo = document.getElementById('cwc-info-section');
   if (existingInfo) existingInfo.remove();
 
-  if (!dates.length) {
-    noSem.style.display    = '';
-    priceBar.style.display = 'none';
-    return;
-  }
-  noSem.style.display = 'none';
+  // If only one day, don't show per-day headers (keep it clean)
+  const multiDay = dayGroups.length > 1;
 
-  // ── PART 1: Date chips with full-width vacation banners between them ──────
   const BREAK_STYLE = {
     'Herfstvakantie': { bg:'#fff3e0', border:'#ffb74d', color:'#e65100', emoji:'🍂' },
     'Kerstvakantie':  { bg:'#e3f2fd', border:'#90caf9', color:'#1565c0', emoji:'🎄' },
@@ -2782,40 +2778,98 @@ function cwcBuildDateGrid(style, levels) {
   };
   const DEFAULT_BREAK_STYLE = { bg:'#f5f5f5', border:'#bdbdbd', color:'#555', emoji:'📅' };
 
-  let lastDate = null;
-  dates.forEach(iso => {
-    // Insert vacation banner if there's a gap > 8 days
-    if (lastDate && sem && sem.breaks) {
-      const gap = Math.floor(
-        (new Date(iso + 'T12:00:00') - new Date(lastDate + 'T12:00:00')) / (1000 * 60 * 60 * 24)
-      );
-      if (gap > 8) {
-        const brk = cwcGetBreakForGap(lastDate, iso, sem.breaks);
-        if (brk) {
-          const bs = BREAK_STYLE[brk.name] || DEFAULT_BREAK_STYLE;
-          const range = cwcFormatDateRange(brk.start, brk.end);
-          const banner = document.createElement('div');
-          banner.style.cssText = `flex-basis:100%;width:100%;background:${bs.bg};border:1.5px solid ${bs.border};border-radius:8px;padding:9px 14px;margin:8px 0;font-size:.78rem;font-weight:700;color:${bs.color};display:flex;align-items:center;justify-content:space-between;`;
-          banner.innerHTML = `<span>${bs.emoji} ${brk.name}</span><span style="font-weight:500;font-size:.76rem;">${range}</span>`;
-          grid.appendChild(banner);
-        }
-      }
+  let anyDates = false;
+
+  dayGroups.forEach((group, gi) => {
+    const dayKey = 'day-' + gi;
+    const dates  = cwcGetSemesterDates([group.dayName]);
+    if (!dates.length) return;
+    anyDates = true;
+
+    cwcExcludedDates[dayKey] = new Set();
+    cwcDayGroupMeta.push({ dayKey, totalDates: dates.length });
+
+    // ── Day section wrapper ──
+    const section = document.createElement('div');
+    section.className = 'cwc-day-section';
+    section.dataset.dayKey = dayKey;
+    if (multiDay) {
+      section.style.cssText = 'border:1.5px solid #e8e0f5;border-radius:12px;padding:14px 16px;margin-bottom:16px;';
     }
 
-    const chip = document.createElement('button');
-    chip.type        = 'button';
-    chip.className   = 'cwc-date-chip';
-    chip.dataset.date = iso;
-    chip.textContent  = cwcFormatChip(iso);
-    chip.onclick = () => cwcToggleDate(iso, chip);
-    grid.appendChild(chip);
-    lastDate = iso;
+    // ── Day header (only if multi-day) ──
+    if (multiDay) {
+      const timeStr = group.slots[0] ? group.slots[0].start + '–' + group.slots[0].end : '';
+      const levelsStr = group.levels.join(' + ');
+      const header = document.createElement('div');
+      header.style.cssText = 'font-size:.88rem;font-weight:700;color:#6B3FA0;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;';
+      header.innerHTML = `<span>📆 ${group.dayName}${levelsStr ? ' — ' + levelsStr : ''}</span>${timeStr ? '<span style="font-size:.78rem;font-weight:500;color:#888;">' + timeStr + '</span>' : ''}`;
+      section.appendChild(header);
+    }
+
+    // ── Date chips grid ──
+    const grid = document.createElement('div');
+    grid.className = 'cwc-dates-grid';
+    grid.dataset.dayKey = dayKey;
+
+    let lastDate = null;
+    dates.forEach(iso => {
+      // Insert vacation banner if there's a gap > 8 days
+      if (lastDate && sem && sem.breaks) {
+        const gap = Math.floor(
+          (new Date(iso + 'T12:00:00') - new Date(lastDate + 'T12:00:00')) / (1000 * 60 * 60 * 24)
+        );
+        if (gap > 8) {
+          const brk = cwcGetBreakForGap(lastDate, iso, sem.breaks);
+          if (brk) {
+            const bs = BREAK_STYLE[brk.name] || DEFAULT_BREAK_STYLE;
+            const range = cwcFormatDateRange(brk.start, brk.end);
+            const banner = document.createElement('div');
+            banner.style.cssText = `flex-basis:100%;width:100%;background:${bs.bg};border:1.5px solid ${bs.border};border-radius:8px;padding:9px 14px;margin:8px 0;font-size:.78rem;font-weight:700;color:${bs.color};display:flex;align-items:center;justify-content:space-between;`;
+            banner.innerHTML = `<span>${bs.emoji} ${brk.name}</span><span style="font-weight:500;font-size:.76rem;">${range}</span>`;
+            grid.appendChild(banner);
+          }
+        }
+      }
+
+      const chip = document.createElement('button');
+      chip.type        = 'button';
+      chip.className   = 'cwc-date-chip';
+      chip.dataset.date   = iso;
+      chip.dataset.dayKey = dayKey;
+      chip.textContent  = cwcFormatChip(iso);
+      chip.onclick = () => cwcToggleDate(iso, chip, dayKey);
+      grid.appendChild(chip);
+      lastDate = iso;
+    });
+
+    section.appendChild(grid);
+
+    // ── Per-day price bar ──
+    const priceBar = document.createElement('div');
+    priceBar.className = 'cwc-price-bar';
+    priceBar.dataset.dayKey = dayKey;
+    priceBar.innerHTML = `
+      <span>📅</span><strong class="cwc-count-label">— classes</strong>
+      <span class="cwc-price-dot">·</span>
+      <strong class="cwc-price-label">—</strong>
+      <span class="cwc-price-dot">·</span>
+      <span style="font-weight:400;font-size:.8rem;"><span data-lbl="student-price">student</span> <strong class="cwc-price-student">—</strong></span>`;
+    section.appendChild(priceBar);
+
+    container.appendChild(section);
+
+    // Calculate initial price for this day group
+    cwcUpdateDayPrice(dayKey, dates.length);
   });
 
-  cwcUpdatePriceSummary(dates.length);
-  priceBar.style.display = '';
+  if (!anyDates) {
+    noSem.style.display = '';
+    return;
+  }
+  noSem.style.display = 'none';
 
-  // ── PART 2: Info cards below price bar (Opendeurdag / Free trial / Catch-up) ──
+  // ── Info cards (Opendeurdag / Free trial / Catch-up) ──
   const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   let infoHtml = '';
@@ -2873,8 +2927,7 @@ function cwcBuildDateGrid(style, levels) {
     infoDiv.id = 'cwc-info-section';
     infoDiv.style.marginTop = '18px';
     infoDiv.innerHTML = infoHtml;
-    // Insert after price bar
-    priceBar.parentNode.insertBefore(infoDiv, priceBar.nextSibling);
+    container.appendChild(infoDiv);
   }
 }
 
@@ -2897,20 +2950,24 @@ function cwcSetOpendeurAvail(date, isAvailable) {
   if (noBtn)  noBtn.classList.toggle('selected', !isAvailable);
 }
 
-function cwcToggleDate(iso, chip) {
-  if (cwcExcludedDates.has(iso)) {
-    cwcExcludedDates.delete(iso);
+function cwcToggleDate(iso, chip, dayKey) {
+  const excluded = cwcExcludedDates[dayKey] || new Set();
+  if (excluded.has(iso)) {
+    excluded.delete(iso);
     chip.classList.remove('excluded');
   } else {
-    cwcExcludedDates.add(iso);
+    excluded.add(iso);
     chip.classList.add('excluded');
   }
-  const total  = document.querySelectorAll('#cwc-dates-grid .cwc-date-chip').length;
-  const active = total - cwcExcludedDates.size;
-  cwcUpdatePriceSummary(active);
+  cwcExcludedDates[dayKey] = excluded;
+  // Recalculate price for this day group
+  const grid   = document.querySelector(`.cwc-dates-grid[data-day-key="${dayKey}"]`);
+  const total  = grid ? grid.querySelectorAll('.cwc-date-chip').length : 0;
+  const active = total - excluded.size;
+  cwcUpdateDayPrice(dayKey, active);
 }
 
-function cwcUpdatePriceSummary(count) {
+function cwcUpdateDayPrice(dayKey, count) {
   const levels       = cwcCurrentData ? cwcCurrentData.levels : [];
   const sem          = cwcGetActiveSemester();
   const durationMins = cwcGetDurationMins(levels);
@@ -2922,36 +2979,59 @@ function cwcUpdatePriceSummary(count) {
   const rateStudent     = tier.student / baseSessions;
   const computedTotal   = Math.round(rateTotal   * count);
   const computedStudent = Math.ceil(rateStudent  * count); // rounded UP per studio rule
-  const computedUitpas  = (computedTotal * 0.2).toFixed(2); // 20% of total (uitpas discount = 80% off) — e.g. €39.60
 
+  const priceBar = document.querySelector(`.cwc-price-bar[data-day-key="${dayKey}"]`);
+  if (!priceBar) return;
   const classWord = count === 1 ? t('course') : t('courses');
-  document.getElementById('cwc-count-label').textContent  = count + ' ' + classWord;
-  document.getElementById('cwc-price-label').textContent   = '€' + computedTotal;
-  const stuEl = document.getElementById('cwc-price-student');
+  priceBar.querySelector('.cwc-count-label').textContent  = count + ' ' + classWord;
+  priceBar.querySelector('.cwc-price-label').textContent   = '€' + computedTotal;
+  const stuEl = priceBar.querySelector('.cwc-price-student');
   if (stuEl) stuEl.textContent = '€' + computedStudent;
-  // NOTE: Uitpas price is no longer shown to teachers (per TASK D2)
 }
 
 async function cwcNext(action) {
   // Finalise the payload with dates, pricing + description before submitting
   if (cwcCurrentData) {
-    // Collect selected (green) class dates from the grid
-    const allChips   = document.querySelectorAll('#cwc-dates-grid .cwc-date-chip');
+    // Collect selected (green) class dates from ALL day group grids
+    const allChips   = document.querySelectorAll('#cwc-schedule-container .cwc-date-chip');
     const classDates = [];
+    const excludedAll = [];
     allChips.forEach(chip => {
       if (!chip.classList.contains('excluded')) classDates.push(chip.dataset.date);
+      else excludedAll.push(chip.dataset.date);
     });
-    cwcCurrentData.payload.class_dates     = classDates;
-    cwcCurrentData.payload.excluded_dates  = [...cwcExcludedDates];
-    cwcCurrentData.payload.total_classes   = classDates.length;
-    // Compute final prices (total / student / uitpas) from duration tier × actual class count
+
+    // Build per-day pricing breakdown for the output generator
     const sem      = cwcGetActiveSemester();
     const durMins  = cwcGetDurationMins(cwcCurrentData.levels);
     const tier     = cwcGetPriceTier(durMins, sem ? sem.prices : {}) || { total: 198, student: 175 };
     const base     = sem ? sem.sessions : 16;
-    const pTotal   = Math.round(tier.total   / base * classDates.length);
-    const pStudent = Math.ceil( tier.student / base * classDates.length);
-    const pUitpas  = parseFloat((pTotal * 0.2).toFixed(2)); // 20% of total (80% discount)
+    const dayPricing = [];
+    (cwcDayGroupMeta || []).forEach(function(meta) {
+      const excluded = cwcExcludedDates[meta.dayKey] || new Set();
+      const grid     = document.querySelector(`.cwc-dates-grid[data-day-key="${meta.dayKey}"]`);
+      const chips    = grid ? grid.querySelectorAll('.cwc-date-chip') : [];
+      const activeDates = [];
+      chips.forEach(c => { if (!c.classList.contains('excluded')) activeDates.push(c.dataset.date); });
+      const count    = activeDates.length;
+      dayPricing.push({
+        day_key:       meta.dayKey,
+        dates:         activeDates,
+        sessions:      count,
+        price_total:   Math.round(tier.total   / base * count),
+        price_student: Math.ceil( tier.student / base * count),
+      });
+    });
+
+    cwcCurrentData.payload.class_dates     = classDates;
+    cwcCurrentData.payload.excluded_dates  = excludedAll;
+    cwcCurrentData.payload.total_classes   = classDates.length;
+    cwcCurrentData.payload.day_pricing     = dayPricing; // per-day breakdown
+
+    // Overall price = sum of per-day prices (not combined session count × rate)
+    const pTotal   = dayPricing.reduce((s, d) => s + d.price_total, 0);
+    const pStudent = dayPricing.reduce((s, d) => s + d.price_student, 0);
+    const pUitpas  = parseFloat((pTotal * 0.2).toFixed(2));
     cwcCurrentData.payload.price_total    = pTotal;
     cwcCurrentData.payload.price_student  = pStudent;
     cwcCurrentData.payload.price_uitpas   = pUitpas;
@@ -3723,7 +3803,6 @@ function setLang(lang) {
   const confirmScreen = document.getElementById('screen-confirm-wc');
   if (confirmScreen && confirmScreen.style.display !== 'none' && cwcCurrentData) {
     cwcBuildDateGrid(cwcCurrentData.style, cwcCurrentData.levels);
-    cwcUpdatePriceSummary();
   }
 }
 
@@ -3748,17 +3827,17 @@ function selectType(type, cardEl) {
   document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
   cardEl.classList.add('selected');
 
+  // All types require login — redirect to login panel if not logged in
+  if (!loggedInProfile) {
+    scrollToLogin();
+    return;
+  }
+
   setTimeout(() => {
     if (type === 'weekly-class') {
       showScreen('weekly');
-      if (loggedInProfile) {
-        document.getElementById('wc-login-required').style.display = 'none';
-        wcShowStyleStep();
-      } else {
-        document.getElementById('wc-login-required').style.display = '';
-        document.getElementById('wc-step-style').style.display     = 'none';
-        document.getElementById('wc-step-schedule').style.display  = 'none';
-      }
+      document.getElementById('wc-login-required').style.display = 'none';
+      wcShowStyleStep();
     } else if (type === 'workshop') {
       showScreen('workshop');
       wsShowFormatStep();
@@ -3773,7 +3852,20 @@ function selectType(type, cardEl) {
   }, 180);
 }
 
+// Shared helper — scroll to login panel and open drawer
+function scrollToLogin() {
+  const panel = document.getElementById('shoonya-login-panel');
+  if (panel) {
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(function () {
+      var d = document.getElementById('slp-drawer');
+      if (d && !d.classList.contains('open')) slpToggleDrawer();
+    }, 400);
+  }
+}
+
 function goToFestivalForm() {
+  if (!loggedInProfile) { scrollToLogin(); return; }
   window.location.href = FESTIVAL_FORM_URL;
 }
 
@@ -4267,13 +4359,8 @@ function navGoProfile() {
     return;
   }
   // Not logged in — scroll to login panel and open drawer
-  const panel = document.getElementById('shoonya-login-panel');
-  if (panel) {
-    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setTimeout(function () {
-      var d = document.getElementById('slp-drawer');
-      if (d && !d.classList.contains('open')) slpToggleDrawer();
-    }, 400);
+  if (document.getElementById('shoonya-login-panel')) {
+    scrollToLogin();
   } else {
     window.location.href = '../profile.html';
   }
