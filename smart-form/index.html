@@ -359,7 +359,7 @@
         <div class="wc-login-prompt">
           <p>Weekly class submissions require a teacher account so we can pre-fill your details.</p>
           <div class="wc-login-btns">
-            <button class="wc-login-btn primary" onclick="document.getElementById('shoonya-login-panel').scrollIntoView({behavior:'smooth'})">Log in ↑</button>
+            <button class="wc-login-btn primary" onclick="document.getElementById('shoonya-login-panel').scrollIntoView({behavior:'smooth'}); setTimeout(function(){ var d=document.getElementById('slp-drawer'); if(d && !d.classList.contains('open')) slpToggleDrawer(); }, 400);">Log in ↑</button>
             <button class="wc-login-btn outline" onclick="window.location.href='../register.html'">Register →</button>
           </div>
         </div>
@@ -4555,7 +4555,7 @@ function ssAddProgrammeRow() {
   // Topic / description field
   const topicRow = document.createElement('div');
   topicRow.style.cssText = 'margin-bottom:8px;';
-  topicRow.innerHTML = `<input type="text" class="ss-act-topic" placeholder="Topic / description (optional)" style="width:100%;font-size:.82rem;padding:5px 8px;border:1.5px solid #ddd;border-radius:6px;box-sizing:border-box;">`;
+  topicRow.innerHTML = `<input type="text" class="ss-act-topic" placeholder="Topic / description *" style="width:100%;font-size:.82rem;padding:5px 8px;border:1.5px solid #ddd;border-radius:6px;box-sizing:border-box;">`;
   row.appendChild(topicRow);
 
   // Teacher field with typeahead
@@ -4563,7 +4563,7 @@ function ssAddProgrammeRow() {
   teacherRow.className = 'ss-teacher-row';
   teacherRow.style.cssText = 'margin-bottom:8px;position:relative;';
   teacherRow.innerHTML = `
-    <input type="text" class="ss-act-teacher" placeholder="Teacher / host (optional)"
+    <input type="text" class="ss-act-teacher" placeholder="Teacher / host *"
       style="width:100%;font-size:.82rem;padding:5px 8px;border:1.5px solid #ddd;border-radius:6px;box-sizing:border-box;"
       autocomplete="off"
       oninput="ssFilterProgTeacher(this)"
@@ -4663,6 +4663,26 @@ function ssProgrammeRenumber() {
 function ssConfirmProgramme() {
   hideErr('err-ss-programme');
 
+  // Validate each workshop row has topic and teacher filled in
+  const rows = document.querySelectorAll('#ss-programme-rows .ss-prog-row');
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const topicEl   = row.querySelector('.ss-act-topic');
+    const teacherEl = row.querySelector('.ss-act-teacher');
+    const topic   = topicEl   ? topicEl.value.trim()   : '';
+    const teacher = teacherEl ? teacherEl.value.trim() : '';
+    if (!topic) {
+      showErr('err-ss-programme', `Workshop #${i + 1}: please fill in the topic / description.`);
+      if (topicEl) { topicEl.style.borderColor = 'var(--red)'; topicEl.focus(); }
+      return;
+    } else if (topicEl) { topicEl.style.borderColor = ''; }
+    if (!teacher) {
+      showErr('err-ss-programme', `Workshop #${i + 1}: please fill in the teacher / host name.`);
+      if (teacherEl) { teacherEl.style.borderColor = 'var(--red)'; teacherEl.focus(); }
+      return;
+    } else if (teacherEl) { teacherEl.style.borderColor = ''; }
+  }
+
   // Validate music selection
   if (!ssMusicType) {
     showErr('err-ss-programme', 'Please select who is handling the music for the dance night.');
@@ -4672,9 +4692,9 @@ function ssConfirmProgramme() {
   }
 
   // Collect workshop rows
-  const rows = document.querySelectorAll('#ss-programme-rows .ss-prog-row');
+  const allRows = document.querySelectorAll('#ss-programme-rows .ss-prog-row');
   const programme = [];
-  for (const row of rows) {
+  for (const row of allRows) {
     const type    = row.querySelector('.ss-act-type')?.value        || '';
     const start   = row.querySelector('.ss-act-start')?.value       || '';
     const end     = row.querySelector('.ss-act-end')?.value         || '';
@@ -4764,10 +4784,27 @@ function ssAddCustomGenre() {
   const input = document.getElementById('ss-genre-custom');
   const val = input.value.trim();
   if (!val) return;
-  // Don't add duplicates
-  if (ssSelectedGenres.map(g => g.toLowerCase()).includes(val.toLowerCase())) { input.value = ''; return; }
 
+  // If it matches a pre-built chip, just select that chip instead
   const gc = document.getElementById('ss-genre-chips');
+  const existing = gc ? [...gc.querySelectorAll('.wc-chip')].find(b => b.textContent.toLowerCase() === val.toLowerCase()) : null;
+  if (existing) {
+    if (!existing.classList.contains('selected')) {
+      existing.classList.add('selected');
+      ssSelectedGenres.push(existing.textContent);
+    }
+    input.value = '';
+    input.style.borderColor = '';
+    return;
+  }
+
+  // Don't add duplicate custom genres
+  if (ssSelectedGenres.map(g => g.toLowerCase()).includes(val.toLowerCase())) {
+    input.style.borderColor = 'var(--purple)';
+    setTimeout(() => { input.style.borderColor = ''; }, 800);
+    return;
+  }
+
   const btn = document.createElement('button');
   btn.type      = 'button';
   btn.className = 'wc-chip selected';
@@ -4777,6 +4814,7 @@ function ssAddCustomGenre() {
 
   ssSelectedGenres.push(val);
   input.value = '';
+  input.style.borderColor = '';
 }
 
 // ── DJ memory ──────────────────────────────────────────────────────────
@@ -4850,6 +4888,14 @@ function ssSubmitPricing() {
   if (pricing.length === 0) {
     showErr('err-ss-pricing', 'Please add at least one pricing tier.');
     return;
+  }
+
+  // Each tier must have at least one price filled in
+  for (const tier of pricing) {
+    if (!tier.advance && !tier.door) {
+      showErr('err-ss-pricing', `"${tier.label}" is missing a price — please fill in at least an advance or door price.`);
+      return;
+    }
   }
 
   ssCurrentData.pricing       = pricing;
