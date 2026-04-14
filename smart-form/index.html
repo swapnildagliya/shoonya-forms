@@ -2141,6 +2141,34 @@ const CLASS_DESCRIPTIONS_BY_NAME = {
   },
 };
 
+// ─── STYLE DESCRIPTIONS (one per style, from website — shown instead of per-level AI) ──
+const WC_STYLE_DESCRIPTIONS = {
+  'Bollywood':               'Build a strong foundation in Bollywood dance! Develop technique through focused footwork, traditional hand movements (mudras), and expressive coordination. A progressive programme from foundational to complex, fast-paced choreographies.',
+  'Bhangra':                 'An exhilarating and vibrant folk dance from the Punjab region. Originally performed by farmers celebrating a bountiful harvest, it has transformed into a globally beloved style celebrated for its lively rhythms and dynamic movements.',
+  'Bollyfolk':               'Focuses on different Indian folk dance traditions each semester. Starts with foundational movements before combining them into choreography set to Bollywood or traditional folk music. All dancers welcome, no prior experience required.',
+  'Garba & Kalbeliya':       'Two rich Indian folk traditions in one semester. First half: Garba (Gujarati folk dance). Second half: Kalbeliya (Rajasthani folk dance). Students may enrol in either or both. No prior experience required.',
+  'Indian Semi-Classical':   'Blends traditional Kathak with accessible, creative interpretations. Students explore intricate footwork, graceful hand gestures, and rhythm (Taal) while learning to feel the music and tell a story through movement.',
+  'Indian Dance Technique':  'A focused technique class complementing ongoing Indian dance training. Emphasises foundational strength, alignment, and body control through Indian dance at the barre, across-the-floor progressions, and technical exercises rooted in Indian classical and modern dance.',
+  'Yoga':                    'A 60-minute balanced yoga session combining traditional Hatha poses with creative Vinyasa movements. Includes slow clear instructions, breathing exercises, meditation, and cool-down. All levels welcome.',
+  'Cuban Salsa':             'Cuban Salsa is a lively and dynamic dance embodying the vibrant spirit of Cuba. Rooted in Afro-Cuban rhythms, combining intricate footwork, sensual body movements, and playful partner interactions. Emphasising circular motion and improvisation.',
+  'Bachata':                 'Foundation course covering the basic step: side step (1), feet together (2), side step (3), tap (4). Progressive programme from partner positioning and rhythm to advanced choreography and complex partner dynamics.',
+  'Bachata Choreo':          'Blends bachata with ballroom and bellydance elements. Graceful turns and elegant arm movements from ballroom, captivating hip work and isolations from bellydance, fun footwork unified in unique choreography.',
+  'Rueda de Casino':         'Group dance where couples perform Cuban salsa in a circle. One dancer calls the moves while partners switch places throughout combinations. Learn specific calls, formations, and partner switching dynamics.',
+  'Raqs Sharqi':             'Belly dance exploring hip and arm engagement with various shimmies and accents. Progressive programme from foundational movement through veil work, crisp isolations, and classical choreography to Baladi style focus with Taqsim phrasing and finger cymbals.',
+  'Tap Dance':               'The syncopated beat of jazz — you create rhythm with your feet, your body dances, your mind becomes light. Tap dancing can be done not only to jazz but to all kinds of music: Latin, boogie, pop, hip-hop, classical, you name it! Progressive programme organised with Tapdance Promotion.',
+  'Burlesque':               'Performance art exploring teasing, audience interaction, sensual movement, body expression, and theatrical elements. Progressive programme from fundamentals through character work to professional-level stage presence.',
+  'Flamenco':                'Systematic and intensive study of arm and hand techniques, footwork, turns, and marcajes (marking steps). Progressive programme exploring compás (12-beat rhythm), the relationship between dance-singing-guitar, and full-fledged flamenco choreography.',
+  'Kizomba':                 'A beautiful partner dance from Angola, often called "African Tango." Smooth movements, soft body motion called Ginga, and the connection between partners.',
+  'Jazzy Workout':           'Movement to jazz music and related styles with African American roots. Builds endurance and strength with focus on body awareness and fun. Dynamic music: hot jazz to afro-grooves, funk and soul. Everyone and every body welcome.',
+  'Lindy Hop':               'Progressive course building on foundational Lindy Hop skills. Emphasises connection between partners, personal expression, and musicality. "Everybody Leads, Everybody Follows" approach.',
+  'Solo Jazz':               'A rich blend of dance styles and steps, popular in Harlem in the 1930s, emerging from African-American dance cultures such as Charleston and tap dance. Personal expression and improvisation are key.',
+  'Ballet':                  'Classical ballet programme from beginner foundations through advanced levels. Building strength, technique, and progression with proper posture and alignment, flexibility and core engagement, barre work, and centre work combinations.',
+  'Ballet Pointes':          'Designed for those looking to elevate their ballet experience by learning the beautiful art of dancing en pointe. Safety, strength development, and technique. Must be enrolled in Ballet Open Level simultaneously.',
+  'Cissy Ball':              'Playful fusion dance rooted in dance theater tradition (Pina Bausch, Alain Platel). Dance steps and choreography created together through games, assignments, and simple instructions. Each session ends with a performance moment.',
+  'African Congolese Dance': 'Vibrant, high-energy sessions blending traditional and contemporary Afro and Congolese styles, including the dynamic Congolese Rumba. Features intense movement, authentic Congolese rhythms, and occasional live percussion accompaniment.',
+  'Congolese Rumba':         'Partner dance rooted in authentic Congolese rhythms. Dynamic high-energy choreography blending traditional and contemporary styles.',
+};
+
 // ─── CLASS META STORE ────────────────────────────────────────────────
 // Pre-seeded from shoonyadance.com. Keyed by email (known) or name (fallback).
 // Fields: age (min age), partner (bool), co (co-teacher string), prereq, learn
@@ -2992,22 +3020,36 @@ function cwcLoadDescriptions(style, levels) {
     finalStyleDescs = nameDescs[style] || {};
   }
 
+  // General style description from website (fallback for levels without specific text)
+  const generalDesc = WC_STYLE_DESCRIPTIONS[style] || '';
+
   let descHtml = '';
   let anyMissing = false;
+  let allUsedGeneral = true; // track if we only used the general description
 
   levels.forEach(lv => {
     const text = finalStyleDescs[lv.level];
     if (text) {
       descHtml += cwcLevelDescHtml(lv.level, text, false);
+      allUsedGeneral = false;
+    } else if (generalDesc) {
+      // Use general style description for this level
+      descHtml += cwcLevelDescHtml(lv.level, generalDesc, false);
     } else {
       anyMissing = true;
       descHtml += cwcLevelDescHtml(lv.level, '', true);
     }
   });
 
+  // If all levels used the same general description, simplify: show it once
+  if (allUsedGeneral && generalDesc && levels.length > 1) {
+    descHtml = cwcLevelDescHtml('All levels', generalDesc, false);
+  }
+
   document.getElementById('cwc-desc-text').innerHTML = descHtml;
 
   if (!anyMissing) {
+    // All descriptions resolved locally — show immediately, no AI needed
     document.getElementById('cwc-desc-loading').style.display = 'none';
     document.getElementById('cwc-desc-block').style.display = '';
   } else if (APPS_SCRIPT_URL) {
