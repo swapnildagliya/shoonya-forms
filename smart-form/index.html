@@ -225,10 +225,25 @@
   .cwc-meta-input:focus { outline:none; border-color:var(--purple); }
 
   /* ── DATE GRID ── */
-  .cwc-dates-grid { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+  .cwc-day-section {
+    border:1.5px solid #e0d4f5; border-radius:12px; padding:16px; margin-bottom:16px;
+    background:#fff;
+  }
+  .cwc-day-header {
+    font-size:.82rem; font-weight:800; text-transform:uppercase; letter-spacing:.6px;
+    color:#6B3FA0; margin-bottom:12px; padding:10px 14px; background:#f3eeff;
+    border-radius:8px; display:flex; align-items:center; gap:8px;
+  }
+  .cwc-day-header .cwc-day-name {
+    font-size:.92rem; letter-spacing:.8px;
+  }
+  .cwc-day-header .cwc-day-detail {
+    font-weight:600; font-size:.78rem; color:#8b6fc0;
+  }
+  .cwc-dates-grid { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
   .cwc-date-chip {
     background:#e8f5e9; color:#2e7d32; border:1.5px solid #81c784;
-    border-radius:8px; padding:5px 10px; font-size:.74rem; font-weight:600;
+    border-radius:8px; padding:6px 11px; font-size:.76rem; font-weight:600;
     cursor:pointer; user-select:none; transition:background .12s,color .12s,border-color .12s;
   }
   .cwc-date-chip:hover { background:#c8e6c9; }
@@ -238,7 +253,7 @@
   .cwc-date-chip.excluded:hover { background:#f8bbd0; }
   .cwc-price-bar {
     display:flex; align-items:center; gap:7px; font-size:.88rem; color:var(--purple);
-    padding:9px 14px; background:#f3eeff; border-radius:9px; margin-bottom:4px;
+    padding:9px 14px; background:#f3eeff; border-radius:9px; margin-top:8px;
   }
   .cwc-price-dot { color:#bbb; font-weight:400; }
 
@@ -485,18 +500,13 @@
         </div>
 
         <div class="cwc-meta-row">
-          <div class="cwc-meta-key" data-lbl="coteachers">Co-teacher(s)</div>
-          <div id="cwc-coteacher-selector" style="width:100%;"></div>
-        </div>
-
-        <div class="cwc-meta-row">
           <div class="cwc-meta-key" data-lbl="what-to-bring">What to bring</div>
           <textarea id="cwc-bring-input" class="cwc-meta-input" rows="2"
             placeholder="e.g. Comfortable clothes, clean non-marking shoes."></textarea>
         </div>
 
         <div class="cwc-meta-row">
-          <div class="cwc-meta-key" data-lbl="max-capacity">Max capacity</div>
+          <div class="cwc-meta-key" data-lbl="max-capacity">Maximum number of students</div>
           <div style="display:flex;align-items:center;gap:10px;">
             <input type="number" id="cwc-capacity-input" class="cwc-meta-input"
               min="1" max="200" placeholder="e.g. 20" style="width:100px;">
@@ -884,7 +894,7 @@
         </div>
 
         <div class="cwc-meta-row">
-          <div class="cwc-meta-key">Max capacity</div>
+          <div class="cwc-meta-key">Maximum number of students</div>
           <div style="display:flex;align-items:center;gap:10px;">
             <input type="number" id="ws-capacity-input" class="cwc-meta-input"
               min="1" max="300" placeholder="e.g. 30" style="width:90px;">
@@ -1406,7 +1416,7 @@ const T = {
     'courses':          'courses',
     'course':           'course',
     'student-price':    'student',
-    'max-capacity':          'Max capacity',
+    'max-capacity':          'Maximum number of students',
     'capacity-hint':         'Leave blank if unlimited',
     'yes':                   'Yes',
     'ws-pick-style-title':   'Workshop — Pick a Style',
@@ -1506,7 +1516,7 @@ const T = {
     'courses':          'lessen',
     'course':           'les',
     'student-price':    'student',
-    'max-capacity':          'Max. deelnemers',
+    'max-capacity':          'Maximaal aantal studenten',
     'capacity-hint':         'Leeg laten als onbeperkt',
     'wc-pick-style-title':   'Wekelijkse Les — Stijl Kiezen',
     'wc-which-style':        'Welke stijl wil je indienen?',
@@ -1592,7 +1602,7 @@ const T = {
     'courses':          'cours',
     'course':           'cours',
     'student-price':    'étudiant·e',
-    'max-capacity':          'Capacité max.',
+    'max-capacity':          'Nombre maximum d\'étudiants',
     'capacity-hint':         'Laisser vide si illimité',
     'wc-pick-style-title':   'Cours Hebdomadaire — Choisir un Style',
     'wc-which-style':        'Quel style soumettez-vous ?',
@@ -3413,21 +3423,20 @@ function cwcBuildDateGrid(style, levels) {
 
     cwcExcludedByDay[dayName] = new Set();
 
-    // ── Day section wrapper ──
+    // ── Day section wrapper (card) ──
     const section = document.createElement('div');
     section.className = 'cwc-day-section';
     section.dataset.day = dayName;
-    section.style.cssText = 'margin-bottom:20px;';
 
     // ── Day header ──
     const header = document.createElement('div');
-    header.style.cssText = 'font-size:.82rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#6B3FA0;margin-bottom:8px;padding:8px 12px;background:#f3eeff;border-radius:8px;';
+    header.className = 'cwc-day-header';
     const levelDescriptions = dayLevels.map(dl => {
       const lvName = dl.level || 'Open Level';
       const time = dl.slot.start + '–' + dl.slot.end;
       return lvName + ' · ' + time;
     });
-    header.textContent = dayName.toUpperCase() + ' — ' + levelDescriptions.join(' | ');
+    header.innerHTML = `<span class="cwc-day-name">${dayName.toUpperCase()}</span><span class="cwc-day-detail">— ${levelDescriptions.join(' | ')}</span>`;
     section.appendChild(header);
 
     // ── Date chips grid ──
@@ -3470,11 +3479,11 @@ function cwcBuildDateGrid(style, levels) {
 
     // ── "All dates work for me" shortcut ──
     const allGoodRow = document.createElement('div');
-    allGoodRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin:6px 0 4px;';
+    allGoodRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin:8px 0 2px;';
     const allGoodBtn = document.createElement('button');
     allGoodBtn.type = 'button';
     allGoodBtn.dataset.day = dayName;
-    allGoodBtn.style.cssText = 'font-size:.75rem;font-weight:700;color:#388e3c;background:none;border:none;cursor:pointer;padding:0;text-decoration:underline dotted;';
+    allGoodBtn.style.cssText = 'font-size:.76rem;font-weight:700;color:#388e3c;background:none;border:none;cursor:pointer;padding:0;text-decoration:underline dotted;';
     allGoodBtn.textContent = '✓ All dates work for me';
     allGoodBtn.onclick = () => cwcMarkAllAvailable(dayName);
     allGoodRow.appendChild(allGoodBtn);
