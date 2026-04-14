@@ -510,6 +510,7 @@
   <!-- ── SCREEN: WEEKLY CLASS DATE SELECTION ────────────── -->
   <div id="screen-dates-wc" style="display:none;">
     <div class="card">
+      <button class="btn-step-back" onclick="cwcBackFromDates()">← Back to schedule</button>
 
       <div class="card-title" id="cwc-dates-screen-title" style="margin-bottom:4px;">📅 Your class dates</div>
       <div id="cwc-dates-style-summary" style="font-size:.82rem;color:#888;margin-bottom:14px;"></div>
@@ -1108,6 +1109,14 @@
               <div class="cwc-meta-row">
                 <div class="cwc-meta-key">Website / socials</div>
                 <input type="text" id="ss-dj-socials" class="cwc-meta-input" placeholder="Optional">
+              </div>
+              <div class="cwc-meta-row">
+                <div class="cwc-meta-key">DJ Fee</div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                  <span style="font-weight:700;">€</span>
+                  <input type="number" id="ss-dj-fee" class="cwc-meta-input" min="0" step="0.5"
+                    placeholder="e.g. 200" style="width:90px;">
+                </div>
               </div>
             </div>
           </div>
@@ -1911,10 +1920,7 @@ const WC_KNOWN_SCHEDULES_BY_NAME = {
 
   // ── Joseph Saidi Simako ───────────────────────────────────────────
   'joseph saidi simako': {
-    'African Dance': [
-      { level: 'Open Level', slots: [{ day: 'Saturday', start: '10:30', end: '12:00' }] }
-    ],
-    'Congolese Dance': [
+    'African Congolese Dance': [
       { level: 'Open Level', slots: [{ day: 'Saturday', start: '10:30', end: '12:00' }] }
     ],
     'Congolese Rumba': [
@@ -1951,6 +1957,145 @@ const CLASS_DESCRIPTIONS = {
       'Open Level': 'A 60-minute balanced yoga session combining traditional Hatha poses with creative Vinyasa movements. Slow clear instructions, breathing exercises (pranayama), meditation, and cool-down. Includes asana practice with alignment guidance, bandhas, flexibility and strength. All levels — from complete beginners to experienced practitioners. Age 12+.',
     },
   }
+};
+
+// ─── CLASS DESCRIPTIONS BY NAME ──────────────────────────────────────
+// Fallback lookup when email is not registered. Keyed by lowercase teacher name.
+const CLASS_DESCRIPTIONS_BY_NAME = {
+  'alex': {
+    'Cuban Salsa': {
+      'Level 1': 'Cuban Salsa is a lively and dynamic dance embodying the vibrant spirit of Cuba, rooted in Afro-Cuban rhythms with intricate footwork, sensual body movements, and playful partner interactions. Emphasising circular motion and improvisation. For beginners. Age 12+.',
+      'Level 2': 'Building on Level 1 foundations, you\'ll deepen your Cuban Salsa technique with enhanced partner connection and musicality. Progression from Level 1 required. Age 12+.',
+      'Level 3': 'Advanced Cuban Salsa with complex choreography and refined technique. Prior Cuban Salsa experience recommended. Age 12+.',
+      'Level 4': 'Advanced Cuban Salsa for experienced dancers with substantial prior Level 3 experience. Complex choreography and advanced improvisation. Age 12+.',
+    },
+    'Bachata': {
+      'Level 1': 'Foundation course in Bachata covering the basic step: side step (1), feet together (2), side step (3), tap (4). Learn partner positioning and rhythm in the four-beat structure. No prior Bachata experience needed. Age 12+.',
+      'Level 2': 'Intermediate Bachata building on foundations with classic close and open positions, enhanced musicality, and stronger partner connection. Age 12+.',
+      'Level 3': 'Advanced choreography, refined technique, and complex partner dynamics. Substantial Bachata training required — speak with instructors beforehand. Age 12+.',
+    },
+    'Rueda de Casino': {
+      'Level 2': 'Group dance where couples perform Cuban salsa in a circle with one dancer calling moves while partners switch places throughout combinations. Learn specific calls, formations, and partner switching dynamics. Requires min. 2 seasons Cuban Salsa. Age 12+.',
+    },
+    'Bachata Choreo': {
+      'Open Level': 'Blending bachata with ballroom and bellydance elements — graceful turns and elegant arm movements from ballroom, captivating hip work and isolations from bellydance, unified in unique choreography. Basic bachata experience required. Age 12+.',
+    },
+  },
+  'lenka badriyah': {
+    'Raqs Sharqi': {
+      'Level 1': 'Foundational belly dance exploring hip and arm engagement with various shimmies and accents. Learn the musical traditions of this beautiful dance form. For beginners or those with some experience. Age 12+.',
+      'Level 2': 'Veil work introduced as complementary prop, with crisp isolations, fluid undulations, intricate footwork, and classical choreography with props. Requires 1–3 years prior belly dance experience. Age 12+.',
+      'Level 3': 'Baladi style focus with Taqsim phrasing, melaya draping, finger cymbals, and musical interpretation for soulful movement. For experienced belly dancers ready for advanced study. Age 12+.',
+    },
+  },
+  'lut vermeulen': {
+    'Tap Dance': {
+      'Level 1': 'Foundation techniques in creating rhythm with feet, introduction to syncopated beats and jazz-influenced movement. No prior tap experience needed. Free tap shoes for beginners for the entire first year. Age 12+.',
+      'Level 2': 'Building on Level 1 foundations with more complex rhythmic combinations and improved syncopation. Age 12+.',
+      'Level 3': 'Advanced tap technique with challenging choreography exploring diverse musical styles. Age 12+.',
+      'Level 4': 'For experienced tap dancers with solid Level 3 foundation. Complex choreography and musical interpretation. Age 12+.',
+      'Level 5': 'Advanced tap exploring diverse styles: Latin, boogie, pop, hip-hop, classical. Professional-level technique required. Age 12+.',
+      'Level 6': 'High-level tap programme for very experienced dancers, exploring all kinds of music and advanced choreography. Age 12+.',
+    },
+  },
+  'zoe bizoe': {
+    'Burlesque': {
+      'Level 1': 'Introductory course for complete beginners exploring the fundamentals of this performance art form. Learn core principles of teasing and audience interaction, basic sensual movement, body expression, and introduction to theatrical elements. Age 12+.',
+      'Level 1+': 'Intermediate course offering deeper, more focused experience with extended skill development. Refined movement vocabulary, advanced teasing techniques, character work, and preparation for advanced choreography. Age 12+.',
+      'Level 2': 'Advanced course for experienced burlesque dancers featuring complex choreography, professional-level execution and stage presence, and advanced artistic interpretation and storytelling. Age 12+.',
+    },
+  },
+  'hendrik lebon': {
+    'Burlesque': {
+      'Level 1': 'Introductory course for complete beginners exploring the fundamentals of this performance art form. Learn core principles of teasing and audience interaction, basic sensual movement, body expression, and introduction to theatrical elements. Age 12+.',
+      'Level 2': 'Advanced course for experienced burlesque dancers featuring complex choreography, professional-level execution and stage presence, and advanced artistic interpretation and storytelling. Age 12+.',
+    },
+    'Cissy Ball': {
+      'Open Level': 'Playful fusion dance rooted in dance theater tradition (Pina Bausch, Alain Platel). Dance steps and choreography are created together through games, assignments, and simple instructions. Each session ends with a performance moment. Performance skills, technical development, and self-expression. For people who love to perform and go crazy with music. No prior experience required. Age 12+.',
+    },
+  },
+  'tine de pauw': {
+    'Burlesque': {
+      'Level 1': 'Introductory course for complete beginners exploring the fundamentals of this performance art form. Learn core principles of teasing and audience interaction, basic sensual movement, body expression, and introduction to theatrical elements. Age 12+.',
+      'Level 2': 'Advanced course for experienced burlesque dancers featuring complex choreography, professional-level execution and stage presence, and advanced artistic interpretation and storytelling. Age 12+.',
+    },
+  },
+  'la liz': {
+    'Flamenco': {
+      'Level 1': 'Foundational flamenco training with systematic and intensive study of arm and hand techniques, footwork, turns, and marcajes (marking steps). This semester: Tangos style and rhythm. For beginners with no prerequisites. Age 12+.',
+      'Level 2': 'Techniques further expanded and intensively practised with study of the compás (12-beat rhythm) and the relationship between dance-singing-guitar. This semester: Fandangos and Bulerias styles. Requires min. 2 seasons flamenco foundations. Age 12+.',
+      'Level 3': 'Techniques drilled and body language refined, working on full-fledged flamenco choreography. This semester: Soleá — "the oldest and deepest palo of flamenco." Requires min. 2–3 years experience with basic compás understanding. Age 12+.',
+    },
+  },
+  'sonja kikizomba': {
+    'Kizomba': {
+      'Level 2': 'A beautiful partner dance from Angola, often called "African Tango." Learn smooth movements, soft body motion called Ginga, and the intimate connection between partners. Prior Kizomba experience required. Age 12+.',
+      'Level 3': 'Progression from Level 2 with more advanced technique, musicality, and partner connection. Age 12+.',
+      'Level 4': 'Advanced Kizomba for very experienced dancers with deep prior experience and refined technique. Age 12+.',
+    },
+  },
+  'gisela graef marino': {
+    'Argentine Tango': {
+      'Level 1': 'Introduction to authentic Argentine Tango — a floating, intense, and timeless dance where two bodies gracefully unite in space, merging into a single rhythmic harmony. Learn fundamental embrace and partner connection, basic movement vocabulary, traditional counterclockwise floor patterns, and the social and improvisational nature of the dance. For beginners with no prior tango experience. Age 16+.',
+      'Level 2': 'Traditional milonga etiquette and musicality with "the intricate rules and codes that govern the traditional milonga." Learn mirada and cabeceo (invitation signals), tanda structure (sets of four pieces), cortina timing, advanced musicality, improvisation, and social codes. Prior tango experience required. Age 16+.',
+    },
+  },
+  'sergio molini': {
+    'Argentine Tango': {
+      'Level 1': 'Introduction to authentic Argentine Tango — a floating, intense, and timeless dance where two bodies gracefully unite in space, merging into a single rhythmic harmony. Learn fundamental embrace and partner connection, basic movement vocabulary, traditional counterclockwise floor patterns, and the social and improvisational nature of the dance. For beginners with no prior tango experience. Age 16+.',
+      'Level 2': 'Traditional milonga etiquette and musicality with "the intricate rules and codes that govern the traditional milonga." Learn mirada and cabeceo (invitation signals), tanda structure (sets of four pieces), cortina timing, advanced musicality, improvisation, and social codes. Prior tango experience required. Age 16+.',
+    },
+  },
+  'shirley de muer': {
+    'Ballet': {
+      'Foundation': 'Beginner ballet classes focusing on building strength, technique, and progression, offering a solid base in classical ballet. Learn proper posture and alignment, flexibility and core engagement, and classical ballet fundamentals through majority barre work. No prior experience required for adults and teens new to ballet. Age 12+.',
+      'Open Level': 'Welcomes dancers with some experience, whether transitioning from Foundations or returning after previous training. Learn complete barre routines, centre work combinations, improved artistry, and advanced technique challenges. Some prior ballet experience required. Age 12+.',
+      'Pointes': 'Designed for those looking to elevate their ballet experience by learning the beautiful art of dancing en pointe. Learn dancing en pointe technique, safety and strength development. Must be enrolled in Ballet Open Level simultaneously. Advanced dancers only. Age 12+.',
+    },
+  },
+  'sep vermeersch': {
+    'Jazzy Workout': {
+      'Open Level': 'Movement to jazz music and related styles with African American roots. Build endurance and strength with focus on body awareness and fun through dynamic music: hot jazz to afro-grooves, funk and soul. Learn swing movement techniques, rhythm development, endurance, strength, personal expression, and improvisation. Everyone and every body welcome — no experience required. Age 12+.',
+    },
+    'Lindy Hop': {
+      'Level 1': 'Progressive course building on foundational Lindy Hop skills with emphasis on connection between partners, personal expression, and musicality. "Everybody Leads, Everybody Follows" approach. Learn rhythm and technical skills, enhanced musicality, partner connection, personal style, and social dancing application. Requires knowledge of basic 8-count moves and 6-count moves. Age 12+.',
+    },
+    'Solo Jazz': {
+      'Open Level': 'A rich blend of dance styles and steps popular in Harlem in the 1930s, emerging from African-American dance cultures such as Charleston and tap dance. Personal expression and improvisation are key. Learn classical jazz movements, swing music rhythms, syncopated rhythms, and personal flair. No experience necessary. Age 12+.',
+    },
+  },
+  'leni denorme': {
+    'Jazzy Workout': {
+      'Open Level': 'Movement to jazz music and related styles with African American roots. Build endurance and strength with focus on body awareness and fun through dynamic music: hot jazz to afro-grooves, funk and soul. Learn swing movement techniques, rhythm development, endurance, strength, personal expression, and improvisation. Everyone and every body welcome — no experience required. Age 12+.',
+    },
+    'Lindy Hop': {
+      'Level 1': 'Progressive course building on foundational Lindy Hop skills with emphasis on connection between partners, personal expression, and musicality. "Everybody Leads, Everybody Follows" approach. Learn rhythm and technical skills, enhanced musicality, partner connection, personal style, and social dancing application. Requires knowledge of basic 8-count and 6-count moves. Age 12+.',
+    },
+    'Solo Jazz': {
+      'Open Level': 'A rich blend of dance styles and steps popular in Harlem in the 1930s, emerging from African-American dance cultures such as Charleston and tap dance. Personal expression and improvisation are key. Learn classical jazz movements, swing music rhythms, syncopated rhythms, and personal flair. No experience necessary. Age 12+.',
+    },
+  },
+  'ann-sofie van enis': {
+    'Jazzy Workout': {
+      'Open Level': 'Movement to jazz music and related styles with African American roots. Build endurance and strength with focus on body awareness and fun through dynamic music: hot jazz to afro-grooves, funk and soul. Learn swing movement techniques, rhythm development, endurance, strength, personal expression, and improvisation. Everyone and every body welcome — no experience required. Age 12+.',
+    },
+    'Lindy Hop': {
+      'Level 1': 'Progressive course building on foundational Lindy Hop skills with emphasis on connection between partners, personal expression, and musicality. "Everybody Leads, Everybody Follows" approach. Learn rhythm and technical skills, enhanced musicality, partner connection, personal style, and social dancing application. Requires knowledge of basic 8-count and 6-count moves. Age 12+.',
+    },
+    'Solo Jazz': {
+      'Open Level': 'A rich blend of dance styles and steps popular in Harlem in the 1930s, emerging from African-American dance cultures such as Charleston and tap dance. Personal expression and improvisation are key. Learn classical jazz movements, swing music rhythms, syncopated rhythms, and personal flair. No experience necessary. Age 12+.',
+    },
+  },
+  'shana van cauwenberghe': {
+    'Jazzy Workout': {
+      'Open Level': 'Movement to jazz music and related styles with African American roots. Build endurance and strength with focus on body awareness and fun through dynamic music: hot jazz to afro-grooves, funk and soul. Learn swing movement techniques, rhythm development, endurance, strength, personal expression, and improvisation. Everyone and every body welcome — no experience required. Age 12+.',
+    },
+  },
+  'joseph saidi simako': {
+    'African Congolese Dance': {
+      'Open Level': 'Vibrant, high-energy sessions blending traditional and contemporary Afro and Congolese styles, including the dynamic Congolese Rumba (partner dance). Features intense movement, authentic Congolese rhythms, and occasional live percussion accompaniment. Learn Afro and Congolese dance techniques, Congolese Rumba, rhythmic movement grounded in authentic musical traditions, and dynamic high-energy choreography. Beginners and intermediate dancers welcome — no prior experience required. Age 12+.',
+    },
+  },
 };
 
 // ─── CLASS META STORE ────────────────────────────────────────────────
@@ -2063,6 +2208,11 @@ const COTEACHER_OPTIONS = [
   'Shana Van Cauwenberghe',
   'Joseph Saidi Simako',
   'Swapnil Dagliya',
+  'Jordan',
+  'Teddy',
+  'Alexandre',
+  'Kitty (Krisztina)',
+  'Nathalie El Ghoul',
 ];
 
 // ─── SEMESTER CONFIG ─────────────────────────────────────────────────
@@ -2287,10 +2437,23 @@ function wcAddLevel(presetLevel, presetSlots) {
     `<option value="${l}" ${l === (presetLevel || 'Level 1') ? 'selected' : ''}>${l}</option>`
   ).join('');
 
+  // Build teacher chip options (pre-select the acting teacher)
+  const actingName = getActingProfile() ? getActingProfile().name : '';
+  const teacherChips = COTEACHER_OPTIONS.map(name =>
+    `<label class="wc-teacher-chip${name === actingName ? ' selected' : ''}" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;border:1.5px solid #ddd;font-size:.78rem;cursor:pointer;margin:2px;background:${name === actingName ? 'var(--purple)' : '#fff'};color:${name === actingName ? '#fff' : 'var(--dark)'};transition:all .15s;">
+      <input type="checkbox" value="${name}" ${name === actingName ? 'checked' : ''} onchange="wcToggleTeacherChip(this)" style="display:none;">
+      ${name}
+    </label>`
+  ).join('');
+
   block.innerHTML = `
     <div class="wc-level-header">
       <select class="wc-level-select" id="wc-level-select-${idx}">${opts}</select>
       <button class="wc-btn-remove" onclick="wcRemoveLevel(this)" title="Remove level">✕</button>
+    </div>
+    <div class="wc-level-teachers" id="wc-teachers-${idx}" style="margin:6px 0 8px;padding:0 4px;">
+      <div style="font-size:.72rem;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;">Teacher(s) for this level</div>
+      <div class="wc-teacher-chips" style="display:flex;flex-wrap:wrap;gap:0;">${teacherChips}</div>
     </div>
     <div class="wc-slots-container" id="wc-slots-${idx}"></div>
     <button class="wc-btn-add-slot" onclick="wcAddSlot(${idx})">${t('add-time-slot')}</button>
@@ -2371,6 +2534,19 @@ function wcToggleLang(btn) {
   btn.classList.toggle('selected');
 }
 
+function wcToggleTeacherChip(checkbox) {
+  const label = checkbox.closest('.wc-teacher-chip');
+  if (checkbox.checked) {
+    label.classList.add('selected');
+    label.style.background = 'var(--purple)';
+    label.style.color = '#fff';
+  } else {
+    label.classList.remove('selected');
+    label.style.background = '#fff';
+    label.style.color = 'var(--dark)';
+  }
+}
+
 function wcCollectData() {
   const levels = [];
   document.querySelectorAll('.wc-level-block').forEach(block => {
@@ -2383,7 +2559,10 @@ function wcCollectData() {
       const end   = slot.querySelector('.wc-end').value;
       if (day && start && end) slots.push({ day, start, end });
     });
-    if (slots.length > 0) levels.push({ level: levelName, slots });
+    // Collect selected teachers for this level
+    const teachers = Array.from(block.querySelectorAll('.wc-teacher-chip input:checked'))
+      .map(cb => cb.value);
+    if (slots.length > 0) levels.push({ level: levelName, slots, teachers });
   });
 
   const langs = Array.from(document.querySelectorAll('#wc-lang-chips .wc-chip.selected'))
@@ -2519,12 +2698,27 @@ function cwcPopulateConfirmation() {
   // Style title
   document.getElementById('cwc-style-title').textContent = style;
 
-  // Schedule summary — one card per level
-  let html = '<div class="cwc-schedule-blocks">';
+  // Schedule summary — group by day of week
+  const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const dayGroups = {};
+
+  // Collect all slots grouped by day
   levels.forEach(lv => {
-    html += `<div class="cwc-schedule-block"><div class="cwc-schedule-level">${esc(lv.level)}</div>`;
-    lv.slots.forEach(s => {
-      html += `<div class="cwc-schedule-slot">${esc(s.day)}&nbsp;&nbsp;${esc(s.start)} → ${esc(s.end)}</div>`;
+    (lv.slots || []).forEach(s => {
+      if (!dayGroups[s.day]) dayGroups[s.day] = [];
+      dayGroups[s.day].push({ level: lv.level, start: s.start, end: s.end, day: s.day });
+    });
+  });
+
+  // Sort days of week
+  const sortedDays = Object.keys(dayGroups).sort((a,b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+
+  // Build HTML grouped by day
+  let html = '<div class="cwc-schedule-blocks">';
+  sortedDays.forEach(day => {
+    html += `<div class="cwc-schedule-block"><div class="cwc-schedule-level">${esc(day)}</div>`;
+    dayGroups[day].forEach(slot => {
+      html += `<div class="cwc-schedule-slot">${esc(slot.level)}&nbsp;&nbsp;${esc(slot.start)} → ${esc(slot.end)}</div>`;
     });
     html += '</div>';
   });
@@ -2574,6 +2768,11 @@ function cwcShowDatesScreen() {
   cwcBuildDateGrid(style, levels);
 
   showScreen('dates-wc');
+}
+
+// ── Back from date selection screen to confirmation screen ──────
+function cwcBackFromDates() {
+  showScreen('confirm-wc');
 }
 
 function cwcBuildSemOverview() {
@@ -2665,11 +2864,19 @@ function cwcLoadDescriptions(style, levels) {
   const emailDescs = CLASS_DESCRIPTIONS[email] || {};
   const styleDescs = emailDescs[style] || {};
 
+  // Fallback to lookup by teacher name if email not found
+  let finalStyleDescs = styleDescs;
+  if (Object.keys(styleDescs).length === 0) {
+    const teacherName = (getActingProfile() && getActingProfile().name) ? getActingProfile().name.toLowerCase().trim() : '';
+    const nameDescs = CLASS_DESCRIPTIONS_BY_NAME[teacherName] || {};
+    finalStyleDescs = nameDescs[style] || {};
+  }
+
   let descHtml = '';
   let anyMissing = false;
 
   levels.forEach(lv => {
-    const text = styleDescs[lv.level];
+    const text = finalStyleDescs[lv.level];
     if (text) {
       descHtml += cwcLevelDescHtml(lv.level, text, false);
     } else {
@@ -3410,6 +3617,14 @@ function cwcUpdateDayPriceSummary(dayName) {
 }
 
 async function cwcNext(action) {
+  // Confirm before submitting
+  if (action !== 'done' && cwcCurrentData) {
+    const style  = cwcCurrentData.style || '';
+    const levels = (cwcCurrentData.levels || []).map(l => l.level).join(', ');
+    const teacher = getActingProfile() ? getActingProfile().name : '';
+    if (!confirm(`Submit "${style}" (${levels}) for ${teacher || 'you'}?\n\nThis will be recorded as a final submission.`)) return;
+  }
+
   // Finalise the payload with dates, pricing + description before submitting
   if (cwcCurrentData) {
     // Collect selected (green) class dates from ALL per-day sections
@@ -3452,6 +3667,10 @@ async function cwcNext(action) {
     cwcCurrentData.payload.age_min            = cwcSelectedAge;
     cwcCurrentData.payload.partner_required   = cwcPartnerReq;
     cwcCurrentData.payload.co_teacher         = cwcSelectedCoTeachers.join(' · ') || '';
+    // Per-level teacher assignments
+    cwcCurrentData.payload.level_teachers    = (cwcCurrentData.levels || []).map(l => ({
+      level: l.level, teachers: l.teachers || []
+    }));
     cwcCurrentData.payload.what_to_bring      = (document.getElementById('cwc-bring-input').value || '').trim();
 
     // Opendeurdag availability
@@ -4263,6 +4482,11 @@ function selectType(type, cardEl) {
   currentType = type;
   document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
   cardEl.classList.add('selected');
+
+  // Update hero title to reflect the event type
+  const typeLabels = { 'weekly-class': 'Weekly Class', 'workshop': 'Workshop', 'social-event': 'Social Night', 'festival': 'Festival' };
+  const heroTitle = document.getElementById('hero-title');
+  if (heroTitle) heroTitle.textContent = typeLabels[type] || 'New Submission';
 
   setTimeout(() => {
     if (type === 'weekly-class') {
@@ -5133,6 +5357,8 @@ function fmtDateLong(iso) {
 function resetForm() {
   currentType = null; extraction = null;
   document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+  const heroTitle = document.getElementById('hero-title');
+  if (heroTitle) heroTitle.textContent = 'New Submission';
   showScreen('type');
 }
 
@@ -5553,6 +5779,7 @@ function ssConfirmProgramme() {
   if (ssMusicType === 'guest-dj') {
     ssCurrentData.djName    = document.getElementById('ss-dj-name')?.value.trim()    || '';
     ssCurrentData.djSocials = document.getElementById('ss-dj-socials')?.value.trim() || '';
+    ssCurrentData.djFee     = document.getElementById('ss-dj-fee')?.value.trim()     || '';
     if (ssCurrentData.djName) ssRememberGuestDJ(ssCurrentData.djName);
   } else if (ssMusicType === 'teacher-dj') {
     ssCurrentData.teacherDJ = document.getElementById('ss-teacher-dj-input')?.value.trim() || '';
@@ -6100,6 +6327,7 @@ async function ssSubmitToShoonya() {
     musicType:            d.musicType,
     djName:               d.djName    || '',
     djSocials:            d.djSocials || '',
+    djFee:                d.djFee     || '',
     teacherDJ:            d.teacherDJ || '',
     genres:               d.genres,
     dj2Name:              d.dj2Name    || '',
