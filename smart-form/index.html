@@ -398,7 +398,7 @@
           <input type="text" id="wc-style-custom" placeholder="Other style not listed above…"
             style="font-size:.82rem;padding:7px 10px;border:1.5px solid #ddd;border-radius:6px;flex:1;min-width:0;"
             onkeydown="if(event.key==='Enter'){event.preventDefault();wcAddCustomStyle();}">
-          <button type="button" class="wc-btn-add-slot" style="margin-top:0;white-space:nowrap;padding:6px 14px;font-size:.82rem;"
+          <button type="button" class="wc-btn-add-slot" style="margin-top:0;white-space:nowrap;padding:6px 14px;font-size:.82rem;width:auto;flex-shrink:0;"
             onclick="wcAddCustomStyle()">+ Add</button>
         </div>
         <div class="err-box" id="err-wc-style" style="margin-top:10px;"></div>
@@ -1010,7 +1010,7 @@
             <input type="text" id="ss-style-custom" placeholder="Type a style name, then press Add →"
               style="font-size:.82rem;padding:7px 10px;border:1.5px solid #ddd;border-radius:6px;flex:1;min-width:0;"
               onkeydown="if(event.key==='Enter'){event.preventDefault();ssAddCustomStyle();}">
-            <button type="button" class="wc-btn-add-slot" style="margin-top:0;white-space:nowrap;padding:6px 14px;font-size:.82rem;"
+            <button type="button" class="wc-btn-add-slot" style="margin-top:0;white-space:nowrap;padding:6px 14px;font-size:.82rem;width:auto;flex-shrink:0;"
               onclick="ssAddCustomStyle()">+ Add</button>
           </div>
           <div id="ss-style-hint" style="font-size:.72rem;color:#e74c3c;margin-top:3px;display:none;">Type a style name first, then click + Add</div>
@@ -2389,9 +2389,20 @@ function wcShowStyleStep() {
   }
 
   if (styles.length === 0) {
-    chips.innerHTML = '<div style="font-size:.82rem;color:#888;">No styles found in your profile. <a href="../profile.html" style="color:var(--purple)">Add styles →</a></div>';
+    const wcCustomWrap = document.getElementById('wc-style-custom') ? document.getElementById('wc-style-custom').parentElement : null;
+    if (loggedInProfile && loggedInProfile.role === 'admin' && !adminActingAs) {
+      chips.innerHTML = '<div style="font-size:.82rem;color:#888;">Select a teacher above to see their styles.</div>';
+      if (wcCustomWrap) wcCustomWrap.style.display = 'none';
+    } else {
+      chips.innerHTML = '<div style="font-size:.82rem;color:#888;">No styles found in your profile. <a href="../profile.html" style="color:var(--purple)">Add styles →</a></div>';
+      if (wcCustomWrap) wcCustomWrap.style.display = '';
+    }
     return;
   }
+
+  // Ensure custom style input is visible when styles exist
+  const wcCustomWrap2 = document.getElementById('wc-style-custom') ? document.getElementById('wc-style-custom').parentElement : null;
+  if (wcCustomWrap2) wcCustomWrap2.style.display = '';
 
   styles.forEach(style => {
     const btn = document.createElement('button');
