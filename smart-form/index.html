@@ -271,7 +271,7 @@
   <h2 id="hero-title">New Submission</h2>
   <p id="hero-sub">Tell us about your class or event — we'll handle the details.</p>
 </div>
-<div class="notice" id="notice-bar">No long forms. Just describe what you're offering and we'll fill in the details for you to check.</div>
+<!-- notice bar removed -->
 
 <div class="container">
 
@@ -363,7 +363,7 @@
         <div class="wc-login-prompt">
           <p>Weekly class submissions require a teacher account so we can pre-fill your details.</p>
           <div class="wc-login-btns">
-            <button class="wc-login-btn primary" onclick="document.getElementById('shoonya-login-panel').scrollIntoView({behavior:'smooth'}); setTimeout(function(){ var d=document.getElementById('slp-drawer'); if(d && !d.classList.contains('open')) slpToggleDrawer(); }, 400);">Log in ↑</button>
+            <button class="wc-login-btn primary" onclick="slpOpenModal()">Log in</button>
             <button class="wc-login-btn outline" onclick="window.location.href='../register.html'">Register →</button>
           </div>
         </div>
@@ -490,14 +490,8 @@
       <div id="cwc-no-semester" style="display:none;font-size:.82rem;color:#e07000;padding:10px 0;">
         ⚠️ Semester dates not yet configured. Ask the admin to update <code>SEMESTER_CONFIG</code> in the form.
       </div>
-      <div id="cwc-dates-grid" class="cwc-dates-grid"></div>
-      <div id="cwc-price-bar" class="cwc-price-bar" style="display:none;">
-        <span>📅</span><strong id="cwc-count-label">— classes</strong>
-        <span class="cwc-price-dot">·</span>
-        <strong id="cwc-price-label">—</strong>
-        <span class="cwc-price-dot">·</span>
-        <span style="font-weight:400;font-size:.8rem;"><span id="cwc-student-lbl" data-lbl="student-price">student</span> <strong id="cwc-price-student">—</strong></span>
-      </div>
+      <!-- Per-day schedule sections are built dynamically here -->
+      <div id="cwc-schedule-container"></div>
 
       <!-- Next step -->
       <div class="cwc-divider"></div>
@@ -521,7 +515,7 @@
         <div class="wc-login-prompt">
           <p>Workshop submissions require a teacher account so we can pre-fill your details and track your events.</p>
           <div class="wc-login-btns">
-            <button class="wc-login-btn primary" onclick="document.getElementById('shoonya-login-panel').scrollIntoView({behavior:'smooth'}); setTimeout(function(){ var d=document.getElementById('slp-drawer'); if(d && !d.classList.contains('open')) slpToggleDrawer(); }, 400);">Log in ↑</button>
+            <button class="wc-login-btn primary" onclick="slpOpenModal()">Log in</button>
             <button class="wc-login-btn outline" onclick="window.location.href='../register.html'">Register →</button>
           </div>
         </div>
@@ -945,7 +939,7 @@
         <div class="wc-login-prompt">
           <p>Social night submissions require a teacher account so we can pre-fill your details and track your events.</p>
           <div class="wc-login-btns">
-            <button class="wc-login-btn primary" onclick="document.getElementById('shoonya-login-panel').scrollIntoView({behavior:'smooth'}); setTimeout(function(){ var d=document.getElementById('slp-drawer'); if(d && !d.classList.contains('open')) slpToggleDrawer(); }, 400);">Log in ↑</button>
+            <button class="wc-login-btn primary" onclick="slpOpenModal()">Log in</button>
             <button class="wc-login-btn outline" onclick="window.location.href='../register.html'">Register →</button>
           </div>
         </div>
@@ -2042,9 +2036,11 @@ const SEMESTER_CONFIG = {
         '2027-01-06','2027-01-07','2027-01-08','2027-01-09','2027-01-10',
       ],
       prices: {
-        '60': { total: 198, student: 175 }, // 1-hour classes
-        '70': { total: 223, student: 197 }, // 1h10 / 1h15 / 1h20 classes
-        '90': { total: 248, student: 219 }, // 1h30 classes
+        '30': { total: 116, student: null, uitpas: 23.20 }, // Ballet Pointes — no student discount
+        '60': { total: 198, student: 175, uitpas: 39.60 },
+        '70': { total: 223, student: 197, uitpas: 44.60 }, // Tap Dance (70 min)
+        '75': { total: 223, student: 197, uitpas: 44.60 }, // Lindy Hop (75 min) — same price as 70
+        '90': { total: 248, student: 219, uitpas: 49.60 },
       }
     },
     {
@@ -2052,7 +2048,7 @@ const SEMESTER_CONFIG = {
       start:      '2027-02-15',
       end:        '2027-06-12',
       sessions:   15,
-      opendeurdag:'2027-01-31',
+      opendeurdag:['2027-01-31', '2027-06-13'],
       catchUpWeek:{ start: '2027-06-14', end: '2027-06-19' },
       breaks: [
         { name: 'Paasvakantie', start: '2027-03-28', end: '2027-04-11' },
@@ -2068,9 +2064,11 @@ const SEMESTER_CONFIG = {
         '2027-05-24', // Pinkstermaandag (Whit Monday)
       ],
       prices: {
-        '60': { total: 186, student: 164 }, // 1-hour classes
-        '70': { total: 209, student: 184 }, // 1h10 / 1h15 / 1h20 classes
-        '90': { total: 232, student: 204 }, // 1h30 classes
+        '30': { total: 109, student: null, uitpas: 21.80 }, // Ballet Pointes — no student discount
+        '60': { total: 186, student: 164, uitpas: 37.20 },
+        '70': { total: 209, student: 184, uitpas: 41.80 }, // Tap Dance (70 min)
+        '75': { total: 209, student: 184, uitpas: 41.80 }, // Lindy Hop (75 min) — same price as 70
+        '90': { total: 232, student: 205, uitpas: 46.40 },
       }
     }
   ]
@@ -2078,11 +2076,15 @@ const SEMESTER_CONFIG = {
 
 // Duration in minutes by style keyword (case-insensitive partial match)
 const WC_DURATIONS = {
+  'Ballet Pointes':           30,
   'Ballet Foundation':        90,
   'Ballet Open':              90,
   'Burlesque':                90,
   'African Congolese':        90,
-  'Lindy Hop':                80,
+  'African Dance':            90,
+  'Lindy Hop':                75,
+  'Solo Jazz':                75,
+  'Jazzy Workout':            75,
   'Tap Dance':                70,
   'Tap':                      70,
 };
@@ -2784,11 +2786,13 @@ function cwcGetDurationMins(levels) {
 }
 
 function cwcGetPriceTier(durationMins, semPrices) {
-  // Maps duration to price tier: ≤60 → '60', 61-85 → '70', ≥86 → '90'
+  // Maps duration to exact price tier: 30/60/70/75/90
   const p = semPrices || {};
-  if (durationMins >= 86) return p['90'] || p['70'] || p['60'];
-  if (durationMins >= 61) return p['70'] || p['60'];
-  return p['60'];
+  if (durationMins <= 30) return p['30'] || p['60'];
+  if (durationMins <= 60) return p['60'];
+  if (durationMins <= 70) return p['70'] || p['60'];
+  if (durationMins <= 75) return p['75'] || p['70'] || p['60'];
+  return p['90'] || p['75'] || p['70'] || p['60'];
 }
 
 function cwcFormatChip(iso) {
@@ -2811,37 +2815,85 @@ function cwcFormatDateRange(startIso, endIso) {
        + ' – ' + e.getDate() + ' ' + MON[e.getMonth()] + ' ' + e.getFullYear();
 }
 
-function cwcBuildDateGrid(style, levels) {
-  // Collect unique days from all schedule slots
-  const dayNames = [];
-  (levels || []).forEach(lv =>
-    (lv.slots || []).forEach(s => {
-      if (s.day && !dayNames.includes(s.day)) dayNames.push(s.day);
-    })
-  );
+function cwcGetSemesterDatesForDay(dayName) {
+  // Returns sorted 'YYYY-MM-DD' strings for a SINGLE day of the week
+  const sem = cwcGetActiveSemester();
+  if (!sem || !sem.start || !sem.end) return [];
 
-  const sem      = cwcGetActiveSemester();
-  const dates    = cwcGetSemesterDates(dayNames);
-  const grid     = document.getElementById('cwc-dates-grid');
-  const noSem    = document.getElementById('cwc-no-semester');
-  const priceBar = document.getElementById('cwc-price-bar');
+  const excluded  = new Set(sem.globalExclusions || []);
+  const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const dayNum    = DAY_NAMES.indexOf(dayName);
+  if (dayNum < 0) return [];
+
+  const semStart = new Date(sem.start + 'T12:00:00');
+  const semEnd   = new Date(sem.end   + 'T12:00:00');
+
+  // Rewind to the Monday of the week containing semStart
+  const weekCursor = new Date(semStart);
+  weekCursor.setDate(weekCursor.getDate() - ((weekCursor.getDay() + 6) % 7));
+
+  const dates = [];
+  while (weekCursor <= semEnd) {
+    // Check Mon–Sat for any excluded date (whole-week exclusion)
+    let weekExcluded = false;
+    for (let d = 0; d <= 5; d++) {
+      const check = new Date(weekCursor);
+      check.setDate(check.getDate() + d);
+      if (excluded.has(check.toISOString().slice(0, 10))) { weekExcluded = true; break; }
+    }
+    if (!weekExcluded) {
+      const offset   = (dayNum + 6) % 7;
+      const classDay = new Date(weekCursor);
+      classDay.setDate(classDay.getDate() + offset);
+      if (classDay >= semStart && classDay <= semEnd) {
+        dates.push(classDay.toISOString().slice(0, 10));
+      }
+    }
+    weekCursor.setDate(weekCursor.getDate() + 7);
+  }
+  return dates.sort();
+}
+
+// Per-day excluded dates: { "Wednesday": Set([...]), "Thursday": Set([...]) }
+let cwcExcludedByDay = {};
+
+function cwcBuildDateGrid(style, levels) {
+  const container = document.getElementById('cwc-schedule-container');
+  const noSem     = document.getElementById('cwc-no-semester');
+  const sem       = cwcGetActiveSemester();
 
   cwcExcludedDates = new Set();
+  cwcExcludedByDay = {};
   cwcOpendeurAvailability = {};
-  grid.innerHTML = '';
+  container.innerHTML = '';
 
-  // Remove any existing info section (prevents duplication on re-entry)
+  // Remove any existing info section
   const existingInfo = document.getElementById('cwc-info-section');
   if (existingInfo) existingInfo.remove();
 
-  if (!dates.length) {
-    noSem.style.display    = '';
-    priceBar.style.display = 'none';
+  // ── Group levels by day ──
+  // dayGroups: { "Wednesday": [{ level, slots, daySlot }], ... }
+  const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const dayGroups = {};
+  (levels || []).forEach(lv => {
+    (lv.slots || []).forEach(s => {
+      if (!s.day) return;
+      if (!dayGroups[s.day]) dayGroups[s.day] = [];
+      dayGroups[s.day].push({ level: lv.level, slot: s });
+    });
+  });
+
+  // Sort days by weekday order
+  const sortedDays = Object.keys(dayGroups).sort((a,b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+
+  if (!sortedDays.length) {
+    noSem.style.display = '';
     return;
   }
-  noSem.style.display = 'none';
 
-  // ── PART 1: Date chips with full-width vacation banners between them ──────
+  // Check if we have dates for at least one day
+  let anyDates = false;
+
   const BREAK_STYLE = {
     'Herfstvakantie': { bg:'#fff3e0', border:'#ffb74d', color:'#e65100', emoji:'🍂' },
     'Kerstvakantie':  { bg:'#e3f2fd', border:'#90caf9', color:'#1565c0', emoji:'🎄' },
@@ -2849,45 +2901,102 @@ function cwcBuildDateGrid(style, levels) {
   };
   const DEFAULT_BREAK_STYLE = { bg:'#f5f5f5', border:'#bdbdbd', color:'#555', emoji:'📅' };
 
-  let lastDate = null;
-  dates.forEach(iso => {
-    // Insert vacation banner if there's a gap > 8 days
-    if (lastDate && sem && sem.breaks) {
-      const gap = Math.floor(
-        (new Date(iso + 'T12:00:00') - new Date(lastDate + 'T12:00:00')) / (1000 * 60 * 60 * 24)
-      );
-      if (gap > 8) {
-        const brk = cwcGetBreakForGap(lastDate, iso, sem.breaks);
-        if (brk) {
-          const bs = BREAK_STYLE[brk.name] || DEFAULT_BREAK_STYLE;
-          const range = cwcFormatDateRange(brk.start, brk.end);
-          const banner = document.createElement('div');
-          banner.style.cssText = `flex-basis:100%;width:100%;background:${bs.bg};border:1.5px solid ${bs.border};border-radius:8px;padding:9px 14px;margin:8px 0;font-size:.78rem;font-weight:700;color:${bs.color};display:flex;align-items:center;justify-content:space-between;`;
-          banner.innerHTML = `<span>${bs.emoji} ${brk.name}</span><span style="font-weight:500;font-size:.76rem;">${range}</span>`;
-          grid.appendChild(banner);
+  sortedDays.forEach(dayName => {
+    const dayLevels = dayGroups[dayName];
+    const dates = cwcGetSemesterDatesForDay(dayName);
+    if (!dates.length) return;
+    anyDates = true;
+
+    cwcExcludedByDay[dayName] = new Set();
+
+    // ── Day section wrapper ──
+    const section = document.createElement('div');
+    section.className = 'cwc-day-section';
+    section.dataset.day = dayName;
+    section.style.cssText = 'margin-bottom:20px;';
+
+    // ── Day header ──
+    const header = document.createElement('div');
+    header.style.cssText = 'font-size:.82rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#6B3FA0;margin-bottom:8px;padding:8px 12px;background:#f3eeff;border-radius:8px;';
+    const levelDescriptions = dayLevels.map(dl => {
+      const lvName = dl.level || 'Open Level';
+      const time = dl.slot.start + '–' + dl.slot.end;
+      return lvName + ' · ' + time;
+    });
+    header.textContent = dayName.toUpperCase() + ' — ' + levelDescriptions.join(' | ');
+    section.appendChild(header);
+
+    // ── Date chips grid ──
+    const grid = document.createElement('div');
+    grid.className = 'cwc-dates-grid';
+    grid.dataset.day = dayName;
+
+    let lastDate = null;
+    dates.forEach(iso => {
+      // Vacation banner between gaps
+      if (lastDate && sem && sem.breaks) {
+        const gap = Math.floor(
+          (new Date(iso + 'T12:00:00') - new Date(lastDate + 'T12:00:00')) / (1000 * 60 * 60 * 24)
+        );
+        if (gap > 8) {
+          const brk = cwcGetBreakForGap(lastDate, iso, sem.breaks);
+          if (brk) {
+            const bs = BREAK_STYLE[brk.name] || DEFAULT_BREAK_STYLE;
+            const range = cwcFormatDateRange(brk.start, brk.end);
+            const banner = document.createElement('div');
+            banner.style.cssText = `flex-basis:100%;width:100%;background:${bs.bg};border:1.5px solid ${bs.border};border-radius:8px;padding:9px 14px;margin:8px 0;font-size:.78rem;font-weight:700;color:${bs.color};display:flex;align-items:center;justify-content:space-between;`;
+            banner.innerHTML = `<span>${bs.emoji} ${brk.name}</span><span style="font-weight:500;font-size:.76rem;">${range}</span>`;
+            grid.appendChild(banner);
+          }
         }
       }
-    }
 
-    const chip = document.createElement('button');
-    chip.type        = 'button';
-    chip.className   = 'cwc-date-chip';
-    chip.dataset.date = iso;
-    chip.textContent  = cwcFormatChip(iso);
-    chip.onclick = () => cwcToggleDate(iso, chip);
-    grid.appendChild(chip);
-    lastDate = iso;
+      const chip = document.createElement('button');
+      chip.type        = 'button';
+      chip.className   = 'cwc-date-chip';
+      chip.dataset.date = iso;
+      chip.dataset.day  = dayName;
+      chip.textContent  = cwcFormatChip(iso);
+      chip.onclick = () => cwcToggleDate(iso, chip, dayName);
+      grid.appendChild(chip);
+      lastDate = iso;
+    });
+
+    section.appendChild(grid);
+
+    // ── Per-day price bar ──
+    const priceBar = document.createElement('div');
+    priceBar.className = 'cwc-price-bar';
+    priceBar.dataset.day = dayName;
+    // Compute initial price for this day
+    const durationMins = cwcGetDayDurationMins(dayLevels);
+    const tier = cwcGetPriceTier(durationMins, sem ? sem.prices : {});
+    const baseSessions = sem ? sem.sessions : 16;
+    const count = dates.length;
+    if (tier) {
+      const pTotal   = Math.round(tier.total / baseSessions * count);
+      const pStudent = tier.student ? Math.ceil(tier.student / baseSessions * count) : null;
+      const classWord = count === 1 ? t('course') : t('courses');
+      priceBar.innerHTML = `<span class="cwc-count-label">${count} ${classWord}</span>`
+        + ` <span class="cwc-price-dot">·</span> <span class="cwc-price-total" style="font-weight:800;">€${pTotal}</span>`
+        + (pStudent !== null ? ` <span class="cwc-price-dot">·</span> <span class="cwc-price-student" style="font-size:.8rem;color:#888;">Student: €${pStudent}</span>` : '');
+    }
+    section.appendChild(priceBar);
+
+    container.appendChild(section);
   });
 
-  cwcUpdatePriceSummary(dates.length);
-  priceBar.style.display = '';
+  if (!anyDates) {
+    noSem.style.display = '';
+    return;
+  }
+  noSem.style.display = 'none';
 
-  // ── PART 2: Info cards below price bar (Opendeurdag / Free trial / Catch-up) ──
+  // ── Info cards (Opendeurdag / Free trial / Catch-up) ──
   const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   let infoHtml = '';
 
-  // ── Opendeurdag ──
   const opDates = sem && sem.opendeurdag
     ? (Array.isArray(sem.opendeurdag) ? sem.opendeurdag : [sem.opendeurdag])
     : [];
@@ -2910,7 +3019,6 @@ function cwcBuildDateGrid(style, levels) {
     infoHtml += `</div>`;
   }
 
-  // ── Free trial week ──
   if (sem && sem.trialWeek) {
     const trialEnd = new Date(sem.trialWeek + 'T12:00:00');
     trialEnd.setDate(trialEnd.getDate() + 6);
@@ -2924,7 +3032,6 @@ function cwcBuildDateGrid(style, levels) {
     </div>`;
   }
 
-  // ── Catch-up week ──
   if (sem && sem.catchUpWeek) {
     const cuRange = cwcFormatDateRange(sem.catchUpWeek.start, sem.catchUpWeek.end);
     infoHtml += `
@@ -2940,9 +3047,21 @@ function cwcBuildDateGrid(style, levels) {
     infoDiv.id = 'cwc-info-section';
     infoDiv.style.marginTop = '18px';
     infoDiv.innerHTML = infoHtml;
-    // Insert after price bar
-    priceBar.parentNode.insertBefore(infoDiv, priceBar.nextSibling);
+    container.appendChild(infoDiv);
   }
+}
+
+// Helper: get duration in minutes from day-level entries
+function cwcGetDayDurationMins(dayLevels) {
+  for (const dl of (dayLevels || [])) {
+    if (dl.slot && dl.slot.start && dl.slot.end) {
+      const [sh, sm] = dl.slot.start.split(':').map(Number);
+      const [eh, em] = dl.slot.end.split(':').map(Number);
+      const mins = (eh * 60 + em) - (sh * 60 + sm);
+      if (mins > 0) return mins;
+    }
+  }
+  return 60;
 }
 
 function cwcGetBreakForGap(lastDate, currentDate, breaks) {
@@ -2964,46 +3083,61 @@ function cwcSetOpendeurAvail(date, isAvailable) {
   if (noBtn)  noBtn.classList.toggle('selected', !isAvailable);
 }
 
-function cwcToggleDate(iso, chip) {
+function cwcToggleDate(iso, chip, dayName) {
   if (cwcExcludedDates.has(iso)) {
     cwcExcludedDates.delete(iso);
+    if (cwcExcludedByDay[dayName]) cwcExcludedByDay[dayName].delete(iso);
     chip.classList.remove('excluded');
   } else {
     cwcExcludedDates.add(iso);
+    if (cwcExcludedByDay[dayName]) cwcExcludedByDay[dayName].add(iso);
     chip.classList.add('excluded');
   }
-  const total  = document.querySelectorAll('#cwc-dates-grid .cwc-date-chip').length;
-  const active = total - cwcExcludedDates.size;
-  cwcUpdatePriceSummary(active);
+  // Update the price bar for this specific day
+  cwcUpdateDayPriceSummary(dayName);
 }
 
-function cwcUpdatePriceSummary(count) {
-  const levels       = cwcCurrentData ? cwcCurrentData.levels : [];
+function cwcUpdateDayPriceSummary(dayName) {
+  const section = document.querySelector(`.cwc-day-section[data-day="${dayName}"]`);
+  if (!section) return;
+
   const sem          = cwcGetActiveSemester();
-  const durationMins = cwcGetDurationMins(levels);
-  const tier         = cwcGetPriceTier(durationMins, sem ? sem.prices : {});
+  const baseSessions = sem ? sem.sessions : 16;
+  const levels       = cwcCurrentData ? cwcCurrentData.levels : [];
+
+  // Get levels for this day
+  const dayLevels = [];
+  (levels || []).forEach(lv => {
+    (lv.slots || []).forEach(s => {
+      if (s.day === dayName) dayLevels.push({ level: lv.level, slot: s });
+    });
+  });
+
+  const durationMins = cwcGetDayDurationMins(dayLevels);
+  const tier = cwcGetPriceTier(durationMins, sem ? sem.prices : {});
   if (!tier) return;
 
-  const baseSessions    = sem ? sem.sessions : 16;
-  const rateTotal       = tier.total   / baseSessions;
-  const rateStudent     = tier.student / baseSessions;
-  const computedTotal   = Math.round(rateTotal   * count);
-  const computedStudent = Math.ceil(rateStudent  * count); // rounded UP per studio rule
-  const computedUitpas  = (computedTotal * 0.2).toFixed(2); // 20% of total (uitpas discount = 80% off) — e.g. €39.60
+  const totalChips = section.querySelectorAll('.cwc-date-chip').length;
+  const excluded   = cwcExcludedByDay[dayName] ? cwcExcludedByDay[dayName].size : 0;
+  const count      = totalChips - excluded;
 
+  const pTotal   = Math.round(tier.total / baseSessions * count);
+  const pStudent = tier.student ? Math.ceil(tier.student / baseSessions * count) : null;
   const classWord = count === 1 ? t('course') : t('courses');
-  document.getElementById('cwc-count-label').textContent  = count + ' ' + classWord;
-  document.getElementById('cwc-price-label').textContent   = '€' + computedTotal;
-  const stuEl = document.getElementById('cwc-price-student');
-  if (stuEl) stuEl.textContent = '€' + computedStudent;
-  // NOTE: Uitpas price is no longer shown to teachers (per TASK D2)
+
+  const priceBar = section.querySelector('.cwc-price-bar');
+  if (priceBar) {
+    priceBar.innerHTML = `<span class="cwc-count-label">${count} ${classWord}</span>`
+      + ` <span class="cwc-price-dot">·</span> <span class="cwc-price-total" style="font-weight:800;">€${pTotal}</span>`
+      + (pStudent !== null ? ` <span class="cwc-price-dot">·</span> <span class="cwc-price-student" style="font-size:.8rem;color:#888;">Student: €${pStudent}</span>` : '');
+  }
 }
 
 async function cwcNext(action) {
   // Finalise the payload with dates, pricing + description before submitting
   if (cwcCurrentData) {
-    // Collect selected (green) class dates from the grid
-    const allChips   = document.querySelectorAll('#cwc-dates-grid .cwc-date-chip');
+    // Collect selected (green) class dates from ALL per-day sections
+    const allChips   = document.querySelectorAll('#cwc-schedule-container .cwc-date-chip');
     const classDates = [];
     allChips.forEach(chip => {
       if (!chip.classList.contains('excluded')) classDates.push(chip.dataset.date);
@@ -3011,14 +3145,28 @@ async function cwcNext(action) {
     cwcCurrentData.payload.class_dates     = classDates;
     cwcCurrentData.payload.excluded_dates  = [...cwcExcludedDates];
     cwcCurrentData.payload.total_classes   = classDates.length;
-    // Compute final prices (total / student / uitpas) from duration tier × actual class count
-    const sem      = cwcGetActiveSemester();
+
+    // Per-day breakdown for the payload
+    const perDayData = {};
+    document.querySelectorAll('#cwc-schedule-container .cwc-day-section').forEach(section => {
+      const day = section.dataset.day;
+      const dayChips = section.querySelectorAll('.cwc-date-chip');
+      const dayDates = [];
+      dayChips.forEach(c => { if (!c.classList.contains('excluded')) dayDates.push(c.dataset.date); });
+      perDayData[day] = { dates: dayDates, count: dayDates.length };
+    });
+    cwcCurrentData.payload.per_day_dates = perDayData;
+
+    // Compute final prices — sum across all days
+    const sem  = cwcGetActiveSemester();
+    const base = sem ? sem.sessions : 16;
+    let pTotal = 0, pStudent = 0;
+    // Use first day's duration for overall pricing (all days same style = same duration)
     const durMins  = cwcGetDurationMins(cwcCurrentData.levels);
     const tier     = cwcGetPriceTier(durMins, sem ? sem.prices : {}) || { total: 198, student: 175 };
-    const base     = sem ? sem.sessions : 16;
-    const pTotal   = Math.round(tier.total   / base * classDates.length);
-    const pStudent = Math.ceil( tier.student / base * classDates.length);
-    const pUitpas  = parseFloat((pTotal * 0.2).toFixed(2)); // 20% of total (80% discount)
+    pTotal   = Math.round(tier.total   / base * classDates.length);
+    pStudent = tier.student ? Math.ceil(tier.student / base * classDates.length) : null;
+    const pUitpas  = parseFloat((pTotal * 0.2).toFixed(2));
     cwcCurrentData.payload.price_total    = pTotal;
     cwcCurrentData.payload.price_student  = pStudent;
     cwcCurrentData.payload.price_uitpas   = pUitpas;
@@ -3809,7 +3957,6 @@ function setLang(lang) {
   const confirmScreen = document.getElementById('screen-confirm-wc');
   if (confirmScreen && confirmScreen.style.display !== 'none' && cwcCurrentData) {
     cwcBuildDateGrid(cwcCurrentData.style, cwcCurrentData.levels);
-    cwcUpdatePriceSummary();
   }
 }
 
@@ -4355,7 +4502,11 @@ function formatFestival(fd) {
 }
 
 // ─── UI HELPERS ──────────────────────────────────────────────────────
-function showScreen(name) {
+// ── Screen navigation with browser back button support ──
+let _currentScreen = 'type';
+let _pushingState  = false; // prevent re-entrant pushState
+
+function showScreen(name, fromPopState) {
   ['type','input','weekly','workshop','loading','review','success','confirm-wc','confirm-ws','social','confirm-ss'].forEach(s => {
     const el = document.getElementById('screen-'+s);
     if (el) el.style.display = s === name ? '' : 'none';
@@ -4364,7 +4515,30 @@ function showScreen(name) {
   // Show/hide home button — hide it only on the type screen
   const homeBtn = document.getElementById('hdr-home-btn');
   if (homeBtn) homeBtn.style.display = (name === 'type') ? 'none' : '';
+
+  // Push browser history state so back button navigates form steps
+  if (!fromPopState && name !== _currentScreen) {
+    try {
+      history.pushState({ screen: name }, '', '');
+    } catch (e) {}
+  }
+  _currentScreen = name;
+  // Scroll to top on screen change
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// Handle browser back button
+window.addEventListener('popstate', function (e) {
+  if (e.state && e.state.screen) {
+    showScreen(e.state.screen, true);
+  } else {
+    // No state — show the type selection screen (form home)
+    showScreen('type', true);
+  }
+});
+
+// Set initial state so first back press doesn't leave the page
+try { history.replaceState({ screen: 'type' }, '', ''); } catch(e) {}
 
 // ─── HEADER NAV ──────────────────────────────────────────────────────
 function navGoHome() {
@@ -4380,14 +4554,9 @@ function navGoProfile() {
     }
     return;
   }
-  // Not logged in — scroll to login panel and open drawer
-  const panel = document.getElementById('shoonya-login-panel');
-  if (panel) {
-    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setTimeout(function () {
-      var d = document.getElementById('slp-drawer');
-      if (d && !d.classList.contains('open')) slpToggleDrawer();
-    }, 400);
+  // Not logged in — open login modal
+  if (typeof slpOpenModal === 'function') {
+    slpOpenModal();
   } else {
     window.location.href = '../profile.html';
   }

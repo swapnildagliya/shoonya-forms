@@ -1,5 +1,5 @@
 // ============================================================
-// SHOONYA — Teacher Login Panel
+// SHOONYA — Teacher Login Panel (Modal Overlay)
 // Inject this on every form with: <script src="../login-panel.js"></script>
 // Depends on: config.js (APPS_SCRIPT_URL)
 // ============================================================
@@ -50,7 +50,6 @@
     const first = parts[0] || '';
     const last  = parts.slice(1).join(' ') || '';
 
-    // Handle both naming conventions (firstName vs first-name)
     fill('firstName',    first);
     fill('first-name',   first);
     fill('lastName',     last);
@@ -59,13 +58,11 @@
     fill('display-name', profile.name || '');
     fill('email',        profile.email || '');
 
-    // Smart-form: hook into its remember-me row
     const remName = document.getElementById('remembered-name');
     const remRow  = document.getElementById('remember-row');
     if (remName) remName.textContent = first;
     if (remRow)  remRow.style.display = '';
 
-    // Let forms do extra work if needed
     window.dispatchEvent(new CustomEvent('shoonya:login', { detail: profile }));
   }
 
@@ -83,10 +80,11 @@
     return JSON.parse(match[0]);
   }
 
-  // ── Render panel ─────────────────────────────────────────
-  function renderPanel() {
-    const style = `
-<style>
+  // ── Inject styles ────────────────────────────────────────
+  function injectStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+/* ── Login Status Bar (slim top bar) ── */
 #shoonya-login-panel {
   position: relative;
   z-index: 100;
@@ -102,15 +100,10 @@
   padding: 9px 16px;
   gap: 10px;
   flex-wrap: wrap;
-  cursor: pointer;
-  user-select: none;
 }
 #slp-bar .slp-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  color: #1a1a1a;
+  display: flex; align-items: center; gap: 8px;
+  font-weight: 600; color: #1a1a1a;
 }
 #slp-bar .slp-avatar {
   width: 28px; height: 28px;
@@ -125,28 +118,16 @@
   color: #888; font-size: 0.78rem;
 }
 #slp-bar .slp-logout {
-  color: #6B3FA0;
-  cursor: pointer;
-  font-weight: 700;
-  text-decoration: underline;
-  font-size: 0.78rem;
+  color: #6B3FA0; cursor: pointer; font-weight: 700;
+  text-decoration: underline; font-size: 0.78rem;
   background: none; border: none; padding: 0;
 }
-#slp-bar .slp-chevron {
-  font-size: 0.7rem;
-  color: #aaa;
-  transition: transform 0.2s;
-}
-#slp-bar.open .slp-chevron { transform: rotate(180deg); }
 
-/* Collapsed login prompt */
+/* ── NOT LOGGED IN prompt bar ── */
 #slp-prompt {
-  display: flex;
-  align-items: center;
+  display: flex; align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
-  gap: 10px;
-  cursor: pointer;
+  padding: 8px 16px; gap: 10px; cursor: pointer;
 }
 #slp-prompt .slp-prompt-text { color: #888; font-size: 0.82rem; }
 #slp-prompt .slp-prompt-link {
@@ -154,55 +135,98 @@
   white-space: nowrap;
 }
 
-/* Expanded drawer */
-#slp-drawer {
-  padding: 14px 16px 16px;
-  border-top: 1px solid #f0ebff;
-  background: #faf7ff;
+/* ── Modal Overlay ── */
+#slp-modal-overlay {
   display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  animation: slp-fade-in 0.2s ease;
 }
-#slp-drawer.open { display: block; }
+#slp-modal-overlay.open { display: flex; }
 
-.slp-form-row {
-  display: flex; gap: 8px; align-items: flex-end;
-  flex-wrap: wrap;
+@keyframes slp-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
-.slp-field { flex: 1; min-width: 130px; }
-.slp-field label {
+
+#slp-modal {
+  background: #fff;
+  border-radius: 14px;
+  padding: 28px 24px 24px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  position: relative;
+  animation: slp-slide-up 0.25s ease;
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+}
+@keyframes slp-slide-up {
+  from { transform: translateY(30px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+#slp-modal .slp-modal-close {
+  position: absolute;
+  top: 12px; right: 14px;
+  background: none; border: none;
+  font-size: 1.3rem; color: #999;
+  cursor: pointer; line-height: 1;
+  padding: 4px;
+}
+#slp-modal .slp-modal-close:hover { color: #333; }
+
+#slp-modal .slp-modal-title {
+  font-size: 1.1rem; font-weight: 800;
+  color: #1a1a1a; margin-bottom: 4px;
+}
+#slp-modal .slp-modal-sub {
+  font-size: 0.82rem; color: #888; margin-bottom: 18px;
+}
+
+.slp-modal-field { margin-bottom: 14px; }
+.slp-modal-field label {
   display: block;
-  font-size: 0.7rem; font-weight: 700;
+  font-size: 0.72rem; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.05em;
-  color: #888; margin-bottom: 4px;
+  color: #888; margin-bottom: 5px;
 }
-.slp-field input {
+.slp-modal-field input {
   width: 100%;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border: 1.5px solid #e0e0e0;
-  border-radius: 7px;
-  font-size: 0.88rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
   font-family: inherit;
   color: #1a1a1a;
+  box-sizing: border-box;
   -webkit-appearance: none;
 }
-.slp-field input:focus { outline: none; border-color: #6B3FA0; }
+.slp-modal-field input:focus { outline: none; border-color: #6B3FA0; }
+
 .slp-btn-login {
-  padding: 8px 16px;
+  width: 100%;
+  padding: 11px 16px;
   background: #6B3FA0;
   color: #fff;
-  border: none; border-radius: 7px;
-  font-size: 0.85rem; font-weight: 800;
-  cursor: pointer; white-space: nowrap;
+  border: none; border-radius: 8px;
+  font-size: 0.9rem; font-weight: 800;
+  cursor: pointer;
   transition: background 0.2s;
-  align-self: flex-end;
+  margin-top: 4px;
 }
 .slp-btn-login:hover:not(:disabled) { background: #5a3388; }
 .slp-btn-login:disabled { opacity: 0.5; cursor: default; }
 
-.slp-links {
-  display: flex; gap: 12px; margin-top: 10px;
-  font-size: 0.78rem; flex-wrap: wrap;
+.slp-modal-links {
+  display: flex; gap: 14px; margin-top: 14px;
+  font-size: 0.8rem; flex-wrap: wrap;
+  justify-content: center;
 }
-.slp-links a {
+.slp-modal-links a {
   color: #6B3FA0; cursor: pointer; text-decoration: underline;
 }
 
@@ -218,10 +242,10 @@
 .slp-msg.info    { background: #f0ebff; color: #6B3FA0; display: block; }
 
 /* Forgot PIN sub-form */
-#slp-forgot { display: none; margin-top: 12px; }
+#slp-forgot { display: none; margin-top: 14px; }
 #slp-forgot.open { display: block; }
 .slp-forgot-title {
-  font-size: 0.78rem; font-weight: 700; color: #555; margin-bottom: 8px;
+  font-size: 0.8rem; font-weight: 700; color: #555; margin-bottom: 10px;
 }
 .slp-spinner {
   display: inline-block;
@@ -233,125 +257,143 @@
   vertical-align: middle; margin-right: 4px;
 }
 @keyframes slp-spin { to { transform: rotate(360deg); } }
-</style>`;
+`;
+    document.head.appendChild(style);
+  }
 
-    const loggedOutHTML = `
-<div id="slp-prompt" onclick="slpToggleDrawer()">
+  // ── Render ────────────────────────────────────────────────
+  function renderPanel() {
+    injectStyles();
+
+    // Build the top bar (status only — no drawer)
+    const panel = document.createElement('div');
+    panel.id = 'shoonya-login-panel';
+
+    const session = loadSession();
+    if (session && session.profile) {
+      currentProfile = session.profile;
+      currentPin     = session.pin;
+      panel.innerHTML = loggedInBarHTML(session.profile);
+    } else {
+      panel.innerHTML = `
+<div id="slp-prompt" onclick="slpOpenModal()">
   <span class="slp-prompt-text">👤 Teacher? Log in to pre-fill your details.</span>
-  <span class="slp-prompt-link">Log in ↓</span>
-</div>
-<div id="slp-drawer">
-  <div class="slp-form-row">
-    <div class="slp-field">
-      <label>Email</label>
-      <input type="email" id="slp-email" placeholder="your@email.com" autocomplete="email">
-    </div>
-    <div class="slp-field">
-      <label>PIN</label>
-      <input type="password" id="slp-pin" placeholder="••••"
-        inputmode="numeric" maxlength="6"
-        onkeydown="if(event.key==='Enter')slpLogin()">
-    </div>
-    <button class="slp-btn-login" id="slp-login-btn" onclick="slpLogin()">Log in</button>
+  <span class="slp-prompt-link">Log in →</span>
+</div>`;
+    }
+
+    document.body.insertBefore(panel, document.body.firstChild);
+
+    // Build the modal (always present, hidden by default)
+    const overlay = document.createElement('div');
+    overlay.id = 'slp-modal-overlay';
+    overlay.innerHTML = `
+<div id="slp-modal">
+  <button class="slp-modal-close" onclick="slpCloseModal()">&times;</button>
+  <div class="slp-modal-title">Teacher Login</div>
+  <div class="slp-modal-sub">Log in to pre-fill your details and track submissions.</div>
+
+  <div class="slp-modal-field">
+    <label>Email</label>
+    <input type="email" id="slp-email" placeholder="your@email.com" autocomplete="email">
   </div>
+  <div class="slp-modal-field">
+    <label>PIN</label>
+    <input type="password" id="slp-pin" placeholder="••••"
+      inputmode="numeric" maxlength="6"
+      onkeydown="if(event.key==='Enter')slpLogin()">
+  </div>
+  <button class="slp-btn-login" id="slp-login-btn" onclick="slpLogin()">Log in</button>
+
   <div class="slp-msg" id="slp-msg"></div>
-  <div class="slp-links">
+
+  <div class="slp-modal-links">
     <a onclick="slpToggleForgot()">Forgot PIN?</a>
     <a href="../register.html">New here? Register →</a>
   </div>
+
   <div id="slp-forgot">
     <div class="slp-forgot-title">Reset PIN — we'll email you a code</div>
-    <div class="slp-form-row">
-      <div class="slp-field">
-        <label>Email</label>
-        <input type="email" id="slp-reset-email" placeholder="your@email.com">
-      </div>
-      <button class="slp-btn-login" onclick="slpRequestCode()">Send Code</button>
+    <div class="slp-modal-field">
+      <label>Email</label>
+      <input type="email" id="slp-reset-email" placeholder="your@email.com">
     </div>
-    <div id="slp-reset-step2" style="display:none; margin-top:10px;">
-      <div class="slp-form-row">
-        <div class="slp-field">
-          <label>Code (from email)</label>
-          <input type="number" id="slp-reset-code" placeholder="123456" maxlength="6">
-        </div>
-        <div class="slp-field">
-          <label>New PIN</label>
-          <input type="password" id="slp-new-pin" placeholder="••••"
-            inputmode="numeric" maxlength="6">
-        </div>
-        <button class="slp-btn-login" onclick="slpResetPin()">Set PIN</button>
+    <button class="slp-btn-login" onclick="slpRequestCode()" style="margin-top:8px;">Send Code</button>
+    <div id="slp-reset-step2" style="display:none; margin-top:12px;">
+      <div class="slp-modal-field">
+        <label>Code (from email)</label>
+        <input type="number" id="slp-reset-code" placeholder="123456" maxlength="6">
       </div>
+      <div class="slp-modal-field">
+        <label>New PIN</label>
+        <input type="password" id="slp-new-pin" placeholder="••••"
+          inputmode="numeric" maxlength="6">
+      </div>
+      <button class="slp-btn-login" onclick="slpResetPin()">Set PIN</button>
     </div>
     <div class="slp-msg" id="slp-reset-msg"></div>
   </div>
 </div>`;
 
-    function loggedInHTML(profile) {
-      const initials = (profile.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
-      const firstName = (profile.name || '').split(' ')[0];
-      return `
-<div id="slp-bar" onclick="slpToggleDrawer()">
+    // Close on overlay click (not on modal itself)
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) slpCloseModal();
+    });
+
+    document.body.appendChild(overlay);
+
+    // If already logged in, prefill
+    if (currentProfile) {
+      setTimeout(() => prefillForm(currentProfile), 50);
+    }
+  }
+
+  function loggedInBarHTML(profile) {
+    const initials = (profile.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+    const firstName = (profile.name || '').split(' ')[0];
+    return `
+<div id="slp-bar">
   <div class="slp-left">
     <div class="slp-avatar">${initials}</div>
     <span>Hi, ${firstName}</span>
   </div>
   <div class="slp-right">
     <span>Logged in</span>
-    <button class="slp-logout" onclick="event.stopPropagation();slpLogout()">Log out</button>
-    <span class="slp-chevron">▼</span>
-  </div>
-</div>
-<div id="slp-drawer">
-  <div style="font-size:0.8rem;color:#555;margin-bottom:10px;">
-    ${profile.dance_styles || ''}<br>
-    <a href="../profile.html" style="color:#6B3FA0;font-weight:700;">View / edit my profile →</a>
+    <button class="slp-logout" onclick="slpLogout()">Log out</button>
   </div>
 </div>`;
-    }
-
-    // Build and inject
-    const panel = document.createElement('div');
-    panel.id = 'shoonya-login-panel';
-    panel.innerHTML = style;
-
-    const session = loadSession();
-    if (session && session.profile) {
-      currentProfile = session.profile;
-      currentPin     = session.pin;
-      panel.innerHTML += loggedInHTML(session.profile);
-    } else {
-      panel.innerHTML += loggedOutHTML;
-    }
-
-    // Inject at top of body
-    document.body.insertBefore(panel, document.body.firstChild);
-
-    // If already logged in, prefill
-    if (currentProfile) {
-      // Wait for DOM to settle
-      setTimeout(() => prefillForm(currentProfile), 50);
-    }
-
-    // Expose loggedInHTML for re-render after login
-    window._slpLoggedInHTML = loggedInHTML;
   }
 
-  // ── Panel interactions ──────────────────────────────────
+  // ── Modal open/close ──────────────────────────────────────
 
-  window.slpToggleDrawer = function () {
-    const drawer = document.getElementById('slp-drawer');
-    const bar    = document.getElementById('slp-bar');
-    if (!drawer) return;
-    const isOpen = drawer.classList.contains('open');
-    drawer.classList.toggle('open', !isOpen);
-    if (bar) bar.classList.toggle('open', !isOpen);
+  window.slpOpenModal = function () {
+    const overlay = document.getElementById('slp-modal-overlay');
+    if (overlay) {
+      overlay.classList.add('open');
+      // Focus email field
+      setTimeout(() => {
+        const emailField = document.getElementById('slp-email');
+        if (emailField) emailField.focus();
+      }, 100);
+    }
   };
+
+  window.slpCloseModal = function () {
+    const overlay = document.getElementById('slp-modal-overlay');
+    if (overlay) overlay.classList.remove('open');
+  };
+
+  // Legacy: slpToggleDrawer now opens the modal
+  window.slpToggleDrawer = function () {
+    slpOpenModal();
+  };
+
+  // ── Login ─────────────────────────────────────────────────
 
   window.slpLogin = async function () {
     const email = (document.getElementById('slp-email')?.value || '').trim().toLowerCase();
     const pin   = (document.getElementById('slp-pin')?.value || '').trim();
     const btn   = document.getElementById('slp-login-btn');
-    const msg   = document.getElementById('slp-msg');
 
     if (!email) return slpMsg('slp-msg', 'error', 'Please enter your email.');
     if (!pin)   return slpMsg('slp-msg', 'error', 'Please enter your PIN.');
@@ -364,10 +406,12 @@
       const result = await appsPost({ action: 'login', email, pin });
       if (result.ok) {
         saveSession(result.profile, pin);
-        // Re-render panel as logged-in
+        // Update the top bar to show logged-in state
         const panel = document.getElementById('shoonya-login-panel');
-        const style = panel.querySelector('style').outerHTML;
-        panel.innerHTML = style + window._slpLoggedInHTML(result.profile);
+        panel.innerHTML = loggedInBarHTML(result.profile);
+        // Close modal
+        slpCloseModal();
+        // Prefill form
         prefillForm(result.profile);
       } else {
         slpMsg('slp-msg', 'error', result.error || 'Login failed. Please try again.');
@@ -391,7 +435,6 @@
     if (!el) return;
     const isOpen = el.classList.contains('open');
     el.classList.toggle('open', !isOpen);
-    // Pre-fill reset email from login email
     const loginEmail = document.getElementById('slp-email')?.value;
     if (loginEmail) {
       const resetEl = document.getElementById('slp-reset-email');
@@ -432,7 +475,6 @@
         slpMsg('slp-reset-msg', 'success', 'PIN updated! You can now log in.');
         document.getElementById('slp-forgot').classList.remove('open');
         document.getElementById('slp-reset-step2').style.display = 'none';
-        // Pre-fill the login fields
         const emailEl = document.getElementById('slp-email');
         if (emailEl) emailEl.value = email;
       } else {
