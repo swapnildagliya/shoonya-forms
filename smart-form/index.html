@@ -1845,8 +1845,10 @@ const WC_KNOWN_SCHEDULES_BY_NAME = {
   'shirley de muer': {
     'Ballet': [
       { level: 'Foundation', slots: [{ day: 'Friday', start: '18:30', end: '20:00' }] },
-      { level: 'Open Level', slots: [{ day: 'Friday', start: '20:00', end: '21:30' }] },
-      { level: 'Pointes',    slots: [{ day: 'Friday', start: '21:30', end: '22:00' }] }
+      { level: 'Open Level', slots: [{ day: 'Friday', start: '20:00', end: '21:30' }] }
+    ],
+    'Ballet Pointes': [
+      { level: 'Open Level', slots: [{ day: 'Friday', start: '21:30', end: '22:00' }] }
     ]
   },
 
@@ -2171,6 +2173,7 @@ const CLASS_META_BY_NAME = {
   },
   'shirley de muer': {
     'Ballet': { age:'12+', partner:false, co:'', prereq:'Foundations: No experience needed. Open Level: Some prior ballet experience or graduation from Foundations.', bring:'Ballet shoes or comfortable socks. Fitted clothing that allows freedom of movement.' },
+    'Ballet Pointes': { age:'12+', partner:false, co:'', prereq:'Must be enrolled in Ballet Open Level simultaneously. Advanced dancers only.', bring:'Pointe shoes. Must have prior approval from teacher.' },
   },
   'lut vermeulen': {
     'Tap Dance': { age:'12+', partner:false, co:'', prereq:'L1: No experience. Each level requires completion of the previous.', bring:'Tap shoes required. Free tap shoes provided for L1 beginners for the full first year.' },
@@ -2218,7 +2221,7 @@ const CLASS_META_BY_NAME = {
   },
 };
 
-const WC_LEVELS = ['Foundation','Level 1','Level 2','Level 3','Level 4','Level 5','Level 6','Level 7','Open Level','Pointes'];
+const WC_LEVELS = ['Foundation','Level 1','Level 2','Level 3','Level 4','Level 5','Level 6','Level 7','Open Level'];
 const WC_DAYS   = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
 // All dance styles offered at Shoonya (used as fallback when profile has none)
