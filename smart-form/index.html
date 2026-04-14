@@ -394,6 +394,13 @@
         <div class="card-title" data-lbl="wc-pick-style-title">Weekly Class — Pick a Style</div>
         <div class="wc-section-label" data-lbl="wc-which-style">Which style are you submitting?</div>
         <div id="wc-style-chips" class="wc-chips"></div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:8px;">
+          <input type="text" id="wc-style-custom" placeholder="Other style not listed above…"
+            style="font-size:.82rem;padding:7px 10px;border:1.5px solid #ddd;border-radius:6px;flex:1;min-width:0;"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();wcAddCustomStyle();}">
+          <button type="button" class="wc-btn-add-slot" style="margin-top:0;white-space:nowrap;padding:6px 14px;font-size:.82rem;"
+            onclick="wcAddCustomStyle()">+ Add</button>
+        </div>
         <div class="err-box" id="err-wc-style" style="margin-top:10px;"></div>
       </div>
 
@@ -1000,12 +1007,13 @@
           <div class="wc-section-label" style="margin-bottom:8px;">Dance style(s)</div>
           <div class="wc-chips" id="ss-style-chips" style="flex-wrap:wrap;margin-bottom:8px;"></div>
           <div style="display:flex;gap:6px;align-items:center;">
-            <input type="text" id="ss-style-custom" placeholder="Add another style…"
-              style="font-size:.82rem;padding:5px 8px;border:1.5px solid #ddd;border-radius:6px;flex:1;"
+            <input type="text" id="ss-style-custom" placeholder="Type a style name, then press Add →"
+              style="font-size:.82rem;padding:7px 10px;border:1.5px solid #ddd;border-radius:6px;flex:1;min-width:0;"
               onkeydown="if(event.key==='Enter'){event.preventDefault();ssAddCustomStyle();}">
-            <button type="button" class="wc-btn-add-slot" style="margin-top:0;white-space:nowrap;padding:6px 12px;"
+            <button type="button" class="wc-btn-add-slot" style="margin-top:0;white-space:nowrap;padding:6px 14px;font-size:.82rem;"
               onclick="ssAddCustomStyle()">+ Add</button>
           </div>
+          <div id="ss-style-hint" style="font-size:.72rem;color:#e74c3c;margin-top:3px;display:none;">Type a style name first, then click + Add</div>
         </div>
 
         <!-- Title (auto-suggested) -->
@@ -1837,7 +1845,8 @@ const WC_KNOWN_SCHEDULES_BY_NAME = {
   'shirley de muer': {
     'Ballet': [
       { level: 'Foundation', slots: [{ day: 'Friday', start: '18:30', end: '20:00' }] },
-      { level: 'Open Level', slots: [{ day: 'Friday', start: '20:00', end: '21:30' }] }
+      { level: 'Open Level', slots: [{ day: 'Friday', start: '20:00', end: '21:30' }] },
+      { level: 'Pointes',    slots: [{ day: 'Friday', start: '21:30', end: '22:00' }] }
     ]
   },
 
@@ -1852,6 +1861,27 @@ const WC_KNOWN_SCHEDULES_BY_NAME = {
       { level: 'Level 4', slots: [{ day: 'Thursday',  start: '18:30', end: '19:40' }] },
       { level: 'Level 5', slots: [{ day: 'Thursday',  start: '19:45', end: '20:55' }] },
       { level: 'Level 6', slots: [{ day: 'Thursday',  start: '21:00', end: '22:10' }] }
+    ]
+  },
+
+  // ── Tap Dance assistant teachers ────────────────────────────────────
+  'jordan': {
+    'Tap Dance': [
+      { level: 'Level 1', slots: [{ day: 'Monday', start: '19:20', end: '20:30' }] }
+    ]
+  },
+  'teddy': {
+    'Tap Dance': [
+      { level: 'Level 1', slots: [{ day: 'Wednesday', start: '21:00', end: '22:10' }] },
+      { level: 'Level 2', slots: [{ day: 'Wednesday', start: '18:30', end: '19:40' }] },
+      { level: 'Level 3', slots: [{ day: 'Wednesday', start: '19:45', end: '20:55' }] }
+    ]
+  },
+  'alexandre': {
+    'Tap Dance': [
+      { level: 'Level 4', slots: [{ day: 'Thursday', start: '18:30', end: '19:40' }] },
+      { level: 'Level 5', slots: [{ day: 'Thursday', start: '19:45', end: '20:55' }] },
+      { level: 'Level 6', slots: [{ day: 'Thursday', start: '21:00', end: '22:10' }] }
     ]
   },
 
@@ -2177,9 +2207,18 @@ const CLASS_META_BY_NAME = {
     'African Congolese Dance': { age:'12+', partner:false, co:'', prereq:'Beginners and intermediate dancers welcome. No experience needed.', bring:'Comfortable clothes, bare feet or clean non-marking indoor shoes.' },
     'Congolese Rumba':         { age:'12+', partner:true,  co:'', prereq:'Beginners welcome.', bring:'Comfortable clothes, bare feet or clean non-marking indoor shoes.' },
   },
+  'jordan': {
+    'Tap Dance': { age:'12+', partner:false, co:'', prereq:'L1: No experience. Each level requires completion of the previous.', bring:'Tap shoes required. Free tap shoes provided for L1 beginners for the full first year.' },
+  },
+  'teddy': {
+    'Tap Dance': { age:'12+', partner:false, co:'', prereq:'L1: No experience. Each level requires completion of the previous.', bring:'Tap shoes required. Free tap shoes provided for L1 beginners for the full first year.' },
+  },
+  'alexandre': {
+    'Tap Dance': { age:'12+', partner:false, co:'', prereq:'L1: No experience. Each level requires completion of the previous.', bring:'Tap shoes required. Free tap shoes provided for L1 beginners for the full first year.' },
+  },
 };
 
-const WC_LEVELS = ['Foundation','Level 1','Level 2','Level 3','Level 4','Level 5','Level 6','Level 7','Open Level'];
+const WC_LEVELS = ['Foundation','Level 1','Level 2','Level 3','Level 4','Level 5','Level 6','Level 7','Open Level','Pointes'];
 const WC_DAYS   = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
 // All dance styles offered at Shoonya (used as fallback when profile has none)
@@ -2214,6 +2253,16 @@ const COTEACHER_OPTIONS = [
   'Kitty (Krisztina)',
   'Nathalie El Ghoul',
 ];
+
+// Reverse lookup: style → list of teacher names who teach it (from CLASS_META_BY_NAME)
+const WC_TEACHERS_BY_STYLE = {};
+Object.entries(CLASS_META_BY_NAME).forEach(([nameKey, styles]) => {
+  const displayName = COTEACHER_OPTIONS.find(n => n.toLowerCase() === nameKey) || nameKey;
+  Object.keys(styles).forEach(style => {
+    if (!WC_TEACHERS_BY_STYLE[style]) WC_TEACHERS_BY_STYLE[style] = [];
+    if (!WC_TEACHERS_BY_STYLE[style].includes(displayName)) WC_TEACHERS_BY_STYLE[style].push(displayName);
+  });
+});
 
 // ─── SEMESTER CONFIG ─────────────────────────────────────────────────
 // Swapnil: change `active` to switch which semester the form uses.
@@ -2353,6 +2402,22 @@ function wcShowStyleStep() {
   });
 }
 
+function wcAddCustomStyle() {
+  const input = document.getElementById('wc-style-custom');
+  const val = input.value.trim();
+  if (!val) { input.focus(); return; }
+  // Add as a chip and auto-select it
+  const chips = document.getElementById('wc-style-chips');
+  const btn = document.createElement('button');
+  btn.className = 'wc-chip';
+  btn.textContent = val;
+  btn.onclick = () => wcSelectStyle(val, btn);
+  chips.appendChild(btn);
+  input.value = '';
+  // Auto-select the newly added style
+  wcSelectStyle(val, btn);
+}
+
 function wcSelectStyle(style, btn) {
   wcSelectedStyle = style;
   document.querySelectorAll('#wc-style-chips .wc-chip').forEach(c => c.classList.remove('selected'));
@@ -2437,14 +2502,23 @@ function wcAddLevel(presetLevel, presetSlots) {
     `<option value="${l}" ${l === (presetLevel || 'Level 1') ? 'selected' : ''}>${l}</option>`
   ).join('');
 
-  // Build teacher chip options (pre-select the acting teacher)
+  // Build contextual teacher chips: only teachers known for this style + acting teacher
   const actingName = getActingProfile() ? getActingProfile().name : '';
-  const teacherChips = COTEACHER_OPTIONS.map(name =>
+  const styleTeachers = (wcSelectedStyle && WC_TEACHERS_BY_STYLE[wcSelectedStyle]) || [];
+  // Ensure acting teacher is always in the list
+  const relevantTeachers = [...styleTeachers];
+  if (actingName && !relevantTeachers.includes(actingName)) relevantTeachers.unshift(actingName);
+
+  const teacherChips = relevantTeachers.map(name =>
     `<label class="wc-teacher-chip${name === actingName ? ' selected' : ''}" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;border:1.5px solid #ddd;font-size:.78rem;cursor:pointer;margin:2px;background:${name === actingName ? 'var(--purple)' : '#fff'};color:${name === actingName ? '#fff' : 'var(--dark)'};transition:all .15s;">
       <input type="checkbox" value="${name}" ${name === actingName ? 'checked' : ''} onchange="wcToggleTeacherChip(this)" style="display:none;">
       ${name}
     </label>`
   ).join('');
+
+  // Build "+ Other" dropdown with remaining teachers not already shown
+  const otherTeachers = COTEACHER_OPTIONS.filter(n => !relevantTeachers.includes(n));
+  const otherOpts = otherTeachers.map(n => `<option value="${n}">${n}</option>`).join('');
 
   block.innerHTML = `
     <div class="wc-level-header">
@@ -2453,7 +2527,13 @@ function wcAddLevel(presetLevel, presetSlots) {
     </div>
     <div class="wc-level-teachers" id="wc-teachers-${idx}" style="margin:6px 0 8px;padding:0 4px;">
       <div style="font-size:.72rem;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;">Teacher(s) for this level</div>
-      <div class="wc-teacher-chips" style="display:flex;flex-wrap:wrap;gap:0;">${teacherChips}</div>
+      <div class="wc-teacher-chips" style="display:flex;flex-wrap:wrap;gap:0;align-items:center;">
+        ${teacherChips}
+        <select class="wc-add-other-teacher" onchange="wcAddOtherTeacher(this, ${idx})" style="font-size:.74rem;padding:3px 6px;border:1.5px dashed #ccc;border-radius:999px;background:#fafafa;color:#888;cursor:pointer;margin:2px;appearance:none;-webkit-appearance:none;">
+          <option value="">+ Other</option>
+          ${otherOpts}
+        </select>
+      </div>
     </div>
     <div class="wc-slots-container" id="wc-slots-${idx}"></div>
     <button class="wc-btn-add-slot" onclick="wcAddSlot(${idx})">${t('add-time-slot')}</button>
@@ -2545,6 +2625,21 @@ function wcToggleTeacherChip(checkbox) {
     label.style.background = '#fff';
     label.style.color = 'var(--dark)';
   }
+}
+
+function wcAddOtherTeacher(select, levelIdx) {
+  const name = select.value;
+  if (!name) return;
+  // Remove this option from the dropdown
+  const opt = [...select.options].find(o => o.value === name);
+  if (opt) opt.remove();
+  select.value = '';
+  // Add a new chip before the dropdown
+  const label = document.createElement('label');
+  label.className = 'wc-teacher-chip';
+  label.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;border:1.5px solid #ddd;font-size:.78rem;cursor:pointer;margin:2px;background:#fff;color:var(--dark);transition:all .15s;';
+  label.innerHTML = `<input type="checkbox" value="${name}" onchange="wcToggleTeacherChip(this)" style="display:none;"> ${name}`;
+  select.parentElement.insertBefore(label, select);
 }
 
 function wcCollectData() {
@@ -3622,7 +3717,7 @@ async function cwcNext(action) {
     const style  = cwcCurrentData.style || '';
     const levels = (cwcCurrentData.levels || []).map(l => l.level).join(', ');
     const teacher = getActingProfile() ? getActingProfile().name : '';
-    if (!confirm(`Submit "${style}" (${levels}) for ${teacher || 'you'}?\n\nThis will be recorded as a final submission.`)) return;
+    if (!confirm(`Submit "${style}" (${levels}) for ${teacher || 'you'}?\n\nIf you already submitted this style, your previous entry will be updated with these new details.`)) return;
   }
 
   // Finalise the payload with dates, pricing + description before submitting
@@ -5475,8 +5570,14 @@ function ssSuggestTitle() {
 
 function ssAddCustomStyle() {
   const input = document.getElementById('ss-style-custom');
+  const hint  = document.getElementById('ss-style-hint');
   const val   = input.value.trim();
-  if (!val) return;
+  if (!val) {
+    if (hint) { hint.style.display = ''; setTimeout(() => hint.style.display = 'none', 2500); }
+    input.focus();
+    return;
+  }
+  if (hint) hint.style.display = 'none';
   // Avoid duplicates (case-insensitive)
   if (ssSelectedStyles.map(s => s.toLowerCase()).includes(val.toLowerCase())) {
     input.value = ''; return;
