@@ -2175,7 +2175,9 @@ function wcShowStyleStep() {
   chips.innerHTML = '';
   wcSelectedStyle = null;
 
-  const styles = getActingProfile() ? parseDanceStyles(getActingProfile().dance_styles || '') : [];
+  const profileStyles = getActingProfile() ? parseDanceStyles(getActingProfile().dance_styles || '') : [];
+  // Admin mode: if teacher has no styles in profile, show all available styles
+  const styles = profileStyles.length > 0 ? profileStyles : (adminActingAs ? WC_STYLES : []);
 
   if (styles.length === 0) {
     chips.innerHTML = '<div style="font-size:.82rem;color:#888;">No styles found in your profile. <a href="../profile.html" style="color:var(--purple)">Add styles →</a></div>';
