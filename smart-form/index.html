@@ -134,11 +134,11 @@
   .wc-btn-remove { background:none; border:none; color:#bbb; font-size:1rem; cursor:pointer; padding:2px 6px; border-radius:4px; transition:color .15s; }
   .wc-btn-remove:hover { color:var(--red); }
 
-  .wc-slot { margin-bottom:10px; padding:8px 10px; border:1px solid #eee; border-radius:8px; background:#fafafa; }
-  .wc-slot > div:first-child { display:grid; grid-template-columns:130px 1fr auto 1fr auto; align-items:center; gap:8px; }
-  .wc-slot select, .wc-slot input[type=time] { padding:7px 10px; border:1.5px solid var(--border); border-radius:6px; font-size:.86rem; width:100%; }
+  .wc-slot { display:grid; grid-template-columns:110px 1fr auto 1fr 130px auto; align-items:center; gap:6px; margin-bottom:8px; padding:7px 10px; border:1px solid #eee; border-radius:8px; background:#fafafa; }
+  .wc-slot select, .wc-slot input[type=time] { padding:6px 8px; border:1.5px solid var(--border); border-radius:6px; font-size:.82rem; width:100%; }
   .wc-slot select:focus, .wc-slot input[type=time]:focus { outline:none; border-color:var(--purple); }
   .wc-slot .wc-arrow { color:#aaa; font-size:.9rem; text-align:center; }
+  .wc-slot .wc-slot-teacher { font-size:.76rem !important; padding:5px 6px !important; }
 
   .wc-btn-add-slot { background:none; border:1.5px dashed #ccc; border-radius:6px; padding:6px 14px; font-size:.78rem; font-weight:700; color:#888; cursor:pointer; width:100%; margin-top:4px; transition:all .15s; }
   .wc-btn-add-slot:hover { border-color:var(--purple); color:var(--purple); }
@@ -149,7 +149,7 @@
   .wc-divider { border:none; border-top:1.5px solid var(--border); margin:18px 0; }
 
   @media(max-width:520px) {
-    .wc-slot > div:first-child { grid-template-columns:1fr 1fr auto 1fr auto; }
+    .wc-slot { grid-template-columns:90px 1fr auto 1fr 100px auto; gap:4px; padding:6px 8px; }
   }
 
   /* ── REVIEW: SUMMARY + MISSING FIELDS ── */
@@ -2614,17 +2614,12 @@ function wcAddSlot(levelIdx, presetDay, presetStart, presetEnd, presetLevel) {
   const teacherOpts = wcBuildSlotTeacherDropdown(defaultTeacher);
 
   slotDiv.innerHTML = `
-    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-      <select class="wc-slot-day">${dayOpts}</select>
-      <input type="time" class="wc-start" oninput="wcAutoFillEnd(this, ${levelIdx})">
-      <span class="wc-arrow">→</span>
-      <input type="time" class="wc-end">
-      <button class="wc-btn-remove" onclick="wcRemoveSlot(this)" title="Remove slot">✕</button>
-    </div>
-    <div style="margin:4px 0 8px;display:flex;align-items:center;gap:6px;">
-      <span style="font-size:.7rem;color:#888;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0;">Teacher:</span>
-      <select class="wc-slot-teacher" style="font-size:.78rem;padding:4px 8px;border:1.5px solid #ddd;border-radius:8px;background:#fff;color:var(--dark);flex:1;max-width:220px;">${teacherOpts}</select>
-    </div>
+    <select class="wc-slot-day">${dayOpts}</select>
+    <input type="time" class="wc-start" oninput="wcAutoFillEnd(this, ${levelIdx})">
+    <span class="wc-arrow">→</span>
+    <input type="time" class="wc-end">
+    <select class="wc-slot-teacher">${teacherOpts}</select>
+    <button class="wc-btn-remove" onclick="wcRemoveSlot(this)" title="Remove slot">✕</button>
   `;
 
   // Set values via JS properties — required for Safari to display them correctly
