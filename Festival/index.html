@@ -129,6 +129,27 @@
 
 <div class="container">
 
+<!-- Login required gate -->
+<div id="festival-login-required" class="card" style="display:none;text-align:center;">
+  <div class="card-title" style="border-bottom:none;">🌟 Festival Submission</div>
+  <p style="font-size:.92rem;color:#555;margin:10px 0 20px;">
+    Festival submissions require a teacher account so we can pre-fill your details and track your events.
+  </p>
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+    <button style="background:var(--purple);color:#fff;border:none;border-radius:8px;font-size:.9rem;font-weight:700;padding:10px 22px;cursor:pointer;"
+      onclick="document.getElementById('shoonya-login-panel').scrollIntoView({behavior:'smooth'}); setTimeout(function(){ var d=document.getElementById('slp-drawer'); if(d && !d.classList.contains('open')) slpToggleDrawer(); }, 400);">
+      Log in ↑
+    </button>
+    <button style="background:#fff;color:var(--purple);border:2px solid var(--purple);border-radius:8px;font-size:.9rem;font-weight:700;padding:10px 22px;cursor:pointer;"
+      onclick="window.location.href='../register.html'">
+      Register →
+    </button>
+  </div>
+</div>
+
+<!-- All form content (hidden until logged in) -->
+<div id="festival-form-content" style="display:none;">
+
 <!-- Admin Panel -->
 <div id="admin-panel">
   <div class="panel-title">⚙ Admin Configuration — Admin Only</div>
@@ -347,6 +368,8 @@
 
   <button class="btn-submit" onclick="submitForm()">Submit Festival →</button>
 
+</div><!-- /festival-form-content -->
+
 </div><!-- /container -->
 
 <!-- Modal -->
@@ -365,6 +388,27 @@
 <script src="../config.js"></script>
 <script src="../login-panel.js"></script>
 <script>
+// ── LOGIN GATE ──────────────────────────────────────────────────────────────
+function setFestivalGate(isLoggedIn) {
+  const gate = document.getElementById('festival-login-required');
+  const form = document.getElementById('festival-form-content');
+  if (!gate || !form) return;
+  gate.style.display = isLoggedIn ? 'none' : '';
+  form.style.display = isLoggedIn ? ''     : 'none';
+}
+
+// Check saved session on load
+(function festivalGateInit() {
+  try {
+    const raw = localStorage.getItem('shoonya_session');
+    const session = raw ? JSON.parse(raw) : null;
+    setFestivalGate(!!(session && session.profile));
+  } catch (e) { setFestivalGate(false); }
+})();
+
+// Login panel fires this event once a user logs in successfully
+window.addEventListener('shoonya:login', () => setFestivalGate(true));
+
 // ── APPS SCRIPT BACKEND ─────────────────────────────────────────────────────
 
 

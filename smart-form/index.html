@@ -511,6 +511,18 @@
   <div id="screen-workshop" style="display:none;">
     <div class="card" id="ws-card">
 
+      <!-- Not logged in -->
+      <div id="ws-login-required" style="display:none;">
+        <div class="card-title">🎓 Workshop</div>
+        <div class="wc-login-prompt">
+          <p>Workshop submissions require a teacher account so we can pre-fill your details and track your events.</p>
+          <div class="wc-login-btns">
+            <button class="wc-login-btn primary" onclick="document.getElementById('shoonya-login-panel').scrollIntoView({behavior:'smooth'}); setTimeout(function(){ var d=document.getElementById('slp-drawer'); if(d && !d.classList.contains('open')) slpToggleDrawer(); }, 400);">Log in ↑</button>
+            <button class="wc-login-btn outline" onclick="window.location.href='../register.html'">Register →</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Step 1 — Format -->
       <div id="ws-step-format">
         <div class="card-title">🎓 Workshop — Format</div>
@@ -922,6 +934,18 @@
   <!-- ── SCREEN: SOCIAL NIGHT ─────────────────────── -->
   <div id="screen-social" style="display:none;">
     <div class="card">
+
+      <!-- Not logged in -->
+      <div id="ss-login-required" style="display:none;">
+        <div class="card-title">🎉 Social Night</div>
+        <div class="wc-login-prompt">
+          <p>Social night submissions require a teacher account so we can pre-fill your details and track your events.</p>
+          <div class="wc-login-btns">
+            <button class="wc-login-btn primary" onclick="document.getElementById('shoonya-login-panel').scrollIntoView({behavior:'smooth'}); setTimeout(function(){ var d=document.getElementById('slp-drawer'); if(d && !d.classList.contains('open')) slpToggleDrawer(); }, 400);">Log in ↑</button>
+            <button class="wc-login-btn outline" onclick="window.location.href='../register.html'">Register →</button>
+          </div>
+        </div>
+      </div>
 
       <!-- Step 1 — Basics -->
       <div id="ss-step-basics">
@@ -3761,10 +3785,26 @@ function selectType(type, cardEl) {
       }
     } else if (type === 'workshop') {
       showScreen('workshop');
-      wsShowFormatStep();
+      if (loggedInProfile) {
+        document.getElementById('ws-login-required').style.display = 'none';
+        wsShowFormatStep();
+      } else {
+        document.getElementById('ws-login-required').style.display = '';
+        document.getElementById('ws-step-format').style.display    = 'none';
+        document.getElementById('ws-step-style').style.display     = 'none';
+        document.getElementById('ws-step-details').style.display   = 'none';
+      }
     } else if (type === 'social-event') {
       showScreen('social');
-      ssShowBasicsStep();
+      if (loggedInProfile) {
+        document.getElementById('ss-login-required').style.display = 'none';
+        ssShowBasicsStep();
+      } else {
+        document.getElementById('ss-login-required').style.display  = '';
+        document.getElementById('ss-step-basics').style.display     = 'none';
+        document.getElementById('ss-step-programme').style.display  = 'none';
+        document.getElementById('ss-step-pricing').style.display    = 'none';
+      }
     } else {
       showScreen('input');
       applyTemplate(type);
@@ -3885,6 +3925,18 @@ function showTeacherProfileCard(profile) {
 // Listen for login event from login-panel.js
 window.addEventListener('shoonya:login', (e) => {
   if (e.detail) showTeacherProfileCard(e.detail);
+  // If the user just logged in while sitting on a gated screen,
+  // re-run the type selection so the proper form appears.
+  if (currentType === 'weekly-class' && document.getElementById('screen-weekly').style.display !== 'none') {
+    document.getElementById('wc-login-required').style.display = 'none';
+    wcShowStyleStep();
+  } else if (currentType === 'workshop' && document.getElementById('screen-workshop').style.display !== 'none') {
+    document.getElementById('ws-login-required').style.display = 'none';
+    wsShowFormatStep();
+  } else if (currentType === 'social-event' && document.getElementById('screen-social').style.display !== 'none') {
+    document.getElementById('ss-login-required').style.display = 'none';
+    ssShowBasicsStep();
+  }
 });
 
 // ─── STARTER TEMPLATE ────────────────────────────────────────────────
