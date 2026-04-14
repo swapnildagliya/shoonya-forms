@@ -2038,6 +2038,12 @@ const CLASS_META_BY_NAME = {
 const WC_LEVELS = ['Foundation','Level 1','Level 2','Level 3','Level 4','Level 5','Level 6','Level 7','Open Level'];
 const WC_DAYS   = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
+// All dance styles offered at Shoonya (used as fallback when profile has none)
+const WC_STYLES = [...new Set([
+  ...Object.keys(CLASS_META).reduce((a, email) => a.concat(Object.keys(CLASS_META[email])), []),
+  ...Object.keys(CLASS_META_BY_NAME).reduce((a, name) => a.concat(Object.keys(CLASS_META_BY_NAME[name])), []),
+])].sort();
+
 // ─── CO-TEACHER OPTIONS ──────────────────────────────────────────────
 const COTEACHER_OPTIONS = [
   'Alex',
@@ -2176,8 +2182,13 @@ function wcShowStyleStep() {
   wcSelectedStyle = null;
 
   const profileStyles = getActingProfile() ? parseDanceStyles(getActingProfile().dance_styles || '') : [];
-  // Admin mode: if teacher has no styles in profile, show all available styles
-  const styles = profileStyles.length > 0 ? profileStyles : (adminActingAs ? WC_STYLES : []);
+  // Admin mode: if teacher has no styles in profile, look up CLASS_META_BY_NAME, then fall back to all styles
+  let styles = profileStyles;
+  if (styles.length === 0 && adminActingAs) {
+    const nameKey = adminActingAs.name.toLowerCase().trim();
+    const metaStyles = CLASS_META_BY_NAME[nameKey] ? Object.keys(CLASS_META_BY_NAME[nameKey]) : [];
+    styles = metaStyles.length > 0 ? metaStyles : WC_STYLES;
+  }
 
   if (styles.length === 0) {
     chips.innerHTML = '<div style="font-size:.82rem;color:#888;">No styles found in your profile. <a href="../profile.html" style="color:var(--purple)">Add styles →</a></div>';
