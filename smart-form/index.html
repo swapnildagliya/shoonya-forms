@@ -134,7 +134,8 @@
   .wc-btn-remove { background:none; border:none; color:#bbb; font-size:1rem; cursor:pointer; padding:2px 6px; border-radius:4px; transition:color .15s; }
   .wc-btn-remove:hover { color:var(--red); }
 
-  .wc-slot { display:grid; grid-template-columns:130px 1fr auto 1fr auto; align-items:center; gap:8px; margin-bottom:8px; }
+  .wc-slot { margin-bottom:10px; padding:8px 10px; border:1px solid #eee; border-radius:8px; background:#fafafa; }
+  .wc-slot > div:first-child { display:grid; grid-template-columns:130px 1fr auto 1fr auto; align-items:center; gap:8px; }
   .wc-slot select, .wc-slot input[type=time] { padding:7px 10px; border:1.5px solid var(--border); border-radius:6px; font-size:.86rem; width:100%; }
   .wc-slot select:focus, .wc-slot input[type=time]:focus { outline:none; border-color:var(--purple); }
   .wc-slot .wc-arrow { color:#aaa; font-size:.9rem; text-align:center; }
@@ -148,7 +149,7 @@
   .wc-divider { border:none; border-top:1.5px solid var(--border); margin:18px 0; }
 
   @media(max-width:520px) {
-    .wc-slot { grid-template-columns:1fr 1fr auto 1fr auto; }
+    .wc-slot > div:first-child { grid-template-columns:1fr 1fr auto 1fr auto; }
   }
 
   /* ── REVIEW: SUMMARY + MISSING FIELDS ── */
@@ -2526,38 +2527,10 @@ function wcAddLevel(presetLevel, presetSlots) {
     `<option value="${l}" ${l === (presetLevel || 'Level 1') ? 'selected' : ''}>${l}</option>`
   ).join('');
 
-  // Build contextual teacher chips: only teachers known for this style + acting teacher
-  const actingName = getActingProfile() ? getActingProfile().name : '';
-  const styleTeachers = (wcSelectedStyle && WC_TEACHERS_BY_STYLE[wcSelectedStyle]) || [];
-  // Ensure acting teacher is always in the list
-  const relevantTeachers = [...styleTeachers];
-  if (actingName && !relevantTeachers.includes(actingName)) relevantTeachers.unshift(actingName);
-
-  const teacherChips = relevantTeachers.map(name =>
-    `<label class="wc-teacher-chip${name === actingName ? ' selected' : ''}" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;border:1.5px solid #ddd;font-size:.78rem;cursor:pointer;margin:2px;background:${name === actingName ? 'var(--purple)' : '#fff'};color:${name === actingName ? '#fff' : 'var(--dark)'};transition:all .15s;">
-      <input type="checkbox" value="${name}" ${name === actingName ? 'checked' : ''} onchange="wcToggleTeacherChip(this)" style="display:none;">
-      ${name}
-    </label>`
-  ).join('');
-
-  // Build "+ Other" dropdown with remaining teachers not already shown
-  const otherTeachers = COTEACHER_OPTIONS.filter(n => !relevantTeachers.includes(n));
-  const otherOpts = otherTeachers.map(n => `<option value="${n}">${n}</option>`).join('');
-
   block.innerHTML = `
     <div class="wc-level-header">
       <select class="wc-level-select" id="wc-level-select-${idx}">${opts}</select>
       <button class="wc-btn-remove" onclick="wcRemoveLevel(this)" title="Remove level">✕</button>
-    </div>
-    <div class="wc-level-teachers" id="wc-teachers-${idx}" style="margin:6px 0 8px;padding:0 4px;">
-      <div style="font-size:.72rem;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em;">Teacher(s) for this level</div>
-      <div class="wc-teacher-chips" style="display:flex;flex-wrap:wrap;gap:0;align-items:center;">
-        ${teacherChips}
-        <select class="wc-add-other-teacher" onchange="wcAddOtherTeacher(this, ${idx})" style="font-size:.74rem;padding:3px 6px;border:1.5px dashed #ccc;border-radius:999px;background:#fafafa;color:#888;cursor:pointer;margin:2px;appearance:none;-webkit-appearance:none;">
-          <option value="">+ Other</option>
-          ${otherOpts}
-        </select>
-      </div>
     </div>
     <div class="wc-slots-container" id="wc-slots-${idx}"></div>
     <button class="wc-btn-add-slot" onclick="wcAddSlot(${idx})">${t('add-time-slot')}</button>
@@ -2566,7 +2539,7 @@ function wcAddLevel(presetLevel, presetSlots) {
 
   // Add preset slots or one empty slot
   if (presetSlots && presetSlots.length > 0) {
-    presetSlots.forEach(s => wcAddSlot(idx, s.day, s.start, s.end));
+    presetSlots.forEach(s => wcAddSlot(idx, s.day, s.start, s.end, presetLevel));
   } else {
     wcAddSlot(idx);
   }
@@ -2578,7 +2551,53 @@ function wcRemoveLevel(btn) {
   block.remove();
 }
 
-function wcAddSlot(levelIdx, presetDay, presetStart, presetEnd) {
+// Find default teacher for a style + level + day combo by checking all WC_KNOWN_SCHEDULES_BY_NAME entries
+function wcFindTeacherForSlot(style, level, day) {
+  const styleLower = (style || '').toLowerCase();
+  const levelLower = (level || '').toLowerCase();
+  const dayLower   = (day || '').toLowerCase();
+  for (const [nameKey, styles] of Object.entries(WC_KNOWN_SCHEDULES_BY_NAME)) {
+    const schedForStyle = styles[style] || styles[styleLower];
+    if (!schedForStyle) continue;
+    for (const lv of schedForStyle) {
+      if ((lv.level || '').toLowerCase() !== levelLower) continue;
+      for (const s of (lv.slots || [])) {
+        if ((s.day || '').toLowerCase() === dayLower) {
+          // Found a match — return display name
+          return COTEACHER_OPTIONS.find(n => n.toLowerCase() === nameKey) || nameKey;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function wcBuildSlotTeacherDropdown(presetTeacher) {
+  const actingName = getActingProfile() ? getActingProfile().name : '';
+  const styleTeachers = (wcSelectedStyle && WC_TEACHERS_BY_STYLE[wcSelectedStyle]) || [];
+  const relevantTeachers = [...styleTeachers];
+  if (actingName && !relevantTeachers.includes(actingName)) relevantTeachers.unshift(actingName);
+  const otherTeachers = COTEACHER_OPTIONS.filter(n => !relevantTeachers.includes(n));
+
+  const selected = presetTeacher || actingName || '';
+  let html = '<option value="">— Teacher —</option>';
+  // Relevant teachers first (grouped)
+  if (relevantTeachers.length) {
+    relevantTeachers.forEach(n => {
+      html += `<option value="${n}" ${n === selected ? 'selected' : ''}>${n}</option>`;
+    });
+  }
+  // Divider + others
+  if (otherTeachers.length) {
+    html += '<option disabled>───────────</option>';
+    otherTeachers.forEach(n => {
+      html += `<option value="${n}" ${n === selected ? 'selected' : ''}>${n}</option>`;
+    });
+  }
+  return html;
+}
+
+function wcAddSlot(levelIdx, presetDay, presetStart, presetEnd, presetLevel) {
   const slotsContainer = document.getElementById('wc-slots-' + levelIdx);
   if (!slotsContainer) return;
 
@@ -2588,16 +2607,28 @@ function wcAddSlot(levelIdx, presetDay, presetStart, presetEnd) {
   // Build day options (no pre-selected in HTML — set via JS below for Safari compat)
   const dayOpts = WC_DAYS.map(d => `<option value="${d}">${d}</option>`).join('');
 
+  // Find default teacher for this specific slot
+  const defaultTeacher = (presetDay && presetLevel)
+    ? wcFindTeacherForSlot(wcSelectedStyle, presetLevel, presetDay)
+    : null;
+  const teacherOpts = wcBuildSlotTeacherDropdown(defaultTeacher);
+
   slotDiv.innerHTML = `
-    <select>${dayOpts}</select>
-    <input type="time" class="wc-start" oninput="wcAutoFillEnd(this, ${levelIdx})">
-    <span class="wc-arrow">→</span>
-    <input type="time" class="wc-end">
-    <button class="wc-btn-remove" onclick="wcRemoveSlot(this)" title="Remove slot">✕</button>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+      <select class="wc-slot-day">${dayOpts}</select>
+      <input type="time" class="wc-start" oninput="wcAutoFillEnd(this, ${levelIdx})">
+      <span class="wc-arrow">→</span>
+      <input type="time" class="wc-end">
+      <button class="wc-btn-remove" onclick="wcRemoveSlot(this)" title="Remove slot">✕</button>
+    </div>
+    <div style="margin:4px 0 8px;display:flex;align-items:center;gap:6px;">
+      <span style="font-size:.7rem;color:#888;text-transform:uppercase;letter-spacing:.04em;flex-shrink:0;">Teacher:</span>
+      <select class="wc-slot-teacher" style="font-size:.78rem;padding:4px 8px;border:1.5px solid #ddd;border-radius:8px;background:#fff;color:var(--dark);flex:1;max-width:220px;">${teacherOpts}</select>
+    </div>
   `;
 
   // Set values via JS properties — required for Safari to display them correctly
-  const daySelect  = slotDiv.querySelector('select');
+  const daySelect  = slotDiv.querySelector('.wc-slot-day');
   const startInput = slotDiv.querySelector('.wc-start');
   const endInput   = slotDiv.querySelector('.wc-end');
 
@@ -2638,33 +2669,7 @@ function wcToggleLang(btn) {
   btn.classList.toggle('selected');
 }
 
-function wcToggleTeacherChip(checkbox) {
-  const label = checkbox.closest('.wc-teacher-chip');
-  if (checkbox.checked) {
-    label.classList.add('selected');
-    label.style.background = 'var(--purple)';
-    label.style.color = '#fff';
-  } else {
-    label.classList.remove('selected');
-    label.style.background = '#fff';
-    label.style.color = 'var(--dark)';
-  }
-}
-
-function wcAddOtherTeacher(select, levelIdx) {
-  const name = select.value;
-  if (!name) return;
-  // Remove this option from the dropdown
-  const opt = [...select.options].find(o => o.value === name);
-  if (opt) opt.remove();
-  select.value = '';
-  // Add a new chip before the dropdown
-  const label = document.createElement('label');
-  label.className = 'wc-teacher-chip';
-  label.style.cssText = 'display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;border:1.5px solid #ddd;font-size:.78rem;cursor:pointer;margin:2px;background:#fff;color:var(--dark);transition:all .15s;';
-  label.innerHTML = `<input type="checkbox" value="${name}" onchange="wcToggleTeacherChip(this)" style="display:none;"> ${name}`;
-  select.parentElement.insertBefore(label, select);
-}
+// (wcToggleTeacherChip and wcAddOtherTeacher removed — teacher is now per-slot dropdown)
 
 function wcCollectData() {
   const levels = [];
@@ -2673,14 +2678,14 @@ function wcCollectData() {
     const levelName = block.querySelector('.wc-level-select').value;
     const slots    = [];
     block.querySelectorAll('.wc-slot').forEach(slot => {
-      const day   = slot.querySelector('select').value;
-      const start = slot.querySelector('.wc-start').value;
-      const end   = slot.querySelector('.wc-end').value;
-      if (day && start && end) slots.push({ day, start, end });
+      const day     = slot.querySelector('.wc-slot-day').value;
+      const start   = slot.querySelector('.wc-start').value;
+      const end     = slot.querySelector('.wc-end').value;
+      const teacher = slot.querySelector('.wc-slot-teacher') ? slot.querySelector('.wc-slot-teacher').value : '';
+      if (day && start && end) slots.push({ day, start, end, teacher });
     });
-    // Collect selected teachers for this level
-    const teachers = Array.from(block.querySelectorAll('.wc-teacher-chip input:checked'))
-      .map(cb => cb.value);
+    // Collect unique teachers across all slots for this level (for backward compat)
+    const teachers = [...new Set(slots.map(s => s.teacher).filter(Boolean))];
     if (slots.length > 0) levels.push({ level: levelName, slots, teachers });
   });
 
@@ -2825,7 +2830,7 @@ function cwcPopulateConfirmation() {
   levels.forEach(lv => {
     (lv.slots || []).forEach(s => {
       if (!dayGroups[s.day]) dayGroups[s.day] = [];
-      dayGroups[s.day].push({ level: lv.level, start: s.start, end: s.end, day: s.day });
+      dayGroups[s.day].push({ level: lv.level, start: s.start, end: s.end, day: s.day, teacher: s.teacher || '' });
     });
   });
 
@@ -2837,7 +2842,8 @@ function cwcPopulateConfirmation() {
   sortedDays.forEach(day => {
     html += `<div class="cwc-schedule-block"><div class="cwc-schedule-level">${esc(day)}</div>`;
     dayGroups[day].forEach(slot => {
-      html += `<div class="cwc-schedule-slot">${esc(slot.level)}&nbsp;&nbsp;${esc(slot.start)} → ${esc(slot.end)}</div>`;
+      const teacherTag = slot.teacher ? `<span style="font-size:.76rem;color:#6B3FA0;margin-left:8px;">${esc(slot.teacher)}</span>` : '';
+      html += `<div class="cwc-schedule-slot">${esc(slot.level)}&nbsp;&nbsp;${esc(slot.start)} → ${esc(slot.end)}${teacherTag}</div>`;
     });
     html += '</div>';
   });
@@ -3785,9 +3791,11 @@ async function cwcNext(action) {
     cwcCurrentData.payload.age_min            = cwcSelectedAge;
     cwcCurrentData.payload.partner_required   = cwcPartnerReq;
     cwcCurrentData.payload.co_teacher         = cwcSelectedCoTeachers.join(' · ') || '';
-    // Per-level teacher assignments
+    // Per-slot teacher assignments (granular: who teaches which level on which day)
     cwcCurrentData.payload.level_teachers    = (cwcCurrentData.levels || []).map(l => ({
-      level: l.level, teachers: l.teachers || []
+      level: l.level,
+      teachers: l.teachers || [],
+      slots: (l.slots || []).map(s => ({ day: s.day, start: s.start, end: s.end, teacher: s.teacher || '' }))
     }));
     cwcCurrentData.payload.what_to_bring      = (document.getElementById('cwc-bring-input').value || '').trim();
 
