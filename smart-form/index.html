@@ -2029,9 +2029,8 @@ const CLASS_META_BY_NAME = {
     'Jazzy Workout':{ age:'12+', partner:false, co:'', prereq:'No experience needed.', bring:'Comfortable clothes, clean non-marking leather-soled shoes or sneakers.' },
   },
   'joseph saidi simako': {
-    'African Dance':   { age:'12+', partner:false, co:'', prereq:'Beginners and intermediate dancers welcome. No experience needed.', bring:'Comfortable clothes, bare feet or clean non-marking indoor shoes.' },
-    'Congolese Dance': { age:'12+', partner:false, co:'', prereq:'Beginners and intermediate welcome.', bring:'Comfortable clothes, bare feet or clean non-marking indoor shoes.' },
-    'Congolese Rumba': { age:'12+', partner:true,  co:'', prereq:'Beginners welcome.', bring:'Comfortable clothes, bare feet or clean non-marking indoor shoes.' },
+    'African Congolese Dance': { age:'12+', partner:false, co:'', prereq:'Beginners and intermediate dancers welcome. No experience needed.', bring:'Comfortable clothes, bare feet or clean non-marking indoor shoes.' },
+    'Congolese Rumba':         { age:'12+', partner:true,  co:'', prereq:'Beginners welcome.', bring:'Comfortable clothes, bare feet or clean non-marking indoor shoes.' },
   },
 };
 
@@ -4623,6 +4622,14 @@ function adminRefreshFormForTeacher(actingProfile) {
   if (bioEl)    { bioEl.textContent = actingProfile.bio_short || ''; bioEl.style.display = actingProfile.bio_short ? '' : 'none'; }
   // Re-apply template
   if (currentType) applyTemplate(currentType);
+
+  // Re-render the active step so style chips / schedule refresh for the new teacher
+  const wcStyleStep    = document.getElementById('wc-step-style');
+  const wcScheduleStep = document.getElementById('wc-step-schedule');
+  const wsStyleStep    = document.getElementById('ws-step-style');
+  if (wcStyleStep && wcStyleStep.style.display !== 'none')       wcShowStyleStep();
+  if (wcScheduleStep && wcScheduleStep.style.display !== 'none') wcShowScheduleStep();
+  if (wsStyleStep && wsStyleStep.style.display !== 'none')       wsShowStyleStep();
 }
 
 // ─── STARTER TEMPLATE ────────────────────────────────────────────────
