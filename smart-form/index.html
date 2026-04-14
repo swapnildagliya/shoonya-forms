@@ -180,6 +180,9 @@
 
   /* ── ERROR ── */
   .err-box { background:#fff5f5; border:1.5px solid var(--red); border-radius:8px; padding:12px 16px; color:var(--red); font-size:.84rem; margin-bottom:14px; display:none; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+  .field-error { border-color:var(--red) !important; box-shadow:0 0 0 2px rgba(192,57,43,.15) !important; animation:shake .4s ease; }
+  .chip-error { outline:2px solid var(--red); outline-offset:2px; animation:shake .4s ease; border-radius:8px; }
 
   /* ── WEEKLY CLASS CONFIRMATION ── */
   .cwc-section-label { font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.7px; color:#999; margin:16px 0 8px; }
@@ -251,9 +254,10 @@
 <body>
 
 <header>
-  <h1>SHOONYA DANCE CENTRE</h1>
+  <a href="https://shoonyadance.com" style="color:#fff;text-decoration:none;"><h1>SHOONYA DANCE CENTRE</h1></a>
   <div class="header-nav">
     <button class="header-nav-btn home-btn" id="hdr-home-btn" onclick="navGoHome()" title="Back to home" style="display:none;">🏠 Home</button>
+    <a href="../admin/" class="header-nav-btn" style="font-size:.7rem;padding:4px 10px;opacity:.5;text-decoration:none;color:#fff;" title="Admin dashboard">⚙</a>
     <button class="header-nav-btn profile-btn" id="hdr-profile-btn" onclick="navGoProfile()" title="My profile">👤 <span id="hdr-profile-label">Profile</span></button>
   </div>
   <div class="lang-switcher">
@@ -2384,6 +2388,45 @@ async function wcSaveScheduleToProfile(style, levels) {
   } catch (e) {}
 }
 
+// Save a workshop or social night submission to the teacher's profile events
+async function saveEventToProfile(type, eventData) {
+  if (!loggedInProfile || !APPS_SCRIPT_URL) return;
+  try {
+    let ae = {};
+    try {
+      ae = typeof loggedInProfile.associated_events === 'string'
+        ? JSON.parse(loggedInProfile.associated_events)
+        : (loggedInProfile.associated_events || {});
+    } catch (e) {}
+    if (!ae.own) ae.own = [];
+    // Add the new event (avoid duplicates by title+date)
+    const isDupe = ae.own.some(ev => ev.title === eventData.title && ev.date === eventData.date);
+    if (!isDupe) ae.own.push(eventData);
+
+    let pin = '';
+    try { pin = JSON.parse(localStorage.getItem('shoonya_session') || '{}').pin || ''; } catch(e) {}
+
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action:  'updateProfile',
+        email:   loggedInProfile.email,
+        pin,
+        updates: { associated_events: JSON.stringify(ae) }
+      })
+    });
+    loggedInProfile.associated_events = JSON.stringify(ae);
+    try {
+      const sess = JSON.parse(localStorage.getItem('shoonya_session') || '{}');
+      if (sess.profile) {
+        sess.profile.associated_events = JSON.stringify(ae);
+        localStorage.setItem('shoonya_session', JSON.stringify(sess));
+      }
+    } catch(e) {}
+  } catch (e) {}
+}
+
 // ─── WC CONFIRMATION SCREEN ──────────────────────────────────────────
 
 function cwcPopulateConfirmation() {
@@ -3479,20 +3522,39 @@ function wsSubmitDetails() {
   const errBox = document.getElementById('err-ws-details');
   errBox.style.display = 'none';
 
-  if (!wsSelectedStyle) { errBox.textContent = 'Please select a style.'; errBox.style.display = ''; return; }
-  if (!wsSelectedLevels.length) { errBox.textContent = 'Please select at least one level.'; errBox.style.display = ''; return; }
+  if (!wsSelectedStyle) {
+    showErr('err-ws-details', 'Please select a style.');
+    markChipGroupError(document.getElementById('ws-style-chips'));
+    return;
+  }
+  if (!wsSelectedLevels.length) {
+    showErr('err-ws-details', 'Please select at least one level.');
+    return;
+  }
 
   // Collect sessions
   const sessions = [];
+  let firstEmptyDate = null;
   document.querySelectorAll('#ws-sessions-container > div').forEach(wrapper => {
-    const date  = wrapper.querySelector('.ws-session-date')?.value  || '';
-    const start = wrapper.querySelector('.ws-session-start')?.value || '';
-    const end   = wrapper.querySelector('.ws-session-end')?.value   || '';
+    const dateEl  = wrapper.querySelector('.ws-session-date');
+    const startEl = wrapper.querySelector('.ws-session-start');
+    const endEl   = wrapper.querySelector('.ws-session-end');
+    const date  = dateEl?.value  || '';
+    const start = startEl?.value || '';
+    const end   = endEl?.value   || '';
     const topic = wrapper.querySelector('.ws-session-topic')?.value.trim() || '';
     const price = parseFloat(wrapper.querySelector('.ws-session-price')?.value) || null;
-    if (date) sessions.push({ date, start, end, topic, price });
+    if (date) {
+      if (!start) markFieldError(startEl);
+      if (!end)   markFieldError(endEl);
+      sessions.push({ date, start, end, topic, price });
+    } else if (!firstEmptyDate) { firstEmptyDate = dateEl; }
   });
-  if (!sessions.length || !sessions[0].date) { errBox.textContent = 'Please add at least one session date.'; errBox.style.display = ''; return; }
+  if (!sessions.length || !sessions[0].date) {
+    showErr('err-ws-details', 'Please add at least one session with a date.');
+    if (firstEmptyDate) markFieldError(firstEmptyDate);
+    return;
+  }
 
   const title       = document.getElementById('ws-title-input').value.trim();
   const pricePP     = wsPricingMode === 'simple' ? (parseFloat(document.getElementById('ws-price-pp').value) || null) : null;
@@ -4349,12 +4411,52 @@ function updateHeaderProfileBtn() {
 
 function showErr(id, msg) {
   const el = document.getElementById(id);
-  if (el) { el.textContent = msg; el.style.display = ''; }
+  if (el) {
+    el.textContent = msg;
+    el.style.display = '';
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 }
 
 function hideErr(id) {
   const el = document.getElementById(id);
   if (el) el.style.display = 'none';
+}
+
+// ── FIELD-LEVEL ERROR HELPERS ────────────────────────────────────────────
+// Marks an input/select/textarea with a red shake, auto-clears on focus.
+function markFieldError(el) {
+  if (!el) return;
+  el.classList.add('field-error');
+  const clear = () => { el.classList.remove('field-error'); el.removeEventListener('focus', clear); el.removeEventListener('input', clear); el.removeEventListener('change', clear); };
+  el.addEventListener('focus', clear);
+  el.addEventListener('input', clear);
+  el.addEventListener('change', clear);
+}
+
+// Marks a chip group container (wc-chips / wc-style-chips etc.) with error outline.
+function markChipGroupError(el) {
+  if (!el) return;
+  el.classList.add('chip-error');
+  setTimeout(() => el.classList.remove('chip-error'), 1500);
+}
+
+// Highlight all empty required fields inside a container, return true if any were empty.
+function highlightEmptyFields(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return false;
+  const fields = container.querySelectorAll('input[required], select[required], textarea[required]');
+  let hasError = false;
+  let firstErr = null;
+  fields.forEach(f => {
+    if (!f.value.trim()) {
+      markFieldError(f);
+      hasError = true;
+      if (!firstErr) firstErr = f;
+    }
+  });
+  if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  return hasError;
 }
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -4516,16 +4618,33 @@ function ssConfirmBasics() {
   hideErr('err-ss-basics');
   if (ssSelectedStyles.length === 0) {
     showErr('err-ss-basics', 'Please select at least one dance style.');
+    markChipGroupError(document.getElementById('ss-style-chips'));
     return;
   }
-  const title = document.getElementById('ss-title').value.trim();
+  const titleEl = document.getElementById('ss-title');
+  const title = titleEl.value.trim();
   if (!title) {
     showErr('err-ss-basics', 'Please enter an event title.');
+    markFieldError(titleEl);
     return;
   }
-  const date = document.getElementById('ss-date').value;
+  const dateEl = document.getElementById('ss-date');
+  const date = dateEl.value;
   if (!date) {
     showErr('err-ss-basics', 'Please pick a date.');
+    markFieldError(dateEl);
+    return;
+  }
+  const doorsEl = document.getElementById('ss-doors');
+  if (!doorsEl.value) {
+    showErr('err-ss-basics', 'Please enter a doors-open time.');
+    markFieldError(doorsEl);
+    return;
+  }
+  const endEl = document.getElementById('ss-end');
+  if (!endEl.value) {
+    showErr('err-ss-basics', 'Please enter an end time.');
+    markFieldError(endEl);
     return;
   }
   ssCurrentData.styles    = [...ssSelectedStyles];
@@ -4736,14 +4855,14 @@ function ssConfirmProgramme() {
     const teacher = teacherEl ? teacherEl.value.trim() : '';
     if (!topic) {
       showErr('err-ss-programme', `Workshop #${i + 1}: please fill in the topic / description.`);
-      if (topicEl) { topicEl.style.borderColor = 'var(--red)'; topicEl.focus(); }
+      markFieldError(topicEl);
       return;
-    } else if (topicEl) { topicEl.style.borderColor = ''; }
+    }
     if (!teacher) {
       showErr('err-ss-programme', `Workshop #${i + 1}: please fill in the teacher / host name.`);
-      if (teacherEl) { teacherEl.style.borderColor = 'var(--red)'; teacherEl.focus(); }
+      markFieldError(teacherEl);
       return;
-    } else if (teacherEl) { teacherEl.style.borderColor = ''; }
+    }
   }
 
   // Validate music selection
@@ -5257,6 +5376,14 @@ async function wsSubmitToShoonya() {
       document.getElementById('ws-what-next-divider').style.display = 'none';
       document.getElementById('ws-what-next-label').style.display   = 'none';
       document.getElementById('ws-what-next-btns').style.display    = 'none';
+      // Save to teacher profile so it appears in "My Events"
+      saveEventToProfile('workshop', {
+        type:  d.format === 'series' ? 'mini-series' : 'workshop',
+        title: d.title,
+        style: d.style,
+        date:  d.sessions?.[0]?.date || '',
+        schedule: d.sessions?.map(s => s.date).join(', ') || ''
+      });
     } else {
       throw new Error(json.error || 'Unknown error');
     }
@@ -5350,6 +5477,14 @@ async function ssSubmitToShoonya() {
       document.getElementById('ss-what-next-divider').style.display = 'none';
       document.getElementById('ss-what-next-label').style.display   = 'none';
       document.getElementById('ss-what-next-btns').style.display    = 'none';
+      // Save to teacher profile so it appears in "My Events"
+      saveEventToProfile('social-night', {
+        type:  'social-night',
+        title: d.title,
+        style: d.styles?.join(', ') || '',
+        date:  d.date || '',
+        schedule: d.date || ''
+      });
     } else {
       throw new Error(json.error || 'Unknown error');
     }
