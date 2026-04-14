@@ -307,6 +307,16 @@
 
       </div>
       <div class="err-box" id="err-type" style="display:none;margin-top:14px;"></div>
+
+      <!-- Semester overview collapsible -->
+      <div style="margin-top:18px;">
+        <div id="type-sem-toggle" onclick="typeToggleSemOverview()"
+          style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 14px;background:#f3eeff;border-radius:9px;font-size:.8rem;font-weight:700;color:#6B3FA0;user-select:none;">
+          <span>📆 <span id="type-sem-toggle-label">View semester calendar</span></span>
+          <span id="type-sem-chevron" style="font-size:.7rem;transition:transform .2s;">▼</span>
+        </div>
+        <div id="type-sem-overview" style="display:none;background:#faf7ff;border:1.5px solid #e8ddff;border-radius:0 0 9px 9px;padding:14px 16px;font-size:.8rem;"></div>
+      </div>
     </div>
   </div>
 
@@ -426,13 +436,11 @@
         <span class="cwc-spinner"></span> <span data-lbl="generating-desc">Generating description…</span>
       </div>
       <div id="cwc-desc-block" style="display:none;">
-        <div class="cwc-desc-text" id="cwc-desc-text"></div>
-        <div class="cwc-desc-actions">
-          <button class="cwc-btn-approve" onclick="cwcApproveDesc()" data-lbl="approve-desc">Looks good ✓</button>
-          <button class="cwc-btn-edit" onclick="cwcEditDesc()" data-lbl="edit-desc">Edit</button>
+        <!-- Level description blocks are built dynamically here (each with its own Edit button) -->
+        <div id="cwc-desc-text"></div>
+        <div class="cwc-desc-actions" style="margin-top:12px;">
+          <button class="cwc-btn-approve" id="cwc-desc-approve-btn" onclick="cwcApproveDesc()" data-lbl="approve-desc">Looks good ✓</button>
         </div>
-        <textarea id="cwc-desc-edit" class="cwc-desc-textarea" style="display:none;" rows="4"></textarea>
-        <button id="cwc-desc-save" class="cwc-btn-approve" style="display:none;margin-top:8px;" onclick="cwcSaveDesc()" data-lbl="save-desc">Save</button>
       </div>
 
       <!-- Class details (meta) -->
@@ -481,19 +489,46 @@
 
       </div>
 
-      <!-- Date grid + pricing -->
+      <!-- Continue to date selection -->
       <div class="cwc-divider"></div>
-      <div class="cwc-section-label" data-lbl="class-dates">Your class dates this semester</div>
-      <div id="cwc-dates-hint" data-lbl="tap-to-mark-absent" style="font-size:.78rem;color:#999;margin-bottom:10px;">
-        Tap any date to mark yourself as absent — it turns red and is excluded from the class count and price.
+      <button class="btn-continue" onclick="cwcShowDatesScreen()" style="width:100%;margin-top:4px;">
+        <span data-lbl="continue-to-dates">Continue — choose your dates →</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── SCREEN: WEEKLY CLASS DATE SELECTION ────────────── -->
+  <div id="screen-dates-wc" style="display:none;">
+    <div class="card">
+
+      <div class="card-title" id="cwc-dates-screen-title" style="margin-bottom:4px;">📅 Your class dates</div>
+      <div id="cwc-dates-style-summary" style="font-size:.82rem;color:#888;margin-bottom:14px;"></div>
+
+      <!-- Semester mini-overview (collapsible) -->
+      <div id="cwc-sem-toggle" onclick="cwcToggleSemOverview()"
+        style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:9px 14px;background:#f3eeff;border-radius:9px;margin-bottom:12px;font-size:.8rem;font-weight:700;color:#6B3FA0;user-select:none;">
+        <span>📆 <span id="cwc-sem-toggle-label">See semester overview</span></span>
+        <span id="cwc-sem-chevron" style="font-size:.7rem;transition:transform .2s;">▼</span>
       </div>
+      <div id="cwc-sem-overview" style="display:none;background:#faf7ff;border:1.5px solid #e8ddff;border-radius:9px;padding:14px 16px;margin-bottom:14px;font-size:.8rem;"></div>
+
+      <!-- Date hint box -->
+      <div style="background:#e8f5e9;border:1.5px solid #81c784;border-radius:9px;padding:11px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;">
+        <span style="font-size:1.1rem;flex-shrink:0;">👆</span>
+        <div>
+          <div style="font-weight:700;font-size:.82rem;color:#2e7d32;margin-bottom:3px;" data-lbl="tap-to-mark-absent">Tap a date to mark yourself as absent</div>
+          <div style="font-size:.78rem;color:#388e3c;" data-lbl="absent-hint-detail">It turns red and is excluded from your session count and price. Tap again to undo.</div>
+        </div>
+      </div>
+
       <div id="cwc-no-semester" style="display:none;font-size:.82rem;color:#e07000;padding:10px 0;">
         ⚠️ Semester dates not yet configured. Ask the admin to update <code>SEMESTER_CONFIG</code> in the form.
       </div>
+
       <!-- Per-day schedule sections are built dynamically here -->
       <div id="cwc-schedule-container"></div>
 
-      <!-- Next step -->
+      <!-- What next -->
       <div class="cwc-divider"></div>
       <div class="cwc-section-label" data-lbl="what-next">What would you like to do next?</div>
       <div class="cwc-next-btns">
@@ -1322,7 +1357,11 @@ const T = {
     'coteachers':       'Co-teacher(s)',
     'what-to-bring':    'What to bring',
     'class-dates':      'Your class dates this semester',
-    'tap-to-mark-absent': 'Tap any date to mark yourself as absent — it turns red and is excluded from the class count and price.',
+    'tap-to-mark-absent': 'Tap a date to mark yourself as absent',
+    'absent-hint-detail': 'It turns red and is excluded from your session count and price. Tap again to undo.',
+    'see-sem-overview': 'See semester overview',
+    'hide-sem-overview': 'Hide semester overview',
+    'continue-to-dates': 'Continue — choose your dates →',
     'free-trial':       'Free trial class:',
     'opendeur-avail':   'Opendeurdag Availability',
     'yes-available':    '✓ Yes, I\'m available',
@@ -1418,7 +1457,11 @@ const T = {
     'coteachers':       'Co-lesgever(s)',
     'what-to-bring':    'Wat meebrengen',
     'class-dates':      'Jouw lesdagen dit semester',
-    'tap-to-mark-absent': 'Tik op een datum om jezelf afwezig te markeren — de datum wordt rood en telt niet mee voor de les- en prijstelling.',
+    'tap-to-mark-absent': 'Tik op een datum om jezelf afwezig te melden',
+    'absent-hint-detail': 'De datum wordt rood en telt niet mee voor de les- en prijstelling. Tik opnieuw om ongedaan te maken.',
+    'see-sem-overview': 'Bekijk semestercalender',
+    'hide-sem-overview': 'Verberg semestercalender',
+    'continue-to-dates': 'Verder — kies jouw data →',
     'free-trial':       'Gratis proefles:',
     'opendeur-avail':   'Opendeurdag Beschikbaarheid',
     'yes-available':    '✓ Ja, ik ben beschikbaar',
@@ -1500,7 +1543,11 @@ const T = {
     'coteachers':       'Co-enseignant(s)',
     'what-to-bring':    'Quoi apporter',
     'class-dates':      'Tes dates de cours ce semestre',
-    'tap-to-mark-absent': 'Appuyez sur une date pour vous marquer absent·e — elle devient rouge et est exclue du décompte des cours et du prix.',
+    'tap-to-mark-absent': 'Appuyez sur une date pour vous marquer absent·e',
+    'absent-hint-detail': 'Elle devient rouge et est exclue du décompte. Appuyez à nouveau pour annuler.',
+    'see-sem-overview': 'Voir le calendrier semestriel',
+    'hide-sem-overview': 'Masquer le calendrier',
+    'continue-to-dates': 'Continuer — choisir vos dates →',
     'free-trial':       'Cours d\'essai gratuit :',
     'opendeur-avail':   'Disponibilité Opendeurdag',
     'yes-available':    '✓ Oui, je suis disponible',
@@ -2266,8 +2313,18 @@ function wcAddSlot(levelIdx, presetDay, presetStart, presetEnd) {
   const endInput   = slotDiv.querySelector('.wc-end');
 
   if (presetDay)   daySelect.value  = presetDay;
-  if (presetStart) startInput.value = presetStart;
-  if (presetEnd)   endInput.value   = presetEnd;
+
+  // Default to 19:00 (7 PM) for start time — most weekly classes are evenings
+  const defaultStart = presetStart || '19:00';
+  startInput.value = defaultStart;
+
+  if (presetEnd) {
+    endInput.value = presetEnd;
+  } else {
+    // Auto-calculate end time from the default start
+    const duration = wcGetDuration(wcSelectedStyle || '');
+    endInput.value = wcCalcEndTime(defaultStart, duration);
+  }
 
   slotsContainer.appendChild(slotDiv);
 }
@@ -2452,20 +2509,130 @@ function cwcPopulateConfirmation() {
   // Populate class meta fields (age, partner, co-teacher, prerequisites, learn)
   cwcPopulateMeta(style);
 
-  // Build semester date grid (replaces old yes/no availability toggle)
-  cwcBuildDateGrid(style, levels);
-
   // Reset description state
   cwcDescApproved = false;
   document.getElementById('cwc-desc-loading').style.display = '';
   document.getElementById('cwc-desc-block').style.display = 'none';
-  const editTA = document.getElementById('cwc-desc-edit');
-  const saveBtn = document.getElementById('cwc-desc-save');
-  if (editTA) editTA.style.display = 'none';
-  if (saveBtn) saveBtn.style.display = 'none';
+  // Restore approve button if it was replaced with a badge
+  const approveBadge = document.querySelector('#cwc-desc-block .cwc-approved-badge');
+  if (approveBadge) {
+    approveBadge.outerHTML = '<button class="cwc-btn-approve" id="cwc-desc-approve-btn" onclick="cwcApproveDesc()" data-lbl="approve-desc">Looks good ✓</button>';
+  }
 
   // Load descriptions (from local store or generate via API)
   cwcLoadDescriptions(style, levels);
+}
+
+// ── Transition from confirmation screen to date selection screen ──────
+function cwcShowDatesScreen() {
+  const { style, levels } = cwcCurrentData;
+
+  // Populate summary on dates screen
+  const styleEl = document.getElementById('cwc-dates-style-summary');
+  if (styleEl) {
+    const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const dayGroups = {};
+    levels.forEach(lv => {
+      (lv.slots || []).forEach(s => {
+        if (!dayGroups[s.day]) dayGroups[s.day] = [];
+        dayGroups[s.day].push(lv.level);
+      });
+    });
+    const sortedDays = Object.keys(dayGroups).sort((a,b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+    styleEl.textContent = style + ' — ' + sortedDays.join(' · ');
+  }
+
+  // Build the semester mini-overview
+  cwcBuildSemOverview();
+
+  // Build date grid
+  cwcBuildDateGrid(style, levels);
+
+  showScreen('dates-wc');
+}
+
+function cwcBuildSemOverview() {
+  const sem = cwcGetActiveSemester();
+  const overviewEl = document.getElementById('cwc-sem-overview');
+  if (!overviewEl || !sem) return;
+
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function fmt(iso) {
+    const d = new Date(iso + 'T12:00:00');
+    return d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  function fmtShort(iso) {
+    const d = new Date(iso + 'T12:00:00');
+    return d.getDate() + ' ' + MON[d.getMonth()];
+  }
+
+  let html = `<div style="font-weight:700;color:#6B3FA0;font-size:.82rem;margin-bottom:8px;">${esc(sem.name || 'Current Semester')}</div>`;
+  html += `<div style="display:grid;gap:5px;">`;
+
+  // Semester dates
+  html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">📅 Semester period</span><span style="font-weight:600;color:#333;">${fmt(sem.start)} – ${fmt(sem.end)}</span></div>`;
+  html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">📊 Sessions</span><span style="font-weight:600;color:#333;">${sem.sessions || 16} per class</span></div>`;
+
+  // Trial week
+  if (sem.trialWeek) {
+    const trialEnd = new Date(sem.trialWeek + 'T12:00:00');
+    trialEnd.setDate(trialEnd.getDate() + 6);
+    html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">🆓 Free trial week</span><span style="font-weight:600;color:#2e7d32;">${fmtShort(sem.trialWeek)} – ${fmtShort(trialEnd.toISOString().split('T')[0])}</span></div>`;
+  }
+
+  // Catch-up week
+  if (sem.catchUpWeek) {
+    html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">🔁 Catch-up week</span><span style="font-weight:600;color:#555;">${fmtShort(sem.catchUpWeek.start)} – ${fmtShort(sem.catchUpWeek.end)}</span></div>`;
+  }
+
+  // School breaks
+  if (sem.breaks && sem.breaks.length) {
+    html += `<div style="margin-top:6px;font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;color:#888;">School holidays (no class)</div>`;
+    sem.breaks.forEach(brk => {
+      html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">${esc(brk.name)}</span><span style="font-weight:600;color:#e65100;">${fmtShort(brk.start)} – ${fmtShort(brk.end)}</span></div>`;
+    });
+  }
+
+  // Opendeurdag
+  const opDates = sem.opendeurdag ? (Array.isArray(sem.opendeurdag) ? sem.opendeurdag : [sem.opendeurdag]) : [];
+  if (opDates.length) {
+    html += `<div style="margin-top:6px;font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;color:#888;">Open door days</div>`;
+    opDates.forEach(d => {
+      html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">🚪 Opendeurdag</span><span style="font-weight:600;color:#6B3FA0;">${fmt(d)}</span></div>`;
+    });
+  }
+
+  html += '</div>';
+  overviewEl.innerHTML = html;
+}
+
+function cwcToggleSemOverview() {
+  const overviewEl = document.getElementById('cwc-sem-overview');
+  const chevron    = document.getElementById('cwc-sem-chevron');
+  const label      = document.getElementById('cwc-sem-toggle-label');
+  if (!overviewEl) return;
+  const isOpen = overviewEl.style.display !== 'none';
+  overviewEl.style.display = isOpen ? 'none' : '';
+  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  if (label)   label.textContent = isOpen ? t('see-sem-overview') : t('hide-sem-overview');
+}
+
+// Build per-level description block HTML (each with its own Edit button)
+function cwcLevelDescHtml(levelName, text, isLoading) {
+  const safeLevel = levelName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+  const bodyHtml = isLoading
+    ? `<div class="cwc-desc-text" style="color:#aaa;font-style:italic;">Preparing description…</div>`
+    : `<div class="cwc-desc-text" id="cwc-desc-view-${safeLevel}">${esc(text)}</div>`;
+  return `
+    <div class="cwc-desc-level-block" data-level="${esc(levelName)}" id="cwc-desc-block-${safeLevel}" style="border:1.5px solid #ede4ff;border-radius:10px;padding:14px 16px;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="cwc-desc-level-label" style="margin:0;">${esc(levelName)}</div>
+        <button class="cwc-btn-edit" id="cwc-desc-edit-btn-${safeLevel}" onclick="cwcEditLevelDesc('${esc(levelName)}')" style="font-size:.75rem;" data-lbl="edit-desc">Edit</button>
+      </div>
+      ${bodyHtml}
+      <textarea id="cwc-desc-ta-${safeLevel}" class="cwc-desc-textarea" style="display:none;margin-top:8px;" rows="5"></textarea>
+      <button id="cwc-desc-save-btn-${safeLevel}" class="cwc-btn-approve" style="display:none;margin-top:8px;font-size:.8rem;" onclick="cwcSaveLevelDesc('${esc(levelName)}')">Save changes</button>
+    </div>`;
 }
 
 function cwcLoadDescriptions(style, levels) {
@@ -2479,27 +2646,19 @@ function cwcLoadDescriptions(style, levels) {
   levels.forEach(lv => {
     const text = styleDescs[lv.level];
     if (text) {
-      descHtml += `<div class="cwc-desc-level-block">
-        <div class="cwc-desc-level-label">${esc(lv.level)}</div>
-        <div class="cwc-desc-text">${esc(text)}</div>
-      </div>`;
+      descHtml += cwcLevelDescHtml(lv.level, text, false);
     } else {
       anyMissing = true;
-      descHtml += `<div class="cwc-desc-level-block">
-        <div class="cwc-desc-level-label">${esc(lv.level)}</div>
-        <div class="cwc-desc-text" style="color:#aaa;font-style:italic;">Preparing description…</div>
-      </div>`;
+      descHtml += cwcLevelDescHtml(lv.level, '', true);
     }
   });
 
   document.getElementById('cwc-desc-text').innerHTML = descHtml;
 
   if (!anyMissing) {
-    // All descriptions found locally — show immediately
     document.getElementById('cwc-desc-loading').style.display = 'none';
     document.getElementById('cwc-desc-block').style.display = '';
   } else if (APPS_SCRIPT_URL) {
-    // Generate missing ones via Claude API
     cwcGenerateDescriptions(style, levels);
   } else {
     document.getElementById('cwc-desc-loading').style.display = 'none';
@@ -2522,63 +2681,66 @@ async function cwcGenerateDescriptions(style, levels) {
     });
     const data = await resp.json();
     if (data.status === 'ok' && data.descriptions) {
-      // Re-render with generated descriptions
-      let descHtml = '';
+      // Update each level's description in place
       levels.forEach(lv => {
-        const text = data.descriptions[lv.level] || 'No description available.';
-        descHtml += `<div class="cwc-desc-level-block">
-          <div class="cwc-desc-level-label">${esc(lv.level)}</div>
-          <div class="cwc-desc-text">${esc(text)}</div>
-        </div>`;
+        const text      = data.descriptions[lv.level] || 'No description available.';
+        const safeLevel = lv.level.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+        const viewEl    = document.getElementById('cwc-desc-view-' + safeLevel);
+        if (viewEl) viewEl.textContent = text;
+        else {
+          // If block was loading, replace it
+          const blockEl = document.getElementById('cwc-desc-block-' + safeLevel);
+          if (blockEl) {
+            const loadEl = blockEl.querySelector('.cwc-desc-text');
+            if (loadEl) { loadEl.style.cssText = ''; loadEl.textContent = text; loadEl.id = 'cwc-desc-view-' + safeLevel; }
+          }
+        }
       });
-      document.getElementById('cwc-desc-text').innerHTML = descHtml;
     }
-  } catch(e) { /* show whatever we have */ }
+  } catch(e) {}
   document.getElementById('cwc-desc-loading').style.display = 'none';
   document.getElementById('cwc-desc-block').style.display = '';
 }
 
 function cwcApproveDesc() {
   cwcDescApproved = true;
-  const actionsEl = document.querySelector('.cwc-desc-actions');
-  if (actionsEl) actionsEl.innerHTML = '<span class="cwc-approved-badge">✓ Description approved</span>';
-  const editTA = document.getElementById('cwc-desc-edit');
-  const saveBtn = document.getElementById('cwc-desc-save');
-  if (editTA) editTA.style.display = 'none';
-  if (saveBtn) saveBtn.style.display = 'none';
+  const approveBtn = document.getElementById('cwc-desc-approve-btn');
+  if (approveBtn) approveBtn.outerHTML = '<span class="cwc-approved-badge">✓ Descriptions approved</span>';
 }
 
-function cwcEditDesc() {
-  // Collect all visible description texts into a single editable textarea
-  const blocks = document.querySelectorAll('#cwc-desc-text .cwc-desc-level-block');
-  const lines = [];
-  blocks.forEach(block => {
-    const label = block.querySelector('.cwc-desc-level-label');
-    const text  = block.querySelector('.cwc-desc-text');
-    if (label) lines.push('— ' + label.textContent.trim() + ' —');
-    if (text)  lines.push(text.textContent.trim());
-    lines.push('');
-  });
-  const editTA = document.getElementById('cwc-desc-edit');
-  if (editTA) {
-    editTA.value = lines.join('\n').trim();
-    editTA.style.display = '';
-    editTA.focus();
-  }
-  const saveBtn = document.getElementById('cwc-desc-save');
+function cwcEditLevelDesc(levelName) {
+  const safeLevel = levelName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+  const viewEl    = document.getElementById('cwc-desc-view-' + safeLevel);
+  const taEl      = document.getElementById('cwc-desc-ta-'   + safeLevel);
+  const saveBtn   = document.getElementById('cwc-desc-save-btn-' + safeLevel);
+  const editBtn   = document.getElementById('cwc-desc-edit-btn-' + safeLevel);
+  if (!taEl) return;
+  taEl.value = viewEl ? viewEl.textContent : '';
+  taEl.style.display = '';
+  if (viewEl)  viewEl.style.display  = 'none';
   if (saveBtn) saveBtn.style.display = '';
+  if (editBtn) editBtn.style.display = 'none';
+  taEl.focus();
+  // Auto-resize
+  taEl.style.height = 'auto';
+  taEl.style.height = Math.min(taEl.scrollHeight + 4, 300) + 'px';
 }
 
-function cwcSaveDesc() {
-  const editTA = document.getElementById('cwc-desc-edit');
-  if (!editTA) return;
-  const edited = editTA.value.trim();
-  // Replace desc-text with a single unified block showing the edited text
-  document.getElementById('cwc-desc-text').innerHTML =
-    `<div class="cwc-desc-level-block"><div class="cwc-desc-text">${esc(edited)}</div></div>`;
-  editTA.style.display = 'none';
-  const saveBtn = document.getElementById('cwc-desc-save');
+function cwcSaveLevelDesc(levelName) {
+  const safeLevel = levelName.replace(/[^a-zA-Z0-9]/g, '-').toLowerCase();
+  const viewEl    = document.getElementById('cwc-desc-view-' + safeLevel);
+  const taEl      = document.getElementById('cwc-desc-ta-'   + safeLevel);
+  const saveBtn   = document.getElementById('cwc-desc-save-btn-' + safeLevel);
+  const editBtn   = document.getElementById('cwc-desc-edit-btn-' + safeLevel);
+  if (!taEl) return;
+  const edited = taEl.value.trim();
+  if (viewEl) {
+    viewEl.textContent = edited;
+    viewEl.style.display = '';
+  }
+  taEl.style.display  = 'none';
   if (saveBtn) saveBtn.style.display = 'none';
+  if (editBtn) editBtn.style.display = '';
 }
 
 function cwcSetAvail(isFull) {
@@ -2964,6 +3126,18 @@ function cwcBuildDateGrid(style, levels) {
 
     section.appendChild(grid);
 
+    // ── "All dates work for me" shortcut ──
+    const allGoodRow = document.createElement('div');
+    allGoodRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin:6px 0 4px;';
+    const allGoodBtn = document.createElement('button');
+    allGoodBtn.type = 'button';
+    allGoodBtn.dataset.day = dayName;
+    allGoodBtn.style.cssText = 'font-size:.75rem;font-weight:700;color:#388e3c;background:none;border:none;cursor:pointer;padding:0;text-decoration:underline dotted;';
+    allGoodBtn.textContent = '✓ All dates work for me';
+    allGoodBtn.onclick = () => cwcMarkAllAvailable(dayName);
+    allGoodRow.appendChild(allGoodBtn);
+    section.appendChild(allGoodRow);
+
     // ── Per-day price bar ──
     const priceBar = document.createElement('div');
     priceBar.className = 'cwc-price-bar';
@@ -3007,13 +3181,24 @@ function cwcBuildDateGrid(style, levels) {
       const opDate  = new Date(dateIso + 'T12:00:00');
       const opLabel = DOW[opDate.getDay()] + ' ' + opDate.getDate() + ' ' + MON[opDate.getMonth()] + ' ' + opDate.getFullYear();
       const safeId  = dateIso.replace(/-/g, '');
+      const gcalUrl = cwcGoogleCalUrl(dateIso, 'Opendeurdag – Shoonya Dance Centre', 'Shoonya Dance Centre, Ghent');
       infoHtml += `
       <div style="font-size:.85rem;font-weight:600;color:#333;margin-bottom:8px;margin-top:8px;">📆 ${opLabel}</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
         <button type="button" class="cwc-avail-btn" id="cwc-opendeur-yes-${safeId}"
           onclick="cwcSetOpendeurAvail('${dateIso}', true)">${t('yes-available')}</button>
         <button type="button" class="cwc-avail-btn" id="cwc-opendeur-no-${safeId}"
           onclick="cwcSetOpendeurAvail('${dateIso}', false)">${t('not-available')}</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+        <a href="${gcalUrl}" target="_blank" rel="noopener"
+          style="font-size:.72rem;color:#6B3FA0;text-decoration:none;border:1px solid #d4c5f5;border-radius:6px;padding:4px 9px;display:inline-flex;align-items:center;gap:4px;">
+          📅 Add to Google Calendar
+        </a>
+        <button type="button" onclick="cwcDownloadIcs('${dateIso}', 'Opendeurdag – Shoonya Dance Centre', 'Shoonya Dance Centre, Ghent')"
+          style="font-size:.72rem;color:#6B3FA0;background:none;text-decoration:none;border:1px solid #d4c5f5;border-radius:6px;padding:4px 9px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+          ⬇️ Download .ics
+        </button>
       </div>`;
     });
     infoHtml += `</div>`;
@@ -3064,6 +3249,22 @@ function cwcGetDayDurationMins(dayLevels) {
   return 60;
 }
 
+// Mark all dates in a day section as available (un-exclude all)
+function cwcMarkAllAvailable(dayName) {
+  const section = document.querySelector(`.cwc-day-section[data-day="${dayName}"]`);
+  if (!section) return;
+  // Clear all exclusions for this day
+  if (cwcExcludedByDay[dayName]) {
+    cwcExcludedByDay[dayName].forEach(iso => cwcExcludedDates.delete(iso));
+    cwcExcludedByDay[dayName].clear();
+  }
+  // Un-exclude all chips
+  section.querySelectorAll('.cwc-date-chip').forEach(chip => {
+    chip.classList.remove('excluded');
+  });
+  cwcUpdateDayPriceSummary(dayName);
+}
+
 function cwcGetBreakForGap(lastDate, currentDate, breaks) {
   // Return the full break object whose interval covers this gap
   for (const brk of (breaks || [])) {
@@ -3072,6 +3273,55 @@ function cwcGetBreakForGap(lastDate, currentDate, breaks) {
     }
   }
   return null;
+}
+
+// Calendar export helpers
+function cwcGoogleCalUrl(dateIso, title, location) {
+  // All-day event: dates in YYYYMMDD format
+  const d = dateIso.replace(/-/g, '');
+  // End date = next day for all-day event
+  const end = new Date(dateIso + 'T12:00:00');
+  end.setDate(end.getDate() + 1);
+  const endD = end.toISOString().split('T')[0].replace(/-/g, '');
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text:   title,
+    dates:  d + '/' + endD,
+    location,
+    details: 'Added from the Shoonya Dance Centre teacher portal.',
+  });
+  return 'https://calendar.google.com/calendar/r/eventedit?' + params.toString();
+}
+
+function cwcDownloadIcs(dateIso, title, location) {
+  const d = dateIso.replace(/-/g, '');
+  const end = new Date(dateIso + 'T12:00:00');
+  end.setDate(end.getDate() + 1);
+  const endD = end.toISOString().split('T')[0].replace(/-/g, '');
+  const uid  = 'shoonya-' + dateIso + '-' + Date.now() + '@shoonyadance.com';
+  const ics  = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Shoonya Dance Centre//Teacher Portal//EN',
+    'BEGIN:VEVENT',
+    'UID:' + uid,
+    'SUMMARY:' + title,
+    'LOCATION:' + location,
+    'DTSTART;VALUE=DATE:' + d,
+    'DTEND;VALUE=DATE:' + endD,
+    'DESCRIPTION:Added from the Shoonya Dance Centre teacher portal.',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'opendeurdag-' + dateIso + '.ics';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 function cwcSetOpendeurAvail(date, isAvailable) {
@@ -3181,10 +3431,17 @@ async function cwcNext(action) {
     // Opendeurdag availability
     cwcCurrentData.payload.opendeur_availability = cwcOpendeurAvailability || {};
 
-    // Collect description from the visible text blocks
-    const descBlocks = document.querySelectorAll('#cwc-desc-text .cwc-desc-text');
-    cwcCurrentData.payload.class_description = Array.from(descBlocks)
-      .map(el => el.textContent.trim()).filter(Boolean).join('\n\n');
+    // Collect description from per-level text blocks
+    const descParts = [];
+    document.querySelectorAll('#cwc-desc-text .cwc-desc-level-block').forEach(block => {
+      const levelLabel = (block.querySelector('.cwc-desc-level-label') || {}).textContent || '';
+      // Text could be in view div or textarea if currently editing
+      const viewEl = block.querySelector('[id^="cwc-desc-view-"]');
+      const taEl   = block.querySelector('[id^="cwc-desc-ta-"]');
+      const text   = (viewEl && viewEl.style.display !== 'none' ? viewEl.textContent : (taEl ? taEl.value : '')).trim();
+      if (text) descParts.push((levelLabel ? levelLabel + ':\n' : '') + text);
+    });
+    cwcCurrentData.payload.class_description = descParts.join('\n\n');
 
     // Submit to Apps Script (fire-and-forget)
     if (APPS_SCRIPT_URL) {
@@ -3953,9 +4210,9 @@ function setLang(lang) {
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === lang));
   applyTranslations();
   if (currentType) applyTemplate(currentType);
-  // Rebuild dynamic WC confirm-screen parts (date grid, price bar) in new language
-  const confirmScreen = document.getElementById('screen-confirm-wc');
-  if (confirmScreen && confirmScreen.style.display !== 'none' && cwcCurrentData) {
+  // Rebuild dynamic WC dates-screen parts in new language
+  const datesScreen = document.getElementById('screen-dates-wc');
+  if (datesScreen && datesScreen.style.display !== 'none' && cwcCurrentData) {
     cwcBuildDateGrid(cwcCurrentData.style, cwcCurrentData.levels);
   }
 }
@@ -4028,6 +4285,70 @@ function goToFestivalForm() {
 
 function goToTypeSelect() {
   showScreen('type');
+}
+
+function typeToggleSemOverview() {
+  const overviewEl = document.getElementById('type-sem-overview');
+  const chevron    = document.getElementById('type-sem-chevron');
+  const label      = document.getElementById('type-sem-toggle-label');
+  if (!overviewEl) return;
+  const isOpen = overviewEl.style.display !== 'none';
+  if (!isOpen) {
+    // Build content on first open (lazy)
+    if (!overviewEl.dataset.built) {
+      typeBuildSemOverview(overviewEl);
+      overviewEl.dataset.built = '1';
+    }
+    overviewEl.style.display = '';
+  } else {
+    overviewEl.style.display = 'none';
+  }
+  if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  if (label)   label.textContent = isOpen ? 'View semester calendar' : 'Hide semester calendar';
+}
+
+function typeBuildSemOverview(container) {
+  // Build an overview of both semesters from SEMESTER_CONFIG
+  if (typeof SEMESTER_CONFIG === 'undefined' || !SEMESTER_CONFIG.semesters) {
+    container.innerHTML = '<em style="color:#aaa;">Semester data not available.</em>';
+    return;
+  }
+  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function fmt(iso) {
+    const d = new Date(iso + 'T12:00:00');
+    return d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  function fmtShort(iso) {
+    const d = new Date(iso + 'T12:00:00');
+    return d.getDate() + ' ' + MON[d.getMonth()];
+  }
+  let html = '';
+  SEMESTER_CONFIG.semesters.forEach((sem, idx) => {
+    html += `<div style="margin-bottom:${idx < SEMESTER_CONFIG.semesters.length - 1 ? '18' : '0'}px;">`;
+    html += `<div style="font-weight:800;color:#6B3FA0;font-size:.82rem;margin-bottom:7px;padding-bottom:5px;border-bottom:1.5px solid #ede4ff;">${esc(sem.name)}</div>`;
+    html += `<div style="display:grid;gap:4px;">`;
+    html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">📅 Period</span><span style="font-weight:600;color:#333;">${fmt(sem.start)} – ${fmt(sem.end)}</span></div>`;
+    if (sem.sessions) html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">📊 Sessions per class</span><span style="font-weight:600;color:#333;">${sem.sessions}</span></div>`;
+    if (sem.trialWeek) {
+      const te = new Date(sem.trialWeek + 'T12:00:00');
+      te.setDate(te.getDate() + 6);
+      html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">🆓 Free trial</span><span style="font-weight:600;color:#2e7d32;">${fmtShort(sem.trialWeek)} – ${fmtShort(te.toISOString().split('T')[0])}</span></div>`;
+    }
+    if (sem.catchUpWeek) {
+      html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">🔁 Catch-up</span><span style="font-weight:600;color:#555;">${fmtShort(sem.catchUpWeek.start)} – ${fmtShort(sem.catchUpWeek.end)}</span></div>`;
+    }
+    if (sem.breaks && sem.breaks.length) {
+      sem.breaks.forEach(brk => {
+        html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">🚫 ${esc(brk.name)}</span><span style="font-weight:600;color:#e65100;">${fmtShort(brk.start)} – ${fmtShort(brk.end)}</span></div>`;
+      });
+    }
+    const opDates = sem.opendeurdag ? (Array.isArray(sem.opendeurdag) ? sem.opendeurdag : [sem.opendeurdag]) : [];
+    opDates.forEach(d => {
+      html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">🚪 Open door day</span><span style="font-weight:600;color:#6B3FA0;">${fmt(d)}</span></div>`;
+    });
+    html += '</div></div>';
+  });
+  container.innerHTML = html;
 }
 
 function goToInput() {
@@ -4507,7 +4828,7 @@ let _currentScreen = 'type';
 let _pushingState  = false; // prevent re-entrant pushState
 
 function showScreen(name, fromPopState) {
-  ['type','input','weekly','workshop','loading','review','success','confirm-wc','confirm-ws','social','confirm-ss'].forEach(s => {
+  ['type','input','weekly','workshop','loading','review','success','confirm-wc','dates-wc','confirm-ws','social','confirm-ss'].forEach(s => {
     const el = document.getElementById('screen-'+s);
     if (el) el.style.display = s === name ? '' : 'none';
   });
