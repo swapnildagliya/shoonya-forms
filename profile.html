@@ -569,7 +569,7 @@ textarea { resize: vertical; line-height: 1.6; }
   </div>
 
   <!-- My Submissions -->
-  <div class="section-card">
+  <div class="section-card" id="submissions-card">
     <div class="section-header">
       <span class="section-title">My Submissions</span>
     </div>
@@ -657,13 +657,19 @@ function showProfile() {
   document.getElementById('login-gate').style.display  = 'none';
   document.getElementById('profile-view').style.display = 'block';
 
-  renderHero();
+  const isAdmin = profile.role === 'admin';
+
+  // Hide teaching-specific sections for admin users
+  document.getElementById('details-card').style.display     = isAdmin ? 'none' : '';
+  document.getElementById('submissions-card').style.display = isAdmin ? 'none' : '';
+
+  renderHero(isAdmin);
   renderBioRead();
-  renderDetailsRead();
-  renderEvents();
+  if (!isAdmin) renderDetailsRead();
+  if (!isAdmin) renderEvents();
 }
 
-function renderHero() {
+function renderHero(isAdmin) {
   const firstName = (profile.name || '').split(' ')[0];
   const initials  = (profile.name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
 
@@ -675,6 +681,20 @@ function renderHero() {
     img.src = profile.photo_url;
     img.style.display = '';
     document.getElementById('avatar-initials').style.display = 'none';
+  }
+
+  if (isAdmin) {
+    // Admin: show role title instead of dance styles
+    document.getElementById('display-styles').textContent = 'Co-founder & Director';
+
+    // Admin badge instead of language/instagram badges
+    const badges = document.getElementById('display-badges');
+    badges.innerHTML = '';
+    const b = document.createElement('span');
+    b.className = 'badge yellow';
+    b.textContent = '⚙ Admin';
+    badges.appendChild(b);
+    return;
   }
 
   // Styles

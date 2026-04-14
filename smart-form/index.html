@@ -271,7 +271,17 @@
   <h2 id="hero-title">New Submission</h2>
   <p id="hero-sub">Tell us about your class or event — we'll handle the details.</p>
 </div>
-<!-- notice bar removed -->
+<!-- ── ADMIN IMPERSONATION BANNER (shown when role=admin is logged in) ── -->
+<div id="admin-impersonation-bar" style="display:none;background:#1a1a2e;color:#fff;font-family:'Helvetica Neue',Arial,sans-serif;font-size:.82rem;padding:10px 16px;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #F5C842;">
+  <span style="font-weight:800;color:#F5C842;white-space:nowrap;">⚡ Admin Mode</span>
+  <span style="color:#aaa;white-space:nowrap;">Submitting as:</span>
+  <select id="admin-teacher-select" onchange="adminSelectTeacher(this.value)"
+    style="flex:1;min-width:160px;padding:5px 8px;border-radius:6px;font-size:.82rem;background:#2a2a3e;color:#fff;border:1.5px solid #444;">
+    <option value="">— Select a teacher —</option>
+  </select>
+  <div id="admin-acting-badge" style="display:none;background:#F5C842;color:#1a1a1a;border-radius:20px;padding:3px 10px;font-weight:800;font-size:.75rem;white-space:nowrap;"></div>
+  <button onclick="adminClearTeacher()" id="admin-clear-btn" style="display:none;background:none;border:1.5px solid #555;color:#aaa;border-radius:6px;padding:3px 9px;font-size:.75rem;cursor:pointer;">✕ Clear</button>
+</div>
 
 <div class="container">
 
@@ -2165,7 +2175,7 @@ function wcShowStyleStep() {
   chips.innerHTML = '';
   wcSelectedStyle = null;
 
-  const styles = loggedInProfile ? parseDanceStyles(loggedInProfile.dance_styles) : [];
+  const styles = getActingProfile() ? parseDanceStyles(getActingProfile().dance_styles || '') : [];
 
   if (styles.length === 0) {
     chips.innerHTML = '<div style="font-size:.82rem;color:#888;">No styles found in your profile. <a href="../profile.html" style="color:var(--purple)">Add styles →</a></div>';
@@ -2198,9 +2208,10 @@ function wcShowScheduleStep(style) {
   // Check for saved schedule for this style (profile first, then local fallback)
   let savedLevels = null;
   try {
-    const ae = typeof loggedInProfile.associated_events === 'string'
-      ? JSON.parse(loggedInProfile.associated_events)
-      : (loggedInProfile.associated_events || {});
+    const actP = getActingProfile();
+    const ae = typeof actP.associated_events === 'string'
+      ? JSON.parse(actP.associated_events)
+      : (actP.associated_events || {});
     const ws = ae.weekly_schedule || {};
     if (ws[style] && ws[style].length > 0) {
       savedLevels = ws[style];
@@ -2208,8 +2219,8 @@ function wcShowScheduleStep(style) {
   } catch (e) {}
 
   // Fallback 1: use locally known schedules keyed by email
-  if (!savedLevels && loggedInProfile && loggedInProfile.email) {
-    const email = loggedInProfile.email.toLowerCase();
+  if (!savedLevels && getActingProfile() && getActingProfile().email) {
+    const email = getActingProfile().email.toLowerCase();
     const knownForEmail = WC_KNOWN_SCHEDULES[email] || {};
     if (knownForEmail[style] && knownForEmail[style].length > 0) {
       savedLevels = knownForEmail[style];
@@ -2217,9 +2228,8 @@ function wcShowScheduleStep(style) {
   }
 
   // Fallback 2: use locally known schedules keyed by teacher name
-  // (for teachers whose email isn't in WC_KNOWN_SCHEDULES yet)
-  if (!savedLevels && loggedInProfile && loggedInProfile.name) {
-    const nameKey = loggedInProfile.name.toLowerCase().trim();
+  if (!savedLevels && getActingProfile() && getActingProfile().name) {
+    const nameKey = getActingProfile().name.toLowerCase().trim();
     const knownForName = WC_KNOWN_SCHEDULES_BY_NAME[nameKey] || {};
     if (knownForName[style] && knownForName[style].length > 0) {
       savedLevels = knownForName[style];
@@ -2391,8 +2401,9 @@ async function submitWeeklyClass() {
   const payload = {
     action:            'submit',
     type:              'weekly-class',
-    teacher_name:      loggedInProfile.name  || '',
-    email:             loggedInProfile.email || '',
+    teacher_name:      getActingProfile().name  || '',
+    email:             getActingProfile().email || '',
+    submitted_by_admin: adminActingAs ? (loggedInProfile ? loggedInProfile.name : '') : '',
     dance_style:       wcSelectedStyle,
     levels,
     teaching_language: langs.join(', '),
@@ -2409,6 +2420,7 @@ async function submitWeeklyClass() {
 
 async function wcSaveScheduleToProfile(style, levels) {
   if (!loggedInProfile || !APPS_SCRIPT_URL) return;
+  if (adminActingAs) return; // Admin submissions don't update profiles
   try {
     // Read current associated_events, merge in new weekly_schedule
     let ae = {};
@@ -2450,6 +2462,7 @@ async function wcSaveScheduleToProfile(style, levels) {
 // Save a workshop or social night submission to the teacher's profile events
 async function saveEventToProfile(type, eventData) {
   if (!loggedInProfile || !APPS_SCRIPT_URL) return;
+  if (adminActingAs) return; // Admin submissions don't update profiles
   try {
     let ae = {};
     try {
@@ -2636,7 +2649,7 @@ function cwcLevelDescHtml(levelName, text, isLoading) {
 }
 
 function cwcLoadDescriptions(style, levels) {
-  const email      = (loggedInProfile && loggedInProfile.email) ? loggedInProfile.email.toLowerCase() : '';
+  const email      = (getActingProfile() && getActingProfile().email) ? getActingProfile().email.toLowerCase() : '';
   const emailDescs = CLASS_DESCRIPTIONS[email] || {};
   const styleDescs = emailDescs[style] || {};
 
@@ -2673,10 +2686,10 @@ async function cwcGenerateDescriptions(style, levels) {
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         action:       'generateClassDesc',
-        teacher_name: loggedInProfile ? loggedInProfile.name : '',
+        teacher_name: getActingProfile() ? getActingProfile().name : '',
         dance_style:  style,
         levels,
-        bio:          loggedInProfile ? (loggedInProfile.bio_short || '') : '',
+        bio:          getActingProfile() ? (getActingProfile().bio_short || '') : '',
       })
     });
     const data = await resp.json();
@@ -2754,11 +2767,12 @@ function cwcSetAvail(isFull) {
 // ─── CLASS META FUNCTIONS ────────────────────────────────────────────
 
 function cwcGetMeta(style) {
-  // Look up meta by email first, then by teacher name
-  const email    = (loggedInProfile && loggedInProfile.email) ? loggedInProfile.email.toLowerCase() : '';
+  // Look up meta by email first, then by teacher name — uses acting profile for admin
+  const ap       = getActingProfile();
+  const email    = (ap && ap.email) ? ap.email.toLowerCase() : '';
   const byEmail  = CLASS_META[email] || {};
   if (byEmail[style]) return byEmail[style];
-  const nameKey  = (loggedInProfile && loggedInProfile.name) ? loggedInProfile.name.toLowerCase().trim() : '';
+  const nameKey  = (ap && ap.name) ? ap.name.toLowerCase().trim() : '';
   const byName   = CLASS_META_BY_NAME[nameKey] || {};
   return byName[style] || null;
 }
@@ -3551,7 +3565,7 @@ function wsShowStyleStep() {
   wsSelectedStyle = '';
   document.getElementById('ws-other-style-wrap').style.display = 'none';
 
-  const profile = loggedInProfile;
+  const profile = getActingProfile();
   const styles  = profile && profile.dance_styles
     ? parseDanceStyles(profile.dance_styles)
     : WC_STYLES;
@@ -4060,7 +4074,7 @@ function wsDuration(start, end) {
 
 async function wsGenerateDesc() {
   const d = wsCurrentData;
-  const profile = loggedInProfile;
+  const profile = getActingProfile();
 
   const fallback = d.title + ' with ' + (profile ? profile.name : 'the teacher') +
     '. A ' + d.formatLabel + ' in ' + d.style + ' for ' + d.levels.join('/') +
@@ -4454,7 +4468,10 @@ function showTeacherProfileCard(profile) {
 
 // Listen for login event from login-panel.js
 window.addEventListener('shoonya:login', (e) => {
-  if (e.detail) showTeacherProfileCard(e.detail);
+  if (e.detail) {
+    showTeacherProfileCard(e.detail);
+    adminCheckAndShowBar(e.detail);
+  }
   // If the user just logged in while sitting on a gated screen,
   // re-run the type selection so the proper form appears.
   if (currentType === 'weekly-class' && document.getElementById('screen-weekly').style.display !== 'none') {
@@ -4468,6 +4485,132 @@ window.addEventListener('shoonya:login', (e) => {
     ssShowBasicsStep();
   }
 });
+
+// ─── ADMIN IMPERSONATION SYSTEM ──────────────────────────────────────
+// When a user with role=admin logs in, they can submit forms on behalf of any teacher.
+// adminActingAs: { name, email, bio_short } — overrides loggedInProfile for form data.
+let adminActingAs = null;
+
+// Helper: returns the "acting" profile for form data (teacher name, email, bio, etc.)
+// Auth operations always use loggedInProfile directly.
+function getActingProfile() {
+  return adminActingAs || loggedInProfile;
+}
+
+function adminCheckAndShowBar(profile) {
+  if (profile && profile.role === 'admin') {
+    const bar = document.getElementById('admin-impersonation-bar');
+    if (bar) bar.style.display = 'flex';
+    adminBuildTeacherSelector();
+  }
+}
+
+// Build the teacher dropdown from ALL_TEACHERS list
+function adminBuildTeacherSelector() {
+  const sel = document.getElementById('admin-teacher-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Select a teacher —</option>';
+  const teachers = adminGetAllTeachers();
+  teachers.forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t.name;
+    opt.textContent = t.name;
+    sel.appendChild(opt);
+  });
+}
+
+function adminGetAllTeachers() {
+  // All Shoonya teachers — name + known email where available
+  // Email is optional; form will still submit with just the name
+  return [
+    { name: 'Swapnil Dagliya' },
+    { name: 'Alex' },
+    { name: 'Ioanna' },
+    { name: 'Lenka Badriyah' },
+    { name: 'Sonja KikiZomba' },
+    { name: 'La Liz' },
+    { name: 'Shirley De Muer' },
+    { name: 'Lut Vermeulen' },
+    { name: 'Alexandre' },
+    { name: 'Teddy' },
+    { name: 'Jordan Souvandjiev' },
+    { name: 'Zoe Bizoe' },
+    { name: 'Hendrik Lebon' },
+    { name: 'Tine De Pauw' },
+    { name: 'Sep Vermeersch' },
+    { name: 'Leni Denorme' },
+    { name: 'Ann-Sofie Van Enis' },
+    { name: 'Shana Van Cauwenberghe' },
+    { name: 'Joseph Saidi Simako' },
+    { name: 'Gisela Graef Marino' },
+    { name: 'Sergio Molini' },
+    { name: 'Kitty' },
+    { name: 'Nathalie El Ghoul' },
+  ];
+}
+
+function adminSelectTeacher(teacherName) {
+  if (!teacherName) {
+    adminClearTeacher();
+    return;
+  }
+  // Build a minimal acting profile from the selected name
+  // CLASS_META and CLASS_DESCRIPTIONS look up by name (already supported)
+  adminActingAs = { name: teacherName, email: '', bio_short: '', dance_styles: '' };
+
+  // Try to look up email via Apps Script if available
+  if (APPS_SCRIPT_URL) {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'fetchTeacherByName', name: teacherName,
+                             admin_email: loggedInProfile ? loggedInProfile.email : '' })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok && data.profile) {
+        adminActingAs = data.profile;
+        adminUpdateBadge(teacherName);
+      }
+    })
+    .catch(() => {});
+  }
+
+  adminUpdateBadge(teacherName);
+
+  // Refresh profile card display so pre-fills work
+  // (Don't call showTeacherProfileCard as that replaces loggedInProfile)
+  adminRefreshFormForTeacher(adminActingAs);
+}
+
+function adminUpdateBadge(name) {
+  const badge    = document.getElementById('admin-acting-badge');
+  const clearBtn = document.getElementById('admin-clear-btn');
+  if (badge)    { badge.textContent = '👤 ' + name; badge.style.display = ''; }
+  if (clearBtn) clearBtn.style.display = '';
+}
+
+function adminClearTeacher() {
+  adminActingAs = null;
+  const sel   = document.getElementById('admin-teacher-select');
+  const badge = document.getElementById('admin-acting-badge');
+  const btn   = document.getElementById('admin-clear-btn');
+  if (sel)   sel.value = '';
+  if (badge) badge.style.display = 'none';
+  if (btn)   btn.style.display   = 'none';
+}
+
+function adminRefreshFormForTeacher(actingProfile) {
+  // Update the profile card shown on the input screen
+  const nameEl   = document.getElementById('tpc-name');
+  const stylesEl = document.getElementById('tpc-styles');
+  const bioEl    = document.getElementById('tpc-bio');
+  if (nameEl)   nameEl.textContent   = actingProfile.name || '';
+  if (stylesEl) stylesEl.textContent = parseDanceStyles(actingProfile.dance_styles || '').join(' · ');
+  if (bioEl)    { bioEl.textContent = actingProfile.bio_short || ''; bioEl.style.display = actingProfile.bio_short ? '' : 'none'; }
+  // Re-apply template
+  if (currentType) applyTemplate(currentType);
+}
 
 // ─── STARTER TEMPLATE ────────────────────────────────────────────────
 function applyTemplate(type) {
@@ -4484,8 +4627,8 @@ function applyTemplate(type) {
     let tmpl = (TEMPLATES[currentLang] && TEMPLATES[currentLang][type]) || TEMPLATES.EN[type] || '';
 
     // If logged in, replace placeholders with real profile data
-    if (loggedInProfile) {
-      const p = loggedInProfile;
+    if (getActingProfile()) {
+      const p = getActingProfile();
       const firstName = (p.name || '').split(' ')[0] || '';
       const styles    = parseDanceStyles(p.dance_styles);
       const firstStyle = styles[0] || '';
@@ -5798,7 +5941,7 @@ async function wsSubmitToShoonya() {
   document.getElementById('ws-submit-error').style.display = 'none';
 
   const d = wsCurrentData;
-  const profile = loggedInProfile || {};
+  const profile = getActingProfile() || {};
 
   // Collect confirm-screen fields
   const guestNameFinal = (document.getElementById('ws-guest-name-confirm')?.value || '').trim();
@@ -5831,6 +5974,7 @@ async function wsSubmitToShoonya() {
     format:               d.format,
     teacher_name:         profile.name || '',
     email:                profile.email || '',
+    submitted_by_admin:   adminActingAs ? (loggedInProfile ? loggedInProfile.name : '') : '',
     approved_description: approvedDesc,
     guest_teacher:        d.isGuest ? (guestNameFinal || d.guestName) : '',
     guest_web:            d.isGuest ? (guestWebFinal || d.guestWeb)   : '',
@@ -5899,7 +6043,7 @@ async function ssSubmitToShoonya() {
   document.getElementById('ss-submit-error').style.display = 'none';
 
   const d = ssCurrentData;
-  const profile = loggedInProfile || {};
+  const profile = getActingProfile() || {};
 
   // Approved description text
   const descEl = document.getElementById('ss-desc-text');
@@ -5945,6 +6089,7 @@ async function ssSubmitToShoonya() {
     earlyDeadline:        d.earlyDeadline,
     organiser_name:            profile.name  || '',
     email:                     profile.email || '',
+    submitted_by_admin:        adminActingAs ? (loggedInProfile ? loggedInProfile.name : '') : '',
     approved_description:      approvedDesc,
     note_shoonya:              noteShoonya,
     guest_teacher_photo_b64:   guestTeacherPhotoB64,
