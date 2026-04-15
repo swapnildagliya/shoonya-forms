@@ -3199,6 +3199,7 @@ async function saveEventToProfile(type, eventData) {
 // ─── WC CONFIRMATION SCREEN ──────────────────────────────────────────
 
 function cwcPopulateConfirmation() {
+  console.log('[CWC] cwcPopulateConfirmation called, style:', cwcCurrentData && cwcCurrentData.style, 'levels:', cwcCurrentData && cwcCurrentData.levels && cwcCurrentData.levels.map(l=>l.level));
   const { style, levels } = cwcCurrentData;
 
   // Style title
@@ -3365,6 +3366,7 @@ function cwcLevelDescHtml(levelName, text, isLoading) {
 }
 
 function cwcLoadDescriptions(style, levels) {
+  console.log('[CWC] cwcLoadDescriptions called, style:', style, 'levels:', levels && levels.map(l=>l.level), 'profile:', getActingProfile() && getActingProfile().name);
   // Start with both hidden; we reveal the right one after resolving
   document.getElementById('cwc-desc-loading').style.display = 'none';
   document.getElementById('cwc-desc-block').style.display = 'none';
@@ -3413,6 +3415,7 @@ function cwcLoadDescriptions(style, levels) {
       descHtml = cwcLevelDescHtml('Description', generalDesc, false);
     }
 
+    console.log('[CWC] descHtml length:', descHtml.length, 'anyMissing:', anyMissing, 'allUsedGeneral:', allUsedGeneral, 'finalStyleDescs keys:', Object.keys(finalStyleDescs));
     document.getElementById('cwc-desc-text').innerHTML = descHtml;
 
     if (!anyMissing) {
