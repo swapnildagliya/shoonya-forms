@@ -3369,55 +3369,70 @@ function cwcLoadDescriptions(style, levels) {
   document.getElementById('cwc-desc-loading').style.display = 'none';
   document.getElementById('cwc-desc-block').style.display = 'none';
 
-  const email      = (getActingProfile() && getActingProfile().email) ? getActingProfile().email.toLowerCase() : '';
-  const emailDescs = CLASS_DESCRIPTIONS[email] || {};
-  const styleDescs = emailDescs[style] || {};
+  try {
+    const email      = (getActingProfile() && getActingProfile().email) ? getActingProfile().email.toLowerCase() : '';
+    const emailDescs = CLASS_DESCRIPTIONS[email] || {};
+    const styleDescs = emailDescs[style] || {};
 
-  // Fallback to lookup by teacher name if email not found
-  let finalStyleDescs = styleDescs;
-  if (Object.keys(styleDescs).length === 0) {
-    const teacherName = (getActingProfile() && getActingProfile().name) ? getActingProfile().name.toLowerCase().trim() : '';
-    const nameDescs = CLASS_DESCRIPTIONS_BY_NAME[teacherName] || {};
-    finalStyleDescs = nameDescs[style] || {};
-  }
-
-  // General style description from website (fallback for levels without specific text)
-  const generalDesc = WC_STYLE_DESCRIPTIONS[style] || '';
-
-  let descHtml = '';
-  let anyMissing = false;
-  let allUsedGeneral = true; // track if we only used the general description
-
-  levels.forEach(lv => {
-    const text = finalStyleDescs[lv.level];
-    if (text) {
-      descHtml += cwcLevelDescHtml(lv.level, text, false);
-      allUsedGeneral = false;
-    } else if (generalDesc) {
-      // Use general style description for this level
-      descHtml += cwcLevelDescHtml(lv.level, generalDesc, false);
-    } else {
-      anyMissing = true;
-      descHtml += cwcLevelDescHtml(lv.level, '', true);
+    // Fallback to lookup by teacher name if email not found
+    let finalStyleDescs = styleDescs;
+    if (Object.keys(styleDescs).length === 0) {
+      const teacherName = (getActingProfile() && getActingProfile().name) ? getActingProfile().name.toLowerCase().trim() : '';
+      const nameDescs = CLASS_DESCRIPTIONS_BY_NAME[teacherName] || {};
+      finalStyleDescs = nameDescs[style] || {};
     }
-  });
 
-  // If all levels used the same general description, simplify: show it once
-  if (allUsedGeneral && generalDesc && levels.length > 1) {
-    descHtml = cwcLevelDescHtml('All levels', generalDesc, false);
-  }
+    // General style description from website (fallback for levels without specific text)
+    const generalDesc = WC_STYLE_DESCRIPTIONS[style] || '';
 
-  document.getElementById('cwc-desc-text').innerHTML = descHtml;
+    let descHtml = '';
+    let anyMissing = false;
+    let allUsedGeneral = true; // track if we only used the general description
 
-  if (!anyMissing) {
-    // All descriptions resolved locally — show immediately, no spinner
-    document.getElementById('cwc-desc-block').style.display = '';
-  } else if (APPS_SCRIPT_URL) {
-    // Only show spinner when we actually need to call AI
-    document.getElementById('cwc-desc-loading').style.display = '';
-    cwcGenerateDescriptions(style, levels);
-  } else {
-    // No API available, show whatever we have
+    levels.forEach(lv => {
+      const text = finalStyleDescs[lv.level];
+      if (text) {
+        descHtml += cwcLevelDescHtml(lv.level, text, false);
+        allUsedGeneral = false;
+      } else if (generalDesc) {
+        // Use general style description for this level
+        descHtml += cwcLevelDescHtml(lv.level, generalDesc, false);
+      } else {
+        anyMissing = true;
+        descHtml += cwcLevelDescHtml(lv.level, '', true);
+      }
+    });
+
+    // If all levels used the same general description, simplify: show it once
+    if (allUsedGeneral && generalDesc && levels.length > 1) {
+      descHtml = cwcLevelDescHtml('All levels', generalDesc, false);
+    }
+
+    // Last-resort fallback: if nothing was built but a general desc exists, show it
+    if (!descHtml && generalDesc) {
+      descHtml = cwcLevelDescHtml('Description', generalDesc, false);
+    }
+
+    document.getElementById('cwc-desc-text').innerHTML = descHtml;
+
+    if (!anyMissing) {
+      // All descriptions resolved locally — show immediately, no spinner
+      document.getElementById('cwc-desc-block').style.display = '';
+    } else if (APPS_SCRIPT_URL) {
+      // Only show spinner when we actually need to call AI
+      document.getElementById('cwc-desc-loading').style.display = '';
+      cwcGenerateDescriptions(style, levels);
+    } else {
+      // No API available, show whatever we have
+      document.getElementById('cwc-desc-block').style.display = '';
+    }
+  } catch(e) {
+    // If anything throws, fall back to showing the general style description
+    console.error('cwcLoadDescriptions error:', e);
+    const generalDesc = WC_STYLE_DESCRIPTIONS[style] || '';
+    document.getElementById('cwc-desc-text').innerHTML = generalDesc
+      ? cwcLevelDescHtml('Description', generalDesc, false)
+      : '<p style="color:#888;font-size:.84rem;">No description available.</p>';
     document.getElementById('cwc-desc-block').style.display = '';
   }
 }
