@@ -803,7 +803,7 @@
 
       <!-- Description review -->
       <div class="cwc-section-label" data-lbl="desc-we-use">Description we'll use</div>
-      <div id="cwc-desc-loading" style="font-size:.82rem;color:#888;margin-bottom:12px;">
+      <div id="cwc-desc-loading" style="display:none;font-size:.82rem;color:#888;margin-bottom:12px;">
         <span class="cwc-spinner"></span> <span data-lbl="generating-desc">Generating description…</span>
       </div>
       <div id="cwc-desc-block" style="display:none;">
@@ -2379,6 +2379,26 @@ const CLASS_DESCRIPTIONS_BY_NAME = {
       'Level 6': 'High-level tap programme for very experienced dancers, exploring all kinds of music and advanced choreography. Age 12+.',
     },
   },
+  // Tap Dance assistant teachers — same per-level descriptions as Lut Vermeulen
+  'jordan souvandjiev': {
+    'Tap Dance': {
+      'Level 1': 'Foundation techniques in creating rhythm with feet, introduction to syncopated beats and jazz-influenced movement. No prior tap experience needed. Free tap shoes for beginners for the entire first year. Age 12+.',
+    },
+  },
+  'teddy': {
+    'Tap Dance': {
+      'Level 1': 'Foundation techniques in creating rhythm with feet, introduction to syncopated beats and jazz-influenced movement. No prior tap experience needed. Free tap shoes for beginners for the entire first year. Age 12+.',
+      'Level 2': 'Building on Level 1 foundations with more complex rhythmic combinations and improved syncopation. Age 12+.',
+      'Level 3': 'Advanced tap technique with challenging choreography exploring diverse musical styles. Age 12+.',
+    },
+  },
+  'alexandre': {
+    'Tap Dance': {
+      'Level 4': 'For experienced tap dancers with solid Level 3 foundation. Complex choreography and musical interpretation. Age 12+.',
+      'Level 5': 'Advanced tap exploring diverse styles: Latin, boogie, pop, hip-hop, classical. Professional-level technique required. Age 12+.',
+      'Level 6': 'High-level tap programme for very experienced dancers, exploring all kinds of music and advanced choreography. Age 12+.',
+    },
+  },
   'zoe bizoe': {
     'Burlesque': {
       'Level 1': 'Introductory course for complete beginners exploring the fundamentals of this performance art form. Learn core principles of teasing and audience interaction, basic sensual movement, body expression, and introduction to theatrical elements. Age 12+.',
@@ -2417,14 +2437,14 @@ const CLASS_DESCRIPTIONS_BY_NAME = {
   },
   'gisela graef marino': {
     'Argentine Tango': {
-      'Level 1': 'Introduction to authentic Argentine Tango — a floating, intense, and timeless dance where two bodies gracefully unite in space, merging into a single rhythmic harmony. Learn fundamental embrace and partner connection, basic movement vocabulary, traditional counterclockwise floor patterns, and the social and improvisational nature of the dance. For beginners with no prior tango experience. Age 16+.',
-      'Level 2': 'Traditional milonga etiquette and musicality with "the intricate rules and codes that govern the traditional milonga." Learn mirada and cabeceo (invitation signals), tanda structure (sets of four pieces), cortina timing, advanced musicality, improvisation, and social codes. Prior tango experience required. Age 16+.',
+      'Level 1': 'Foundational exploration of Argentine Tango as a social, sensual, and improvisational couple\'s dance. Learn comfortable embrace techniques, basic movement vocabulary, and how to navigate the traditional counterclockwise dance floor. For beginners with no prior tango experience. Partner registration required. Age 16+.',
+      'Level 2': 'Building on foundational skills, this course introduces the traditional codes of the milonga. Learn invitation signals (mirada and cabeceo), deepen musicality through Tandas (four-piece sets) and Cortinas (musical interludes), and develop the improvisation that makes this an experience where barriers of age or language dissolve. Prior tango experience required. Partner registration required. Age 16+.',
     },
   },
   'sergio molini': {
     'Argentine Tango': {
-      'Level 1': 'Introduction to authentic Argentine Tango — a floating, intense, and timeless dance where two bodies gracefully unite in space, merging into a single rhythmic harmony. Learn fundamental embrace and partner connection, basic movement vocabulary, traditional counterclockwise floor patterns, and the social and improvisational nature of the dance. For beginners with no prior tango experience. Age 16+.',
-      'Level 2': 'Traditional milonga etiquette and musicality with "the intricate rules and codes that govern the traditional milonga." Learn mirada and cabeceo (invitation signals), tanda structure (sets of four pieces), cortina timing, advanced musicality, improvisation, and social codes. Prior tango experience required. Age 16+.',
+      'Level 1': 'Foundational exploration of Argentine Tango as a social, sensual, and improvisational couple\'s dance. Learn comfortable embrace techniques, basic movement vocabulary, and how to navigate the traditional counterclockwise dance floor. For beginners with no prior tango experience. Partner registration required. Age 16+.',
+      'Level 2': 'Building on foundational skills, this course introduces the traditional codes of the milonga. Learn invitation signals (mirada and cabeceo), deepen musicality through Tandas (four-piece sets) and Cortinas (musical interludes), and develop the improvisation that makes this an experience where barriers of age or language dissolve. Prior tango experience required. Partner registration required. Age 16+.',
     },
   },
   'shirley de muer': {
@@ -2505,6 +2525,7 @@ const WC_STYLE_DESCRIPTIONS = {
   'Cissy Ball':              'Playful fusion dance rooted in dance theater tradition (Pina Bausch, Alain Platel). Dance steps and choreography created together through games, assignments, and simple instructions. Each session ends with a performance moment.',
   'African Congolese Dance': 'Vibrant, high-energy sessions blending traditional and contemporary Afro and Congolese styles, including the dynamic Congolese Rumba. Features intense movement, authentic Congolese rhythms, and occasional live percussion accompaniment.',
   'Congolese Rumba':         'Partner dance rooted in authentic Congolese rhythms. Dynamic high-energy choreography blending traditional and contemporary styles.',
+  'Argentine Tango':         'A floating, intense, and timeless dance where two bodies gracefully unite in space — barriers of age or language dissolve in this improvised partner experience. Progressive programme from foundational embrace and counterclockwise floor navigation to the traditional codes and musicality of the milonga. Partner registration required. Age 16+.',
 };
 
 // ─── CLASS META STORE ────────────────────────────────────────────────
@@ -3403,9 +3424,12 @@ function cwcLoadDescriptions(style, levels) {
 
 async function cwcGenerateDescriptions(style, levels) {
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000); // 20s max
     const resp = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
+      signal: controller.signal,
       body: JSON.stringify({
         action:       'generateClassDesc',
         teacher_name: getActingProfile() ? getActingProfile().name : '',
@@ -3414,6 +3438,7 @@ async function cwcGenerateDescriptions(style, levels) {
         bio:          getActingProfile() ? (getActingProfile().bio_short || '') : '',
       })
     });
+    clearTimeout(timeout);
     const data = await resp.json();
     if (data.status === 'ok' && data.descriptions) {
       // Update each level's description in place
