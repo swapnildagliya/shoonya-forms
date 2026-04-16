@@ -2116,6 +2116,32 @@ const WC_KNOWN_SCHEDULES = {
 // display name → style → levels[]. Updated each semester from shoonyadance.com.
 const WC_KNOWN_SCHEDULES_BY_NAME = {
 
+  // ── Swapnil Dagliya ───────────────────────────────────────────────
+  'swapnil dagliya': {
+    'Bollywood': [
+      { level: 'Level 2', slots: [{ day: 'Thursday', start: '18:30', end: '19:30' }] },
+      { level: 'Level 3', slots: [{ day: 'Thursday', start: '19:30', end: '20:30' }] }
+    ],
+    'Bhangra': [
+      { level: 'Level 2', slots: [{ day: 'Wednesday', start: '19:30', end: '20:30' }] }
+    ],
+    'Bollyfolk': [
+      { level: 'Open Level', slots: [{ day: 'Tuesday', start: '18:30', end: '19:30' }] }
+    ],
+    'Garba & Kalbeliya': [
+      { level: 'Open Level', slots: [{ day: 'Wednesday', start: '18:30', end: '19:30' }] }
+    ],
+    'Indian Semi-Classical': [
+      { level: 'Level 2', slots: [{ day: 'Wednesday', start: '20:30', end: '21:45' }] }
+    ],
+    'Indian Dance Technique': [
+      { level: 'Open Level', slots: [{ day: 'Tuesday', start: '20:30', end: '21:30' }] }
+    ],
+    'Yoga': [
+      { level: 'Open Level', slots: [{ day: 'Tuesday', start: '19:30', end: '20:30' }] }
+    ]
+  },
+
   // ── Alex ──────────────────────────────────────────────────────────
   'alex': {
     'Cuban Salsa': [
@@ -2493,6 +2519,15 @@ const CLASS_META = {
 };
 
 const CLASS_META_BY_NAME = {
+  'swapnil dagliya': {
+    'Bollywood':             { age:'12+', partner:false, co:'', prereq:'Beginners with some dance background. Absolute beginners should start with Bollyfolk or Garba & Kalbeliya first.', bring:'Comfortable clothes, clean non-marking indoor shoes or bare feet.' },
+    'Bhangra':               { age:'12+', partner:false, co:'', prereq:'Foundational Bhangra knowledge required. Newcomers should complete a seasonal intensive first.', bring:'Comfortable clothes, clean non-marking indoor shoes.' },
+    'Bollyfolk':             { age:'12+', partner:false, co:'', prereq:'All levels welcome. No prior experience required.', bring:'Comfortable clothes, clean non-marking indoor shoes or bare feet.' },
+    'Garba & Kalbeliya':     { age:'12+', partner:false, co:'', prereq:'No prior experience required.', bring:'Comfortable clothes, clean non-marking indoor shoes or bare feet. Ghagra skirt recommended for Kalbeliya.' },
+    'Indian Semi-Classical': { age:'12+', partner:false, co:'', prereq:'Intermediate level. Prior dance experience recommended.', bring:'Comfortable clothes, ghungroo (ankle bells) if you have them, clean non-marking shoes.' },
+    'Indian Dance Technique':{ age:'12+', partner:false, co:'', prereq:'Open to all levels.', bring:'Comfortable clothes, clean non-marking indoor shoes or bare feet.' },
+    'Yoga':                  { age:'12+', partner:false, co:'', prereq:'All levels, complete beginners to experienced practitioners.', bring:'Yoga mat, comfortable clothes. Mats available at the studio.' },
+  },
   'alex': {
     'Cuban Salsa':     { age:'12+', partner:true,  co:'Ioanna (L1 & L2)', prereq:'L1: No prior experience. L3/L4: Prior Cuban Salsa experience. Partner registration required.', bring:'Comfortable clothes, dance shoes or clean non-marking indoor shoes.' },
     'Bachata':         { age:'12+', partner:true,  co:'Lenka Badriyah (L1 & L2) · Ioanna (L3)', prereq:'L1: No prior Bachata experience needed. L2/L3: Prior experience or progression from previous level. Partner registration required.', bring:'Comfortable clothes, dance shoes or clean non-marking indoor shoes.' },
@@ -2821,6 +2856,17 @@ function wcShowScheduleStep(style) {
     const knownForName = WC_KNOWN_SCHEDULES_BY_NAME[nameKey] || {};
     if (knownForName[style] && knownForName[style].length > 0) {
       savedLevels = knownForName[style];
+    }
+  }
+
+  // Fallback 3: search all known schedules for any teacher who teaches this style
+  // (handles admin acting as wrong teacher, or teacher with outdated profile data)
+  if (!savedLevels) {
+    for (const [, teacherSched] of Object.entries(WC_KNOWN_SCHEDULES_BY_NAME)) {
+      if (teacherSched[style] && teacherSched[style].length > 0) {
+        savedLevels = teacherSched[style];
+        break;
+      }
     }
   }
 
