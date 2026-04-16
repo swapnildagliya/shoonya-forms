@@ -3199,7 +3199,6 @@ async function saveEventToProfile(type, eventData) {
 // ─── WC CONFIRMATION SCREEN ──────────────────────────────────────────
 
 function cwcPopulateConfirmation() {
-  console.log('[CWC] cwcPopulateConfirmation called, style:', cwcCurrentData && cwcCurrentData.style, 'levels:', cwcCurrentData && cwcCurrentData.levels && cwcCurrentData.levels.map(l=>l.level));
   const { style, levels } = cwcCurrentData;
 
   // Style title
@@ -3234,7 +3233,7 @@ function cwcPopulateConfirmation() {
   document.getElementById('cwc-schedule-summary').innerHTML = html;
 
   // Populate class meta fields (age, partner, co-teacher, prerequisites, learn)
-  cwcPopulateMeta(style);
+  try { cwcPopulateMeta(style); } catch(e) { console.warn('[CWC] cwcPopulateMeta error:', e); }
 
   // Reset description state
   cwcDescApproved = false;
@@ -3366,7 +3365,6 @@ function cwcLevelDescHtml(levelName, text, isLoading) {
 }
 
 function cwcLoadDescriptions(style, levels) {
-  console.log('[CWC] cwcLoadDescriptions called, style:', style, 'levels:', levels && levels.map(l=>l.level), 'profile:', getActingProfile() && getActingProfile().name);
   // Start with both hidden; we reveal the right one after resolving
   document.getElementById('cwc-desc-loading').style.display = 'none';
   document.getElementById('cwc-desc-block').style.display = 'none';
@@ -3415,7 +3413,6 @@ function cwcLoadDescriptions(style, levels) {
       descHtml = cwcLevelDescHtml('Description', generalDesc, false);
     }
 
-    console.log('[CWC] descHtml length:', descHtml.length, 'anyMissing:', anyMissing, 'allUsedGeneral:', allUsedGeneral, 'finalStyleDescs keys:', Object.keys(finalStyleDescs));
     document.getElementById('cwc-desc-text').innerHTML = descHtml;
 
     if (!anyMissing) {
@@ -3568,6 +3565,7 @@ function cwcPopulateMeta(style) {
 function cwcBuildCoTeacherSelector(preSelected) {
   cwcSelectedCoTeachers = [...preSelected];
   const container = document.getElementById('cwc-coteacher-selector');
+  if (!container) return;
   container.innerHTML = `
     <div style="display:flex; gap:8px; flex-direction:column; align-items:flex-start; width:100%;">
       <div style="display:flex; flex-wrap:wrap; gap:6px; width:100%;" id="cwc-coteacher-chips"></div>
