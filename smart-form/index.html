@@ -785,7 +785,7 @@
         </div>
 
         <div class="err-box" id="err-wc-schedule" style="margin-top:12px;"></div>
-        <button class="btn-continue" style="margin-top:16px;" onclick="submitWeeklyClass()" data-lbl="submit-wc-form">Submit →</button>
+        <button class="btn-continue" style="margin-top:16px;" onclick="submitWeeklyClass()" data-lbl="submit-wc-form">Continue — add class details →</button>
       </div>
 
     </div>
@@ -1729,7 +1729,7 @@ const T = {
     'submit-workshop':  'Submit a workshop or miniseries →',
     'submit-social':    'Submit a social event →',
     'done-for-now':     'I\'m done for now',
-    'submit-wc-form':   'Submit →',
+    'submit-wc-form':   'Continue — add class details →',
     'edit-desc':        'Edit',
     'approve-desc':     'Looks good ✓',
     'save-desc':        'Save',
@@ -1829,7 +1829,7 @@ const T = {
     'submit-workshop':  'Workshop of minireeks indienen →',
     'submit-social':    'Sociaal evenement indienen →',
     'done-for-now':     'Ik ben klaar voor nu',
-    'submit-wc-form':   'Indienen →',
+    'submit-wc-form':   'Verder — lesgegevens invullen →',
     'edit-desc':        'Bewerken',
     'approve-desc':     'Ziet er goed uit ✓',
     'save-desc':        'Opslaan',
@@ -1915,7 +1915,7 @@ const T = {
     'submit-workshop':  'Soumettre un atelier ou une minisérie →',
     'submit-social':    'Soumettre un événement social →',
     'done-for-now':     'J\'ai terminé pour l\'instant',
-    'submit-wc-form':   'Soumettre →',
+    'submit-wc-form':   'Continuer — ajouter les détails →',
     'edit-desc':        'Modifier',
     'approve-desc':     'C\'est bon ✓',
     'save-desc':        'Enregistrer',
@@ -3956,15 +3956,12 @@ function cwcBuildDateGrid(style, levels) {
           onclick="cwcSetOpendeurAvail('${dateIso}', false)">${t('not-available')}</button>
       </div>
       <div id="cwc-opendeur-time-wrap-${safeId}" style="display:none;margin-top:8px;">
-        <span style="font-size:.76rem;font-weight:600;color:#6B3FA0;">Your class time that day:</span>
-        <div style="display:inline-flex;align-items:center;gap:6px;margin-left:8px;">
-          <input type="time" id="cwc-opendeur-start-${safeId}"
-            style="font-size:.82rem;padding:4px 8px;border:1.5px solid #d4c5f5;border-radius:6px;"
-            oninput="cwcSetOpendeurTime('${dateIso}')">
-          <span style="font-size:.8rem;color:#888;">–</span>
-          <input type="time" id="cwc-opendeur-end-${safeId}"
-            style="font-size:.82rem;padding:4px 8px;border:1.5px solid #d4c5f5;border-radius:6px;"
-            oninput="cwcSetOpendeurTime('${dateIso}')">
+        <div style="font-size:.76rem;font-weight:600;color:#6B3FA0;margin-bottom:6px;">Preference (Shoonya will confirm your slot):</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button type="button" class="wc-chip" id="cwc-od-morn-${safeId}"  onclick="cwcSetOpendeurPref('${dateIso}', 'Morning',   this)">Morning</button>
+          <button type="button" class="wc-chip" id="cwc-od-aftn-${safeId}"  onclick="cwcSetOpendeurPref('${dateIso}', 'Afternoon', this)">Afternoon</button>
+          <button type="button" class="wc-chip" id="cwc-od-eve-${safeId}"   onclick="cwcSetOpendeurPref('${dateIso}', 'Evening',   this)">Evening</button>
+          <button type="button" class="wc-chip" id="cwc-od-any-${safeId}"   onclick="cwcSetOpendeurPref('${dateIso}', 'Any',       this)">Any time</button>
         </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
@@ -4114,13 +4111,15 @@ function cwcSetOpendeurAvail(date, isAvailable) {
   if (timeWrap) timeWrap.style.display = isAvailable ? '' : 'none';
 }
 
-function cwcSetOpendeurTime(date) {
-  const safeId = date.replace(/-/g, '');
-  const start  = (document.getElementById('cwc-opendeur-start-' + safeId) || {}).value || '';
-  const end    = (document.getElementById('cwc-opendeur-end-'   + safeId) || {}).value || '';
-  const time   = start && end ? start + '–' + end : (start || end);
+function cwcSetOpendeurPref(date, pref, btn) {
   if (!cwcOpendeurAvailability[date]) cwcOpendeurAvailability[date] = { available: true, time: '' };
-  cwcOpendeurAvailability[date].time = time;
+  cwcOpendeurAvailability[date].time = pref;
+  // Toggle selected state — deselect siblings
+  const safeId = date.replace(/-/g, '');
+  ['morn','aftn','eve','any'].forEach(function(key) {
+    const el = document.getElementById('cwc-od-' + key + '-' + safeId);
+    if (el) el.classList.toggle('selected', el === btn);
+  });
 }
 
 function cwcToggleDate(iso, chip, dayName) {
