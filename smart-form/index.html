@@ -4204,19 +4204,27 @@ async function cwcNext(action) {
     });
     cwcCurrentData.payload.per_day_dates = perDayData;
 
-    // Compute final prices — sum across all days
-    const sem  = cwcGetActiveSemester();
-    const base = sem ? sem.sessions : 16;
-    let pTotal = 0, pStudent = 0;
-    // Use first day's duration for overall pricing (all days same style = same duration)
-    const durMins  = cwcGetDurationMins(cwcCurrentData.levels);
-    const tier     = cwcGetPriceTier(durMins, sem ? sem.prices : {}) || { total: 198, student: 175 };
-    pTotal   = Math.round(tier.total   / base * classDates.length);
-    pStudent = tier.student ? Math.ceil(tier.student / base * classDates.length) : null;
-    const pUitpas  = parseFloat((pTotal * 0.2).toFixed(2));
-    cwcCurrentData.payload.price_total    = pTotal;
-    cwcCurrentData.payload.price_student  = pStudent;
-    cwcCurrentData.payload.price_uitpas   = pUitpas;
+    // Compute prices PER DAY — a student pays for one level, not all levels combined
+    const sem     = cwcGetActiveSemester();
+    const base    = sem ? sem.sessions : 16;
+    const durMins = cwcGetDurationMins(cwcCurrentData.levels);
+    const tier    = cwcGetPriceTier(durMins, sem ? sem.prices : {}) || { total: 198, student: 175 };
+
+    const perDayPrices = {};
+    Object.entries(perDayData).forEach(([day, dayInfo]) => {
+      const count   = dayInfo.count;
+      const full    = Math.round(tier.total / base * count);
+      const student = tier.student ? Math.ceil(tier.student / base * count) : null;
+      const uitpas  = parseFloat((full * 0.2).toFixed(2));
+      perDayPrices[day] = { sessions: count, full, student, uitpas };
+    });
+    cwcCurrentData.payload.per_day_prices = perDayPrices;
+
+    // price_total = what a student pays for ONE level (first day as reference)
+    const refDay = Object.values(perDayPrices)[0] || { full: tier.total, student: tier.student, uitpas: parseFloat((tier.total * 0.2).toFixed(2)) };
+    cwcCurrentData.payload.price_total    = refDay.full;
+    cwcCurrentData.payload.price_student  = refDay.student;
+    cwcCurrentData.payload.price_uitpas   = refDay.uitpas;
     cwcCurrentData.payload.semester_name  = sem ? sem.name : '';
 
     // Class meta fields
