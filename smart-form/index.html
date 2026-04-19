@@ -560,7 +560,7 @@
   /* ── DATE GRID ── */
   .cwc-day-section {
     border: 1.5px solid var(--purple-mid); border-radius: 6px;
-    padding: 16px; margin-bottom: 14px; background: var(--surface);
+    padding: 16px; margin-bottom: 24px; background: var(--surface);
   }
   .cwc-day-header {
     font-family: var(--font-display); font-size: .7rem; font-weight: 700;
@@ -844,14 +844,6 @@
             placeholder="e.g. Comfortable clothes, clean non-marking shoes."></textarea>
         </div>
 
-        <div class="cwc-meta-row">
-          <div class="cwc-meta-key" data-lbl="max-capacity">Maximum number of students</div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <input type="number" id="cwc-capacity-input" class="cwc-meta-input"
-              min="1" max="200" placeholder="e.g. 20" style="width:100px;">
-            <span style="font-size:.78rem;color:#888;" data-lbl="capacity-hint">Leave blank if unlimited</span>
-          </div>
-        </div>
 
       </div>
 
@@ -1241,16 +1233,6 @@
           </div>
         </div>
 
-        <div class="cwc-meta-row">
-          <div class="cwc-meta-key">Min. participants
-            <div style="font-size:.7rem;font-weight:400;color:#aaa;margin-top:2px;">Event runs only if this is met</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <input type="number" id="ws-min-participants" class="cwc-meta-input"
-              min="1" max="200" placeholder="e.g. 10" style="width:90px;">
-            <span style="font-size:.78rem;color:#888;">Leave blank if no minimum</span>
-          </div>
-        </div>
 
       </div>
 
@@ -2918,6 +2900,11 @@ function wcAddLevel(presetLevel, presetSlots) {
     </div>
     <div class="wc-slots-container" id="wc-slots-${idx}"></div>
     <button class="wc-btn-add-slot" onclick="wcAddSlot(${idx})">${t('add-time-slot')}</button>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+      <span style="font-size:.76rem;font-weight:600;color:#777;white-space:nowrap;">Max students:</span>
+      <input type="number" id="wc-capacity-${idx}" class="cwc-meta-input"
+        min="1" max="200" placeholder="unlimited" style="width:90px;font-size:.82rem;">
+    </div>
   `;
   container.appendChild(block);
 
@@ -3065,7 +3052,9 @@ function wcCollectData() {
     });
     // Collect unique teachers across all slots for this level (for backward compat)
     const teachers = [...new Set(slots.map(s => s.teacher).filter(Boolean))];
-    if (slots.length > 0) levels.push({ level: levelName, slots, teachers });
+    const capInput = block.querySelector(`#wc-capacity-${idx}`);
+    const maxCap   = capInput && capInput.value ? parseInt(capInput.value) : null;
+    if (slots.length > 0) levels.push({ level: levelName, slots, teachers, max_capacity: maxCap });
   });
 
   const langs = Array.from(document.querySelectorAll('#wc-lang-chips .wc-chip.selected'))
@@ -3854,12 +3843,14 @@ function cwcBuildDateGrid(style, levels) {
     // ── Day header ──
     const header = document.createElement('div');
     header.className = 'cwc-day-header';
-    const levelDescriptions = dayLevels.map(dl => {
+    header.style.flexDirection = 'column';
+    header.style.alignItems = 'flex-start';
+    const levelLines = dayLevels.map(dl => {
       const lvName = dl.level || 'Open Level';
       const time = dl.slot.start + '–' + dl.slot.end;
-      return lvName + ' · ' + time;
-    });
-    header.innerHTML = `<span class="cwc-day-name">${dayName.toUpperCase()}</span><span class="cwc-day-detail">— ${levelDescriptions.join(' | ')}</span>`;
+      return `<div class="cwc-day-detail" style="margin-top:4px;font-size:.78rem;">◎ ${lvName} · ${time}</div>`;
+    }).join('');
+    header.innerHTML = `<div class="cwc-day-name" style="font-size:.9rem;font-weight:900;letter-spacing:1.6px;">${dayName.toUpperCase()}</div>${levelLines}`;
     section.appendChild(header);
 
     // ── Date chips grid ──
@@ -3963,6 +3954,18 @@ function cwcBuildDateGrid(style, levels) {
           onclick="cwcSetOpendeurAvail('${dateIso}', true)">${t('yes-available')}</button>
         <button type="button" class="cwc-avail-btn" id="cwc-opendeur-no-${safeId}"
           onclick="cwcSetOpendeurAvail('${dateIso}', false)">${t('not-available')}</button>
+      </div>
+      <div id="cwc-opendeur-time-wrap-${safeId}" style="display:none;margin-top:8px;">
+        <span style="font-size:.76rem;font-weight:600;color:#6B3FA0;">Your class time that day:</span>
+        <div style="display:inline-flex;align-items:center;gap:6px;margin-left:8px;">
+          <input type="time" id="cwc-opendeur-start-${safeId}"
+            style="font-size:.82rem;padding:4px 8px;border:1.5px solid #d4c5f5;border-radius:6px;"
+            oninput="cwcSetOpendeurTime('${dateIso}')">
+          <span style="font-size:.8rem;color:#888;">–</span>
+          <input type="time" id="cwc-opendeur-end-${safeId}"
+            style="font-size:.82rem;padding:4px 8px;border:1.5px solid #d4c5f5;border-radius:6px;"
+            oninput="cwcSetOpendeurTime('${dateIso}')">
+        </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
         <a href="${gcalUrl}" target="_blank" rel="noopener"
@@ -4099,12 +4102,25 @@ function cwcDownloadIcs(dateIso, title, location) {
 }
 
 function cwcSetOpendeurAvail(date, isAvailable) {
-  cwcOpendeurAvailability[date] = isAvailable;
+  // Preserve existing time if already set
+  const existing = cwcOpendeurAvailability[date] || {};
+  cwcOpendeurAvailability[date] = { available: isAvailable, time: existing.time || '' };
+  const safeId   = date.replace(/-/g, '');
+  const yesBtn   = document.getElementById('cwc-opendeur-yes-'       + safeId);
+  const noBtn    = document.getElementById('cwc-opendeur-no-'        + safeId);
+  const timeWrap = document.getElementById('cwc-opendeur-time-wrap-' + safeId);
+  if (yesBtn)   yesBtn.classList.toggle('selected',  isAvailable);
+  if (noBtn)    noBtn.classList.toggle('selected', !isAvailable);
+  if (timeWrap) timeWrap.style.display = isAvailable ? '' : 'none';
+}
+
+function cwcSetOpendeurTime(date) {
   const safeId = date.replace(/-/g, '');
-  const yesBtn = document.getElementById('cwc-opendeur-yes-' + safeId);
-  const noBtn  = document.getElementById('cwc-opendeur-no-'  + safeId);
-  if (yesBtn) yesBtn.classList.toggle('selected',  isAvailable);
-  if (noBtn)  noBtn.classList.toggle('selected', !isAvailable);
+  const start  = (document.getElementById('cwc-opendeur-start-' + safeId) || {}).value || '';
+  const end    = (document.getElementById('cwc-opendeur-end-'   + safeId) || {}).value || '';
+  const time   = start && end ? start + '–' + end : (start || end);
+  if (!cwcOpendeurAvailability[date]) cwcOpendeurAvailability[date] = { available: true, time: '' };
+  cwcOpendeurAvailability[date].time = time;
 }
 
 function cwcToggleDate(iso, chip, dayName) {
