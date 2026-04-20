@@ -3266,6 +3266,132 @@ function cwcBackFromDates() {
   showScreen('confirm-wc');
 }
 
+// ── Pre-submit review panel ───────────────────────────────────────────────
+// Returns a Promise that resolves true (confirm) or false (edit).
+function cwcShowReview(action) {
+  return new Promise(function(resolve) {
+    const d      = cwcCurrentData;
+    const style  = d.style || '';
+    const levels = Array.isArray(d.levels) ? d.levels : [];
+    const profile = getActingProfile() || {};
+    const sem    = cwcGetActiveSemester();
+
+    // Collect selected class dates
+    const allChips   = document.querySelectorAll('#cwc-schedule-container .cwc-date-chip');
+    const classDates = [];
+    allChips.forEach(function(chip) { if (!chip.classList.contains('excluded')) classDates.push(chip.dataset.date); });
+
+    // Pricing
+    const sem2 = sem || {};
+    const base  = sem2.sessions || 16;
+    const durMins = cwcGetDurationMins(levels);
+    const tier  = cwcGetPriceTier(durMins, sem2.prices || {}) || {};
+
+    // Opendeurdag
+    const opendeur = cwcOpendeurAvailability || {};
+    const odLines  = Object.keys(opendeur).sort().map(function(iso) {
+      const entry   = opendeur[iso];
+      const avail   = entry && entry.available;
+      const pref    = (entry && entry.time) ? ' · ' + entry.time : '';
+      const d2      = new Date(iso + 'T12:00:00');
+      const label   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d2.getDay()] + ' ' + d2.getDate() + '/' + (d2.getMonth()+1);
+      return '<div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;">'
+           + '<span>' + esc(label) + '</span>'
+           + '<span style="font-weight:600;color:' + (avail ? '#2e7d32' : '#b71c1c') + ';">'
+           + (avail ? '✅ Available' + esc(pref) : '❌ Not available') + '</span></div>';
+    }).join('');
+
+    // Schedule rows
+    const schedRows = levels.map(function(lv) {
+      return (Array.isArray(lv.slots) ? lv.slots : []).map(function(s) {
+        const cap = lv.max_capacity ? ' · max ' + lv.max_capacity : '';
+        return '<div style="font-size:.82rem;padding:2px 0;">'
+             + '<strong>' + esc(lv.level || 'Open Level') + '</strong>'
+             + ' — ' + esc(s.day) + ' ' + esc(s.start || '') + '–' + esc(s.end || '') + esc(cap) + '</div>';
+      }).join('');
+    }).join('');
+
+    // Per-day price summary
+    let priceHtml = '';
+    if (tier.total) {
+      const perDay = {};
+      document.querySelectorAll('#cwc-schedule-container .cwc-day-section').forEach(function(sec) {
+        const day   = sec.dataset.day;
+        const count = sec.querySelectorAll('.cwc-date-chip:not(.excluded)').length;
+        if (day && count > 0) {
+          const full = Math.round(tier.total / base * count);
+          const stu  = tier.student ? Math.ceil(tier.student / base * count) : null;
+          perDay[day] = { count, full, stu };
+        }
+      });
+      priceHtml = Object.entries(perDay).map(function([day, p]) {
+        return '<div style="font-size:.82rem;padding:2px 0;display:flex;justify-content:space-between;">'
+             + '<span>' + esc(day) + ' (' + p.count + ' sessions)</span>'
+             + '<span style="font-weight:600;">€' + p.full + (p.stu ? ' <span style="color:#888;font-weight:400;">/ Student €' + p.stu + '</span>' : '') + '</span></div>';
+      }).join('');
+    }
+
+    function row(label, val) {
+      return val ? '<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid #f0f0f0;font-size:.82rem;">'
+                 + '<span style="color:#666;min-width:130px;flex-shrink:0;">' + esc(label) + '</span>'
+                 + '<span style="font-weight:600;color:#1a1a1a;">' + val + '</span></div>' : '';
+    }
+
+    const age       = document.getElementById('cwc-age-chips')   ? (document.querySelector('#cwc-age-chips .cwc-meta-chip.selected') || {}).textContent : '';
+    const partner   = document.getElementById('cwc-partner-yes') && document.getElementById('cwc-partner-yes').classList.contains('selected') ? 'Yes — compulsory' : 'No';
+    const coTeacher = cwcSelectedCoTeachers && cwcSelectedCoTeachers.length ? cwcSelectedCoTeachers.join(', ') : '';
+    const bring     = (document.getElementById('cwc-bring-input') || {}).value || '';
+
+    const html = `
+      <div id="cwc-review-overlay" style="
+        position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;
+        display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px;">
+        <div style="
+          background:#fff;border-radius:12px;width:100%;max-width:520px;
+          padding:28px;box-shadow:0 24px 64px rgba(0,0,0,.35);margin:auto;">
+
+          <div style="font-family:'Josefin Sans',sans-serif;font-size:.7rem;font-weight:700;
+            letter-spacing:2px;text-transform:uppercase;color:#7c4dcc;margin-bottom:4px;">Review your submission</div>
+          <div style="font-size:1.1rem;font-weight:700;margin-bottom:20px;color:#1a1a1a;">
+            ${esc(style)}${profile.name ? ' — ' + esc(profile.name) : ''}
+          </div>
+
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c4dcc;margin-bottom:6px;">Schedule</div>
+          ${schedRows}
+
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c4dcc;margin:14px 0 6px;">Class details</div>
+          ${row('Semester', esc(sem ? sem.name : ''))}
+          ${row('Total sessions', classDates.length ? classDates.length + ' classes' : '')}
+          ${row('Teaching language', esc((d.payload || {}).teaching_language || ''))}
+          ${row('Min age', esc(age || ''))}
+          ${row('Partner required', esc(partner))}
+          ${coTeacher ? row('Co-teacher', esc(coTeacher)) : ''}
+          ${bring ? row('What to bring', esc(bring)) : ''}
+
+          ${priceHtml ? `<div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c4dcc;margin:14px 0 6px;">Pricing (per level)</div>${priceHtml}<div style="font-size:.76rem;color:#888;margin-top:4px;">+ UiTPAS 80% discount</div>` : ''}
+
+          ${odLines ? `<div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c4dcc;margin:14px 0 6px;">Opendeurdag availability</div>${odLines}` : ''}
+
+          <div style="background:#fffde7;border:1px solid #f9a825;border-radius:6px;padding:10px 12px;font-size:.8rem;color:#555;margin:18px 0 0;">
+            ℹ️ Once submitted, your previous entry for this style will be updated. If you need to change something after submitting, reply to your confirmation email.
+          </div>
+
+          <div style="display:flex;gap:10px;margin-top:20px;">
+            <button onclick="document.getElementById('cwc-review-overlay').remove(); window._cwcReviewResolve(false);"
+              style="flex:1;padding:11px;border:2px solid #ccc;background:#fff;border-radius:6px;
+              font-weight:600;font-size:.85rem;cursor:pointer;color:#555;">← Edit</button>
+            <button onclick="document.getElementById('cwc-review-overlay').remove(); window._cwcReviewResolve(true);"
+              style="flex:2;padding:11px;background:#6B3FA0;color:#fff;border:none;border-radius:6px;
+              font-weight:700;font-size:.85rem;cursor:pointer;letter-spacing:.3px;">Confirm & Submit</button>
+          </div>
+        </div>
+      </div>`;
+
+    window._cwcReviewResolve = resolve;
+    document.body.insertAdjacentHTML('beforeend', html);
+  });
+}
+
 function cwcBuildSemOverview() {
   const sem = cwcGetActiveSemester();
   const overviewEl = document.getElementById('cwc-sem-overview');
@@ -4173,12 +4299,10 @@ function cwcUpdateDayPriceSummary(dayName) {
 }
 
 async function cwcNext(action) {
-  // Confirm before submitting
-  if (action !== 'done' && cwcCurrentData) {
-    const style  = cwcCurrentData.style || '';
-    const levels = (cwcCurrentData.levels || []).map(l => l.level).join(', ');
-    const teacher = getActingProfile() ? getActingProfile().name : '';
-    if (!confirm(`Submit "${style}" (${levels}) for ${teacher || 'you'}?\n\nIf you already submitted this style, your previous entry will be updated with these new details.`)) return;
+  // Show review panel before submitting
+  if (cwcCurrentData) {
+    const approved = await cwcShowReview(action);
+    if (!approved) return;
   }
 
   // Finalise the payload with dates, pricing + description before submitting
