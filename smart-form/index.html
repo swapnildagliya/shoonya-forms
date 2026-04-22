@@ -823,6 +823,7 @@
           <div class="cwc-meta-key" data-lbl="min-age">Min. age</div>
           <div class="cwc-meta-chips" id="cwc-age-chips">
             <button type="button" class="cwc-meta-chip" onclick="cwcSetAge('All ages')">All ages</button>
+            <button type="button" class="cwc-meta-chip" onclick="cwcSetAge('9+')">9+</button>
             <button type="button" class="cwc-meta-chip selected" onclick="cwcSetAge('12+')">12+</button>
             <button type="button" class="cwc-meta-chip" onclick="cwcSetAge('14+')">14+</button>
             <button type="button" class="cwc-meta-chip" onclick="cwcSetAge('16+')">16+</button>
@@ -1196,6 +1197,7 @@
           <div class="cwc-meta-key">Min. age</div>
           <div class="cwc-meta-chips" id="ws-age-chips">
             <button type="button" class="cwc-meta-chip selected" onclick="wsSetAge('All ages')">All ages</button>
+            <button type="button" class="cwc-meta-chip" onclick="wsSetAge('9+')">9+</button>
             <button type="button" class="cwc-meta-chip" onclick="wsSetAge('12+')">12+</button>
             <button type="button" class="cwc-meta-chip" onclick="wsSetAge('14+')">14+</button>
             <button type="button" class="cwc-meta-chip" onclick="wsSetAge('16+')">16+</button>
@@ -2901,9 +2903,9 @@ function wcAddLevel(presetLevel, presetSlots) {
     <div class="wc-slots-container" id="wc-slots-${idx}"></div>
     <button class="wc-btn-add-slot" onclick="wcAddSlot(${idx})">${t('add-time-slot')}</button>
     <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
-      <span style="font-size:.76rem;font-weight:600;color:#777;white-space:nowrap;">Max students:</span>
+      <span style="font-size:.76rem;font-weight:600;color:#777;white-space:nowrap;">Max students: <span style="color:var(--red)">*</span></span>
       <input type="number" id="wc-capacity-${idx}" class="cwc-meta-input"
-        min="1" max="200" placeholder="unlimited" style="width:90px;font-size:.82rem;">
+        min="1" max="200" placeholder="required" style="width:90px;font-size:.82rem;">
     </div>
   `;
   container.appendChild(block);
@@ -2986,9 +2988,9 @@ function wcAddSlot(levelIdx, presetDay, presetStart, presetEnd, presetLevel) {
 
   slotDiv.innerHTML = `
     <select class="wc-slot-day">${dayOpts}</select>
-    <input type="time" class="wc-start" oninput="wcAutoFillEnd(this, ${levelIdx})">
+    <input type="time" class="wc-start" oninput="wcAutoFillEnd(this, ${levelIdx})" step="60">
     <span class="wc-arrow">→</span>
-    <input type="time" class="wc-end">
+    <input type="time" class="wc-end" step="60">
     <select class="wc-slot-teacher">${teacherOpts}</select>
     <button class="wc-btn-remove" onclick="wcRemoveSlot(this)" title="Remove slot">✕</button>
   `;
@@ -3076,6 +3078,23 @@ async function submitWeeklyClass() {
   if (!allSlotsValid) {
     errEl.textContent = 'Please fill in start and end times for all slots.'; return;
   }
+
+  // Max students is compulsory — scroll to first empty field
+  const levelBlocks = document.querySelectorAll('.wc-level-block');
+  for (let i = 0; i < levelBlocks.length; i++) {
+    const block = levelBlocks[i];
+    const idx = block.dataset.levelIdx;
+    const capInput = block.querySelector(`#wc-capacity-${idx}`);
+    if (!capInput || !capInput.value) {
+      capInput && capInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      capInput && capInput.focus();
+      capInput && (capInput.style.borderColor = 'var(--red)');
+      errEl.textContent = 'Please fill in the maximum number of students for each level.';
+      return;
+    }
+    if (capInput) capInput.style.borderColor = '';
+  }
+
   if (langs.length === 0) {
     errEl.textContent = 'Please select at least one teaching language.'; return;
   }
@@ -3361,7 +3380,27 @@ function cwcShowReview(action) {
 
           <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c4dcc;margin:14px 0 6px;">Class details</div>
           ${row('Semester', esc(sem ? sem.name : ''))}
-          ${row('Total sessions', classDates.length ? classDates.length + ' classes' : '')}
+          ${(function() {
+            const DAYS_RV = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            const MONTHS_RV = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const byDay = {};
+            classDates.forEach(function(iso) {
+              const d2 = new Date(iso + 'T12:00:00');
+              const dn = DAYS_RV[d2.getDay()];
+              if (!byDay[dn]) byDay[dn] = [];
+              byDay[dn].push(d2);
+            });
+            const DAY_ORD_RV = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+            return DAY_ORD_RV.filter(function(dn) { return byDay[dn]; }).map(function(day) {
+              const dates = byDay[day];
+              const byMonth = {};
+              dates.forEach(function(d2) { const m = d2.getMonth(); if (!byMonth[m]) byMonth[m] = []; byMonth[m].push(d2.getDate()); });
+              const datesStr = Object.keys(byMonth).map(Number).sort(function(a,b){return a-b;}).map(function(m) {
+                return MONTHS_RV[m] + ': ' + byMonth[m].join(', ');
+              }).join(' · ');
+              return row(day + ' (' + dates.length + ')', esc(datesStr));
+            }).join('');
+          })()}
           ${row('Teaching language', esc((d.payload || {}).teaching_language || ''))}
           ${row('Min age', esc(age || ''))}
           ${row('Partner required', esc(partner))}
