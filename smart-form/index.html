@@ -23,7 +23,7 @@
     --border-strong: oklch(76% 0.018 295);
     --text: oklch(18% 0.02 295);
     --text-mid: oklch(45% 0.012 295);
-    --text-light: oklch(62% 0.009 295);
+    --text-light: oklch(48% 0.012 295);
     --purple-light: oklch(96% 0.016 295);
     --purple-mid: oklch(90% 0.025 295);
     --yellow-light: oklch(96.5% 0.035 87);
@@ -88,6 +88,17 @@
     font-weight: 400;
     -webkit-font-smoothing: antialiased;
   }
+
+  /* ── SKIP LINK ── */
+  .skip-link {
+    position: absolute; top: -100%; left: 16px;
+    background: var(--purple); color: #fff;
+    padding: 8px 16px; border-radius: 0 0 4px 4px;
+    font-family: var(--font-display); font-size: .72rem; font-weight: 700;
+    letter-spacing: .8px; text-transform: uppercase; text-decoration: none;
+    z-index: 999; transition: top .15s var(--ease-out);
+  }
+  .skip-link:focus { top: 0; outline: 2px solid var(--yellow); outline-offset: 2px; }
 
   /* ── HEADER ── */
   header {
@@ -705,6 +716,11 @@
       /* Error box */
       --err-bg:     oklch(18% 0.04 25);
       --err-border: oklch(44% 0.1 25);
+      /* Brighter brand colours for dark backgrounds */
+      --green: #2ecc71;
+      --red:   #e74c3c;
+      /* text-light needs to be lighter in dark mode (dark bg inverts the need) */
+      --text-light: oklch(58% 0.012 295);
     }
   }
 
@@ -719,6 +735,8 @@
 </style>
 </head>
 <body>
+
+<a href="#main-content" class="skip-link">Skip to content</a>
 
 <header>
   <a href="https://shoonyadance.com" style="color:#fff;text-decoration:none;"><h1>SHOONYA DANCE CENTRE</h1></a>
@@ -750,7 +768,7 @@
   <button onclick="adminClearTeacher()" id="admin-clear-btn" style="display:none;background:none;border:1.5px solid #555;color:#aaa;border-radius:6px;padding:3px 9px;font-size:.75rem;cursor:pointer;">✕ Clear</button>
 </div>
 
-<main>
+<main id="main-content">
 <div class="container">
 
   <!-- ── SCREEN 1: TYPE SELECTION ─────────────────── -->
