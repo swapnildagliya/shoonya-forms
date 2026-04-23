@@ -38,6 +38,17 @@
     --font-display: 'Josefin Sans', sans-serif;
     --font-body:    'Jost', sans-serif;
     --ease-out: cubic-bezier(0.2, 0, 0, 1);
+
+    /* Computed tokens — derived from brand colours, used in components */
+    --header-bg:      oklch(14% 0.025 295);
+    --on-yellow:      oklch(15% 0.02 87);
+    --yellow-hover:   oklch(76% 0.18 87);
+    --green-hover:    oklch(48% 0.14 145);
+    --success-bg:     oklch(96.5% 0.02 145);
+    --success-border: oklch(80% 0.06 145);
+    --success-text:   oklch(30% 0.1 145);
+    --nav-color:      oklch(65% 0.01 295);
+    --nav-border:     oklch(35% 0.02 295);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -53,7 +64,7 @@
 
   /* ── HEADER ── */
   header {
-    background: oklch(14% 0.025 295);
+    background: var(--header-bg);
     color: #fff;
     padding: 10px 20px;
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -97,7 +108,7 @@
     font-family: var(--font-display);
     font-size: 1.35rem; font-weight: 700;
     text-transform: uppercase; letter-spacing: 2.5px;
-    color: oklch(15% 0.02 87);
+    color: var(--on-yellow);
   }
   .hero p { margin-top: 6px; font-size: .85rem; color: oklch(32% 0.05 87); font-weight: 400; }
 
@@ -144,7 +155,7 @@
     color: var(--text); background: var(--surface);
     transition: border-color .15s var(--ease-out);
   }
-  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--purple); }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--purple); outline-offset: 2px; border-color: var(--purple); }
   .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
   /* ── BACK BUTTON ── */
@@ -220,7 +231,7 @@
     font-size: .9rem; font-family: var(--font-body); line-height: 1.75;
     resize: vertical; transition: border-color .15s var(--ease-out); background: var(--surface);
   }
-  .big-input:focus { outline: none; border-color: var(--purple); }
+  .big-input:focus { outline: 2px solid var(--purple); outline-offset: 2px; border-color: var(--purple); }
 
   .textarea-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
   .toolbar-label {
@@ -246,14 +257,14 @@
   /* ── PRIMARY BUTTON ── */
   .btn-continue {
     display: block; width: 100%; padding: 14px;
-    background: var(--yellow); color: oklch(15% 0.02 87);
+    background: var(--yellow); color: var(--on-yellow);
     border: none; border-radius: 4px;
     font-family: var(--font-display); font-size: .78rem; font-weight: 700;
     cursor: pointer; text-transform: uppercase; letter-spacing: 1.6px;
     margin-top: 16px;
     transition: background .15s var(--ease-out), transform .1s var(--ease-out);
   }
-  .btn-continue:hover { background: oklch(76% 0.18 87); transform: translateY(-1px); }
+  .btn-continue:hover { background: var(--yellow-hover); transform: translateY(-1px); }
   .btn-continue:active { transform: translateY(0); }
   .btn-continue:disabled { background: var(--border); color: var(--text-light); cursor: not-allowed; transform: none; }
 
@@ -283,8 +294,8 @@
     letter-spacing: .9px; text-transform: uppercase; cursor: pointer; border: none;
     transition: all .15s var(--ease-out);
   }
-  .wc-login-btn.primary { background: var(--yellow); color: oklch(15% 0.02 87); }
-  .wc-login-btn.primary:hover { background: oklch(76% 0.18 87); }
+  .wc-login-btn.primary { background: var(--yellow); color: var(--on-yellow); }
+  .wc-login-btn.primary:hover { background: var(--yellow-hover); }
   .wc-login-btn.outline { background: none; border: 1.5px solid var(--purple); color: var(--purple); }
   .wc-login-btn.outline:hover { background: var(--purple-light); }
 
@@ -317,9 +328,9 @@
     color: var(--purple); background: none; border: none; cursor: pointer; text-decoration: underline;
   }
   .wc-prefill-banner {
-    background: oklch(96.5% 0.02 145); border: 1.5px solid oklch(80% 0.06 145);
+    background: var(--success-bg); border: 1.5px solid var(--success-border);
     border-radius: 6px; padding: 10px 14px; margin-bottom: 16px;
-    font-size: .82rem; color: oklch(30% 0.1 145);
+    font-size: .82rem; color: var(--success-text);
   }
 
   .wc-level-block { border: 1.5px solid var(--border); border-radius: 6px; padding: 14px 16px; margin-bottom: 12px; background: var(--bg); }
@@ -330,7 +341,7 @@
     font-size: .88rem; font-weight: 500; color: var(--text);
     background: var(--surface); cursor: pointer; font-family: var(--font-body);
   }
-  .wc-level-select:focus { outline: none; border-color: var(--purple); }
+  .wc-level-select:focus { outline: 2px solid var(--purple); outline-offset: 2px; border-color: var(--purple); }
   .wc-btn-remove { background: none; border: none; color: var(--border-strong); font-size: .95rem; cursor: pointer; padding: 2px 6px; border-radius: 3px; transition: color .15s; }
   .wc-btn-remove:hover { color: var(--red); }
 
@@ -343,7 +354,7 @@
     padding: 6px 8px; border: 1.5px solid var(--border); border-radius: 4px;
     font-size: .82rem; width: 100%; font-family: var(--font-body);
   }
-  .wc-slot select:focus, .wc-slot input[type=time]:focus { outline: none; border-color: var(--purple); }
+  .wc-slot select:focus, .wc-slot input[type=time]:focus { outline: 2px solid var(--purple); outline-offset: 2px; border-color: var(--purple); }
   .wc-slot .wc-arrow { color: var(--text-light); font-size: .9rem; text-align: center; }
   .wc-slot .wc-slot-teacher { font-size: .76rem !important; padding: 5px 6px !important; }
 
@@ -375,7 +386,7 @@
 
   /* ── REVIEW ── */
   .summary-block {
-    background: oklch(96.5% 0.02 145); border: 1.5px solid oklch(80% 0.06 145);
+    background: var(--success-bg); border: 1.5px solid var(--success-border);
     border-radius: 6px; padding: 14px 16px; margin-bottom: 18px;
   }
   .summary-title {
@@ -415,7 +426,7 @@
     letter-spacing: 1.6px; cursor: pointer; text-transform: uppercase; margin-top: 6px;
     transition: background .15s var(--ease-out), transform .1s var(--ease-out);
   }
-  .btn-submit:hover { background: oklch(48% 0.14 145); transform: translateY(-1px); }
+  .btn-submit:hover { background: var(--green-hover); transform: translateY(-1px); }
   .btn-submit:active { transform: translateY(0); }
   .btn-submit:disabled { background: var(--border); color: var(--text-light); cursor: not-allowed; transform: none; }
   .btn-back {
@@ -438,12 +449,12 @@
   .success-sub { font-size: .86rem; color: var(--text-mid); font-weight: 300; }
   .btn-new {
     display: inline-block; margin-top: 20px; padding: 10px 28px;
-    background: var(--yellow); color: oklch(15% 0.02 87); border: none; border-radius: 4px;
+    background: var(--yellow); color: var(--on-yellow); border: none; border-radius: 4px;
     font-family: var(--font-display); font-size: .7rem; font-weight: 700;
     letter-spacing: 1.1px; text-transform: uppercase; cursor: pointer;
     transition: background .15s var(--ease-out);
   }
-  .btn-new:hover { background: oklch(76% 0.18 87); }
+  .btn-new:hover { background: var(--yellow-hover); }
 
   /* ── ERRORS ── */
   .err-box {
@@ -485,7 +496,7 @@
     letter-spacing: .6px; text-transform: uppercase;
     cursor: pointer; transition: background .15s var(--ease-out);
   }
-  .cwc-btn-approve:hover { background: oklch(48% 0.14 145); }
+  .cwc-btn-approve:hover { background: var(--green-hover); }
   .cwc-btn-edit {
     background: none; border: 1.5px solid var(--border); color: var(--text-mid);
     border-radius: 4px; padding: 8px 18px;
@@ -499,7 +510,7 @@
     border: 1.5px solid var(--border); border-radius: 4px;
     font-size: .86rem; font-family: var(--font-body); line-height: 1.6; resize: vertical;
   }
-  .cwc-desc-textarea:focus { outline: none; border-color: var(--purple); }
+  .cwc-desc-textarea:focus { outline: 2px solid var(--purple); outline-offset: 2px; border-color: var(--purple); }
   .cwc-approved-badge {
     display: inline-flex; align-items: center; gap: 5px;
     background: oklch(93% 0.04 145); color: oklch(28% 0.12 145);
@@ -520,14 +531,14 @@
   .cwc-avail-btn.selected { border-color: oklch(50% 0.14 145); background: oklch(93% 0.04 145); color: oklch(28% 0.12 145); }
   .cwc-next-btns { display: flex; flex-direction: column; gap: 8px; }
   .cwc-next-btn {
-    background: var(--yellow); color: oklch(15% 0.02 87);
+    background: var(--yellow); color: var(--on-yellow);
     border: none; border-radius: 4px; padding: 13px 16px;
     font-family: var(--font-display); font-size: .72rem; font-weight: 700;
     letter-spacing: 1.1px; text-transform: uppercase;
     cursor: pointer; text-align: left;
     transition: background .15s var(--ease-out), transform .1s var(--ease-out);
   }
-  .cwc-next-btn:hover { background: oklch(76% 0.18 87); transform: translateY(-1px); }
+  .cwc-next-btn:hover { background: var(--yellow-hover); transform: translateY(-1px); }
   .cwc-next-btn:active { transform: translateY(0); }
   .cwc-next-btn.outline {
     background: none; border: 1.5px solid var(--border); color: var(--text-light); font-weight: 500;
@@ -557,7 +568,7 @@
     font-size: .82rem; width: 100%; box-sizing: border-box;
     font-family: var(--font-body); background: var(--surface);
   }
-  .cwc-meta-input:focus { outline: none; border-color: var(--purple); }
+  .cwc-meta-input:focus { outline: 2px solid var(--purple); outline-offset: 2px; border-color: var(--purple); }
 
   /* ── DATE GRID ── */
   .cwc-day-section {
@@ -601,9 +612,25 @@
     background: var(--purple); color: #fff; margin-bottom: 14px;
   }
 
+  @media (max-width: 680px) {
+    /* Tablet / large phone — schedule slot grid becomes awkward */
+    .wc-slot { grid-template-columns: 100px 1fr auto 1fr 110px auto; gap: 4px; }
+  }
+
   @media (max-width: 520px) {
     .type-grid { grid-template-columns: 1fr; }
     .row-2 { grid-template-columns: 1fr; }
+    /* Larger touch targets for header controls on mobile */
+    .header-nav-btn, .lang-btn { padding: 10px 12px; min-height: 44px; }
+  }
+
+  /* Respect user motion preferences — disable all non-essential animations */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 </style>
 </head>
@@ -612,9 +639,9 @@
 <header>
   <a href="https://shoonyadance.com" style="color:#fff;text-decoration:none;"><h1>SHOONYA DANCE CENTRE</h1></a>
   <div class="header-nav">
-    <button class="header-nav-btn home-btn" id="hdr-home-btn" onclick="navGoHome()" title="Back to home" style="display:none;">🏠 Home</button>
-    <a href="../admin/" class="header-nav-btn" style="font-size:.7rem;padding:4px 10px;opacity:.5;text-decoration:none;color:#fff;" title="Admin dashboard">⚙</a>
-    <button class="header-nav-btn profile-btn" id="hdr-profile-btn" onclick="navGoProfile()" title="My profile">👤 <span id="hdr-profile-label">Profile</span></button>
+    <button class="header-nav-btn home-btn" id="hdr-home-btn" onclick="navGoHome()" title="Back to home" aria-label="Back to home" style="display:none;">🏠 Home</button>
+    <a href="../admin/" class="header-nav-btn" style="font-size:.7rem;padding:4px 10px;opacity:.5;text-decoration:none;color:#fff;" title="Admin dashboard" aria-label="Admin dashboard">⚙</a>
+    <button class="header-nav-btn profile-btn" id="hdr-profile-btn" onclick="navGoProfile()" title="My profile" aria-label="My profile">👤 <span id="hdr-profile-label">Profile</span></button>
   </div>
   <div class="lang-switcher">
     <button class="lang-btn active" onclick="setLang('EN')">EN</button>
@@ -647,32 +674,32 @@
       <div class="card-title" id="lbl-choose-type">What are you submitting?</div>
       <div class="type-grid">
 
-        <div class="type-card" onclick="selectType('weekly-class', this)">
-          <span class="type-card-icon">📅</span>
+        <div class="type-card" onclick="selectType('weekly-class', this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectType('weekly-class',this);}">
+          <span class="type-card-icon" aria-hidden="true">📅</span>
           <div class="type-card-title" data-lbl="type-weekly-title">Weekly Class</div>
           <div class="type-card-desc" data-lbl="type-weekly-desc">A recurring class every week throughout the semester — same day, same time.</div>
         </div>
 
-        <div class="type-card" onclick="selectType('social-event', this)">
-          <span class="type-card-icon">🎉</span>
+        <div class="type-card" onclick="selectType('social-event', this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectType('social-event',this);}">
+          <span class="type-card-icon" aria-hidden="true">🎉</span>
           <div class="type-card-title" data-lbl="type-social-title">Social Night</div>
           <div class="type-card-desc" data-lbl="type-social-desc">A one-off dance evening, practice night, milonga, or party with optional workshops.</div>
         </div>
 
-        <div class="type-card" onclick="selectType('workshop', this)">
-          <span class="type-card-icon">🎓</span>
+        <div class="type-card" onclick="selectType('workshop', this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectType('workshop',this);}">
+          <span class="type-card-icon" aria-hidden="true">🎓</span>
           <div class="type-card-title" data-lbl="type-workshop-title">Workshop</div>
           <div class="type-card-desc" data-lbl="type-workshop-desc">A guest teacher or intensive — one session, a weekend, or a short series.</div>
         </div>
 
-        <div class="type-card festival-card" onclick="goToFestivalForm()">
-          <span class="type-card-icon">🌟</span>
+        <div class="type-card festival-card" onclick="goToFestivalForm()" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goToFestivalForm();}">
+          <span class="type-card-icon" aria-hidden="true">🌟</span>
           <div class="type-card-title" data-lbl="type-festival-title">Festival</div>
           <div class="type-card-desc" data-lbl="type-festival-desc">Multi-day event with multiple teachers and a full programme. Uses a dedicated form →</div>
         </div>
 
       </div>
-      <div class="err-box" id="err-type" style="display:none;margin-top:14px;"></div>
+      <div class="err-box" id="err-type" style="display:none;margin-top:14px;" aria-live="assertive" role="alert"></div>
 
       <!-- Semester overview collapsible -->
       <div style="margin-top:18px;">
@@ -893,7 +920,7 @@
       <!-- What next -->
       <div class="cwc-divider"></div>
       <div class="cwc-section-label" data-lbl="what-next">What would you like to do next?</div>
-      <div class="err-box" id="cwc-submit-error" style="display:none;margin-bottom:8px;"></div>
+      <div class="err-box" id="cwc-submit-error" style="display:none;margin-bottom:8px;" aria-live="assertive" role="alert"></div>
       <div class="cwc-next-btns">
         <button class="cwc-next-btn" onclick="cwcNext('weekly', this)"   data-lbl="submit-weekly">Submit another weekly class →</button>
         <button class="cwc-next-btn" onclick="cwcNext('workshop', this)" data-lbl="submit-workshop">Submit a workshop or miniseries →</button>
@@ -1298,7 +1325,7 @@
           style="width:100%;margin-top:0;font-size:.95rem;">
           Submit to Shoonya →
         </button>
-        <div id="ws-submit-error" class="err-box" style="display:none;margin-top:10px;"></div>
+        <div id="ws-submit-error" class="err-box" style="display:none;margin-top:10px;" aria-live="assertive" role="alert"></div>
       </div>
       <div id="ws-submit-success" style="display:none;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:20px;text-align:center;margin-top:14px;">
         <div style="font-size:1.6rem;margin-bottom:8px;">🎉</div>
@@ -1608,7 +1635,7 @@
           style="width:100%;margin-top:0;font-size:.95rem;">
           Submit to Shoonya →
         </button>
-        <div id="ss-submit-error" class="err-box" style="display:none;margin-top:10px;"></div>
+        <div id="ss-submit-error" class="err-box" style="display:none;margin-top:10px;" aria-live="assertive" role="alert"></div>
       </div>
       <div id="ss-submit-success" style="display:none;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:20px;text-align:center;margin-top:14px;">
         <div style="font-size:1.6rem;margin-bottom:8px;">🎉</div>
@@ -1629,9 +1656,9 @@
 
   <!-- ── SCREEN 3: LOADING ─────────────────────────── -->
   <div id="screen-loading" style="display:none;">
-    <div class="card loading-card">
-      <div class="spinner"></div>
-      <div style="font-size:.9rem;color:#666;" id="loading-msg" data-lbl="loading-msg">Reading your description…</div>
+    <div class="card loading-card" role="status" aria-live="polite" aria-label="Processing your submission">
+      <div class="spinner" aria-hidden="true"></div>
+      <div style="font-size:.9rem;color:#666;" id="loading-msg" data-lbl="loading-msg">Reading your description — this takes a few seconds…</div>
       <div class="loading-step active" id="ls1" data-lbl="ls1">Identifying the submission type</div>
       <div class="loading-step" id="ls2" data-lbl="ls2">Filling in the details</div>
       <div class="loading-step" id="ls3" data-lbl="ls3">Checking for anything missing</div>
@@ -1643,7 +1670,7 @@
     <div class="card">
       <div class="card-title" id="lbl-review">Check your details</div>
       <div id="review-content"></div>
-      <div class="err-box" id="err-review"></div>
+      <div class="err-box" id="err-review" aria-live="assertive" role="alert"></div>
       <button class="btn-submit" onclick="submitConfirmed()" id="btn-submit" data-lbl="confirm-submit">Confirm &amp; Submit</button>
       <button class="btn-back" onclick="goToInput()" data-lbl="back-to-input">← Edit my description</button>
     </div>
@@ -1673,7 +1700,7 @@ const FESTIVAL_FORM_URL = '../Festival/index.html';
 // ─── TRANSLATIONS ───────────────────────────────────────────────────
 const T = {
   EN: {
-    'hero-title':       'New Submission',
+    'hero-title':       'Submit a Class or Event',
     'hero-sub':         'Tell us about your class or event — we\'ll handle the details.',
     'notice-bar':       'No long forms. Just describe what you\'re offering and we\'ll fill in the details for you to check.',
     'lbl-choose-type':  'What are you submitting?',
@@ -1685,7 +1712,7 @@ const T = {
     'type-workshop-desc':'A guest teacher or intensive — one session, a weekend, or a short series.',
     'type-festival-title':'Festival',
     'type-festival-desc':'Multi-day event with multiple teachers and a full programme. Uses a dedicated form →',
-    'lbl-describe':     'Describe your event',
+    'lbl-describe':     'Describe your class or event',
     'welcome-back':     'Welcome back',
     'use-my-details':   'Use my saved details',
     'your-description': 'Your description',
@@ -1694,19 +1721,20 @@ const T = {
     'input-hint':       'Include your name, email, schedule, and level — whatever you know. The more you share, the less we\'ll need to follow up.',
     'continue-btn':     'Continue →',
     'back-to-types':    '← Change submission type',
-    'loading-msg':      'Reading your description…',
+    'loading-msg':      'Reading your description — this takes a few seconds…',
     'ls1':              'Identifying the submission type',
     'ls2':              'Filling in the details',
     'ls3':              'Checking for anything missing',
     'lbl-review':       'Check your details',
     'what-we-found':    'What we found',
-    'still-needed':     'A few things we still need',
+    'still-needed':     'We just need a few more details',
     'confirm-submit':   'Confirm & Submit',
     'back-to-input':    '← Edit my description',
     'success-title':    'Submission received!',
-    'success-sub':      'Your details have been saved and Shoonya has been notified. We\'ll be in touch if we need anything else.',
+    'success-sub':      'Your details have been saved and Shoonya has been notified. You\'ll receive a confirmation email shortly — check info@shoonyadance.com if you don\'t see it.',
     'submit-another':   'Submit another',
-    'note-from-us':     'A note',
+    'note-from-us':     'Heads up',
+    'low-confidence':   'We extracted your details but weren\'t fully confident — please check everything carefully before submitting.',
     'err-no-url':       '⚠ The submission system is not yet configured. Please contact info@shoonyadance.com.',
     'err-empty':        'Please describe your class or event first.',
     'err-retry':        'Something went wrong. Please try again or email info@shoonyadance.com.',
@@ -1715,18 +1743,18 @@ const T = {
     'add-time-slot':    '+ Add time slot',
     'class-info':       'Class info',
     'min-age':          'Min. age',
-    'partner-req':      'Partner reg. compulsory?',
+    'partner-req':      'Partner required?',
     'yes-compulsory':   'Yes — compulsory',
     'coteachers':       'Co-teacher(s)',
     'what-to-bring':    'What to bring',
     'class-dates':      'Your class dates this semester',
-    'tap-to-mark-absent': 'Tap a date to mark yourself as absent',
+    'tap-to-mark-absent': 'Tap a date to remove it — no class that day',
     'absent-hint-detail': 'It turns red and is excluded from your session count and price. Tap again to undo.',
     'see-sem-overview': 'See semester overview',
     'hide-sem-overview': 'Hide semester overview',
     'continue-to-dates': 'Continue — choose your dates →',
     'free-trial':       'Free trial class:',
-    'opendeur-avail':   'Opendeurdag Availability',
+    'opendeur-avail':   'Open Door Day Availability',
     'yes-available':    '✓ Yes, I\'m available',
     'not-available':    '✗ Not available',
     'what-next':        'What would you like to do next?',
@@ -1773,14 +1801,14 @@ const T = {
     'catchup-note':          'Reserved for teachers who missed a planned class due to illness or injury.',
   },
   NL: {
-    'hero-title':       'Nieuwe Inzending',
+    'hero-title':       'Les of Evenement Indienen',
     'hero-sub':         'Vertel ons over je les of evenement — wij verwerken de details.',
     'notice-bar':       'Geen lange formulieren. Beschrijf gewoon wat je aanbiedt en wij vullen de details in om te controleren.',
     'lbl-choose-type':  'Wat wil je indienen?',
     'type-weekly-title':'Wekelijkse Les',
     'type-weekly-desc': 'Een wekelijks terugkerende les doorheen het semester — zelfde dag, zelfde tijdstip.',
     'type-social-title':'Sociale Avond',
-    'type-social-desc': 'Een eenmalige dansavond, oefenavo nd, milonga of feest met optionele workshops.',
+    'type-social-desc': 'Een eenmalige dansavond, oefenavond, milonga of feest met optionele workshops.',
     'type-workshop-title':'Workshop',
     'type-workshop-desc':'Een gastdocent of intensief — één sessie, een weekend of een korte reeks.',
     'type-festival-title':'Festival',
@@ -1794,19 +1822,20 @@ const T = {
     'input-hint':       'Vermeld je naam, e-mail, planning en niveau — alles wat je weet. Hoe meer details, hoe minder we later nodig hebben.',
     'continue-btn':     'Verder →',
     'back-to-types':    '← Type wijzigen',
-    'loading-msg':      'Je beschrijving wordt verwerkt…',
+    'loading-msg':      'Je beschrijving wordt verwerkt — dit duurt even…',
     'ls1':              'Type inzending bepalen',
     'ls2':              'Details invullen',
     'ls3':              'Controleren op ontbrekende info',
     'lbl-review':       'Controleer je gegevens',
     'what-we-found':    'Wat we gevonden hebben',
-    'still-needed':     'Nog een paar dingen die we nodig hebben',
+    'still-needed':     'We hebben nog een paar details nodig',
     'confirm-submit':   'Bevestigen & Verzenden',
     'back-to-input':    '← Beschrijving aanpassen',
     'success-title':    'Inzending ontvangen!',
-    'success-sub':      'Je gegevens zijn opgeslagen en Shoonya is op de hoogte gesteld. We nemen contact op als we nog iets nodig hebben.',
+    'success-sub':      'Je gegevens zijn opgeslagen en Shoonya is op de hoogte gesteld. Je ontvangt binnenkort een bevestigingsmail — check info@shoonyadance.com als je die niet ziet.',
     'submit-another':   'Nog een inzending',
-    'note-from-us':     'Een opmerking',
+    'note-from-us':     'Let op',
+    'low-confidence':   'We hebben je gegevens uitgelezen maar waren niet volledig zeker — controleer alles goed voor je indient.',
     'err-no-url':       '⚠ Het inzendsysteem is nog niet geconfigureerd. Neem contact op via info@shoonyadance.com.',
     'err-empty':        'Beschrijf eerst je les of evenement.',
     'err-retry':        'Er is iets misgegaan. Probeer opnieuw of stuur een e-mail naar info@shoonyadance.com.',
@@ -1820,10 +1849,10 @@ const T = {
     'coteachers':       'Co-lesgever(s)',
     'what-to-bring':    'Wat meebrengen',
     'class-dates':      'Jouw lesdagen dit semester',
-    'tap-to-mark-absent': 'Tik op een datum om jezelf afwezig te melden',
+    'tap-to-mark-absent': 'Tik op een datum om die te schrappen — geen les die dag',
     'absent-hint-detail': 'De datum wordt rood en telt niet mee voor de les- en prijstelling. Tik opnieuw om ongedaan te maken.',
-    'see-sem-overview': 'Bekijk semestercalender',
-    'hide-sem-overview': 'Verberg semestercalender',
+    'see-sem-overview': 'Bekijk semesterkalender',
+    'hide-sem-overview': 'Verberg semesterkalender',
     'continue-to-dates': 'Verder — kies jouw data →',
     'free-trial':       'Gratis proefles:',
     'opendeur-avail':   'Opendeurdag Beschikbaarheid',
@@ -1859,7 +1888,7 @@ const T = {
     'catchup-note':          'Voorzien voor leerkrachten die een geplande les hebben gemist door ziekte of blessure.',
   },
   FR: {
-    'hero-title':       'Nouvelle Soumission',
+    'hero-title':       'Soumettre un Cours ou Événement',
     'hero-sub':         'Décrivez votre cours ou événement — nous nous occupons des détails.',
     'notice-bar':       'Pas de longs formulaires. Décrivez simplement ce que vous proposez et nous remplirons les détails pour vous.',
     'lbl-choose-type':  'Que souhaitez-vous soumettre ?',
@@ -1880,19 +1909,20 @@ const T = {
     'input-hint':       'Indiquez votre nom, e-mail, horaire et niveau — tout ce que vous savez. Plus vous partagez, moins nous aurons besoin de suivre.',
     'continue-btn':     'Continuer →',
     'back-to-types':    '← Changer le type',
-    'loading-msg':      'Lecture de votre description…',
+    'loading-msg':      'Lecture de votre description — cela prend quelques secondes…',
     'ls1':              'Identification du type de soumission',
     'ls2':              'Remplissage des détails',
     'ls3':              'Vérification des informations manquantes',
     'lbl-review':       'Vérifiez vos informations',
     'what-we-found':    'Ce que nous avons trouvé',
-    'still-needed':     'Quelques informations encore nécessaires',
+    'still-needed':     'Nous avons besoin de quelques détails supplémentaires',
     'confirm-submit':   'Confirmer & Envoyer',
     'back-to-input':    '← Modifier ma description',
     'success-title':    'Soumission reçue !',
-    'success-sub':      'Vos informations ont été enregistrées et Shoonya a été informé. Nous vous contacterons si nécessaire.',
+    'success-sub':      'Vos informations ont été enregistrées et Shoonya a été informé. Vous recevrez un e-mail de confirmation sous peu — vérifiez info@shoonyadance.com si vous ne le voyez pas.',
     'submit-another':   'Soumettre une autre',
-    'note-from-us':     'Une remarque',
+    'note-from-us':     'À noter',
+    'low-confidence':   'Nous avons extrait vos informations mais n\'étions pas entièrement certains — vérifiez tout attentivement avant de soumettre.',
     'err-no-url':       '⚠ Le système de soumission n\'est pas encore configuré. Contactez info@shoonyadance.com.',
     'err-empty':        'Veuillez d\'abord décrire votre cours ou événement.',
     'err-retry':        'Une erreur s\'est produite. Veuillez réessayer ou envoyer un e-mail à info@shoonyadance.com.',
@@ -1906,7 +1936,7 @@ const T = {
     'coteachers':       'Co-enseignant(s)',
     'what-to-bring':    'Quoi apporter',
     'class-dates':      'Tes dates de cours ce semestre',
-    'tap-to-mark-absent': 'Appuyez sur une date pour vous marquer absent·e',
+    'tap-to-mark-absent': 'Appuyez sur une date pour la supprimer — pas de cours ce jour-là',
     'absent-hint-detail': 'Elle devient rouge et est exclue du décompte. Appuyez à nouveau pour annuler.',
     'see-sem-overview': 'Voir le calendrier semestriel',
     'hide-sem-overview': 'Masquer le calendrier',
@@ -5213,6 +5243,7 @@ function wsNext(dest) {
 function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('shoonya_lang', lang);
+  document.documentElement.lang = lang.toLowerCase(); // screen readers use this for pronunciation
   document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === lang));
   applyTranslations();
   if (currentType) applyTemplate(currentType);
@@ -5805,7 +5836,7 @@ function renderReview(ext) {
 
   // Warning if low confidence
   if (conf < 0.5) {
-    html += `<div class="note-block" style="border-color:var(--red);background:#fff5f5;color:#721c24;"><strong>${t('note-from-us')}</strong>${esc(t('err-retry'))}</div>`;
+    html += `<div class="note-block" style="border-color:var(--red);background:#fff5f5;color:#721c24;">${esc(t('low-confidence'))}</div>`;
   }
 
   // AI notes
@@ -7059,7 +7090,7 @@ async function wsSubmitToShoonya() {
     }
   } catch (err) {
     const wsErr = document.getElementById('ws-submit-error');
-    wsErr.textContent = '⚠ Something went wrong: ' + err.message + '. Please try again or email info@shoonyadance.com.';
+    wsErr.textContent = '⚠ Something went wrong. Please try again or email info@shoonyadance.com.';
     wsErr.style.display = '';
     wsErr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     btn.disabled    = false;
@@ -7164,7 +7195,7 @@ async function ssSubmitToShoonya() {
     }
   } catch (err) {
     const ssErr = document.getElementById('ss-submit-error');
-    ssErr.textContent = '⚠ Something went wrong: ' + err.message + '. Please try again or email info@shoonyadance.com.';
+    ssErr.textContent = '⚠ Something went wrong. Please try again or email info@shoonyadance.com.';
     ssErr.style.display = '';
     ssErr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     btn.disabled    = false;
