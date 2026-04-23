@@ -184,7 +184,7 @@
     color: var(--text-mid); margin-bottom: 5px;
   }
   .field label .req { color: var(--red); margin-left: 2px; }
-  .hint { font-size: .73rem; color: var(--text-light); margin-top: 3px; font-weight: 300; }
+  .hint { font-size: .78rem; color: var(--text-light); margin-top: 3px; font-weight: 300; }
 
   input[type=text], input[type=email], input[type=date], input[type=time], select, textarea {
     width: 100%; padding: 9px 12px;
@@ -254,7 +254,7 @@
   .tpc-styles { font-size: .78rem; color: var(--purple); font-weight: 600; margin-top: 2px; }
   .tpc-bio { font-size: .82rem; color: var(--text-mid); line-height: 1.55; margin-bottom: 8px; font-weight: 300; }
   .tpc-section-label {
-    font-family: var(--font-display); font-size: .64rem; font-weight: 700;
+    font-family: var(--font-display); font-size: .68rem; font-weight: 700;
     text-transform: uppercase; letter-spacing: .8px; color: var(--text-light); margin: 8px 0 4px;
   }
   .tpc-events-list { display: flex; flex-direction: column; gap: 4px; }
@@ -273,7 +273,7 @@
 
   .textarea-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
   .toolbar-label {
-    font-family: var(--font-display); font-size: .64rem; font-weight: 700;
+    font-family: var(--font-display); font-size: .68rem; font-weight: 700;
     color: var(--text-light); text-transform: uppercase; letter-spacing: .8px;
   }
   .btn-voice {
@@ -315,7 +315,7 @@
   }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-step {
-    font-family: var(--font-display); font-size: .68rem;
+    font-family: var(--font-display); font-size: .72rem;
     letter-spacing: .7px; text-transform: uppercase;
     color: var(--text-light); margin-top: 8px; transition: color .3s;
   }
@@ -589,7 +589,7 @@
   .cwc-meta-row { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 9px; }
   .cwc-meta-key {
     min-width: 105px; font-family: var(--font-display);
-    font-size: .61rem; font-weight: 700; color: var(--text-light);
+    font-size: .68rem; font-weight: 700; color: var(--text-light);
     text-transform: uppercase; letter-spacing: .8px; padding-top: 5px; flex-shrink: 0;
   }
   .cwc-meta-chips { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -660,6 +660,23 @@
     .row-2 { grid-template-columns: 1fr; }
     /* Larger touch targets for header controls on mobile */
     .header-nav-btn, .lang-btn { padding: 10px 12px; min-height: 44px; }
+
+    /* Stack meta key+input vertically — side-by-side is too cramped on phone */
+    .cwc-meta-row { flex-direction: column; gap: 4px; }
+    .cwc-meta-key { min-width: unset; padding-top: 0; }
+
+    /* Slot grid: collapse teacher column on very narrow screens */
+    .wc-slot { grid-template-columns: 80px 1fr auto 1fr auto; gap: 3px; padding: 5px 6px; }
+    .wc-slot .wc-slot-teacher { display: none; }
+
+    /* Summary label min-width too wide for phone */
+    .summary-label { min-width: 90px; }
+
+    /* Give date chips more room */
+    .cwc-date-chip { padding: 7px 10px; font-size: .8rem; }
+
+    /* Prevent review overlay from being taller than screen */
+    #cwc-review-overlay { align-items: flex-start; padding: 12px 8px; }
   }
 
   /* Respect user motion preferences — disable all non-essential animations */
@@ -877,7 +894,7 @@
 
       <!-- Logged in: step 1 — style picker -->
       <div id="wc-step-style" style="display:none;">
-        <h3 class="card-title" data-lbl="wc-pick-style-title">Weekly Class — Pick a Style</h3>
+        <h3 class="card-title" data-lbl="wc-pick-style-title">Weekly Class — Pick a Style <span style="font-size:.58rem;font-weight:400;color:var(--text-light);letter-spacing:.5px;text-transform:none;float:right;margin-top:2px;">Step 1 of 4</span></h3>
         <div class="wc-section-label" data-lbl="wc-which-style">Which style are you submitting?</div>
         <div id="wc-style-chips" class="wc-chips"></div>
         <div style="display:flex;gap:6px;align-items:center;margin-top:8px;">
@@ -893,7 +910,7 @@
       <!-- Logged in: step 2 — schedule builder -->
       <div id="wc-step-schedule" style="display:none;">
         <button class="btn-step-back" onclick="wcBackToStyle()">← Back</button>
-        <h3 class="card-title" data-lbl="wc-schedule-title">Weekly Class — Schedule</h3>
+        <h3 class="card-title" data-lbl="wc-schedule-title">Weekly Class — Schedule <span style="font-size:.58rem;font-weight:400;color:var(--text-light);letter-spacing:.5px;text-transform:none;float:right;margin-top:2px;">Step 2 of 4</span></h3>
 
         <div class="wc-style-banner" id="wc-style-banner">
           <span id="wc-style-banner-label"></span>
@@ -928,7 +945,7 @@
   <div id="screen-confirm-wc" style="display:none;">
     <div class="card">
       <button class="btn-step-back" onclick="wcBackFromConfirm()">← Back to schedule</button>
-      <h3 class="card-title">✅ <span id="cwc-style-title"></span> Submitted</h3>
+      <h3 class="card-title">✅ <span id="cwc-style-title"></span> Submitted <span style="font-size:.58rem;font-weight:400;color:var(--text-light);letter-spacing:.5px;text-transform:none;float:right;margin-top:2px;">Step 3 of 4</span></h3>
 
       <!-- Schedule summary -->
       <div id="cwc-schedule-summary" style="margin-bottom:18px;"></div>
@@ -980,6 +997,7 @@
         <div class="cwc-meta-row">
           <div class="cwc-meta-key">Prerequisites</div>
           <textarea id="cwc-prereq-input" class="cwc-meta-input" rows="2"
+            aria-label="Prerequisites"
             placeholder="Level requirements and prior experience needed."></textarea>
         </div>
 
@@ -989,7 +1007,8 @@
             Website note
             <div style="font-size:.58rem;font-weight:400;color:var(--text-light);text-transform:none;letter-spacing:0;margin-top:2px;">Published on class page</div>
           </div>
-          <textarea id="cwc-website-note-input" class="cwc-meta-input" rows="5"
+          <textarea id="cwc-website-note-input" class="cwc-meta-input" rows="3"
+            aria-label="Website note — published on class page"
             placeholder="Extra information shown on the Squarespace class page."></textarea>
         </div>
 
@@ -1008,7 +1027,7 @@
     <div class="card">
       <button class="btn-step-back" onclick="cwcBackFromDates()">← Back to schedule</button>
 
-      <h3 class="card-title" id="cwc-dates-screen-title" style="margin-bottom:4px;">📅 Your class dates</h3>
+      <h3 class="card-title" id="cwc-dates-screen-title" style="margin-bottom:4px;">📅 Your class dates <span style="font-size:.58rem;font-weight:400;color:var(--text-light);letter-spacing:.5px;text-transform:none;float:right;margin-top:2px;">Step 4 of 4</span></h3>
       <div id="cwc-dates-style-summary" style="font-size:.82rem;color:#888;margin-bottom:14px;"></div>
 
       <!-- Semester mini-overview (collapsible) -->
@@ -3936,18 +3955,26 @@ function cwcPopulateMeta(style) {
   document.getElementById('cwc-bring-input').value = (meta && meta.bring) || '';
 
   // Prerequisites — surface the stored prereq so teachers can review and edit
-  document.getElementById('cwc-prereq-input').value = (meta && meta.prereq) || '';
+  const prereqInput = document.getElementById('cwc-prereq-input');
+  if (prereqInput) {
+    prereqInput.value = (meta && meta.prereq) || '';
+    prereqInput.style.height = 'auto';
+    prereqInput.style.height = Math.min(prereqInput.scrollHeight + 4, 200) + 'px';
+  }
 
   // Website note — style-specific, semester-aware; only show row if there's content
   const websiteNote = cwcGetStyleWebsiteNote(style);
   const noteRow     = document.getElementById('cwc-website-note-row');
   const noteInput   = document.getElementById('cwc-website-note-input');
   if (websiteNote && noteRow && noteInput) {
-    noteInput.value      = websiteNote;
+    noteInput.value       = websiteNote;
     noteRow.style.display = '';
+    // Auto-resize to show full content without scrolling
+    noteInput.style.height = 'auto';
+    noteInput.style.height = Math.min(noteInput.scrollHeight + 4, 400) + 'px';
   } else if (noteRow) {
     noteRow.style.display = 'none';
-    if (noteInput) noteInput.value = '';
+    if (noteInput) { noteInput.value = ''; noteInput.style.height = ''; }
   }
 }
 
@@ -4343,7 +4370,8 @@ function cwcBuildDateGrid(style, levels) {
     : [];
   if (opDates.length) {
     infoHtml += `<div style="border:1.5px solid #d4c5f5;border-radius:10px;padding:14px 16px;margin-bottom:12px;">
-      <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#6B3FA0;margin-bottom:6px;">🚪 ${t('opendeur-avail')}</div>`;
+      <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#6B3FA0;margin-bottom:2px;">🚪 ${t('opendeur-avail')}</div>
+      <div style="font-size:.76rem;color:#888;margin-bottom:8px;font-weight:400;">New students can try your class for free — let us know if you can teach.</div>`;
     opDates.forEach(function(dateIso) {
       const opDate  = new Date(dateIso + 'T12:00:00');
       const opLabel = DOW[opDate.getDay()] + ' ' + opDate.getDate() + ' ' + MON[opDate.getMonth()] + ' ' + opDate.getFullYear();
