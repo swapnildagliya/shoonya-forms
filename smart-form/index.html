@@ -417,6 +417,7 @@
   }
   .btn-submit:hover { background: oklch(48% 0.14 145); transform: translateY(-1px); }
   .btn-submit:active { transform: translateY(0); }
+  .btn-submit:disabled { background: var(--border); color: var(--text-light); cursor: not-allowed; transform: none; }
   .btn-back {
     display: block; width: 100%; padding: 10px;
     background: none; color: var(--text-light);
@@ -532,6 +533,7 @@
     background: none; border: 1.5px solid var(--border); color: var(--text-light); font-weight: 500;
   }
   .cwc-next-btn.outline:hover { border-color: var(--border-strong); color: var(--text-mid); background: none; transform: none; }
+  .cwc-next-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; pointer-events: none; }
 
   /* ── CLASS META ── */
   .cwc-meta-section { margin-bottom: 4px; }
@@ -891,11 +893,12 @@
       <!-- What next -->
       <div class="cwc-divider"></div>
       <div class="cwc-section-label" data-lbl="what-next">What would you like to do next?</div>
+      <div class="err-box" id="cwc-submit-error" style="display:none;margin-bottom:8px;"></div>
       <div class="cwc-next-btns">
-        <button class="cwc-next-btn" onclick="cwcNext('weekly')"   data-lbl="submit-weekly">Submit another weekly class →</button>
-        <button class="cwc-next-btn" onclick="cwcNext('workshop')" data-lbl="submit-workshop">Submit a workshop or miniseries →</button>
-        <button class="cwc-next-btn" onclick="cwcNext('social')"   data-lbl="submit-social">Submit a social event →</button>
-        <button class="cwc-next-btn outline" onclick="cwcNext('done')" data-lbl="done-for-now">I'm done for now</button>
+        <button class="cwc-next-btn" onclick="cwcNext('weekly', this)"   data-lbl="submit-weekly">Submit another weekly class →</button>
+        <button class="cwc-next-btn" onclick="cwcNext('workshop', this)" data-lbl="submit-workshop">Submit a workshop or miniseries →</button>
+        <button class="cwc-next-btn" onclick="cwcNext('social', this)"   data-lbl="submit-social">Submit a social event →</button>
+        <button class="cwc-next-btn outline" onclick="cwcNext('done', this)" data-lbl="done-for-now">I'm done for now</button>
       </div>
     </div>
   </div>
@@ -2064,6 +2067,7 @@ let cwcSelectedAge    = '12+';
 let cwcPartnerReq     = false;
 let cwcSelectedCoTeachers = []; // Array of co-teacher names
 let cwcOpendeurAvailability = {}; // Keyed by opendeurdag date
+let cwcSubmitting     = false; // Guard against double-submission
 
 // ─── KNOWN SCHEDULES FALLBACK ────────────────────────────────────────
 // Used when the profile's associated_events has no weekly_schedule yet.
@@ -3419,7 +3423,7 @@ function cwcShowReview(action) {
             <button onclick="document.getElementById('cwc-review-overlay').remove(); window._cwcReviewResolve(false);"
               style="flex:1;padding:11px;border:2px solid #ccc;background:#fff;border-radius:6px;
               font-weight:600;font-size:.85rem;cursor:pointer;color:#555;">← Edit</button>
-            <button onclick="document.getElementById('cwc-review-overlay').remove(); window._cwcReviewResolve(true);"
+            <button onclick="this.disabled=true; this.textContent='Submitting…'; this.previousElementSibling.disabled=true; setTimeout(function(){ document.getElementById('cwc-review-overlay').remove(); window._cwcReviewResolve(true); }, 80);"
               style="flex:2;padding:11px;background:#6B3FA0;color:#fff;border:none;border-radius:6px;
               font-weight:700;font-size:.85rem;cursor:pointer;letter-spacing:.3px;">Confirm & Submit</button>
           </div>
@@ -4337,7 +4341,9 @@ function cwcUpdateDayPriceSummary(dayName) {
   }
 }
 
-async function cwcNext(action) {
+async function cwcNext(action, triggerBtn) {
+  if (cwcSubmitting) return; // prevent double-submission
+
   // Show review panel before submitting
   if (cwcCurrentData) {
     const approved = await cwcShowReview(action);
@@ -4417,13 +4423,39 @@ async function cwcNext(action) {
     });
     cwcCurrentData.payload.class_description = descParts.join('\n\n');
 
-    // Submit to Apps Script (fire-and-forget)
+    // Submit to Apps Script — awaited so we can catch failures
     if (APPS_SCRIPT_URL) {
-      fetch(APPS_SCRIPT_URL, {
-        method:  'POST',
-        headers: { 'Content-Type': 'text/plain' },
-        body:    JSON.stringify(cwcCurrentData.payload)
-      }).catch(() => {});
+      // Disable all next-step buttons; show "Submitting…" on the one that was clicked
+      const nextBtns = document.querySelectorAll('.cwc-next-btn');
+      nextBtns.forEach(b => { b.disabled = true; });
+      if (triggerBtn) triggerBtn.textContent = 'Submitting…';
+      const errEl = document.getElementById('cwc-submit-error');
+      if (errEl) errEl.style.display = 'none';
+      cwcSubmitting = true;
+
+      try {
+        const controller = new AbortController();
+        const tid = setTimeout(() => controller.abort(), 30000);
+        await fetch(APPS_SCRIPT_URL, {
+          method:  'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body:    JSON.stringify(cwcCurrentData.payload),
+          signal:  controller.signal
+        });
+        clearTimeout(tid);
+      } catch (err) {
+        // Re-enable buttons, restore label, show error — do NOT navigate away
+        cwcSubmitting = false;
+        nextBtns.forEach(b => { b.disabled = false; });
+        if (triggerBtn && triggerBtn.dataset.lbl) triggerBtn.textContent = t(triggerBtn.dataset.lbl);
+        if (errEl) {
+          errEl.textContent = '⚠ Submission failed — please try again or email info@shoonyadance.com.';
+          errEl.style.display = '';
+          errEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        return;
+      }
+      cwcSubmitting = false;
     }
 
     // Save schedule to profile for next-semester pre-fill (fire-and-forget)
@@ -5829,7 +5861,7 @@ function renderReview(ext) {
 }
 
 // ─── SUBMIT CONFIRMED ────────────────────────────────────────────────
-function submitConfirmed() {
+async function submitConfirmed() {
   hideErr('err-review');
   const type   = document.getElementById('f_eventType').value;
   const ext    = extraction || {};
@@ -5858,20 +5890,42 @@ function submitConfirmed() {
   // Clear draft
   localStorage.removeItem('shoonya_draft_' + currentType);
 
+  // Disable button and show loading state to prevent double-submission
+  const btn = document.getElementById('btn-submit');
+  if (btn) { btn.disabled = true; btn.textContent = 'Submitting…'; }
+
   const submissionText = formatSubmission(type, merged);
-  sendSubmission({ eventType: type, submittedBy, email, title: title || submittedBy, submissionText });
+  const ok = await sendSubmission({ eventType: type, submittedBy, email, title: title || submittedBy, submissionText });
+
+  if (!ok) {
+    // Re-enable button so teacher can retry
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = btn.dataset.lbl ? t(btn.dataset.lbl) : 'Confirm & Submit';
+    }
+    showErr('err-review', '⚠ Submission failed — please try again or email info@shoonyadance.com.');
+  }
 }
 
+// Returns true on success, false on failure.
 async function sendSubmission(payload) {
-  if (!APPS_SCRIPT_URL) { showScreen('success'); return; }
+  if (!APPS_SCRIPT_URL) { showScreen('success'); return true; }
   try {
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 30000);
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      signal: controller.signal
     });
-  } catch(e) { /* no-cors: treat as success */ }
-  showScreen('success');
+    clearTimeout(tid);
+    // no-cors: response body unreadable, but network errors / timeouts do throw
+    showScreen('success');
+    return true;
+  } catch(e) {
+    return false;
+  }
 }
 
 // ─── TEXT FORMATTERS ─────────────────────────────────────────────────
@@ -7004,8 +7058,10 @@ async function wsSubmitToShoonya() {
       throw new Error(json.error || 'Unknown error');
     }
   } catch (err) {
-    document.getElementById('ws-submit-error').textContent = '⚠ Something went wrong: ' + err.message + '. Please try again or email info@shoonyadance.com.';
-    document.getElementById('ws-submit-error').style.display = '';
+    const wsErr = document.getElementById('ws-submit-error');
+    wsErr.textContent = '⚠ Something went wrong: ' + err.message + '. Please try again or email info@shoonyadance.com.';
+    wsErr.style.display = '';
+    wsErr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     btn.disabled    = false;
     btn.textContent = 'Submit to Shoonya →';
   }
@@ -7107,8 +7163,10 @@ async function ssSubmitToShoonya() {
       throw new Error(json.error || 'Unknown error');
     }
   } catch (err) {
-    document.getElementById('ss-submit-error').textContent = '⚠ Something went wrong: ' + err.message + '. Please try again or email info@shoonyadance.com.';
-    document.getElementById('ss-submit-error').style.display = '';
+    const ssErr = document.getElementById('ss-submit-error');
+    ssErr.textContent = '⚠ Something went wrong: ' + err.message + '. Please try again or email info@shoonyadance.com.';
+    ssErr.style.display = '';
+    ssErr.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     btn.disabled    = false;
     btn.textContent = 'Submit to Shoonya →';
   }
