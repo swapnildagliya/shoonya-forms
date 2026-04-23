@@ -977,6 +977,21 @@
             placeholder="e.g. Comfortable clothes, clean non-marking shoes."></textarea>
         </div>
 
+        <div class="cwc-meta-row">
+          <div class="cwc-meta-key">Prerequisites</div>
+          <textarea id="cwc-prereq-input" class="cwc-meta-input" rows="2"
+            placeholder="Level requirements and prior experience needed."></textarea>
+        </div>
+
+        <!-- Website note — only shown for styles that have one -->
+        <div class="cwc-meta-row" id="cwc-website-note-row" style="display:none;">
+          <div class="cwc-meta-key" style="padding-top:5px;">
+            Website note
+            <div style="font-size:.58rem;font-weight:400;color:var(--text-light);text-transform:none;letter-spacing:0;margin-top:2px;">Published on class page</div>
+          </div>
+          <textarea id="cwc-website-note-input" class="cwc-meta-input" rows="5"
+            placeholder="Extra information shown on the Squarespace class page."></textarea>
+        </div>
 
       </div>
 
@@ -2726,6 +2741,76 @@ const CLASS_META_BY_NAME = {
   },
 };
 
+// ─── STYLE WEBSITE NOTES ─────────────────────────────────────────────
+// Per-style notes shown to teachers on the confirmation screen so they can
+// confirm the content matches what's on the website before submitting.
+// Semester-aware notes use cwcGetActiveSemester() to switch summer/winter.
+// Teachers can edit or clear these before submitting.
+const STYLE_WEBSITE_NOTES = {
+  'Flamenco': `FLAMENCO SHOES
+
+For your first class, wear a closed-toe shoe with a sturdy, chunky heel. Men can choose flamenco boots or chapins (lace-up shoes).
+
+When you're ready to buy proper flamenco shoes, invest in professional-level shoes — they will enhance your dancing experience.
+
+Good brands: Senovilla (the best!), Gallardo (oldest brand, very reliable), Antonio Garcia, Begona Cervera (beautiful but most models have high heels), Menkes, Artefyl (very sturdy but hard sole).
+Avoid: Gladys.
+
+Semi-professional alternative: Sodanza is acceptable.
+
+Tips:
+- Maximum recommended heel height: 5 cm. Avoid very high heels.
+- Women: avoid shoes with open sides.
+- Available in normal width (A) or extra wide (AA). Leather = stronger; suede = adapts faster to foot shape.
+- Different brands excel in different sounds: some are better for the planta, others for the tacón. Some shoes are hard and take weeks to soften.
+- Try them on before buying online — borrow from someone in another class if you can.
+
+Local shops: Flamencoschool 'La Juana' in Houthalen-Helchteren · Danceshop in Lille (France) — both carry Begona Cervera.`,
+
+  'Indian Semi-Classical': null, // computed dynamically (semester-aware)
+  'Bhangra': null,               // computed dynamically (semester-aware)
+
+  'Bollywood': `BOLLYWOOD — BEGINNER PATH & ADVANCED OPPORTUNITIES
+
+New to Indian dance? We recommend starting with Bollyfolk or Garba & Kalbeliya to build your foundation before joining Bollywood Level 2.
+
+Level 3 is designed for dancers with at least three years of experience (in any style) or a background in Indian dance.
+
+Advanced Level 3 students may be invited to join Swapnil's professional dance group, ABC a Bollywood Company.`,
+
+  'Tap Dance': `TAP SHOES
+
+Beginners: free tap shoe loan available for the entire first year — no need to buy immediately.
+
+When you're ready to invest in your own shoes: we recommend Larabesko in Ghent (Kos. Astridlaan 167). Quality shoes start at €80; premium options around €185.
+
+Tap Dance at Shoonya is organised in collaboration with Tapdance Promotion (vzw Onfijlbaar).`,
+
+  'Ballet Pointes': `BALLET POINTES — IMPORTANT
+
+Enrolment in this class requires simultaneous enrolment in the Ballet Open Level class. Safety and strength are our top priorities — pointe work without the Open Level foundation is not permitted.
+
+Prior teacher approval is required before starting pointe work.`,
+};
+
+// Returns the website note for a given style. Semester-aware for intensives.
+function cwcGetStyleWebsiteNote(style) {
+  if (style === 'Indian Semi-Classical' || style === 'Bhangra') {
+    const sem      = cwcGetActiveSemester();
+    const semName  = (sem && sem.name) || '';
+    const intensive = semName.includes('Semester 2') ? 'Winter Intensive' : 'Summer Intensive';
+    const styleName = style === 'Indian Semi-Classical' ? 'Semi-Classical and Kathak' : 'Bhangra';
+    return `JOIN THE ${intensive.toUpperCase()} FIRST
+
+Are you eager to join our intermediate ${styleName} classes? Because we currently only offer this style at Level 2, we strongly recommend completing our ${intensive} before the new semester begins.
+
+These intensives establish a strong foundation in the essentials of ${styleName} movement, ensuring you can step into our weekly classes with confidence and maximise your experience.
+
+Looking for a Level 1 / Absolute Beginner class? Keep an eye on our schedule or contact us to let us know you're interested. Check the Calendar to see if we have announced any upcoming intensives.`;
+  }
+  return STYLE_WEBSITE_NOTES[style] || null;
+}
+
 const WC_LEVELS = ['Foundation','Level 1','Level 2','Level 3','Level 4','Level 5','Level 6','Level 7','Open Level'];
 const WC_DAYS   = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 
@@ -3849,6 +3934,21 @@ function cwcPopulateMeta(style) {
 
   // What to bring
   document.getElementById('cwc-bring-input').value = (meta && meta.bring) || '';
+
+  // Prerequisites — surface the stored prereq so teachers can review and edit
+  document.getElementById('cwc-prereq-input').value = (meta && meta.prereq) || '';
+
+  // Website note — style-specific, semester-aware; only show row if there's content
+  const websiteNote = cwcGetStyleWebsiteNote(style);
+  const noteRow     = document.getElementById('cwc-website-note-row');
+  const noteInput   = document.getElementById('cwc-website-note-input');
+  if (websiteNote && noteRow && noteInput) {
+    noteInput.value      = websiteNote;
+    noteRow.style.display = '';
+  } else if (noteRow) {
+    noteRow.style.display = 'none';
+    if (noteInput) noteInput.value = '';
+  }
 }
 
 function cwcBuildCoTeacherSelector(preSelected) {
@@ -4539,7 +4639,9 @@ async function cwcNext(action, triggerBtn) {
       teachers: l.teachers || [],
       slots: (l.slots || []).map(s => ({ day: s.day, start: s.start, end: s.end, teacher: s.teacher || '' }))
     }));
-    cwcCurrentData.payload.what_to_bring      = (document.getElementById('cwc-bring-input').value || '').trim();
+    cwcCurrentData.payload.what_to_bring  = (document.getElementById('cwc-bring-input').value       || '').trim();
+    cwcCurrentData.payload.prereq         = (document.getElementById('cwc-prereq-input').value      || '').trim();
+    cwcCurrentData.payload.website_note   = (document.getElementById('cwc-website-note-input').value || '').trim();
 
     // Opendeurdag availability
     cwcCurrentData.payload.opendeur_availability = cwcOpendeurAvailability || {};
