@@ -49,6 +49,29 @@
     --success-text:   oklch(30% 0.1 145);
     --nav-color:      oklch(65% 0.01 295);
     --nav-border:     oklch(35% 0.02 295);
+    --nav-hover:      oklch(58% 0.01 295);
+    --profile-hover:  oklch(72% 0.1 295);
+
+    /* Date chip colours — active (green) and excluded (red-orange) */
+    --chip-active-bg:       oklch(95% 0.03 145);
+    --chip-active-border:   oklch(75% 0.08 145);
+    --chip-active-text:     oklch(28% 0.1 145);
+    --chip-active-hover:    oklch(88% 0.05 145);
+    --chip-excluded-bg:     oklch(95% 0.02 25);
+    --chip-excluded-text:   oklch(40% 0.15 25);
+    --chip-excluded-border: oklch(72% 0.1 25);
+    --chip-excluded-hover:  oklch(90% 0.04 25);
+
+    /* Approved / availability badge colours */
+    --approved-bg:    oklch(93% 0.04 145);
+    --approved-text:  oklch(28% 0.12 145);
+
+    /* Misc component colours */
+    --note-text:       oklch(28% 0.07 87);
+    --summary-title:   oklch(38% 0.12 145);
+    --purple-detail:   oklch(50% 0.1 295);
+    --purple-chip-hover: oklch(91% 0.03 295);
+    --hero-sub-color:  oklch(32% 0.05 87);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -78,29 +101,29 @@
 
   .header-nav { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
   .header-nav-btn {
-    background: none; border: 1px solid oklch(35% 0.02 295);
-    color: oklch(65% 0.01 295);
+    background: none; border: 1px solid var(--nav-border);
+    color: var(--nav-color);
     font-family: var(--font-display); font-size: .62rem; font-weight: 600;
     letter-spacing: .8px; text-transform: uppercase;
     padding: 4px 10px; border-radius: 3px; cursor: pointer;
     transition: border-color .15s var(--ease-out), color .15s var(--ease-out);
     display: flex; align-items: center; gap: 4px; white-space: nowrap;
   }
-  .header-nav-btn:hover { border-color: oklch(58% 0.01 295); color: #fff; }
+  .header-nav-btn:hover { border-color: var(--nav-hover); color: #fff; }
   .header-nav-btn.home-btn:hover { border-color: var(--yellow); color: var(--yellow); }
-  .header-nav-btn.profile-btn:hover { border-color: oklch(72% 0.1 295); color: oklch(72% 0.1 295); }
-  .header-nav-btn.profile-btn.logged-in { border-color: oklch(58% 0.15 295); color: oklch(72% 0.1 295); }
+  .header-nav-btn.profile-btn:hover { border-color: var(--profile-hover); color: var(--profile-hover); }
+  .header-nav-btn.profile-btn.logged-in { border-color: oklch(58% 0.15 295); color: var(--profile-hover); }
 
   .lang-switcher { display: flex; gap: 3px; flex-shrink: 0; }
   .lang-btn {
-    background: none; border: 1px solid oklch(32% 0.02 295);
-    color: oklch(58% 0.01 295);
+    background: none; border: 1px solid var(--nav-border);
+    color: var(--nav-color);
     font-family: var(--font-display); font-size: .62rem; font-weight: 600;
     letter-spacing: .8px; padding: 4px 9px; border-radius: 3px; cursor: pointer;
     transition: all .15s var(--ease-out);
   }
   .lang-btn.active { border-color: var(--yellow); color: var(--yellow); }
-  .lang-btn:hover { border-color: oklch(55% 0.01 295); color: #fff; }
+  .lang-btn:hover { border-color: var(--nav-hover); color: #fff; }
 
   /* ── HERO ── */
   .hero { background: var(--yellow); padding: 28px 24px; text-align: center; }
@@ -110,7 +133,7 @@
     text-transform: uppercase; letter-spacing: 2.5px;
     color: var(--on-yellow);
   }
-  .hero p { margin-top: 6px; font-size: .85rem; color: oklch(32% 0.05 87); font-weight: 400; }
+  .hero p { margin-top: 6px; font-size: .85rem; color: var(--hero-sub-color); font-weight: 400; }
 
   .notice {
     background: var(--purple); color: #fff;
@@ -392,7 +415,7 @@
   .summary-title {
     font-family: var(--font-display); font-size: .64rem; font-weight: 700;
     text-transform: uppercase; letter-spacing: .9px;
-    color: oklch(38% 0.12 145); margin-bottom: 10px;
+    color: var(--summary-title); margin-bottom: 10px;
   }
   .summary-row { display: flex; gap: 8px; font-size: .82rem; padding: 3px 0; }
   .summary-label { color: var(--text-light); min-width: 130px; flex-shrink: 0; font-size: .78rem; font-weight: 300; }
@@ -411,7 +434,7 @@
   .note-block {
     background: var(--yellow-light); border: 1.5px solid var(--yellow-border);
     border-radius: 6px; padding: 10px 14px;
-    font-size: .8rem; color: oklch(28% 0.07 87); margin-bottom: 16px;
+    font-size: .8rem; color: var(--note-text); margin-bottom: 16px;
   }
   .note-block strong {
     display: block; margin-bottom: 3px;
@@ -513,7 +536,7 @@
   .cwc-desc-textarea:focus { outline: 2px solid var(--purple); outline-offset: 2px; border-color: var(--purple); }
   .cwc-approved-badge {
     display: inline-flex; align-items: center; gap: 5px;
-    background: oklch(93% 0.04 145); color: oklch(28% 0.12 145);
+    background: var(--approved-bg); color: var(--approved-text);
     border-radius: 4px; padding: 5px 12px;
     font-family: var(--font-display); font-size: .64rem; font-weight: 700;
     letter-spacing: .6px; text-transform: uppercase;
@@ -528,7 +551,7 @@
     cursor: pointer; transition: all .15s var(--ease-out);
   }
   .cwc-avail-btn:hover { border-color: var(--purple); color: var(--purple); }
-  .cwc-avail-btn.selected { border-color: oklch(50% 0.14 145); background: oklch(93% 0.04 145); color: oklch(28% 0.12 145); }
+  .cwc-avail-btn.selected { border-color: oklch(50% 0.14 145); background: var(--approved-bg); color: var(--approved-text); }
   .cwc-next-btns { display: flex; flex-direction: column; gap: 8px; }
   .cwc-next-btn {
     background: var(--yellow); color: var(--on-yellow);
@@ -561,7 +584,7 @@
     font-size: .76rem; font-weight: 500; cursor: pointer;
     transition: background .12s, color .12s; font-family: var(--font-body);
   }
-  .cwc-meta-chip:hover { background: oklch(91% 0.03 295); }
+  .cwc-meta-chip:hover { background: var(--purple-chip-hover); }
   .cwc-meta-chip.selected { background: var(--purple); color: #fff; border-color: var(--purple); }
   .cwc-meta-input {
     border: 1.5px solid var(--border); border-radius: 4px; padding: 6px 10px;
@@ -583,21 +606,21 @@
     display: flex; align-items: center; gap: 8px;
   }
   .cwc-day-header .cwc-day-name { font-size: .82rem; letter-spacing: 1.4px; }
-  .cwc-day-header .cwc-day-detail { font-weight: 500; font-size: .7rem; color: oklch(50% 0.1 295); }
+  .cwc-day-header .cwc-day-detail { font-weight: 500; font-size: .7rem; color: var(--purple-detail); }
   .cwc-dates-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
   .cwc-date-chip {
-    background: oklch(95% 0.03 145); color: oklch(28% 0.1 145);
-    border: 1.5px solid oklch(75% 0.08 145); border-radius: 4px;
+    background: var(--chip-active-bg); color: var(--chip-active-text);
+    border: 1.5px solid var(--chip-active-border); border-radius: 4px;
     padding: 5px 11px; font-size: .76rem; font-weight: 500; font-family: var(--font-body);
     cursor: pointer; user-select: none;
     transition: background .12s, color .12s, border-color .12s;
   }
-  .cwc-date-chip:hover { background: oklch(88% 0.05 145); }
+  .cwc-date-chip:hover { background: var(--chip-active-hover); }
   .cwc-date-chip.excluded {
-    background: oklch(95% 0.02 25); color: oklch(40% 0.15 25);
-    border-color: oklch(72% 0.1 25); text-decoration: line-through;
+    background: var(--chip-excluded-bg); color: var(--chip-excluded-text);
+    border-color: var(--chip-excluded-border); text-decoration: line-through;
   }
-  .cwc-date-chip.excluded:hover { background: oklch(90% 0.04 25); }
+  .cwc-date-chip.excluded:hover { background: var(--chip-excluded-hover); }
   .cwc-price-bar {
     display: flex; align-items: center; gap: 7px; font-size: .88rem; color: var(--purple);
     padding: 9px 14px; background: var(--purple-light); border-radius: 4px; margin-top: 8px;
@@ -625,6 +648,15 @@
   }
 
   /* Respect user motion preferences — disable all non-essential animations */
+  /* ── ADMIN BAR ── */
+  .admin-bar {
+    display: none; background: var(--header-bg); color: #fff;
+    font-family: var(--font-display); font-size: .72rem; letter-spacing: .5px;
+    padding: 10px 16px; align-items: center; gap: 10px; flex-wrap: wrap;
+    border-bottom: 2px solid var(--yellow);
+  }
+  .admin-bar.visible { display: flex; }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
@@ -655,7 +687,7 @@
   <p id="hero-sub">Tell us about your class or event — we'll handle the details.</p>
 </div>
 <!-- ── ADMIN IMPERSONATION BANNER (shown when role=admin is logged in) ── -->
-<div id="admin-impersonation-bar" style="display:none;background:oklch(14% 0.03 295);color:#fff;font-family:'Josefin Sans',sans-serif;font-size:.72rem;letter-spacing:.5px;padding:10px 16px;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #F5C842;">
+<div id="admin-impersonation-bar" class="admin-bar">
   <span style="font-weight:800;color:#F5C842;white-space:nowrap;">⚡ Admin Mode</span>
   <span style="color:#aaa;white-space:nowrap;">Submitting as:</span>
   <select id="admin-teacher-select" onchange="adminSelectTeacher(this.value)"
@@ -666,12 +698,13 @@
   <button onclick="adminClearTeacher()" id="admin-clear-btn" style="display:none;background:none;border:1.5px solid #555;color:#aaa;border-radius:6px;padding:3px 9px;font-size:.75rem;cursor:pointer;">✕ Clear</button>
 </div>
 
+<main>
 <div class="container">
 
   <!-- ── SCREEN 1: TYPE SELECTION ─────────────────── -->
   <div id="screen-type">
     <div class="card">
-      <div class="card-title" id="lbl-choose-type">What are you submitting?</div>
+      <h3 class="card-title" id="lbl-choose-type">What are you submitting?</h3>
       <div class="type-grid">
 
         <div class="type-card" onclick="selectType('weekly-class', this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectType('weekly-class',this);}">
@@ -716,7 +749,7 @@
   <!-- ── SCREEN 2: INPUT ──────────────────────────── -->
   <div id="screen-input" style="display:none;">
     <div class="card">
-      <div class="card-title" id="lbl-describe">Describe your event</div>
+      <h3 class="card-title" id="lbl-describe">Describe your event</h3>
 
       <!-- Remember me -->
       <div class="remember-row" id="remember-row" style="display:none;">
@@ -762,7 +795,7 @@
 
       <!-- Not logged in -->
       <div id="wc-login-required" style="display:none;">
-        <div class="card-title">Weekly Class</div>
+        <h3 class="card-title">Weekly Class</h3>
         <div class="wc-login-prompt">
           <p>Weekly class submissions require a teacher account so we can pre-fill your details.</p>
           <div class="wc-login-btns">
@@ -774,7 +807,7 @@
 
       <!-- Logged in: step 1 — style picker -->
       <div id="wc-step-style" style="display:none;">
-        <div class="card-title" data-lbl="wc-pick-style-title">Weekly Class — Pick a Style</div>
+        <h3 class="card-title" data-lbl="wc-pick-style-title">Weekly Class — Pick a Style</h3>
         <div class="wc-section-label" data-lbl="wc-which-style">Which style are you submitting?</div>
         <div id="wc-style-chips" class="wc-chips"></div>
         <div style="display:flex;gap:6px;align-items:center;margin-top:8px;">
@@ -790,7 +823,7 @@
       <!-- Logged in: step 2 — schedule builder -->
       <div id="wc-step-schedule" style="display:none;">
         <button class="btn-step-back" onclick="wcBackToStyle()">← Back</button>
-        <div class="card-title" data-lbl="wc-schedule-title">Weekly Class — Schedule</div>
+        <h3 class="card-title" data-lbl="wc-schedule-title">Weekly Class — Schedule</h3>
 
         <div class="wc-style-banner" id="wc-style-banner">
           <span id="wc-style-banner-label"></span>
@@ -825,7 +858,7 @@
   <div id="screen-confirm-wc" style="display:none;">
     <div class="card">
       <button class="btn-step-back" onclick="wcBackFromConfirm()">← Back to schedule</button>
-      <div class="card-title">✅ <span id="cwc-style-title"></span> Submitted</div>
+      <h3 class="card-title">✅ <span id="cwc-style-title"></span> Submitted</h3>
 
       <!-- Schedule summary -->
       <div id="cwc-schedule-summary" style="margin-bottom:18px;"></div>
@@ -890,7 +923,7 @@
     <div class="card">
       <button class="btn-step-back" onclick="cwcBackFromDates()">← Back to schedule</button>
 
-      <div class="card-title" id="cwc-dates-screen-title" style="margin-bottom:4px;">📅 Your class dates</div>
+      <h3 class="card-title" id="cwc-dates-screen-title" style="margin-bottom:4px;">📅 Your class dates</h3>
       <div id="cwc-dates-style-summary" style="font-size:.82rem;color:#888;margin-bottom:14px;"></div>
 
       <!-- Semester mini-overview (collapsible) -->
@@ -936,7 +969,7 @@
 
       <!-- Not logged in -->
       <div id="ws-login-required" style="display:none;">
-        <div class="card-title">🎓 Workshop</div>
+        <h3 class="card-title">🎓 Workshop</h3>
         <div class="wc-login-prompt">
           <p>Workshop submissions require a teacher account so we can pre-fill your details and track your events.</p>
           <div class="wc-login-btns">
@@ -948,7 +981,7 @@
 
       <!-- Step 1 — Format -->
       <div id="ws-step-format">
-        <div class="card-title">🎓 Workshop — Format</div>
+        <h3 class="card-title">🎓 Workshop — Format</h3>
         <div class="wc-section-label" style="margin-bottom:10px;">What kind of workshop is this?</div>
         <div class="wc-chips" id="ws-format-chips">
           <button class="wc-chip" onclick="wsSelectFormat('single',    this)">Single session</button>
@@ -965,7 +998,7 @@
       <!-- Step 2 — Style -->
       <div id="ws-step-style" style="display:none;">
         <button class="btn-step-back" onclick="wsBackToFormat()">← Back</button>
-        <div class="card-title">🎓 Workshop — Style</div>
+        <h3 class="card-title">🎓 Workshop — Style</h3>
         <div class="wc-style-banner" id="ws-format-banner" style="margin-bottom:14px;">
           <span id="ws-format-banner-label"></span>
           <button onclick="wsBackToFormat()">Change format</button>
@@ -985,7 +1018,7 @@
       <!-- Step 3 — Details + Pricing -->
       <div id="ws-step-details" style="display:none;">
         <button class="btn-step-back" onclick="wsBackToStyle()">← Back</button>
-        <div class="card-title">🎓 Workshop — Details</div>
+        <h3 class="card-title">🎓 Workshop — Details</h3>
 
         <!-- Breadcrumb banners -->
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
@@ -1198,7 +1231,7 @@
   <div id="screen-confirm-ws" style="display:none;">
     <div class="card">
       <button class="btn-step-back" onclick="wsBackFromConfirm()">← Back to details</button>
-      <div class="card-title">🎓 <span id="ws-confirm-title-label"></span></div>
+      <h3 class="card-title">🎓 <span id="ws-confirm-title-label"></span></h3>
 
       <!-- Sessions summary -->
       <div id="ws-sessions-summary" style="margin-bottom:18px;"></div>
@@ -1351,7 +1384,7 @@
 
       <!-- Not logged in -->
       <div id="ss-login-required" style="display:none;">
-        <div class="card-title">🎉 Social Night</div>
+        <h3 class="card-title">🎉 Social Night</h3>
         <div class="wc-login-prompt">
           <p>Social night submissions require a teacher account so we can pre-fill your details and track your events.</p>
           <div class="wc-login-btns">
@@ -1363,7 +1396,7 @@
 
       <!-- Step 1 — Basics -->
       <div id="ss-step-basics">
-        <div class="card-title">🎉 Social Night — Basics</div>
+        <h3 class="card-title">🎉 Social Night — Basics</h3>
 
         <!-- Styles first (used to suggest title) -->
         <div style="margin-bottom:14px;">
@@ -1425,7 +1458,7 @@
       <!-- Step 2 — Programme + Dance night -->
       <div id="ss-step-programme" style="display:none;">
         <button class="btn-step-back" onclick="ssBackToBasics()">← Back</button>
-        <div class="card-title">🎉 Social Night — Programme</div>
+        <h3 class="card-title">🎉 Social Night — Programme</h3>
         <div style="font-size:.8rem;color:#555;margin-bottom:14px;background:#f8f4ff;border-left:3px solid var(--purple);padding:10px 12px;border-radius:0 6px 6px 0;line-height:1.5;">
           Add each workshop in order. The dance night block below is always included — just fill in the timing and music.
         </div>
@@ -1557,7 +1590,7 @@
       <!-- Step 3 — Pricing -->
       <div id="ss-step-pricing" style="display:none;">
         <button class="btn-step-back" onclick="ssBackToProgramme()">← Back</button>
-        <div class="card-title">🎉 Social Night — Pricing</div>
+        <h3 class="card-title">🎉 Social Night — Pricing</h3>
         <div style="font-size:.8rem;color:#555;margin-bottom:14px;background:#f8f4ff;border-left:3px solid var(--purple);padding:10px 12px;border-radius:0 6px 6px 0;line-height:1.5;">
           Add one row per pricing tier. Advance tickets via Zoho — Shoonya sets that up after approval.
         </div>
@@ -1584,7 +1617,7 @@
   <div id="screen-confirm-ss" style="display:none;">
     <div class="card">
       <button class="btn-step-back" onclick="ssBackFromConfirm()">← Back to pricing</button>
-      <div class="card-title">🎉 <span id="ss-confirm-title"></span></div>
+      <h3 class="card-title">🎉 <span id="ss-confirm-title"></span></h3>
 
       <!-- Event summary -->
       <div id="ss-event-summary" style="margin-bottom:18px;"></div>
@@ -1668,7 +1701,7 @@
   <!-- ── SCREEN 4: REVIEW ──────────────────────────── -->
   <div id="screen-review" style="display:none;">
     <div class="card">
-      <div class="card-title" id="lbl-review">Check your details</div>
+      <h3 class="card-title" id="lbl-review">Check your details</h3>
       <div id="review-content"></div>
       <div class="err-box" id="err-review" aria-live="assertive" role="alert"></div>
       <button class="btn-submit" onclick="submitConfirmed()" id="btn-submit" data-lbl="confirm-submit">Confirm &amp; Submit</button>
@@ -5244,7 +5277,11 @@ function setLang(lang) {
   currentLang = lang;
   localStorage.setItem('shoonya_lang', lang);
   document.documentElement.lang = lang.toLowerCase(); // screen readers use this for pronunciation
-  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === lang));
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    const isActive = b.textContent === lang;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-current', isActive ? 'true' : 'false');
+  });
   applyTranslations();
   if (currentType) applyTemplate(currentType);
   // Rebuild dynamic WC dates-screen parts in new language
@@ -5528,7 +5565,7 @@ function getActingProfile() {
 function adminCheckAndShowBar(profile) {
   if (profile && profile.role === 'admin') {
     const bar = document.getElementById('admin-impersonation-bar');
-    if (bar) bar.style.display = 'flex';
+    if (bar) bar.classList.add('visible');
     adminBuildTeacherSelector();
   }
 }
@@ -7215,10 +7252,16 @@ function ssNext(dest) {
 // ─── INIT ────────────────────────────────────────────────────────────
 (function init() {
   // Apply saved language
-  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent === currentLang));
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    const isActive = b.textContent === currentLang;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-current', isActive ? 'true' : 'false');
+  });
   applyTranslations();
   showScreen('type');
 })();
 </script>
+</div><!-- /.container -->
+</main>
 </body>
 </html>
