@@ -76,6 +76,7 @@
     --err-bg:          oklch(96% 0.02 25);
     --err-border:      oklch(70% 0.12 25);
     --avail-active-border: oklch(50% 0.14 145);
+    --warning-text:    oklch(40% 0.14 52);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -225,8 +226,6 @@
     margin-bottom: 6px; color: var(--text);
   }
   .type-card-desc { font-size: .79rem; color: var(--text-light); line-height: 1.55; font-weight: 300; }
-  .type-card.festival-card { border-style: dashed; }
-  .type-card.festival-card .type-card-desc { color: var(--text-light); }
 
   /* ── REMEMBER ROW ── */
   .remember-row {
@@ -369,6 +368,21 @@
     background: var(--success-bg); border: 1.5px solid var(--success-border);
     border-radius: 6px; padding: 10px 14px; margin-bottom: 16px;
     font-size: .82rem; color: var(--success-text);
+  }
+
+  /* ── STEP PILL (card-title step counter) ── */
+  .step-pill {
+    float: right;
+    margin-top: 2px;
+    font-size: .72rem;
+    font-weight: 500;
+    color: var(--text-light);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 9px;
+    letter-spacing: .3px;
+    text-transform: none;
   }
 
   .wc-level-block { border: 1.5px solid var(--border); border-radius: 6px; padding: 14px 16px; margin-bottom: 12px; background: var(--bg); }
@@ -736,6 +750,7 @@
       /* Brighter brand colours for dark backgrounds */
       --green: #2ecc71;
       --red:   #e74c3c;
+      --warning-text: oklch(72% 0.14 52);
       /* text-light needs to be lighter in dark mode (dark bg inverts the need) */
       --text-light: oklch(58% 0.012 295);
     }
@@ -781,7 +796,7 @@
   <div class="header-nav">
     <button class="header-nav-btn home-btn" id="hdr-home-btn" onclick="navGoHome()" title="Back to home" aria-label="Back to home" style="display:none;">🏠 Home</button>
     <a href="../admin/" class="header-nav-btn" style="font-size:.7rem;padding:4px 10px;opacity:.5;text-decoration:none;color:#fff;" title="Admin dashboard" aria-label="Admin dashboard">⚙</a>
-    <a href="../register.html" class="header-nav-btn" id="hdr-register-btn" style="text-decoration:none;font-size:.78rem;padding:4px 10px;" aria-label="Create an account">Register</a>
+    <a href="../register.html" class="header-nav-btn" id="hdr-register-btn" style="text-decoration:none;" aria-label="Create an account">Register</a>
     <button class="header-nav-btn profile-btn" id="hdr-profile-btn" onclick="navGoProfile()" title="My profile" aria-label="My profile">👤 <span id="hdr-profile-label">Log in</span></button>
   </div>
   <div class="lang-switcher">
@@ -834,14 +849,12 @@
           <div class="type-card-desc" data-lbl="type-workshop-desc">A guest teacher or intensive — one session, a weekend, or a short series.</div>
         </div>
 
-        <div class="type-card festival-card" onclick="goToFestivalForm()" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();goToFestivalForm();}">
-          <span class="type-card-icon" aria-hidden="true">🌟</span>
-          <div class="type-card-title" data-lbl="type-festival-title">Festival</div>
-          <div class="type-card-desc" data-lbl="type-festival-desc">Multi-day event with multiple teachers and a full programme. Uses a dedicated form →</div>
-        </div>
-
       </div>
       <div class="err-box" id="err-type" style="display:none;margin-top:14px;" aria-live="assertive" role="alert"></div>
+      <div style="margin-top:12px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <span style="font-size:.82rem;color:var(--text-mid);">🎪 Planning a festival or multi-day event?</span>
+        <button onclick="goToFestivalForm()" style="font-size:.78rem;font-weight:600;color:var(--purple);background:none;border:1px solid var(--purple);border-radius:6px;padding:5px 12px;cursor:pointer;white-space:nowrap;">Open festival form →</button>
+      </div>
 
       <!-- Semester overview collapsible -->
       <div style="margin-top:18px;">
@@ -916,12 +929,12 @@
 
       <!-- Logged in: step 1 — style picker -->
       <div id="wc-step-style" style="display:none;">
-        <h3 class="card-title" data-lbl="wc-pick-style-title">Weekly Class — Pick a Style <span style="font-size:.58rem;font-weight:400;color:var(--text-light);letter-spacing:.5px;text-transform:none;float:right;margin-top:2px;">Step 1 of 4</span></h3>
+        <h3 class="card-title" data-lbl="wc-pick-style-title">Weekly Class — Pick a Style <span class="step-pill">Step 1 of 4</span></h3>
         <div class="wc-section-label" data-lbl="wc-which-style">Which style are you submitting?</div>
         <div id="wc-style-chips" class="wc-chips"></div>
         <div style="display:flex;gap:6px;align-items:center;margin-top:8px;">
           <input type="text" id="wc-style-custom" placeholder="Other style not listed above…"
-            style="font-size:.82rem;padding:7px 10px;border:1.5px solid #ddd;border-radius:6px;flex:1;min-width:0;"
+            style="font-size:.82rem;padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;flex:1;min-width:0;"
             onkeydown="if(event.key==='Enter'){event.preventDefault();wcAddCustomStyle();}">
           <button type="button" class="wc-btn-add-slot" style="margin-top:0;white-space:nowrap;padding:6px 14px;font-size:.82rem;width:auto;flex-shrink:0;"
             onclick="wcAddCustomStyle()">+ Add</button>
@@ -932,7 +945,7 @@
       <!-- Logged in: step 2 — schedule builder -->
       <div id="wc-step-schedule" style="display:none;">
         <button class="btn-step-back" onclick="wcBackToStyle()">← Back</button>
-        <h3 class="card-title" data-lbl="wc-schedule-title">Weekly Class — Schedule <span style="font-size:.58rem;font-weight:400;color:var(--text-light);letter-spacing:.5px;text-transform:none;float:right;margin-top:2px;">Step 2 of 4</span></h3>
+        <h3 class="card-title" data-lbl="wc-schedule-title">Weekly Class — Schedule <span class="step-pill">Step 2 of 4</span></h3>
 
         <div class="wc-style-banner" id="wc-style-banner">
           <span id="wc-style-banner-label"></span>
@@ -967,14 +980,14 @@
   <div id="screen-confirm-wc" style="display:none;">
     <div class="card">
       <button class="btn-step-back" onclick="wcBackFromConfirm()">← Back to schedule</button>
-      <h3 class="card-title">✅ <span id="cwc-style-title"></span> Submitted <span style="font-size:.58rem;font-weight:400;color:var(--text-light);letter-spacing:.5px;text-transform:none;float:right;margin-top:2px;">Step 3 of 4</span></h3>
+      <h3 class="card-title">Review Description <span class="step-pill">Step 3 of 4</span></h3>
 
       <!-- Schedule summary -->
       <div id="cwc-schedule-summary" style="margin-bottom:18px;"></div>
 
       <!-- Description review -->
       <div class="cwc-section-label" data-lbl="desc-we-use">Description we'll use</div>
-      <div id="cwc-desc-loading" style="display:none;font-size:.82rem;color:#888;margin-bottom:12px;">
+      <div id="cwc-desc-loading" style="display:none;font-size:.82rem;color:var(--text-light);margin-bottom:12px;">
         <span class="cwc-spinner"></span> <span data-lbl="generating-desc">Generating description…</span>
       </div>
       <div id="cwc-desc-block" style="display:none;">
@@ -985,7 +998,8 @@
         </div>
       </div>
 
-      <!-- Class details (meta) -->
+      <!-- Class details (meta) — revealed after description approval -->
+      <div id="cwc-details-reveal" style="display:none;">
       <div class="cwc-divider"></div>
       <div class="cwc-section-label" data-lbl="class-info">Class info</div>
       <div class="cwc-meta-section">
@@ -1041,6 +1055,7 @@
       <button class="btn-continue" onclick="cwcShowDatesScreen()" style="width:100%;margin-top:4px;">
         <span data-lbl="continue-to-dates">Continue — choose your dates →</span>
       </button>
+      </div><!-- /cwc-details-reveal -->
     </div>
   </div>
 
@@ -1049,8 +1064,8 @@
     <div class="card">
       <button class="btn-step-back" onclick="cwcBackFromDates()">← Back to schedule</button>
 
-      <h3 class="card-title" id="cwc-dates-screen-title" style="margin-bottom:4px;">📅 Your class dates <span style="font-size:.58rem;font-weight:400;color:var(--text-light);letter-spacing:.5px;text-transform:none;float:right;margin-top:2px;">Step 4 of 4</span></h3>
-      <div id="cwc-dates-style-summary" style="font-size:.82rem;color:#888;margin-bottom:14px;"></div>
+      <h3 class="card-title" id="cwc-dates-screen-title" style="margin-bottom:4px;">📅 Your class dates <span class="step-pill">Step 4 of 4</span></h3>
+      <div id="cwc-dates-style-summary" style="font-size:.82rem;color:var(--text-light);margin-bottom:14px;"></div>
 
       <!-- Semester mini-overview (collapsible) -->
       <div id="cwc-sem-toggle" onclick="cwcToggleSemOverview()"
@@ -1061,15 +1076,15 @@
       <div id="cwc-sem-overview" style="display:none;background:#faf7ff;border:1.5px solid #e8ddff;border-radius:9px;padding:14px 16px;margin-bottom:14px;font-size:.8rem;"></div>
 
       <!-- Date hint box -->
-      <div style="background:#e8f5e9;border:1.5px solid #81c784;border-radius:9px;padding:11px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;">
+      <div style="background:var(--success-bg);border:1.5px solid var(--success-border);border-radius:9px;padding:11px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start;">
         <span style="font-size:1.1rem;flex-shrink:0;">👆</span>
         <div>
-          <div style="font-weight:700;font-size:.82rem;color:#2e7d32;margin-bottom:3px;" data-lbl="tap-to-mark-absent">Tap a date to mark yourself as absent</div>
-          <div style="font-size:.78rem;color:#388e3c;" data-lbl="absent-hint-detail">It turns red and is excluded from your session count and price. Tap again to undo.</div>
+          <div style="font-weight:700;font-size:.82rem;color:var(--success-text);margin-bottom:3px;" data-lbl="tap-to-mark-absent">Tap a date to mark yourself as absent</div>
+          <div style="font-size:.78rem;color:var(--success-text);opacity:.85;" data-lbl="absent-hint-detail">It turns red and is excluded from your session count and price. Tap again to undo.</div>
         </div>
       </div>
 
-      <div id="cwc-no-semester" style="display:none;font-size:.82rem;color:#e07000;padding:10px 0;">
+      <div id="cwc-no-semester" style="display:none;font-size:.82rem;color:var(--warning-text);padding:10px 0;">
         ⚠️ Semester dates not yet configured. Ask the admin to update <code>SEMESTER_CONFIG</code> in the form.
       </div>
 
@@ -1107,14 +1122,14 @@
 
       <!-- Step 1 — Format -->
       <div id="ws-step-format">
-        <h3 class="card-title">🎓 Workshop — Format</h3>
+        <h3 class="card-title">🎓 Workshop — Format <span class="step-pill">Step 1 of 3</span></h3>
         <div class="wc-section-label" style="margin-bottom:10px;">What kind of workshop is this?</div>
         <div class="wc-chips" id="ws-format-chips">
-          <button class="wc-chip" onclick="wsSelectFormat('single',    this)">Single session</button>
-          <button class="wc-chip" onclick="wsSelectFormat('2day',      this)">2-day workshop</button>
-          <button class="wc-chip" onclick="wsSelectFormat('intensive', this)">Intensive</button>
-          <button class="wc-chip" onclick="wsSelectFormat('bootcamp',  this)">Bootcamp</button>
-          <button class="wc-chip" onclick="wsSelectFormat('series',    this)">Mini-series</button>
+          <button class="wc-chip" onclick="wsSelectFormat('single',    this)" data-lbl="ws-fmt-single">Single session</button>
+          <button class="wc-chip" onclick="wsSelectFormat('2day',      this)" data-lbl="ws-fmt-2day">2-day workshop</button>
+          <button class="wc-chip" onclick="wsSelectFormat('intensive', this)" data-lbl="ws-fmt-intensive">Intensive</button>
+          <button class="wc-chip" onclick="wsSelectFormat('bootcamp',  this)" data-lbl="ws-fmt-bootcamp">Bootcamp</button>
+          <button class="wc-chip" onclick="wsSelectFormat('series',    this)" data-lbl="ws-fmt-series">Mini-series</button>
         </div>
         <div id="ws-format-hint" style="display:none;font-size:.8rem;color:#555;background:#f8f4ff;border-left:3px solid var(--purple);padding:10px 12px;border-radius:0 6px 6px 0;margin-top:12px;line-height:1.5;"></div>
         <div class="err-box" id="err-ws-format" style="margin-top:10px;"></div>
@@ -1124,7 +1139,7 @@
       <!-- Step 2 — Style -->
       <div id="ws-step-style" style="display:none;">
         <button class="btn-step-back" onclick="wsBackToFormat()">← Back</button>
-        <h3 class="card-title">🎓 Workshop — Style</h3>
+        <h3 class="card-title">🎓 Workshop — Style <span class="step-pill">Step 2 of 3</span></h3>
         <div class="wc-style-banner" id="ws-format-banner" style="margin-bottom:14px;">
           <span id="ws-format-banner-label"></span>
           <button onclick="wsBackToFormat()">Change format</button>
@@ -1144,7 +1159,7 @@
       <!-- Step 3 — Details + Pricing -->
       <div id="ws-step-details" style="display:none;">
         <button class="btn-step-back" onclick="wsBackToStyle()">← Back</button>
-        <h3 class="card-title">🎓 Workshop — Details</h3>
+        <h3 class="card-title">🎓 Workshop — Details <span class="step-pill">Step 3 of 3</span></h3>
 
         <!-- Breadcrumb banners -->
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
@@ -1181,7 +1196,7 @@
 
               <!-- Day of week -->
               <div style="margin-bottom:10px;">
-                <div style="font-size:.72rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Day of week</div>
+                <div style="font-size:.72rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Day of week</div>
                 <div class="wc-chips" id="ws-series-dow">
                   <button class="wc-chip" onclick="wsSeriesDowSelect(1,this)">Mon</button>
                   <button class="wc-chip" onclick="wsSeriesDowSelect(2,this)">Tue</button>
@@ -1196,33 +1211,33 @@
               <!-- Start date + times -->
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
                 <div>
-                  <div style="font-size:.72rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Start date</div>
+                  <div style="font-size:.72rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Start date</div>
                   <input type="date" id="ws-series-start" style="font-size:.84rem;padding:6px 8px;">
                 </div>
                 <div>
-                  <div style="font-size:.72rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Start time</div>
+                  <div style="font-size:.72rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Start time</div>
                   <input type="time" id="ws-series-time-start" value="19:00" style="font-size:.84rem;padding:6px 8px;" oninput="wsSeriesAutoEnd(this)">
                 </div>
                 <div>
-                  <div style="font-size:.72rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">End time</div>
+                  <div style="font-size:.72rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">End time</div>
                   <input type="time" id="ws-series-time-end" value="20:30" style="font-size:.84rem;padding:6px 8px;">
                 </div>
               </div>
 
               <!-- Session count stepper -->
               <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                <div style="font-size:.72rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;">Sessions</div>
+                <div style="font-size:.72rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;">Sessions</div>
                 <button type="button" onclick="wsSeriesAdjust(-1)"
                   style="width:28px;height:28px;border-radius:50%;border:1.5px solid #d4c5f5;background:#fff;font-size:1rem;cursor:pointer;line-height:1;color:#6B3FA0;">−</button>
                 <span id="ws-series-count-display"
                   style="font-size:1.1rem;font-weight:800;min-width:24px;text-align:center;">5</span>
                 <button type="button" onclick="wsSeriesAdjust(+1)"
                   style="width:28px;height:28px;border-radius:50%;border:1.5px solid #d4c5f5;background:#fff;font-size:1rem;cursor:pointer;line-height:1;color:#6B3FA0;">+</button>
-                <span style="font-size:.76rem;color:#888;">weekly sessions (3–10)</span>
+                <span style="font-size:.76rem;color:var(--text-light);">weekly sessions (3–10)</span>
               </div>
 
               <button class="wc-btn-add-slot" onclick="wsSeriesGenerate()" id="ws-series-generate-btn">Generate dates →</button>
-              <div id="ws-series-note" style="display:none;font-size:.76rem;color:#27ae60;margin-top:8px;">
+              <div id="ws-series-note" style="display:none;font-size:.76rem;color:var(--success-text);margin-top:8px;">
                 ✓ Dates generated — edit any row below if needed, or adjust the pattern and regenerate.
               </div>
             </div>
@@ -1294,12 +1309,12 @@
 
           <!-- Full pass (intensive / bootcamp) -->
           <div class="cwc-meta-row" id="ws-fullpass-row" style="display:none;">
-            <div class="cwc-meta-key">Full pass <span id="ws-fullpass-label" style="font-size:.72rem;font-weight:400;font-style:italic;color:#888;"></span></div>
+            <div class="cwc-meta-key">Full pass <span id="ws-fullpass-label" style="font-size:.72rem;font-weight:400;font-style:italic;color:var(--text-light);"></span></div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
               <span style="font-weight:700;">€</span>
               <input type="number" id="ws-price-fullpass" class="cwc-meta-input" min="0" step="0.5"
                 placeholder="e.g. 150" style="width:90px;">
-              <span style="font-size:.76rem;color:#888;">optional discount for all sessions</span>
+              <span style="font-size:.76rem;color:var(--text-light);">optional discount for all sessions</span>
             </div>
           </div>
 
@@ -1335,7 +1350,7 @@
               <span style="font-weight:700;">€</span>
               <input type="number" id="ws-price-day" class="cwc-meta-input" min="0" step="0.5"
                 placeholder="e.g. 18" style="width:90px;">
-              <span style="font-size:.76rem;color:#888;">per person / per day</span>
+              <span style="font-size:.76rem;color:var(--text-light);">per person / per day</span>
             </div>
           </div>
 
@@ -1364,7 +1379,7 @@
 
       <!-- Description -->
       <div class="cwc-section-label">Description we'll use</div>
-      <div id="ws-desc-loading" style="font-size:.82rem;color:#888;margin-bottom:12px;">
+      <div id="ws-desc-loading" style="font-size:.82rem;color:var(--text-light);margin-bottom:12px;">
         <span class="cwc-spinner"></span> Generating description…
       </div>
       <div id="ws-desc-block" style="display:none;">
@@ -1400,16 +1415,16 @@
             <input type="number" id="ws-min-participants" class="cwc-meta-input"
               min="1" max="200" placeholder="e.g. 10" style="width:90px;"
               oninput="wsToggleMinNote(this)">
-            <span style="font-size:.78rem;color:#888;">Leave blank if no minimum</span>
+            <span style="font-size:.78rem;color:var(--text-light);">Leave blank if no minimum</span>
           </div>
           <!-- Conditional session toggle — appears when min is set -->
           <div id="ws-min-conditional-wrap" style="display:none;margin-top:8px;">
-            <div style="font-size:.72rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Session runs only if minimum is reached?</div>
+            <div style="font-size:.72rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Session runs only if minimum is reached?</div>
             <div class="wc-chips" style="gap:6px;">
               <button class="wc-chip selected" id="ws-min-cond-no"  onclick="wsSetMinConditional(false)">No — runs regardless</button>
               <button class="wc-chip"          id="ws-min-cond-yes" onclick="wsSetMinConditional(true)">Yes — cancel if under minimum</button>
             </div>
-            <div id="ws-min-cond-note" style="display:none;margin-top:8px;font-size:.76rem;color:#e07000;background:#fff8f0;border-left:3px solid #e07000;padding:8px 10px;border-radius:0 6px 6px 0;line-height:1.5;">
+            <div id="ws-min-cond-note" style="display:none;margin-top:8px;font-size:.76rem;color:var(--warning-text);background:#fff8f0;border-left:3px solid var(--warning-text);padding:8px 10px;border-radius:0 6px 6px 0;line-height:1.5;">
               Registrants will be informed that the session is subject to a minimum number of participants. Shoonya will notify everyone if it's cancelled.
             </div>
           </div>
@@ -1420,7 +1435,7 @@
           <div style="display:flex;align-items:center;gap:10px;">
             <input type="number" id="ws-capacity-input" class="cwc-meta-input"
               min="1" max="300" placeholder="e.g. 30" style="width:90px;">
-            <span style="font-size:.78rem;color:#888;">Leave blank if unlimited</span>
+            <span style="font-size:.78rem;color:var(--text-light);">Leave blank if unlimited</span>
           </div>
         </div>
 
@@ -1470,7 +1485,7 @@
         </div>
 
         <div class="cwc-meta-row">
-          <div class="cwc-meta-key" style="color:#e07000;">Note to Shoonya</div>
+          <div class="cwc-meta-key" style="color:var(--warning-text);">Note to Shoonya</div>
           <textarea id="ws-note-shoonya" class="cwc-meta-input" rows="2"
             placeholder="Anything Shoonya needs to know — pricing discussion, special setup, etc. Not published."></textarea>
         </div>
@@ -1522,7 +1537,7 @@
 
       <!-- Step 1 — Basics -->
       <div id="ss-step-basics">
-        <h3 class="card-title">🎉 Social Night — Basics</h3>
+        <h3 class="card-title">🎉 Social Night — Basics <span class="step-pill">Step 1 of 3</span></h3>
 
         <!-- Styles first (used to suggest title) -->
         <div style="margin-bottom:14px;">
@@ -1530,7 +1545,7 @@
           <div class="wc-chips" id="ss-style-chips" style="flex-wrap:wrap;margin-bottom:8px;"></div>
           <div style="display:flex;gap:6px;align-items:center;">
             <input type="text" id="ss-style-custom" placeholder="Type a style name, then press Add →"
-              style="font-size:.82rem;padding:7px 10px;border:1.5px solid #ddd;border-radius:6px;flex:1;min-width:0;"
+              style="font-size:.82rem;padding:7px 10px;border:1.5px solid var(--border);border-radius:6px;flex:1;min-width:0;"
               onkeydown="if(event.key==='Enter'){event.preventDefault();ssAddCustomStyle();}">
             <button type="button" class="wc-btn-add-slot" style="margin-top:0;white-space:nowrap;padding:6px 14px;font-size:.82rem;width:auto;flex-shrink:0;"
               onclick="ssAddCustomStyle()">+ Add</button>
@@ -1542,7 +1557,7 @@
         <div style="margin-bottom:14px;">
           <div class="wc-section-label">Event title</div>
           <input type="text" id="ss-title" placeholder="e.g. Shoonya goes Salsa &amp; Bachata" style="margin-top:4px;">
-          <div style="font-size:.74rem;color:#888;margin-top:3px;">Suggested from your style selection — edit freely.</div>
+          <div style="font-size:.74rem;color:var(--text-light);margin-top:3px;">Suggested from your style selection — edit freely.</div>
         </div>
 
         <!-- Date + times -->
@@ -1550,11 +1565,11 @@
           <div class="wc-section-label" style="margin-bottom:8px;">Date &amp; times</div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
             <div>
-              <div style="font-size:.72rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Date</div>
+              <div style="font-size:.72rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Date</div>
               <input type="date" id="ss-date" style="font-size:.84rem;padding:6px 8px;">
             </div>
             <div>
-              <div style="font-size:.72rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Doors open</div>
+              <div style="font-size:.72rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Doors open</div>
               <input type="time" id="ss-doors" style="font-size:.84rem;padding:6px 8px;">
               <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;">
                 <span style="font-size:.68rem;color:#bbb;align-self:center;">Quick:</span>
@@ -1565,7 +1580,7 @@
               </div>
             </div>
             <div>
-              <div style="font-size:.72rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">End time</div>
+              <div style="font-size:.72rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">End time</div>
               <input type="time" id="ss-end" style="font-size:.84rem;padding:6px 8px;">
             </div>
           </div>
@@ -1584,7 +1599,7 @@
       <!-- Step 2 — Programme + Dance night -->
       <div id="ss-step-programme" style="display:none;">
         <button class="btn-step-back" onclick="ssBackToBasics()">← Back</button>
-        <h3 class="card-title">🎉 Social Night — Programme</h3>
+        <h3 class="card-title">🎉 Social Night — Programme <span class="step-pill">Step 2 of 3</span></h3>
         <div style="font-size:.8rem;color:#555;margin-bottom:14px;background:#f8f4ff;border-left:3px solid var(--purple);padding:10px 12px;border-radius:0 6px 6px 0;line-height:1.5;">
           Add each workshop in order. The dance night block below is always included — just fill in the timing and music.
         </div>
@@ -1603,8 +1618,8 @@
           <!-- Timing -->
           <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin-bottom:14px;">
             <div>
-              <div style="font-size:.7rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Floor opens</div>
-              <input type="time" id="ss-dn-start" value="22:00" style="font-size:.84rem;padding:6px 8px;border:1.5px solid #ddd;border-radius:6px;width:100%;box-sizing:border-box;">
+              <div style="font-size:.7rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Floor opens</div>
+              <input type="time" id="ss-dn-start" value="22:00" style="font-size:.84rem;padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;width:100%;box-sizing:border-box;">
               <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px;">
                 <span style="font-size:.68rem;color:#bbb;align-self:center;">Quick:</span>
                 <button type="button" class="wc-chip" style="font-size:.68rem;padding:2px 8px;" onclick="document.getElementById('ss-dn-start').value='21:00'">21:00</button>
@@ -1614,8 +1629,8 @@
             </div>
             <span style="font-size:.8rem;color:#ccc;text-align:center;margin-top:18px;">→</span>
             <div>
-              <div style="font-size:.7rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">End</div>
-              <input type="time" id="ss-dn-end" value="01:00" style="font-size:.84rem;padding:6px 8px;border:1.5px solid #ddd;border-radius:6px;width:100%;box-sizing:border-box;">
+              <div style="font-size:.7rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">End</div>
+              <input type="time" id="ss-dn-end" value="01:00" style="font-size:.84rem;padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;width:100%;box-sizing:border-box;">
             </div>
           </div>
 
@@ -1674,7 +1689,7 @@
               <div class="wc-chips" id="ss-genre-chips" style="flex-wrap:wrap;margin-bottom:8px;"></div>
               <div style="display:flex;gap:6px;align-items:center;">
                 <input type="text" id="ss-genre-custom" placeholder="Add another genre…"
-                  style="font-size:.82rem;padding:5px 8px;border:1.5px solid #ddd;border-radius:6px;flex:1;"
+                  style="font-size:.82rem;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;flex:1;"
                   onkeydown="if(event.key==='Enter'){event.preventDefault();ssAddCustomGenre();}">
                 <button type="button" class="wc-btn-add-slot" style="margin-top:0;white-space:nowrap;padding:6px 12px;"
                   onclick="ssAddCustomGenre()">+ Add style</button>
@@ -1716,7 +1731,7 @@
       <!-- Step 3 — Pricing -->
       <div id="ss-step-pricing" style="display:none;">
         <button class="btn-step-back" onclick="ssBackToProgramme()">← Back</button>
-        <h3 class="card-title">🎉 Social Night — Pricing</h3>
+        <h3 class="card-title">🎉 Social Night — Pricing <span class="step-pill">Step 3 of 3</span></h3>
         <div style="font-size:.8rem;color:#555;margin-bottom:14px;background:#f8f4ff;border-left:3px solid var(--purple);padding:10px 12px;border-radius:0 6px 6px 0;line-height:1.5;">
           Add one row per pricing tier. Advance tickets via Zoho — Shoonya sets that up after approval.
         </div>
@@ -1727,7 +1742,7 @@
           <div class="wc-section-label" style="margin-bottom:8px;">Early booking deadline <span style="font-weight:400;font-style:italic;text-transform:none;">(optional)</span></div>
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <input type="date" id="ss-early-deadline" style="font-size:.84rem;padding:6px 8px;max-width:180px;">
-            <span style="font-size:.76rem;color:#888;">Advance prices apply until this date</span>
+            <span style="font-size:.76rem;color:var(--text-light);">Advance prices apply until this date</span>
           </div>
         </div>
 
@@ -1750,7 +1765,7 @@
 
       <!-- Description -->
       <div class="cwc-section-label" data-lbl="desc-we-use">Description we'll use</div>
-      <div id="ss-desc-loading" style="font-size:.82rem;color:#888;margin-bottom:12px;">
+      <div id="ss-desc-loading" style="font-size:.82rem;color:var(--text-light);margin-bottom:12px;">
         <span class="cwc-spinner"></span> Generating description…
       </div>
       <div id="ss-desc-block" style="display:none;">
@@ -1939,7 +1954,10 @@ const T = {
     'ws-level-label':        'Level(s)',
     'ws-format-label':       'Format',
     'ws-fmt-single':         'Single session',
+    'ws-fmt-2day':           '2-day workshop',
     'ws-fmt-weekend':        'Weekend workshop',
+    'ws-fmt-intensive':      'Intensive',
+    'ws-fmt-bootcamp':       'Bootcamp',
     'ws-fmt-series':         'Mini-series',
     'ws-sessions-label':     'Date & time',
     'ws-add-session':        '+ Add another session',
@@ -2045,6 +2063,9 @@ const T = {
     'free-trial-note':       'Open voor nieuwe leerlingen — geen betaling nodig deze week.',
     'catchup-week':          'Inhaalweek',
     'catchup-note':          'Voorzien voor leerkrachten die een geplande les hebben gemist door ziekte of blessure.',
+    'ws-fmt-2day':           '2-daagse workshop',
+    'ws-fmt-intensive':      'Intensief',
+    'ws-fmt-bootcamp':       'Stage',
   },
   FR: {
     'hero-title':       'Soumettre un Cours ou Événement',
@@ -2132,6 +2153,8 @@ const T = {
     'free-trial-note':       'Ouvert aux nouveaux élèves — aucun paiement nécessaire cette semaine.',
     'catchup-week':          'Semaine de Rattrapage',
     'catchup-note':          'Réservée aux enseignant·e·s ayant manqué un cours prévu en raison d\'une maladie ou blessure.',
+    'ws-fmt-intensive':      'Intensif',
+    'ws-fmt-bootcamp':       'Stage',
   }
 };
 
@@ -3025,10 +3048,10 @@ function wcShowStyleStep() {
   if (styles.length === 0) {
     const wcCustomWrap = document.getElementById('wc-style-custom') ? document.getElementById('wc-style-custom').parentElement : null;
     if (loggedInProfile && loggedInProfile.role === 'admin' && !adminActingAs) {
-      chips.innerHTML = '<div style="font-size:.82rem;color:#888;">Select a teacher above to see their styles.</div>';
+      chips.innerHTML = '<div style="font-size:.82rem;color:var(--text-light);">Select a teacher above to see their styles.</div>';
       if (wcCustomWrap) wcCustomWrap.style.display = 'none';
     } else {
-      chips.innerHTML = '<div style="font-size:.82rem;color:#888;">No styles found in your profile. <a href="../profile.html" style="color:var(--purple)">Add styles →</a></div>';
+      chips.innerHTML = '<div style="font-size:.82rem;color:var(--text-light);">No styles found in your profile. <a href="../profile.html" style="color:var(--purple)">Add styles →</a></div>';
       if (wcCustomWrap) wcCustomWrap.style.display = '';
     }
     return;
@@ -3579,7 +3602,7 @@ function cwcShowReview(action) {
       const label   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d2.getDay()] + ' ' + d2.getDate() + '/' + (d2.getMonth()+1);
       return '<div style="display:flex;justify-content:space-between;font-size:.82rem;padding:3px 0;">'
            + '<span>' + esc(label) + '</span>'
-           + '<span style="font-weight:600;color:' + (avail ? '#2e7d32' : '#b71c1c') + ';">'
+           + '<span style="font-weight:600;color:' + (avail ? 'var(--success-text)' : 'var(--red)') + ';">'
            + (avail ? '✅ Available' + esc(pref) : '❌ Not available') + '</span></div>';
     }).join('');
 
@@ -3609,14 +3632,14 @@ function cwcShowReview(action) {
       priceHtml = Object.entries(perDay).map(function([day, p]) {
         return '<div style="font-size:.82rem;padding:2px 0;display:flex;justify-content:space-between;">'
              + '<span>' + esc(day) + ' (' + p.count + ' sessions)</span>'
-             + '<span style="font-weight:600;">€' + p.full + (p.stu ? ' <span style="color:#888;font-weight:400;">/ Student €' + p.stu + '</span>' : '') + '</span></div>';
+             + '<span style="font-weight:600;">€' + p.full + (p.stu ? ' <span style="color:var(--text-light);font-weight:400;">/ Student €' + p.stu + '</span>' : '') + '</span></div>';
       }).join('');
     }
 
     function row(label, val) {
-      return val ? '<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid #f0f0f0;font-size:.82rem;">'
-                 + '<span style="color:#666;min-width:130px;flex-shrink:0;">' + esc(label) + '</span>'
-                 + '<span style="font-weight:600;color:#1a1a1a;">' + val + '</span></div>' : '';
+      return val ? '<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid var(--border);font-size:.82rem;">'
+                 + '<span style="color:var(--text-mid);min-width:130px;flex-shrink:0;">' + esc(label) + '</span>'
+                 + '<span style="font-weight:600;color:var(--text);">' + val + '</span></div>' : '';
     }
 
     const age       = document.getElementById('cwc-age-chips')   ? (document.querySelector('#cwc-age-chips .cwc-meta-chip.selected') || {}).textContent : '';
@@ -3627,21 +3650,24 @@ function cwcShowReview(action) {
     const html = `
       <div id="cwc-review-overlay" style="
         position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;
-        display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px;">
+        display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 16px;"
+        onclick="if(event.target===this){_cwcCloseOverlay();}">
         <div style="
-          background:var(--surface);border-radius:12px;width:100%;max-width:520px;
+          position:relative;background:var(--surface);border-radius:12px;width:100%;max-width:520px;
           padding:28px;box-shadow:0 24px 64px rgba(0,0,0,.35);margin:auto;">
+
+          <button onclick="_cwcCloseOverlay()" style="position:absolute;top:12px;right:14px;background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-mid);padding:4px 6px;border-radius:4px;line-height:1;" aria-label="Close review">✕</button>
 
           <div style="font-family:'Josefin Sans',sans-serif;font-size:.7rem;font-weight:700;
             letter-spacing:2px;text-transform:uppercase;color:var(--purple);margin-bottom:4px;">Review your submission</div>
-          <div style="font-size:1.1rem;font-weight:700;margin-bottom:20px;color:#1a1a1a;">
+          <div style="font-size:1.1rem;font-weight:700;margin-bottom:20px;color:var(--text);">
             ${esc(style)}${profile.name ? ' — ' + esc(profile.name) : ''}
           </div>
 
-          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c4dcc;margin-bottom:6px;">Schedule</div>
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--purple);margin-bottom:6px;">Schedule</div>
           ${schedRows}
 
-          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c4dcc;margin:14px 0 6px;">Class details</div>
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--purple);margin:14px 0 6px;">Class details</div>
           ${row('Semester', esc(sem ? sem.name : ''))}
           ${(function() {
             const DAYS_RV = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
@@ -3670,20 +3696,20 @@ function cwcShowReview(action) {
           ${coTeacher ? row('Co-teacher', esc(coTeacher)) : ''}
           ${bring ? row('What to bring', esc(bring)) : ''}
 
-          ${priceHtml ? `<div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c4dcc;margin:14px 0 6px;">Pricing (per level)</div>${priceHtml}<div style="font-size:.76rem;color:#888;margin-top:4px;">+ UiTPAS 80% discount</div>` : ''}
+          ${priceHtml ? `<div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--purple);margin:14px 0 6px;">Pricing (per level)</div>${priceHtml}<div style="font-size:.76rem;color:var(--text-light);margin-top:4px;">+ UiTPAS 80% discount</div>` : ''}
 
-          ${odLines ? `<div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#7c4dcc;margin:14px 0 6px;">Opendeurdag availability</div>${odLines}` : ''}
+          ${odLines ? `<div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--purple);margin:14px 0 6px;">Opendeurdag availability</div>${odLines}` : ''}
 
-          <div style="background:#fffde7;border:1px solid #f9a825;border-radius:6px;padding:10px 12px;font-size:.8rem;color:#555;margin:18px 0 0;">
+          <div style="background:var(--yellow-light);border:1px solid var(--yellow-border);border-radius:6px;padding:10px 12px;font-size:.8rem;color:var(--text-mid);margin:18px 0 0;">
             ℹ️ Once submitted, your previous entry for this style will be updated. If you need to change something after submitting, reply to your confirmation email.
           </div>
 
           <div style="display:flex;gap:10px;margin-top:20px;">
-            <button onclick="document.getElementById('cwc-review-overlay').remove(); window._cwcReviewResolve(false);"
-              style="flex:1;padding:11px;border:2px solid #ccc;background:#fff;border-radius:6px;
-              font-weight:600;font-size:.85rem;cursor:pointer;color:#555;">← Edit</button>
+            <button onclick="_cwcCloseOverlay();"
+              style="flex:1;padding:11px;border:2px solid var(--border);background:var(--surface);border-radius:6px;
+              font-weight:600;font-size:.85rem;cursor:pointer;color:var(--text-mid);">← Edit</button>
             <button onclick="this.disabled=true; this.textContent='Submitting…'; this.previousElementSibling.disabled=true; setTimeout(function(){ document.getElementById('cwc-review-overlay').remove(); window._cwcReviewResolve(true); }, 80);"
-              style="flex:2;padding:11px;background:#6B3FA0;color:#fff;border:none;border-radius:6px;
+              style="flex:2;padding:11px;background:var(--purple);color:#fff;border:none;border-radius:6px;
               font-weight:700;font-size:.85rem;cursor:pointer;letter-spacing:.3px;">Confirm & Submit</button>
           </div>
         </div>
@@ -3691,6 +3717,19 @@ function cwcShowReview(action) {
 
     window._cwcReviewResolve = resolve;
     document.body.insertAdjacentHTML('beforeend', html);
+
+    // Escape key closes overlay
+    function _cwcOverlayEscape(e) {
+      if (e.key === 'Escape') { _cwcCloseOverlay(); }
+    }
+    window._cwcCloseOverlay = function _cwcCloseOverlay() {
+      document.removeEventListener('keydown', _cwcOverlayEscape);
+      const ov = document.getElementById('cwc-review-overlay');
+      if (ov) { ov.remove(); window._cwcReviewResolve(false); }
+    };
+    // Also expose as global for inline onclick
+    window._cwcCloseOverlay._escape = _cwcOverlayEscape;
+    document.addEventListener('keydown', _cwcOverlayEscape);
   });
 }
 
@@ -3720,7 +3759,7 @@ function cwcBuildSemOverview() {
   if (sem.trialWeek) {
     const trialEnd = new Date(sem.trialWeek + 'T12:00:00');
     trialEnd.setDate(trialEnd.getDate() + 6);
-    html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">🆓 Free trial week</span><span style="font-weight:600;color:#2e7d32;">${fmtShort(sem.trialWeek)} – ${fmtShort(trialEnd.toISOString().split('T')[0])}</span></div>`;
+    html += `<div style="display:flex;justify-content:space-between;"><span style="color:var(--text-mid);">🆓 Free trial week</span><span style="font-weight:600;color:var(--success-text);">${fmtShort(sem.trialWeek)} – ${fmtShort(trialEnd.toISOString().split('T')[0])}</span></div>`;
   }
 
   // Catch-up week
@@ -3730,7 +3769,7 @@ function cwcBuildSemOverview() {
 
   // School breaks
   if (sem.breaks && sem.breaks.length) {
-    html += `<div style="margin-top:6px;font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;color:#888;">School holidays (no class)</div>`;
+    html += `<div style="margin-top:6px;font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);">School holidays (no class)</div>`;
     sem.breaks.forEach(brk => {
       html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">${esc(brk.name)}</span><span style="font-weight:600;color:#e65100;">${fmtShort(brk.start)} – ${fmtShort(brk.end)}</span></div>`;
     });
@@ -3739,7 +3778,7 @@ function cwcBuildSemOverview() {
   // Opendeurdag
   const opDates = sem.opendeurdag ? (Array.isArray(sem.opendeurdag) ? sem.opendeurdag : [sem.opendeurdag]) : [];
   if (opDates.length) {
-    html += `<div style="margin-top:6px;font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;color:#888;">Open door days</div>`;
+    html += `<div style="margin-top:6px;font-weight:700;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text-light);">Open door days</div>`;
     opDates.forEach(d => {
       html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">🚪 Opendeurdag</span><span style="font-weight:600;color:#6B3FA0;">${fmt(d)}</span></div>`;
     });
@@ -3847,7 +3886,7 @@ function cwcLoadDescriptions(style, levels) {
     const generalDesc = WC_STYLE_DESCRIPTIONS[style] || '';
     document.getElementById('cwc-desc-text').innerHTML = generalDesc
       ? cwcLevelDescHtml('Description', generalDesc, false)
-      : '<p style="color:#888;font-size:.84rem;">No description available.</p>';
+      : '<p style="color:var(--text-light);font-size:.84rem;">No description available.</p>';
     document.getElementById('cwc-desc-block').style.display = '';
   }
 }
@@ -3896,6 +3935,13 @@ function cwcApproveDesc() {
   cwcDescApproved = true;
   const approveBtn = document.getElementById('cwc-desc-approve-btn');
   if (approveBtn) approveBtn.outerHTML = '<span class="cwc-approved-badge">✓ Descriptions approved</span>';
+  // Reveal class details section
+  const reveal = document.getElementById('cwc-details-reveal');
+  if (reveal) {
+    reveal.style.display = '';
+    reveal.style.animation = 'errSlideIn .25s ease both';
+    setTimeout(() => reveal.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  }
 }
 
 function cwcEditLevelDesc(levelName) {
@@ -4348,7 +4394,7 @@ function cwcBuildDateGrid(style, levels) {
     const allGoodBtn = document.createElement('button');
     allGoodBtn.type = 'button';
     allGoodBtn.dataset.day = dayName;
-    allGoodBtn.style.cssText = 'font-size:.76rem;font-weight:700;color:#388e3c;background:none;border:none;cursor:pointer;padding:0;text-decoration:underline dotted;';
+    allGoodBtn.style.cssText = 'font-size:.76rem;font-weight:700;color:var(--success-text);background:none;border:none;cursor:pointer;padding:0;text-decoration:underline dotted;';
     allGoodBtn.textContent = '✓ All dates work for me';
     allGoodBtn.onclick = () => cwcMarkAllAvailable(dayName);
     allGoodRow.appendChild(allGoodBtn);
@@ -4369,7 +4415,7 @@ function cwcBuildDateGrid(style, levels) {
       const classWord = count === 1 ? t('course') : t('courses');
       priceBar.innerHTML = `<span class="cwc-count-label">${count} ${classWord}</span>`
         + ` <span class="cwc-price-dot">·</span> <span class="cwc-price-total" style="font-weight:800;">€${pTotal}</span>`
-        + (pStudent !== null ? ` <span class="cwc-price-dot">·</span> <span class="cwc-price-student" style="font-size:.8rem;color:#888;">Student: €${pStudent}</span>` : '');
+        + (pStudent !== null ? ` <span class="cwc-price-dot">·</span> <span class="cwc-price-student" style="font-size:.8rem;color:var(--text-light);">Student: €${pStudent}</span>` : '');
     }
     section.appendChild(priceBar);
 
@@ -4393,7 +4439,7 @@ function cwcBuildDateGrid(style, levels) {
   if (opDates.length) {
     infoHtml += `<div style="border:1.5px solid #d4c5f5;border-radius:10px;padding:14px 16px;margin-bottom:12px;">
       <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#6B3FA0;margin-bottom:2px;">🚪 ${t('opendeur-avail')}</div>
-      <div style="font-size:.76rem;color:#888;margin-bottom:8px;font-weight:400;">New students can try your class for free — let us know if you can teach.</div>`;
+      <div style="font-size:.76rem;color:var(--text-light);margin-bottom:8px;font-weight:400;">New students can try your class for free — let us know if you can teach.</div>`;
     opDates.forEach(function(dateIso) {
       const opDate  = new Date(dateIso + 'T12:00:00');
       const opLabel = DOW[opDate.getDay()] + ' ' + opDate.getDate() + ' ' + MON[opDate.getMonth()] + ' ' + opDate.getFullYear();
@@ -4436,10 +4482,10 @@ function cwcBuildDateGrid(style, levels) {
     const trialEndIso = trialEnd.toISOString().split('T')[0];
     const trialRange = cwcFormatDateRange(sem.trialWeek, trialEndIso);
     infoHtml += `
-    <div style="background:#d4edda;border:1.5px solid #b8e8c4;border-radius:10px;padding:14px 16px;margin-bottom:12px;">
-      <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#155724;margin-bottom:6px;">🆓 ${t('free-trial-week')}</div>
-      <div style="font-size:.85rem;font-weight:600;color:#155724;">${trialRange}</div>
-      <div style="font-size:.76rem;color:#2e7d32;margin-top:4px;">${t('free-trial-note')}</div>
+    <div style="background:var(--success-bg);border:1.5px solid var(--success-border);border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+      <div style="font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--success-text);margin-bottom:6px;">🆓 ${t('free-trial-week')}</div>
+      <div style="font-size:.85rem;font-weight:600;color:var(--success-text);">${trialRange}</div>
+      <div style="font-size:.76rem;color:var(--success-text);opacity:.85;margin-top:4px;">${t('free-trial-note')}</div>
     </div>`;
   }
 
@@ -4620,7 +4666,7 @@ function cwcUpdateDayPriceSummary(dayName) {
   if (priceBar) {
     priceBar.innerHTML = `<span class="cwc-count-label">${count} ${classWord}</span>`
       + ` <span class="cwc-price-dot">·</span> <span class="cwc-price-total" style="font-weight:800;">€${pTotal}</span>`
-      + (pStudent !== null ? ` <span class="cwc-price-dot">·</span> <span class="cwc-price-student" style="font-size:.8rem;color:#888;">Student: €${pStudent}</span>` : '');
+      + (pStudent !== null ? ` <span class="cwc-price-dot">·</span> <span class="cwc-price-student" style="font-size:.8rem;color:var(--text-light);">Student: €${pStudent}</span>` : '');
   }
 }
 
@@ -4859,7 +4905,7 @@ function wsShowStyleStep() {
   const otherBtn = document.createElement('button');
   otherBtn.className   = 'wc-chip';
   otherBtn.textContent = '+ Other style';
-  otherBtn.style.cssText = 'border-style:dashed;color:#888;';
+  otherBtn.style.cssText = 'border-style:dashed;color:var(--text-light);';
   otherBtn.onclick     = () => {
     document.querySelectorAll('#ws-style-chips .wc-chip').forEach(b => b.classList.remove('selected'));
     otherBtn.classList.add('selected');
@@ -5095,7 +5141,7 @@ function wsAddSession() {
   const row = document.createElement('div');
   row.style.cssText = 'display:grid;grid-template-columns:auto 1fr 1fr auto;gap:8px;align-items:center;';
   row.innerHTML = `
-    <span style="font-size:.76rem;font-weight:700;color:#999;white-space:nowrap;">Day ${idx}</span>
+    <span style="font-size:.76rem;font-weight:700;color:var(--text-mid);white-space:nowrap;">Day ${idx}</span>
     <input type="date" class="ws-session-date" style="font-size:.84rem;">
     <div style="display:flex;align-items:center;gap:4px;">
       <input type="time" class="ws-session-start" value="19:00" style="font-size:.84rem;flex:1;" oninput="wsAutoEnd(this)">
@@ -5114,7 +5160,7 @@ function wsAddSession() {
         placeholder="Session topic / theme — e.g. Bhangra &amp; Jhoomar: The Punjabi Toolkit"
         style="font-size:.82rem;border-color:#d4c5f5;">
       <div style="display:flex;align-items:center;gap:4px;">
-        <span style="font-size:.76rem;font-weight:700;color:#888;">€</span>
+        <span style="font-size:.76rem;font-weight:700;color:var(--text-light);">€</span>
         <input type="number" class="ws-session-price"
           placeholder="price" style="font-size:.82rem;width:72px;" min="0" step="0.5">
       </div>
@@ -5303,7 +5349,7 @@ function wsShowConfirmation() {
     summHtml += `<div class="cwc-schedule-block">
       <div class="cwc-schedule-level">${label} · ${dStr}${priceTag}</div>
       ${s.topic ? `<div style="font-size:.8rem;color:#6B3FA0;margin:2px 0;">${s.topic}</div>` : ''}
-      <div style="font-size:.82rem;color:#555;">${s.start || '—'} → ${s.end || '—'}${dur ? ' <span style="color:#999;font-size:.76rem;">('+dur+')</span>' : ''}</div>
+      <div style="font-size:.82rem;color:#555;">${s.start || '—'} → ${s.end || '—'}${dur ? ' <span style="color:var(--text-mid);font-size:.76rem;">('+dur+')</span>' : ''}</div>
     </div>`;
   });
   // Pricing summary line
@@ -5316,7 +5362,7 @@ function wsShowConfirmation() {
   if (priceLines.length) {
     summHtml += `<div class="cwc-schedule-block" style="background:#f8f4ff;border-color:#d4c5f5;">
       <div class="cwc-schedule-level">💶 Pricing · ${priceLines.join(' · ')}</div>
-      <div style="font-size:.76rem;color:#888;">Members −10% applied automatically</div>
+      <div style="font-size:.76rem;color:var(--text-light);">Members −10% applied automatically</div>
     </div>`;
   }
   summHtml += '</div>';
@@ -5629,11 +5675,11 @@ function typeBuildSemOverview(container) {
     html += `<div style="font-weight:800;color:#6B3FA0;font-size:.82rem;margin-bottom:7px;padding-bottom:5px;border-bottom:1.5px solid #ede4ff;">${esc(sem.name)}</div>`;
     html += `<div style="display:grid;gap:4px;">`;
     html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">📅 Period</span><span style="font-weight:600;color:#333;">${fmt(sem.start)} – ${fmt(sem.end)}</span></div>`;
-    if (sem.sessions) html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">📊 Sessions per class</span><span style="font-weight:600;color:#333;">${sem.sessions}</span></div>`;
+    if (sem.sessions) html += `<div style="display:flex;justify-content:space-between;"><span style="color:var(--text-mid);">📊 Sessions per class</span><span style="font-weight:600;color:var(--text);">${sem.sessions}</span></div>`;
     if (sem.trialWeek) {
       const te = new Date(sem.trialWeek + 'T12:00:00');
       te.setDate(te.getDate() + 6);
-      html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">🆓 Free trial</span><span style="font-weight:600;color:#2e7d32;">${fmtShort(sem.trialWeek)} – ${fmtShort(te.toISOString().split('T')[0])}</span></div>`;
+      html += `<div style="display:flex;justify-content:space-between;"><span style="color:var(--text-mid);">🆓 Free trial</span><span style="font-weight:600;color:var(--success-text);">${fmtShort(sem.trialWeek)} – ${fmtShort(te.toISOString().split('T')[0])}</span></div>`;
     }
     if (sem.catchUpWeek) {
       html += `<div style="display:flex;justify-content:space-between;"><span style="color:#555;">🔁 Catch-up</span><span style="font-weight:600;color:#555;">${fmtShort(sem.catchUpWeek.start)} – ${fmtShort(sem.catchUpWeek.end)}</span></div>`;
@@ -6056,7 +6102,20 @@ async function submitDescription() {
 
   } catch(err) {
     showScreen('input');
-    showErr('err-input', t('err-retry') + (err.message ? ' (' + err.message + ')' : ''));
+    const errMsg = t('err-retry') + (err.message ? ' (' + err.message + ')' : '');
+    const errEl = document.getElementById('err-input');
+    if (errEl) {
+      errEl.innerHTML = '';
+      const msgSpan = document.createElement('span');
+      msgSpan.textContent = errMsg;
+      errEl.appendChild(msgSpan);
+      const retryBtn = document.createElement('button');
+      retryBtn.textContent = 'Try again →';
+      retryBtn.style.cssText = 'margin-left:10px;padding:3px 10px;background:var(--yellow);color:var(--on-yellow);border:none;border-radius:4px;font-family:var(--font-display);font-size:.7rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;';
+      retryBtn.onclick = function() { submitDescription(); };
+      errEl.appendChild(retryBtn);
+      errEl.style.display = '';
+    }
   }
 }
 
@@ -6678,7 +6737,7 @@ function ssAddProgrammeRow() {
   header.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px;';
   header.innerHTML = `
     <span style="font-size:.72rem;font-weight:700;color:#bbb;min-width:20px;">#${idx}</span>
-    <select class="ss-act-type" onchange="ssActTypeChanged(this)" style="flex:1;font-size:.82rem;padding:5px 8px;border:1.5px solid #ddd;border-radius:6px;background:#fff;">
+    <select class="ss-act-type" onchange="ssActTypeChanged(this)" style="flex:1;font-size:.82rem;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;background:#fff;">
       ${SS_ACT_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}
     </select>
     <button type="button" class="wc-btn-remove" onclick="ssRemoveProgrammeRow(this)" title="Remove">✕</button>
@@ -6689,16 +6748,16 @@ function ssAddProgrammeRow() {
   const timeRow = document.createElement('div');
   timeRow.style.cssText = 'display:grid;grid-template-columns:1fr auto 1fr;gap:6px;align-items:center;margin-bottom:8px;';
   timeRow.innerHTML = `
-    <input type="time" class="ss-act-start" value="19:00" style="font-size:.82rem;padding:5px 8px;border:1.5px solid #ddd;border-radius:6px;">
+    <input type="time" class="ss-act-start" value="19:00" style="font-size:.82rem;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;">
     <span style="font-size:.78rem;color:#aaa;text-align:center;">→</span>
-    <input type="time" class="ss-act-end" value="20:30" style="font-size:.82rem;padding:5px 8px;border:1.5px solid #ddd;border-radius:6px;">
+    <input type="time" class="ss-act-end" value="20:30" style="font-size:.82rem;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;">
   `;
   row.appendChild(timeRow);
 
   // Topic / description field
   const topicRow = document.createElement('div');
   topicRow.style.cssText = 'margin-bottom:8px;';
-  topicRow.innerHTML = `<input type="text" class="ss-act-topic" placeholder="Topic / description *" style="width:100%;font-size:.82rem;padding:5px 8px;border:1.5px solid #ddd;border-radius:6px;box-sizing:border-box;">`;
+  topicRow.innerHTML = `<input type="text" class="ss-act-topic" placeholder="Topic / description *" style="width:100%;font-size:.82rem;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;box-sizing:border-box;">`;
   row.appendChild(topicRow);
 
   // Teacher field with typeahead
@@ -6707,7 +6766,7 @@ function ssAddProgrammeRow() {
   teacherRow.style.cssText = 'margin-bottom:8px;position:relative;';
   teacherRow.innerHTML = `
     <input type="text" class="ss-act-teacher" placeholder="Teacher / host *"
-      style="width:100%;font-size:.82rem;padding:5px 8px;border:1.5px solid #ddd;border-radius:6px;box-sizing:border-box;"
+      style="width:100%;font-size:.82rem;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;box-sizing:border-box;"
       autocomplete="off"
       oninput="ssFilterProgTeacher(this)"
       onblur="setTimeout(()=>{ const d=this.nextElementSibling; if(d) d.style.display='none'; },200)">
@@ -6720,7 +6779,7 @@ function ssAddProgrammeRow() {
   levelRow.className = 'ss-level-row';
   levelRow.style.display = 'none'; // hidden by default
   levelRow.innerHTML = `
-    <div style="font-size:.72rem;font-weight:700;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Workshop level</div>
+    <div style="font-size:.72rem;font-weight:700;color:var(--text-mid);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;">Workshop level</div>
     <div class="wc-chips ss-level-chips" style="flex-wrap:wrap;">
       ${SS_WORKSHOP_LEVELS.map(lv => `<button type="button" class="wc-chip" style="font-size:.74rem;padding:4px 10px;" onclick="ssLevelToggle(this)">${lv}</button>`).join('')}
     </div>
@@ -6994,16 +7053,16 @@ function ssAddPricingRow(prefillLabel) {
     <input type="text" class="ss-price-label"
       placeholder="Tier label (e.g. 2 workshops + dance night)"
       value="${esc(prefillLabel || '')}"
-      style="font-size:.82rem;padding:6px 8px;border:1.5px solid #ddd;border-radius:6px;">
+      style="font-size:.82rem;padding:6px 8px;border:1.5px solid var(--border);border-radius:6px;">
     <div style="display:flex;align-items:center;gap:3px;">
-      <span style="font-size:.78rem;color:#888;">Adv €</span>
+      <span style="font-size:.78rem;color:var(--text-light);">Adv €</span>
       <input type="number" class="ss-price-advance" min="0" step="0.5" placeholder="—"
-        style="width:56px;font-size:.82rem;padding:5px 6px;border:1.5px solid #ddd;border-radius:6px;">
+        style="width:56px;font-size:.82rem;padding:5px 6px;border:1.5px solid var(--border);border-radius:6px;">
     </div>
     <div style="display:flex;align-items:center;gap:3px;">
-      <span style="font-size:.78rem;color:#888;">Door €</span>
+      <span style="font-size:.78rem;color:var(--text-light);">Door €</span>
       <input type="number" class="ss-price-door" min="0" step="0.5" placeholder="—"
-        style="width:56px;font-size:.82rem;padding:5px 6px;border:1.5px solid #ddd;border-radius:6px;">
+        style="width:56px;font-size:.82rem;padding:5px 6px;border:1.5px solid var(--border);border-radius:6px;">
     </div>
     <button type="button" class="wc-btn-remove" onclick="ssRemovePricingRow(this)" title="Remove">✕</button>
   `;
@@ -7086,7 +7145,7 @@ function ssShowConfirmation() {
     summary += `<div style="margin-top:8px;font-weight:700;font-size:.76rem;text-transform:uppercase;letter-spacing:.5px;color:#7c4dcc;">Programme</div>`;
     d.programme.forEach(r => {
       const time = r.start ? `${r.start}${r.end ? '–' + r.end : ''}` : '';
-      const lvls = r.levels && r.levels.length ? ` <em style="color:#999;font-size:.78rem;">(${r.levels.join(', ')})</em>` : '';
+      const lvls = r.levels && r.levels.length ? ` <em style="color:var(--text-mid);font-size:.78rem;">(${r.levels.join(', ')})</em>` : '';
       summary += `<div style="padding-left:8px;">`;
       if (time) summary += `<span style="color:#aaa;font-size:.78rem;">${esc(time)} </span>`;
       summary += `<strong>${esc(r.type)}</strong>`;
@@ -7121,7 +7180,7 @@ function ssShowConfirmation() {
     });
     if (d.earlyDeadline) {
       const dlStr = fmtDate(d.earlyDeadline);
-      summary += `<div style="padding-left:8px;color:#888;font-size:.78rem;">Advance deadline: ${esc(dlStr)}</div>`;
+      summary += `<div style="padding-left:8px;color:var(--text-light);font-size:.78rem;">Advance deadline: ${esc(dlStr)}</div>`;
     }
   }
 
