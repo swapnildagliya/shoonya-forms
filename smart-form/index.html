@@ -781,7 +781,8 @@
   <div class="header-nav">
     <button class="header-nav-btn home-btn" id="hdr-home-btn" onclick="navGoHome()" title="Back to home" aria-label="Back to home" style="display:none;">🏠 Home</button>
     <a href="../admin/" class="header-nav-btn" style="font-size:.7rem;padding:4px 10px;opacity:.5;text-decoration:none;color:#fff;" title="Admin dashboard" aria-label="Admin dashboard">⚙</a>
-    <button class="header-nav-btn profile-btn" id="hdr-profile-btn" onclick="navGoProfile()" title="My profile" aria-label="My profile">👤 <span id="hdr-profile-label">Profile</span></button>
+    <a href="../register.html" class="header-nav-btn" id="hdr-register-btn" style="text-decoration:none;font-size:.78rem;padding:4px 10px;" aria-label="Create an account">Register</a>
+    <button class="header-nav-btn profile-btn" id="hdr-profile-btn" onclick="navGoProfile()" title="My profile" aria-label="My profile">👤 <span id="hdr-profile-label">Log in</span></button>
   </div>
   <div class="lang-switcher">
     <button class="lang-btn active" onclick="setLang('EN')">EN</button>
@@ -6345,16 +6346,19 @@ function navGoProfile() {
 function updateHeaderProfileBtn() {
   const btn = document.getElementById('hdr-profile-btn');
   const lbl = document.getElementById('hdr-profile-label');
+  const regBtn = document.getElementById('hdr-register-btn');
   if (!btn || !lbl) return;
   if (typeof loggedInProfile !== 'undefined' && loggedInProfile && loggedInProfile.name) {
     const firstName = loggedInProfile.name.split(' ')[0];
     lbl.textContent = firstName;
     btn.classList.add('logged-in');
     btn.title = 'View your profile';
+    if (regBtn) regBtn.style.display = 'none';
   } else {
-    lbl.textContent = 'Profile';
+    lbl.textContent = 'Log in';
     btn.classList.remove('logged-in');
     btn.title = 'Log in';
+    if (regBtn) regBtn.style.display = '';
   }
 }
 
