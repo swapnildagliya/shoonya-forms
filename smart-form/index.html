@@ -954,20 +954,40 @@
   .cwc-next-btn.outline:hover { background: var(--vibrant); color: var(--void-white); border-color: var(--vibrant); }
   .cwc-next-btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 
-  /* ── CLASS META ── */
-  .cwc-meta-section { margin-bottom: 4px; }
-  .cwc-meta-row { display: flex; align-items: flex-start; gap: var(--space-3); margin-bottom: var(--space-3); }
-  .cwc-meta-key {
-    min-width: 105px; font-family: var(--font-body);
-    font-size: var(--type-eyebrow); font-weight: 500; color: var(--fg-1);
-    text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); padding-top: 5px; flex-shrink: 0;
+  /* ── CLASS META — Squarespace-style vertical form rows.
+     Each field is a discrete top-down block: label above, input/chips below.
+     Labels are sentence-case Inter Medium 500 (NOT eyebrow caps) so they
+     read as natural form labels. ── */
+  .cwc-meta-section { margin-bottom: var(--space-2); }
+  .cwc-meta-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-1);
+    margin-bottom: var(--space-3);
   }
-  .cwc-meta-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+  .cwc-meta-key {
+    font-family: var(--font-body);
+    font-size: var(--type-body);
+    font-weight: 500;
+    color: var(--fg-1);
+    text-transform: none;
+    letter-spacing: 0;
+    line-height: var(--leading-snug);
+  }
+  .cwc-meta-key .cwc-meta-required {
+    margin-left: 6px;
+    font-size: var(--type-body-sm);
+    font-weight: 400;
+    font-style: italic;
+    color: var(--fg-3);
+  }
+  .cwc-meta-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
   .cwc-meta-chip {
-    background: var(--bg); color: var(--fg-1);
-    border: var(--line) solid var(--fg-1); border-radius: var(--radius-0); padding: 8px 12px;
-    min-height: 36px; display: inline-flex; align-items: center;
-    font-size: var(--type-body-sm); font-weight: 400; cursor: pointer;
+    background: var(--surface); color: var(--fg-1);
+    border: var(--line) solid var(--fg-1); border-radius: var(--radius-0); padding: 10px 14px;
+    min-height: 44px; display: inline-flex; align-items: center;
+    font-size: var(--type-body); font-weight: 400; cursor: pointer;
     transition: all var(--duration-fast) var(--ease); font-family: var(--font-body);
   }
   .cwc-meta-chip:hover { background: var(--vibrant-purple-tint); border-color: var(--vibrant); color: var(--vibrant); }
@@ -1002,6 +1022,27 @@
   .cwc-day-header .cwc-day-name { font-size: var(--type-h3); letter-spacing: -0.005em; font-style: italic; font-weight: 400; }
   .cwc-day-header .cwc-day-detail { font-family: var(--font-body); font-weight: 400; font-size: var(--type-body-sm); color: var(--fg-2); letter-spacing: 0; text-transform: none; }
   .cwc-dates-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  /* "All dates work for me" — prominent skip button at top of each day section */
+  .cwc-all-dates-btn {
+    display: block;
+    width: 100%;
+    margin: var(--space-1) 0 var(--space-2);
+    padding: 12px var(--space-2);
+    background: var(--surface);
+    color: var(--green);
+    border: var(--line) solid var(--green);
+    border-radius: var(--radius-0);
+    font-family: var(--font-body);
+    font-size: var(--type-caption);
+    font-weight: 500;
+    letter-spacing: var(--tracking-caption);
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all var(--duration-base) var(--ease);
+  }
+  .cwc-all-dates-btn:hover { background: var(--green); color: var(--void-white); }
+  .cwc-all-dates-btn.confirmed { background: var(--green); color: var(--void-white); border-color: var(--green); }
+
   .cwc-date-chip {
     background: var(--chip-active-bg); color: var(--chip-active-text);
     border: var(--line) solid var(--chip-active-border); border-radius: var(--radius-0);
@@ -5000,6 +5041,16 @@ function cwcBuildDateGrid(style, levels) {
     header.innerHTML = `<div class="cwc-day-name" style="font-size:.9rem;font-weight:500;letter-spacing:1.6px;">${dayName.toUpperCase()}</div>${levelLines}`;
     section.appendChild(header);
 
+    // ── "All dates work for me" — prominent shortcut button at top of day section.
+    //    Lets teachers opt out of per-date interaction without scrolling all chips. ──
+    const allGoodTopBtn = document.createElement('button');
+    allGoodTopBtn.type = 'button';
+    allGoodTopBtn.className = 'cwc-all-dates-btn';
+    allGoodTopBtn.dataset.day = dayName;
+    allGoodTopBtn.textContent = '✓ All dates work for me';
+    allGoodTopBtn.onclick = () => cwcMarkAllAvailable(dayName);
+    section.appendChild(allGoodTopBtn);
+
     // ── Date chips grid ──
     const grid = document.createElement('div');
     grid.className = 'cwc-dates-grid';
@@ -5037,18 +5088,6 @@ function cwcBuildDateGrid(style, levels) {
     });
 
     section.appendChild(grid);
-
-    // ── "All dates work for me" shortcut ──
-    const allGoodRow = document.createElement('div');
-    allGoodRow.style.cssText = 'display:flex;align-items:center;gap:10px;margin:8px 0 2px;';
-    const allGoodBtn = document.createElement('button');
-    allGoodBtn.type = 'button';
-    allGoodBtn.dataset.day = dayName;
-    allGoodBtn.style.cssText = 'font-size:.76rem;font-weight:500;color:var(--success-text);background:none;border:none;cursor:pointer;padding:0;text-decoration:underline dotted;';
-    allGoodBtn.textContent = '✓ All dates work for me';
-    allGoodBtn.onclick = () => cwcMarkAllAvailable(dayName);
-    allGoodRow.appendChild(allGoodBtn);
-    section.appendChild(allGoodRow);
 
     // ── Per-day price bar ──
     const priceBar = document.createElement('div');
