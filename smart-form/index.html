@@ -5567,8 +5567,7 @@ function cwcBuildDateGrid(style, levels) {
     : [];
   if (opDates.length) {
     infoHtml += `<div style="background:var(--surface);border:var(--hairline) solid var(--rule);border-left:2px solid var(--vibrant);border-radius:var(--radius-0);padding:var(--space-2);margin-bottom:var(--space-2);">
-      <div style="font-family:var(--font-body);font-size:var(--type-eyebrow);font-weight:500;text-transform:uppercase;letter-spacing:var(--tracking-eyebrow);color:var(--vibrant);margin-bottom:4px;">🚪 ${t('opendeur-avail')} <span class="required-marker">required</span></div>
-      <div style="font-size:var(--type-body-sm);color:var(--fg-2);margin-bottom:var(--space-1);font-weight:400;">New students can try your class for free. Tell us whether you can teach on each open door day so we can plan trial slots.</div>`;
+      <div style="font-family:var(--font-body);font-size:var(--type-eyebrow);font-weight:500;text-transform:uppercase;letter-spacing:var(--tracking-eyebrow);color:var(--vibrant);margin-bottom:var(--space-1);">🚪 ${t('opendeur-avail')} <span class="required-marker">required</span></div>`;
     opDates.forEach(function(dateIso) {
       const opDate  = new Date(dateIso + 'T12:00:00');
       const opLabel = DOW[opDate.getDay()] + ' ' + opDate.getDate() + ' ' + MON[opDate.getMonth()] + ' ' + opDate.getFullYear();
