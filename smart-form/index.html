@@ -842,15 +842,39 @@
   .field-error { border-color: var(--red) !important; box-shadow: 0 0 0 1px var(--red) !important; animation: shake var(--duration-base) var(--ease); }
   .chip-error { outline: 1px solid var(--red); outline-offset: 2px; animation: shake var(--duration-base) var(--ease); border-radius: var(--radius-0); }
 
-  /* ── WEEKLY CLASS CONFIRMATION ── */
-  .cwc-section-label {
-    font-family: var(--font-body);
-    font-size: var(--type-eyebrow);
+  /* Inline field-level error message — sits directly under the offending input */
+  .field-error-msg {
+    display: block;
+    margin-top: 6px;
+    font-size: var(--type-body-sm);
     font-weight: 500;
-    letter-spacing: var(--tracking-eyebrow);
-    text-transform: uppercase;
+    color: var(--red);
+    line-height: var(--leading-snug);
+  }
+  .field-error-msg::before { content: '⚠ '; }
+
+  /* Required indicator — appears next to a label */
+  .required-marker {
+    margin-left: 6px;
+    font-size: var(--type-body-sm);
+    font-weight: 400;
+    font-style: italic;
+    color: var(--fg-3);
+  }
+
+  /* ── WEEKLY CLASS CONFIRMATION ──
+     Section labels are now Playfair italic at h3 size — "Class info", "Pricing",
+     "Schedule" read as group titles (Squarespace-style), not utilitarian signage. ── */
+  .cwc-section-label {
+    font-family: var(--font-display);
+    font-size: var(--type-h3);
+    font-weight: 500;
+    font-style: italic;
+    line-height: var(--leading-snug);
+    letter-spacing: -0.005em;
+    text-transform: none;
     color: var(--fg-1);
-    margin: var(--space-2) 0 var(--space-1);
+    margin: var(--space-3) 0 var(--space-2);
   }
   .cwc-spinner {
     display: inline-block; width: 14px; height: 14px;
@@ -993,10 +1017,13 @@
   .cwc-meta-chip:hover { background: var(--vibrant-purple-tint); border-color: var(--vibrant); color: var(--vibrant); }
   .cwc-meta-chip.selected { background: var(--vibrant); color: var(--void-white); border-color: var(--vibrant); }
   .cwc-meta-input {
-    border: var(--line) solid var(--fg-1); border-radius: var(--radius-0); padding: 10px 12px;
+    border: var(--line) solid var(--fg-1); border-radius: var(--radius-0); padding: 12px 14px;
     font-size: var(--type-body); width: 100%; box-sizing: border-box;
-    font-family: var(--font-body); background: var(--bg); color: var(--fg-1);
+    font-family: var(--font-body); background: var(--surface); color: var(--fg-1);
+    line-height: var(--leading-body);
   }
+  /* Textareas inside .cwc-meta-input — give them room. Auto-grow handled in JS. */
+  textarea.cwc-meta-input { min-height: 96px; resize: vertical; }
   .cwc-meta-input:focus { outline: 2px solid var(--vibrant); outline-offset: 1px; border-color: var(--vibrant); }
 
   /* ── DATE GRID ── */
@@ -3401,89 +3428,89 @@ const WC_STYLE_DESCRIPTIONS = {
 // Fields: age (min age), partner (bool), co (co-teacher string), prereq, learn
 const CLASS_META = {
   'swapnildagliya@gmail.com': {
-    'Bollywood':             { age:'12+', partner:false, co:'', prereq:'Beginners with some dance background. Absolute beginners should start with Bollyfolk or Garba & Kalbeliya first.', bring:'Comfortable clothes, clean non-marking indoor shoes or bare feet.' },
-    'Bhangra':               { age:'12+', partner:false, co:'', prereq:'Foundational Bhangra knowledge required. Newcomers should complete a seasonal intensive first.', bring:'Comfortable clothes, clean non-marking indoor shoes.' },
-    'Bollyfolk':             { age:'12+', partner:false, co:'', prereq:'All levels welcome. No prior experience required.', bring:'Comfortable clothes, clean non-marking indoor shoes or bare feet.' },
-    'Garba & Kalbeliya':     { age:'12+', partner:false, co:'', prereq:'No prior experience required.', bring:'Comfortable clothes, clean non-marking indoor shoes or bare feet. Ghagra skirt recommended for Kalbeliya.' },
-    'Indian Semi-Classical': { age:'12+', partner:false, co:'', prereq:'Intermediate level. Prior dance experience recommended.', bring:'Comfortable clothes, ghungroo (ankle bells) if you have them, clean non-marking shoes.' },
-    'Indian Dance Technique':{ age:'12+', partner:false, co:'', prereq:'Open to all levels.', bring:'Comfortable clothes, clean non-marking indoor shoes or bare feet.' },
+    'Bollywood':             { age:'12+', partner:false, co:'', prereq:'Beginners with some dance background. Absolute beginners should start with Bollyfolk or Garba & Kalbeliya first.', bring:'Comfortable clothes you can move in. We dance barefoot.' },
+    'Bhangra':               { age:'12+', partner:false, co:'', prereq:'Foundational Bhangra knowledge required. Newcomers should complete a seasonal intensive first.', bring:'Comfortable clothes you can move in. We dance barefoot.' },
+    'Bollyfolk':             { age:'12+', partner:false, co:'', prereq:'All levels welcome. No prior experience required.', bring:'Comfortable clothes you can move in. We dance barefoot.' },
+    'Garba & Kalbeliya':     { age:'12+', partner:false, co:'', prereq:'No prior experience required.', bring:'Comfortable clothes you can move in. We dance barefoot. A ghagra skirt is recommended for Kalbeliya.' },
+    'Indian Semi-Classical': { age:'12+', partner:false, co:'', prereq:'Intermediate level. Prior dance experience recommended.', bring:'Comfortable clothes, ghungroo (ankle bells) if you have them. We dance barefoot.' },
+    'Indian Dance Technique':{ age:'12+', partner:false, co:'', prereq:'Open to all levels.', bring:'Comfortable clothes you can move in. We dance barefoot.' },
     'Yoga':                  { age:'12+', partner:false, co:'', prereq:'All levels, complete beginners to experienced practitioners.', bring:'Yoga mat, comfortable clothes. Mats available at the studio.' },
   }
 };
 
 const CLASS_META_BY_NAME = {
   'swapnil dagliya': {
-    'Bollywood':             { age:'12+', partner:false, co:'', prereq:'Beginners with some dance background. Absolute beginners should start with Bollyfolk or Garba & Kalbeliya first.', bring:'Comfortable clothes, clean non-marking indoor shoes or bare feet.' },
-    'Bhangra':               { age:'12+', partner:false, co:'', prereq:'Foundational Bhangra knowledge required. Newcomers should complete a seasonal intensive first.', bring:'Comfortable clothes, clean non-marking indoor shoes.' },
-    'Bollyfolk':             { age:'12+', partner:false, co:'', prereq:'All levels welcome. No prior experience required.', bring:'Comfortable clothes, clean non-marking indoor shoes or bare feet.' },
-    'Garba & Kalbeliya':     { age:'12+', partner:false, co:'', prereq:'No prior experience required.', bring:'Comfortable clothes, clean non-marking indoor shoes or bare feet. Ghagra skirt recommended for Kalbeliya.' },
-    'Indian Semi-Classical': { age:'12+', partner:false, co:'', prereq:'Intermediate level. Prior dance experience recommended.', bring:'Comfortable clothes, ghungroo (ankle bells) if you have them, clean non-marking shoes.' },
-    'Indian Dance Technique':{ age:'12+', partner:false, co:'', prereq:'Open to all levels.', bring:'Comfortable clothes, clean non-marking indoor shoes or bare feet.' },
+    'Bollywood':             { age:'12+', partner:false, co:'', prereq:'Beginners with some dance background. Absolute beginners should start with Bollyfolk or Garba & Kalbeliya first.', bring:'Comfortable clothes you can move in. We dance barefoot.' },
+    'Bhangra':               { age:'12+', partner:false, co:'', prereq:'Foundational Bhangra knowledge required. Newcomers should complete a seasonal intensive first.', bring:'Comfortable clothes you can move in. We dance barefoot.' },
+    'Bollyfolk':             { age:'12+', partner:false, co:'', prereq:'All levels welcome. No prior experience required.', bring:'Comfortable clothes you can move in. We dance barefoot.' },
+    'Garba & Kalbeliya':     { age:'12+', partner:false, co:'', prereq:'No prior experience required.', bring:'Comfortable clothes you can move in. We dance barefoot. A ghagra skirt is recommended for Kalbeliya.' },
+    'Indian Semi-Classical': { age:'12+', partner:false, co:'', prereq:'Intermediate level. Prior dance experience recommended.', bring:'Comfortable clothes, ghungroo (ankle bells) if you have them. We dance barefoot.' },
+    'Indian Dance Technique':{ age:'12+', partner:false, co:'', prereq:'Open to all levels.', bring:'Comfortable clothes you can move in. We dance barefoot.' },
     'Yoga':                  { age:'12+', partner:false, co:'', prereq:'All levels, complete beginners to experienced practitioners.', bring:'Yoga mat, comfortable clothes. Mats available at the studio.' },
   },
   'alex': {
-    'Cuban Salsa':     { age:'12+', partner:true,  co:'Ioanna (L1 & L2)', prereq:'L1: No prior experience. L3/L4: Prior Cuban Salsa experience. Partner registration required.', bring:'Comfortable clothes, dance shoes or clean non-marking indoor shoes.' },
-    'Bachata':         { age:'12+', partner:true,  co:'Lenka Badriyah (L1 & L2) · Ioanna (L3)', prereq:'L1: No prior Bachata experience needed. L2/L3: Prior experience or progression from previous level. Partner registration required.', bring:'Comfortable clothes, dance shoes or clean non-marking indoor shoes.' },
-    'Rueda de Casino': { age:'12+', partner:true,  co:'', prereq:'Min. 2 seasons Cuban Salsa with Wim, Lennert, or Alex. Partner registration required. Closed group — no mid-season joining.', bring:'Comfortable clothes, dance shoes or clean non-marking indoor shoes.' },
+    'Cuban Salsa':     { age:'12+', partner:true,  co:'Ioanna (L1 & L2)', prereq:'L1: No prior experience. L3/L4: Prior Cuban Salsa experience. Partner registration required.', bring:'' },
+    'Bachata':         { age:'12+', partner:true,  co:'Lenka Badriyah (L1 & L2) · Ioanna (L3)', prereq:'L1: No prior Bachata experience needed. L2/L3: Prior experience or progression from previous level. Partner registration required.', bring:'' },
+    'Rueda de Casino': { age:'12+', partner:true,  co:'', prereq:'Min. 2 seasons Cuban Salsa with Wim, Lennert, or Alex. Partner registration required. Closed group — no mid-season joining.', bring:'' },
   },
   'ioanna': {
-    'Cuban Salsa': { age:'12+', partner:true,  co:'Alex', prereq:'Partner registration required.', bring:'Comfortable clothes, dance shoes or clean non-marking indoor shoes.' },
-    'Bachata':     { age:'12+', partner:true,  co:'Alex', prereq:'Partner registration required. Substantial Bachata training for L3.', bring:'Comfortable clothes, dance shoes or clean non-marking indoor shoes.' },
+    'Cuban Salsa': { age:'12+', partner:true,  co:'Alex', prereq:'Partner registration required.', bring:'' },
+    'Bachata':     { age:'12+', partner:true,  co:'Alex', prereq:'Partner registration required. Substantial Bachata training for L3.', bring:'' },
   },
   'lenka badriyah': {
-    'Raqs Sharqi': { age:'12+', partner:false, co:'', prereq:'L1: Beginners welcome. L2: 1–3 years belly dance experience. L3: Experienced belly dancers.', bring:'Comfortable clothes, bare feet or soft dance shoes. Hip scarf welcome for Raqs Sharqi.' },
-    'Bachata':     { age:'12+', partner:true,  co:'Alex', prereq:'Partner registration required.', bring:'Comfortable clothes, dance shoes or clean non-marking indoor shoes.' },
+    'Raqs Sharqi': { age:'12+', partner:false, co:'', prereq:'L1: Beginners welcome. L2: 1–3 years belly dance experience. L3: Experienced belly dancers.', bring:'' },
+    'Bachata':     { age:'12+', partner:true,  co:'Alex', prereq:'Partner registration required.', bring:'' },
   },
   'sonja kikizomba': {
-    'Kizomba': { age:'12+', partner:true, co:'', prereq:'Prior Kizomba experience. Partner registration required.', bring:'Comfortable clothes, dance shoes or clean non-marking indoor shoes.' },
+    'Kizomba': { age:'12+', partner:true, co:'', prereq:'Prior Kizomba experience. Partner registration required.', bring:'' },
   },
   'gisela graef marino': {
-    'Argentine Tango': { age:'16+', partner:true, co:'Sergio Molini', prereq:'Partner registration required. L2/3: Prior tango experience.', bring:'Comfortable clothes, dance shoes or clean non-marking indoor shoes.' },
+    'Argentine Tango': { age:'16+', partner:true, co:'Sergio Molini', prereq:'Partner registration required. L2/3: Prior tango experience.', bring:'' },
   },
   'sergio molini': {
-    'Argentine Tango': { age:'16+', partner:true, co:'Gisela Graef Marino', prereq:'Partner registration required. L2/3: Prior tango experience.', bring:'Comfortable clothes, dance shoes or clean non-marking indoor shoes.' },
+    'Argentine Tango': { age:'16+', partner:true, co:'Gisela Graef Marino', prereq:'Partner registration required. L2/3: Prior tango experience.', bring:'' },
   },
   'la liz': {
-    'Flamenco': { age:'12+', partner:false, co:'', prereq:'L1: No prerequisites. L2: Min. 2 seasons flamenco. L3: Min. 2–3 years experience with basic compás understanding.', bring:'Comfortable clothes, bare feet or soft dance shoes. Hip scarf welcome for Raqs Sharqi.' },
+    'Flamenco': { age:'12+', partner:false, co:'', prereq:'L1: No prerequisites. L2: Min. 2 seasons flamenco. L3: Min. 2–3 years experience with basic compás understanding.', bring:'Comfortable clothes. For your first class: a closed-toe shoe with a sturdy, chunky heel (men: flamenco boots or chapins). See the website note for proper flamenco shoes.' },
   },
   'shirley de muer': {
-    'Ballet': { age:'12+', partner:false, co:'', prereq:'Foundations: No experience needed. Open Level: Some prior ballet experience or graduation from Foundations.', bring:'Ballet shoes or comfortable socks. Fitted clothing that allows freedom of movement.' },
+    'Ballet': { age:'12+', partner:false, co:'', prereq:'Foundations: No experience needed. Open Level: Some prior ballet experience or graduation from Foundations.', bring:'' },
     'Ballet Pointes': { age:'12+', partner:false, co:'', prereq:'Must be enrolled in Ballet Open Level simultaneously. Advanced dancers only.', bring:'Pointe shoes. Must have prior approval from teacher.' },
   },
   'lut vermeulen': {
     'Tap Dance': { age:'12+', partner:false, co:'', prereq:'L1: No experience. Each level requires completion of the previous.', bring:'Tap shoes required. Free tap shoes provided for L1 beginners for the full first year.' },
   },
   'zoe bizoe': {
-    'Burlesque': { age:'12+', partner:false, co:'', prereq:'L1: No experience needed. L1+: Prior burlesque or L1 graduate. L2: Substantial burlesque experience.', bring:'Comfortable clothes you can move freely in.' },
+    'Burlesque': { age:'12+', partner:false, co:'', prereq:'L1: No experience needed. L1+: Prior burlesque or L1 graduate. L2: Substantial burlesque experience.', bring:'' },
   },
   'hendrik lebon': {
-    'Burlesque': { age:'12+', partner:false, co:'', prereq:'No experience needed for L1.', bring:'Comfortable clothes you can move freely in.' },
-    'Cissy Ball': { age:'12+', partner:false, co:'', prereq:'No prior experience required. Love of performing and music welcome.', bring:'Comfortable clothes you can move freely in.' },
+    'Burlesque': { age:'12+', partner:false, co:'', prereq:'No experience needed for L1.', bring:'' },
+    'Cissy Ball': { age:'12+', partner:false, co:'', prereq:'No prior experience required. Love of performing and music welcome.', bring:'' },
   },
   'tine de pauw': {
-    'Burlesque': { age:'12+', partner:false, co:'', prereq:'No experience needed for L1.', bring:'Comfortable clothes you can move freely in.' },
+    'Burlesque': { age:'12+', partner:false, co:'', prereq:'No experience needed for L1.', bring:'' },
   },
   'sep vermeersch': {
-    'Jazzy Workout':{ age:'12+', partner:false, co:'', prereq:'No experience needed. All bodies welcome.', bring:'Comfortable clothes, clean non-marking leather-soled shoes or sneakers.' },
-    'Lindy Hop':    { age:'12+', partner:true,  co:'', prereq:'Must know 8-count basics (circle, swing out, promenade) and 6-count moves (send out, tuck turn, change of place).', bring:'Comfortable clothes, clean non-marking leather-soled shoes or sneakers.' },
-    'Solo Jazz':    { age:'12+', partner:false, co:'', prereq:'No experience needed.', bring:'Comfortable clothes, clean non-marking leather-soled shoes or sneakers.' },
+    'Jazzy Workout':{ age:'12+', partner:false, co:'', prereq:'No experience needed. All bodies welcome.', bring:'' },
+    'Lindy Hop':    { age:'12+', partner:true,  co:'', prereq:'Must know 8-count basics (circle, swing out, promenade) and 6-count moves (send out, tuck turn, change of place).', bring:'' },
+    'Solo Jazz':    { age:'12+', partner:false, co:'', prereq:'No experience needed.', bring:'' },
   },
   'leni denorme': {
-    'Jazzy Workout':{ age:'12+', partner:false, co:'', prereq:'No experience needed.', bring:'Comfortable clothes, clean non-marking leather-soled shoes or sneakers.' },
-    'Lindy Hop':    { age:'12+', partner:true,  co:'', prereq:'Must know basic 8-count and 6-count moves.', bring:'Comfortable clothes, clean non-marking leather-soled shoes or sneakers.' },
-    'Solo Jazz':    { age:'12+', partner:false, co:'', prereq:'No experience needed.', bring:'Comfortable clothes, clean non-marking leather-soled shoes or sneakers.' },
+    'Jazzy Workout':{ age:'12+', partner:false, co:'', prereq:'No experience needed.', bring:'' },
+    'Lindy Hop':    { age:'12+', partner:true,  co:'', prereq:'Must know basic 8-count and 6-count moves.', bring:'' },
+    'Solo Jazz':    { age:'12+', partner:false, co:'', prereq:'No experience needed.', bring:'' },
   },
   'ann-sofie van enis': {
-    'Jazzy Workout':{ age:'12+', partner:false, co:'', prereq:'No experience needed.', bring:'Comfortable clothes, clean non-marking leather-soled shoes or sneakers.' },
-    'Lindy Hop':    { age:'12+', partner:true,  co:'', prereq:'Must know basic 8-count and 6-count moves.', bring:'Comfortable clothes, clean non-marking leather-soled shoes or sneakers.' },
-    'Solo Jazz':    { age:'12+', partner:false, co:'', prereq:'No experience needed.', bring:'Comfortable clothes, clean non-marking leather-soled shoes or sneakers.' },
+    'Jazzy Workout':{ age:'12+', partner:false, co:'', prereq:'No experience needed.', bring:'' },
+    'Lindy Hop':    { age:'12+', partner:true,  co:'', prereq:'Must know basic 8-count and 6-count moves.', bring:'' },
+    'Solo Jazz':    { age:'12+', partner:false, co:'', prereq:'No experience needed.', bring:'' },
   },
   'shana van cauwenberghe': {
-    'Jazzy Workout':{ age:'12+', partner:false, co:'', prereq:'No experience needed.', bring:'Comfortable clothes, clean non-marking leather-soled shoes or sneakers.' },
+    'Jazzy Workout':{ age:'12+', partner:false, co:'', prereq:'No experience needed.', bring:'' },
   },
   'joseph saidi simako': {
-    'African Congolese Dance': { age:'12+', partner:false, co:'', prereq:'Beginners and intermediate dancers welcome. No experience needed.', bring:'Comfortable clothes, bare feet or clean non-marking indoor shoes.' },
-    'Congolese Rumba':         { age:'12+', partner:true,  co:'', prereq:'Beginners welcome.', bring:'Comfortable clothes, bare feet or clean non-marking indoor shoes.' },
+    'African Congolese Dance': { age:'12+', partner:false, co:'', prereq:'Beginners and intermediate dancers welcome. No experience needed.', bring:'' },
+    'Congolese Rumba':         { age:'12+', partner:true,  co:'', prereq:'Beginners welcome.', bring:'' },
   },
   'jordan': {
     'Tap Dance': { age:'12+', partner:false, co:'', prereq:'L1: No experience. Each level requires completion of the previous.', bring:'Tap shoes required. Free tap shoes provided for L1 beginners for the full first year.' },
@@ -4373,10 +4400,16 @@ function cwcShowReview(action) {
             const DAY_ORD_RV = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
             return DAY_ORD_RV.filter(function(dn) { return byDay[dn]; }).map(function(day) {
               const dates = byDay[day];
-              const byMonth = {};
-              dates.forEach(function(d2) { const m = d2.getMonth(); if (!byMonth[m]) byMonth[m] = []; byMonth[m].push(d2.getDate()); });
-              const datesStr = Object.keys(byMonth).map(Number).sort(function(a,b){return a-b;}).map(function(m) {
-                return MONTHS_RV[m] + ': ' + byMonth[m].join(', ');
+              // Group by year+month so Jan 2027 sorts AFTER Dec 2026, not before Sep 2026.
+              // Key format: "YYYY-MM" — pads month so string sort matches chronological sort.
+              const byYearMonth = {};
+              dates.forEach(function(d2) {
+                const key = d2.getFullYear() + '-' + String(d2.getMonth()).padStart(2, '0');
+                if (!byYearMonth[key]) byYearMonth[key] = { month: d2.getMonth(), days: [] };
+                byYearMonth[key].days.push(d2.getDate());
+              });
+              const datesStr = Object.keys(byYearMonth).sort().map(function(key) {
+                return MONTHS_RV[byYearMonth[key].month] + ': ' + byYearMonth[key].days.join(', ');
               }).join(' · ');
               return row(day + ' (' + dates.length + ')', esc(datesStr));
             }).join('');
@@ -7126,14 +7159,64 @@ function hideErr(id) {
 
 // ── FIELD-LEVEL ERROR HELPERS ────────────────────────────────────────────
 // Marks an input/select/textarea with a red shake, auto-clears on focus.
-function markFieldError(el) {
+// If `msg` is provided, also injects an inline error message right after the field.
+function markFieldError(el, msg) {
   if (!el) return;
   el.classList.add('field-error');
-  const clear = () => { el.classList.remove('field-error'); el.removeEventListener('focus', clear); el.removeEventListener('input', clear); el.removeEventListener('change', clear); };
+  // Inject an inline error message under the field (Squarespace-style)
+  if (msg) {
+    let errMsg = el.parentElement && el.parentElement.querySelector(':scope > .field-error-msg');
+    if (!errMsg) {
+      errMsg = document.createElement('div');
+      errMsg.className = 'field-error-msg';
+      errMsg.setAttribute('role', 'alert');
+      // Place after the input (and any wrapping siblings like € prefix)
+      el.insertAdjacentElement('afterend', errMsg);
+    }
+    errMsg.textContent = msg;
+  }
+  const clear = () => {
+    el.classList.remove('field-error');
+    const m = el.parentElement && el.parentElement.querySelector(':scope > .field-error-msg');
+    if (m) m.remove();
+    el.removeEventListener('focus', clear);
+    el.removeEventListener('input', clear);
+    el.removeEventListener('change', clear);
+  };
   el.addEventListener('focus', clear);
   el.addEventListener('input', clear);
   el.addEventListener('change', clear);
 }
+
+// Scroll to the first errored field on the page and focus it.
+function scrollToFirstError() {
+  const first = document.querySelector('.field-error, .chip-error');
+  if (!first) return;
+  first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  if (typeof first.focus === 'function') {
+    setTimeout(() => first.focus({ preventScroll: true }), 240);
+  }
+}
+
+// Auto-grow textareas as the user types. Applies to all .cwc-meta-input textareas.
+(function setupTextareaAutoGrow() {
+  function grow(el) {
+    if (!el || el.tagName !== 'TEXTAREA') return;
+    el.style.height = 'auto';
+    el.style.height = Math.max(96, el.scrollHeight + 2) + 'px';
+  }
+  document.addEventListener('input', function(e) {
+    if (e.target && e.target.matches && e.target.matches('textarea.cwc-meta-input, textarea.big-input, textarea.cwc-desc-textarea')) {
+      grow(e.target);
+    }
+  });
+  // On any view change, grow all visible textareas
+  window.cwcGrowAllTextareas = function() {
+    document.querySelectorAll('textarea.cwc-meta-input, textarea.big-input, textarea.cwc-desc-textarea').forEach(grow);
+  };
+  // Run once at load + when content changes via JS
+  document.addEventListener('DOMContentLoaded', () => window.cwcGrowAllTextareas && window.cwcGrowAllTextareas());
+})();
 
 // Marks a chip group container (wc-chips / wc-style-chips etc.) with error outline.
 function markChipGroupError(el) {
