@@ -34,9 +34,14 @@
     --highlight-yellow-tint:  #FFF4CC;
     --highlight-yellow-edge:  #F0BD00;
 
-    /* ── Semantic ── */
-    --bg:        var(--void-white);
-    --surface:   var(--void-white);
+    /* ── Semantic ──
+       Page wash: warm off-white "notebook paper" tone for the document body.
+       Card surface: pure white, sits on the wash. This creates visible layer
+       separation without breaking the white-foundation principle (cards still
+       pure white; the wash is a subtle paper undertone, not a competing foundation). */
+    --paper:     #FAF7F0;             /* warm off-white page wash */
+    --bg:        var(--paper);        /* document body */
+    --surface:   var(--void-white);   /* cards / inputs / banners — pure white pop */
     --fg-1:      var(--void-black);   /* primary ink — headlines, inputs */
     --fg-2:      var(--charcoal);     /* body text */
     --fg-3:      #8A8A8A;             /* tertiary, captions, hints */
@@ -129,8 +134,8 @@
     --type-h2:      clamp(22px, 2.6vw, 30px);
     --type-h3:      clamp(18px, 2vw, 22px);
     --type-sub:     clamp(17px, 1.7vw, 20px);
-    --type-body:    16px;
-    --type-body-sm: 14px;
+    --type-body:    17px;
+    --type-body-sm: 15px;
     --type-caption: 12px;
     --type-eyebrow: 11px;
 
@@ -286,12 +291,12 @@
   .lang-btn.active { border-color: var(--vibrant); color: var(--vibrant); background: var(--void-white); }
   .lang-btn:hover { border-color: var(--nav-hover); color: var(--void-white); }
 
-  /* ── HERO ── White-foundation page headline. Yellow demoted from background to a thin highlight rule below the title. ── */
+  /* ── HERO ── Paper wash, sentence-case Playfair, yellow as highlight pen-mark beneath the title. ── */
   .hero {
-    background: var(--bg);
+    background: var(--paper);
     padding: var(--space-5) var(--space-3) var(--space-4);
     text-align: left;
-    border-bottom: var(--hairline) solid var(--rule);
+    border-bottom: var(--line) solid var(--rule);
   }
   .hero h2 {
     font-family: var(--font-display);
@@ -301,9 +306,12 @@
     letter-spacing: -0.005em;
     color: var(--fg-1);
     text-transform: none;
+    display: inline;
+    box-shadow: inset 0 -8px 0 var(--highlight-yellow);
+    padding: 0 4px 2px;
   }
   .hero p {
-    margin-top: var(--space-1);
+    margin-top: var(--space-2);
     font-size: var(--type-body);
     color: var(--fg-2);
     font-weight: 400;
@@ -324,13 +332,14 @@
   /* ── LAYOUT ── */
   .container { max-width: 760px; margin: var(--space-3) auto; padding: 0 var(--space-2) var(--space-5); }
 
-  /* ── CARD — gallery-flat, hairline mist, no shadow ── */
+  /* ── CARD — pure white surface on paper wash, hairline border + vibrant left spine ── */
   .card {
-    background: var(--bg);
+    background: var(--surface);
     border-radius: var(--radius-0);
-    padding: var(--space-3);
+    padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
     margin-bottom: var(--space-3);
-    border: var(--hairline) solid var(--rule);
+    border: var(--line) solid var(--rule);
+    border-left: 3px solid var(--vibrant);
   }
   .card-title {
     font-family: var(--font-display);
@@ -1624,7 +1633,7 @@
   <div id="screen-confirm-wc" style="display:none;">
     <div class="card">
       <button class="btn-step-back" onclick="wcBackFromConfirm()">← Back to schedule</button>
-      <h3 class="card-title">Review Description <span class="step-pill">Step 3 of 4</span></h3>
+      <h3 class="card-title"><span id="cwc-style-title">Review your description</span> <span class="step-pill">Step 3 of 4</span></h3>
 
       <!-- Schedule summary -->
       <div id="cwc-schedule-summary" style="margin-bottom:18px;"></div>
