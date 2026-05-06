@@ -1142,18 +1142,76 @@
   }
   .cwc-divider { border: none; border-top: 1px solid var(--border); margin: var(--space-5) 0; }
   .cwc-avail-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
-  .cwc-avail-btn {
-    background: none; border: var(--line) solid var(--fg-1); color: var(--fg-1);
-    border-radius: var(--radius-0); padding: 11px 20px;
-    font-family: var(--font-body);
-    font-size: var(--type-caption);
-    font-weight: 500;
-    letter-spacing: var(--tracking-caption);
-    text-transform: uppercase;
-    cursor: pointer; transition: all var(--duration-base) var(--ease);
+  /* ── SEGMENTED Y/N TOGGLE — connected pair, hairline border, distinct active states.
+     Used for opendeurdag availability per date. Cleaner than two bulky pills. ── */
+  .cwc-avail-toggle {
+    display: inline-flex;
+    border: var(--line) solid var(--fg-1);
+    border-radius: var(--radius-0);
+    overflow: hidden;
+    transition: border-color var(--duration-fast) var(--ease), box-shadow var(--duration-fast) var(--ease);
   }
-  .cwc-avail-btn:hover { background: var(--vibrant); color: var(--void-white); border-color: var(--vibrant); }
-  .cwc-avail-btn.selected { border-color: var(--avail-active-border); background: var(--approved-bg); color: var(--approved-text); }
+  /* Compulsory — red border + shake animation when teacher tries to submit without choosing */
+  .cwc-avail-toggle.is-error {
+    border-color: var(--red);
+    box-shadow: 0 0 0 1px var(--red);
+    animation: shake var(--duration-base) var(--ease);
+  }
+  .cwc-avail-btn {
+    background: var(--surface);
+    color: var(--fg-1);
+    border: none;
+    border-right: var(--line) solid var(--fg-1);
+    padding: 9px 18px;
+    font-family: var(--font-body);
+    font-size: var(--type-body-sm);
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease);
+    min-width: 110px;
+  }
+  .cwc-avail-btn:last-child { border-right: none; }
+  .cwc-avail-btn:hover { background: var(--vibrant-purple-tint); }
+  .cwc-avail-btn.selected.is-yes {
+    background: var(--vibrant);
+    color: var(--void-white);
+    font-weight: 500;
+  }
+  .cwc-avail-btn.selected.is-no {
+    background: var(--fg-1);
+    color: var(--void-white);
+    font-weight: 500;
+  }
+
+  /* ── CAL LINKS — minimalist text + small icon, no pill wrapper.
+     Hidden by default (opt-in), shown only when Yes is selected. ── */
+  .cwc-cal-links {
+    display: none;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+    margin-top: var(--space-1);
+    padding-left: 2px;
+  }
+  .cwc-cal-links.is-visible { display: flex; }
+  .cwc-cal-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    padding: 4px 0;
+    color: var(--fg-2);
+    font-family: var(--font-body);
+    font-size: var(--type-body-sm);
+    font-weight: 400;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color var(--duration-fast) var(--ease);
+  }
+  .cwc-cal-link:hover { color: var(--vibrant); }
+  .cwc-cal-link svg { width: 14px; height: 14px; flex-shrink: 0; }
   .cwc-next-btns { display: flex; flex-direction: column; gap: var(--space-1); }
   .cwc-next-btn {
     background: var(--vibrant); color: var(--void-white);
@@ -1266,21 +1324,37 @@
   .cwc-all-dates-btn:hover { background: var(--green); color: var(--void-white); }
   .cwc-all-dates-btn.confirmed { background: var(--green); color: var(--void-white); border-color: var(--green); }
 
+  /* Default date chip — neutral pill: white surface, light grey hairline, dark ink.
+     Distinct from the green "All dates work" success button. ── */
   .cwc-date-chip {
-    background: var(--chip-active-bg); color: var(--chip-active-text);
-    border: var(--line) solid var(--chip-active-border); border-radius: var(--radius-0);
-    padding: 8px 12px; min-height: 36px; display: inline-flex; align-items: center;
+    background: var(--surface);
+    color: var(--fg-1);
+    border: var(--line) solid var(--rule);
+    border-radius: var(--radius-0);
+    padding: 8px 12px; min-height: 36px;
+    display: inline-flex; align-items: center;
     font-size: var(--type-body-sm); font-weight: 400; font-family: var(--font-body);
     font-variant-numeric: tabular-nums;
     cursor: pointer; user-select: none;
-    transition: background var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast);
+    transition: background var(--duration-fast), color var(--duration-fast),
+                border-color var(--duration-fast), opacity var(--duration-fast);
   }
-  .cwc-date-chip:hover { background: var(--chip-active-hover); }
+  .cwc-date-chip:hover {
+    background: var(--surface);
+    border-color: var(--fg-1);
+  }
+  /* Excluded — definitively disabled: strike-through, half opacity, soft red wash */
   .cwc-date-chip.excluded {
-    background: var(--chip-excluded-bg); color: var(--chip-excluded-text);
-    border-color: var(--chip-excluded-border); text-decoration: line-through;
+    background: var(--chip-excluded-bg);
+    color: var(--chip-excluded-text);
+    border-color: var(--chip-excluded-border);
+    text-decoration: line-through;
+    opacity: 0.5;
   }
-  .cwc-date-chip.excluded:hover { background: var(--chip-excluded-hover); }
+  .cwc-date-chip.excluded:hover {
+    background: var(--chip-excluded-hover);
+    opacity: 0.7;
+  }
   .cwc-price-bar {
     display: flex; align-items: center; gap: 7px; font-size: .88rem; color: var(--purple);
     padding: var(--space-1) var(--space-2); background: var(--bg); border: var(--hairline) solid var(--rule); border-left: 2px solid var(--vibrant); border-radius: var(--radius-0); margin-top: var(--space-1);
@@ -5457,24 +5531,24 @@ function cwcBuildDateGrid(style, levels) {
     ? (Array.isArray(sem.opendeurdag) ? sem.opendeurdag : [sem.opendeurdag])
     : [];
   if (opDates.length) {
-    infoHtml += `<div style="border:1.5px solid #E2CCFF;border-radius:10px;padding:14px 16px;margin-bottom:12px;">
-      <div style="font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:.7px;color:#B564F7;margin-bottom:2px;">🚪 ${t('opendeur-avail')}</div>
-      <div style="font-size:.76rem;color:var(--text-light);margin-bottom:8px;font-weight:400;">New students can try your class for free — let us know if you can teach.</div>`;
+    infoHtml += `<div style="background:var(--surface);border:var(--hairline) solid var(--rule);border-left:2px solid var(--vibrant);border-radius:var(--radius-0);padding:var(--space-2);margin-bottom:var(--space-2);">
+      <div style="font-family:var(--font-body);font-size:var(--type-eyebrow);font-weight:500;text-transform:uppercase;letter-spacing:var(--tracking-eyebrow);color:var(--vibrant);margin-bottom:4px;">🚪 ${t('opendeur-avail')} <span class="required-marker">required</span></div>
+      <div style="font-size:var(--type-body-sm);color:var(--fg-2);margin-bottom:var(--space-1);font-weight:400;">New students can try your class for free. Tell us whether you can teach on each open door day so we can plan trial slots.</div>`;
     opDates.forEach(function(dateIso) {
       const opDate  = new Date(dateIso + 'T12:00:00');
       const opLabel = DOW[opDate.getDay()] + ' ' + opDate.getDate() + ' ' + MON[opDate.getMonth()] + ' ' + opDate.getFullYear();
       const safeId  = dateIso.replace(/-/g, '');
       const gcalUrl = cwcGoogleCalUrl(dateIso, 'Opendeurdag – Shoonya Dance Centre', 'Shoonya Dance Centre, Ghent');
       infoHtml += `
-      <div style="font-size:.85rem;font-weight:600;color:#333;margin-bottom:8px;margin-top:8px;">📆 ${opLabel}</div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
-        <button type="button" class="cwc-avail-btn" id="cwc-opendeur-yes-${safeId}"
-          onclick="cwcSetOpendeurAvail('${dateIso}', true)">${t('yes-available')}</button>
-        <button type="button" class="cwc-avail-btn" id="cwc-opendeur-no-${safeId}"
-          onclick="cwcSetOpendeurAvail('${dateIso}', false)">${t('not-available')}</button>
+      <div style="font-size:var(--type-body);font-weight:500;color:var(--fg-1);margin-bottom:var(--space-1);margin-top:var(--space-1);">${opLabel}</div>
+      <div class="cwc-avail-toggle" role="radiogroup" aria-label="Open door availability">
+        <button type="button" class="cwc-avail-btn is-yes" id="cwc-opendeur-yes-${safeId}"
+          onclick="cwcSetOpendeurAvail('${dateIso}', true)" role="radio" aria-checked="false">${t('yes-available')}</button>
+        <button type="button" class="cwc-avail-btn is-no" id="cwc-opendeur-no-${safeId}"
+          onclick="cwcSetOpendeurAvail('${dateIso}', false)" role="radio" aria-checked="false">${t('not-available')}</button>
       </div>
-      <div id="cwc-opendeur-time-wrap-${safeId}" style="display:none;margin-top:8px;">
-        <div style="font-size:.76rem;font-weight:600;color:#B564F7;margin-bottom:6px;">Preference (Shoonya will confirm your slot):</div>
+      <div id="cwc-opendeur-time-wrap-${safeId}" style="display:none;margin-top:var(--space-1);">
+        <div class="ws-mini-label">Preference (Shoonya will confirm your slot)</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
           <button type="button" class="wc-chip" id="cwc-od-morn-${safeId}"  onclick="cwcSetOpendeurPref('${dateIso}', 'Morning',   this)">Morning</button>
           <button type="button" class="wc-chip" id="cwc-od-aftn-${safeId}"  onclick="cwcSetOpendeurPref('${dateIso}', 'Afternoon', this)">Afternoon</button>
@@ -5482,14 +5556,18 @@ function cwcBuildDateGrid(style, levels) {
           <button type="button" class="wc-chip" id="cwc-od-any-${safeId}"   onclick="cwcSetOpendeurPref('${dateIso}', 'Any',       this)">Any time</button>
         </div>
       </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
-        <a href="${gcalUrl}" target="_blank" rel="noopener"
-          style="font-size:.72rem;color:#B564F7;text-decoration:none;border:1px solid #E2CCFF;border-radius:6px;padding:4px 9px;display:inline-flex;align-items:center;gap:4px;">
-          📅 Add to Google Calendar
+      <div class="cwc-cal-links" id="cwc-cal-links-${safeId}">
+        <a href="${gcalUrl}" target="_blank" rel="noopener" class="cwc-cal-link" aria-label="Add to Google Calendar">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="3" width="12" height="11" rx="1"/><line x1="2" y1="6" x2="14" y2="6"/><line x1="5" y1="2" x2="5" y2="4"/><line x1="11" y1="2" x2="11" y2="4"/>
+          </svg>
+          Add to Google Calendar
         </a>
-        <button type="button" onclick="cwcDownloadIcs('${dateIso}', 'Opendeurdag – Shoonya Dance Centre', 'Shoonya Dance Centre, Ghent')"
-          style="font-size:.72rem;color:#B564F7;background:none;text-decoration:none;border:1px solid #E2CCFF;border-radius:6px;padding:4px 9px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
-          ⬇️ Download .ics
+        <button type="button" onclick="cwcDownloadIcs('${dateIso}', 'Opendeurdag – Shoonya Dance Centre', 'Shoonya Dance Centre, Ghent')" class="cwc-cal-link" aria-label="Download iCal file">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 2v9"/><path d="M4 7l4 4 4-4"/><path d="M2 13h12"/>
+          </svg>
+          Download .ics
         </button>
       </div>`;
     });
@@ -5624,9 +5702,18 @@ function cwcSetOpendeurAvail(date, isAvailable) {
   const yesBtn   = document.getElementById('cwc-opendeur-yes-'       + safeId);
   const noBtn    = document.getElementById('cwc-opendeur-no-'        + safeId);
   const timeWrap = document.getElementById('cwc-opendeur-time-wrap-' + safeId);
-  if (yesBtn)   yesBtn.classList.toggle('selected',  isAvailable);
-  if (noBtn)    noBtn.classList.toggle('selected', !isAvailable);
+  const calLinks = document.getElementById('cwc-cal-links-'          + safeId);
+  if (yesBtn) {
+    yesBtn.classList.toggle('selected',  isAvailable);
+    yesBtn.setAttribute('aria-checked',   isAvailable);
+  }
+  if (noBtn) {
+    noBtn.classList.toggle('selected', !isAvailable);
+    noBtn.setAttribute('aria-checked', !isAvailable);
+  }
   if (timeWrap) timeWrap.style.display = isAvailable ? '' : 'none';
+  // Calendar links visible only when "Yes" — progressive disclosure
+  if (calLinks) calLinks.classList.toggle('is-visible', isAvailable);
 }
 
 function cwcSetOpendeurPref(date, pref, btn) {
@@ -5692,6 +5779,55 @@ function cwcUpdateDayPriceSummary(dayName) {
 
 async function cwcNext(action, triggerBtn) {
   if (cwcSubmitting) return; // prevent double-submission
+
+  // ── COMPULSORY: opendeurdag availability ──
+  // Every open door day in the active semester must have a Yes/No answer.
+  // This is a teaching commitment, not optional — block submit until answered.
+  const semForVal = cwcGetActiveSemester();
+  const opDatesVal = (semForVal && semForVal.opendeurdag)
+    ? (Array.isArray(semForVal.opendeurdag) ? semForVal.opendeurdag : [semForVal.opendeurdag])
+    : [];
+  const missingOpDates = opDatesVal.filter(function(iso) {
+    const entry = cwcOpendeurAvailability[iso];
+    // "answered" = entry exists AND has explicit available true OR false
+    return !entry || typeof entry.available !== 'boolean';
+  });
+  if (missingOpDates.length > 0) {
+    // Mark each missing toggle as errored
+    let firstErroredEl = null;
+    missingOpDates.forEach(function(iso) {
+      const safeId = iso.replace(/-/g, '');
+      const yesBtn = document.getElementById('cwc-opendeur-yes-' + safeId);
+      const toggle = yesBtn ? yesBtn.parentElement : null;
+      if (toggle) {
+        toggle.classList.add('is-error');
+        if (!firstErroredEl) firstErroredEl = toggle;
+        // Auto-clear error when user picks either button
+        ['cwc-opendeur-yes-', 'cwc-opendeur-no-'].forEach(function(prefix) {
+          const btn = document.getElementById(prefix + safeId);
+          if (btn && !btn.dataset.errClearBound) {
+            btn.dataset.errClearBound = '1';
+            btn.addEventListener('click', function() { toggle.classList.remove('is-error'); }, { once: true });
+          }
+        });
+      }
+    });
+    // Surface a clear, scoped error message
+    const errEl = document.getElementById('cwc-submit-error');
+    if (errEl) {
+      const dateList = missingOpDates.map(function(iso) {
+        const d = new Date(iso + 'T12:00:00');
+        return d.getDate() + '/' + (d.getMonth() + 1);
+      }).join(', ');
+      errEl.textContent = '⚠ Please answer open door availability for: ' + dateList + '. We need to know if you can teach so we can plan free trial classes.';
+      errEl.style.display = '';
+    }
+    // Scroll to the first errored toggle
+    if (firstErroredEl) {
+      firstErroredEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    return; // block submit
+  }
 
   // Show review panel before submitting
   if (cwcCurrentData) {
