@@ -1963,6 +1963,12 @@
         <button class="wc-btn-add-level" onclick="wcAddLevel()" data-lbl="add-another-level">+ Add another level</button>
 
         <hr class="wc-divider">
+
+        <!-- Co-teachers — chip multi-select. Shared state with Step 3. -->
+        <div class="wc-section-label">Co-teachers <span class="ws-label-hint">optional</span></div>
+        <div id="wc-coteacher-selector"></div>
+
+        <hr class="wc-divider">
         <div class="wc-section-label" data-lbl="teaching-language">Teaching language</div>
         <div class="wc-lang-row" id="wc-lang-chips">
           <button class="wc-chip lang-chip selected" data-lang="EN" onclick="wcToggleLang(this)">EN</button>
@@ -4188,6 +4194,19 @@ function wcShowScheduleStep(style) {
   document.getElementById('wc-step-schedule').style.display = '';
   document.getElementById('wc-style-banner-label').textContent = style;
 
+  // Initialize co-teacher chip selector on Step 2 with any prefilled co-teachers
+  // from the active profile's class meta. State is shared with the Step 3 instance
+  // so anything added here persists through to confirm.
+  try {
+    const meta = cwcGetMeta(style);
+    const preSelectedCo = (meta && meta.co)
+      ? meta.co.split(' · ').map(s => s.trim()).filter(Boolean)
+      : [];
+    cwcBuildCoTeacherSelector(preSelectedCo);
+  } catch (e) {
+    cwcBuildCoTeacherSelector([]);
+  }
+
   // Check for saved schedule for this style (profile first, then local fallback)
   let savedLevels = null;
   try {
@@ -5142,56 +5161,61 @@ function cwcPopulateMeta(style) {
   }
 }
 
+// Tracks all co-teacher selector containers currently in the DOM (Step 2 + Step 3)
+// so all instances render in sync from the shared cwcSelectedCoTeachers state.
+const COTEACHER_PREFIXES = ['cwc', 'wc'];
+
 function cwcBuildCoTeacherSelector(preSelected) {
-  cwcSelectedCoTeachers = [...preSelected];
-  const container = document.getElementById('cwc-coteacher-selector');
-  if (!container) return;
-  container.innerHTML = `
-    <div style="display:flex; gap:8px; flex-direction:column; align-items:flex-start; width:100%;">
-      <div style="display:flex; flex-wrap:wrap; gap:6px; width:100%;" id="cwc-coteacher-chips"></div>
-      <input aria-label="Co-teacher name" type="text" id="cwc-coteacher-input" placeholder="Search or type co-teacher name…"
-        style="width:100%; padding:8px 11px; border:1.5px solid var(--border); border-radius:6px; font-size:.86rem;"
-        oninput="cwcFilterCoTeachers(this.value)" />
-      <div id="cwc-coteacher-dropdown" style="display:none; width:100%; max-height:200px; overflow-y:auto;
-        border:1.5px solid var(--border); border-radius:6px; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.1);"></div>
-    </div>
-  `;
+  cwcSelectedCoTeachers = [...(preSelected || [])];
+  COTEACHER_PREFIXES.forEach(prefix => {
+    const container = document.getElementById(prefix + '-coteacher-selector');
+    if (!container) return; // skip if container isn't present on the active screen
+    container.innerHTML = `
+      <div style="display:flex; gap:8px; flex-direction:column; align-items:flex-start; width:100%;">
+        <div style="display:flex; flex-wrap:wrap; gap:6px; width:100%;" id="${prefix}-coteacher-chips"></div>
+        <input aria-label="Co-teacher name" type="text" id="${prefix}-coteacher-input" placeholder="Search or type co-teacher name…"
+          style="width:100%; padding:8px 11px; border:var(--line) solid var(--fg-1); border-radius:var(--radius-0); font-size:var(--type-body); font-family:var(--font-body);"
+          oninput="cwcFilterCoTeachers(this.value, '${prefix}')"
+          onfocus="cwcFilterCoTeachers(this.value, '${prefix}')" />
+        <div id="${prefix}-coteacher-dropdown" style="display:none; width:100%; max-height:200px; overflow-y:auto;
+          border:var(--line) solid var(--rule); border-radius:var(--radius-0); background:var(--surface);"></div>
+      </div>
+    `;
+  });
   cwcRenderCoTeacherChips();
 }
 
 function cwcRenderCoTeacherChips() {
-  const chipsContainer = document.getElementById('cwc-coteacher-chips');
-  if (!chipsContainer) return;
-
-  chipsContainer.innerHTML = cwcSelectedCoTeachers.map(teacher =>
-    `<div style="background:#6b3fa0; color:#fff; padding:5px 12px; border-radius:20px; font-size:.8rem; font-weight:600; display:flex; align-items:center; gap:6px;">
-      ${teacher}
-      <button type="button" style="background:none; border:none; color:#fff; cursor:pointer; font-weight:bold; padding:0; font-size:1rem;"
-        onclick="cwcRemoveCoTeacher('${teacher.replace(/'/g, "\\'")}')">✕</button>
-    </div>`
-  ).join('');
+  COTEACHER_PREFIXES.forEach(prefix => {
+    const chipsContainer = document.getElementById(prefix + '-coteacher-chips');
+    if (!chipsContainer) return;
+    chipsContainer.innerHTML = cwcSelectedCoTeachers.map(teacher =>
+      `<div style="background:var(--vibrant); color:var(--void-white); padding:6px 12px; border-radius:var(--radius-0); font-size:var(--type-body-sm); font-weight:500; display:flex; align-items:center; gap:6px;">
+        ${teacher}
+        <button type="button" style="background:none; border:none; color:var(--void-white); cursor:pointer; font-weight:500; padding:0; font-size:1rem; line-height:1;"
+          aria-label="Remove ${teacher}"
+          onclick="cwcRemoveCoTeacher('${teacher.replace(/'/g, "\\'")}')">×</button>
+      </div>`
+    ).join('');
+  });
 }
 
-function cwcFilterCoTeachers(query) {
-  const dropdown = document.getElementById('cwc-coteacher-dropdown');
+function cwcFilterCoTeachers(query, activePrefix) {
+  // If no prefix passed (legacy callers), default to 'cwc'
+  const prefix = activePrefix || 'cwc';
+  const dropdown = document.getElementById(prefix + '-coteacher-dropdown');
   if (!dropdown) return;
 
-  const q = query.toLowerCase().trim();
-  if (!q) {
-    dropdown.style.display = 'none';
-    return;
-  }
-
+  const q = (query || '').toLowerCase().trim();
   const filtered = COTEACHER_OPTIONS.filter(opt =>
     !cwcSelectedCoTeachers.includes(opt) && opt.toLowerCase().includes(q)
   );
 
   if (filtered.length === 0) {
-    // Show option to add free-text name
     if (q.length > 0 && !cwcSelectedCoTeachers.some(t => t.toLowerCase() === q)) {
       dropdown.innerHTML = `
-        <div style="padding:10px 14px; cursor:pointer; border-bottom:1px solid #eee;"
-          onclick="cwcAddCoTeacher('${q.replace(/'/g, "\\'")}')">
+        <div style="padding:10px 14px; cursor:pointer; border-bottom:var(--hairline) solid var(--rule);"
+          onclick="cwcAddCoTeacher('${q.replace(/'/g, "\\'")}', '${prefix}')">
           <strong>+ Add "${q}" as co-teacher</strong>
         </div>
       `;
@@ -5201,8 +5225,8 @@ function cwcFilterCoTeachers(query) {
     }
   } else {
     dropdown.innerHTML = filtered.map(opt =>
-      `<div style="padding:10px 14px; cursor:pointer; border-bottom:1px solid #eee; hover:background:#f5f0ff;"
-        onclick="cwcAddCoTeacher('${opt.replace(/'/g, "\\'")}')">
+      `<div style="padding:10px 14px; cursor:pointer; border-bottom:var(--hairline) solid var(--rule);"
+        onclick="cwcAddCoTeacher('${opt.replace(/'/g, "\\'")}', '${prefix}')">
         ${opt}
       </div>`
     ).join('');
@@ -5210,14 +5234,17 @@ function cwcFilterCoTeachers(query) {
   }
 }
 
-function cwcAddCoTeacher(name) {
+function cwcAddCoTeacher(name, activePrefix) {
   if (!cwcSelectedCoTeachers.includes(name)) {
     cwcSelectedCoTeachers.push(name);
-    cwcRenderCoTeacherChips();
+    cwcRenderCoTeacherChips(); // re-renders all instances
   }
-  document.getElementById('cwc-coteacher-input').value = '';
-  document.getElementById('cwc-coteacher-dropdown').style.display = 'none';
-  document.getElementById('cwc-coteacher-input').focus();
+  // Clear the input + dropdown on the instance that triggered the add (and refocus)
+  const prefix = activePrefix || 'cwc';
+  const input    = document.getElementById(prefix + '-coteacher-input');
+  const dropdown = document.getElementById(prefix + '-coteacher-dropdown');
+  if (input) { input.value = ''; input.focus(); }
+  if (dropdown) dropdown.style.display = 'none';
 }
 
 function cwcRemoveCoTeacher(name) {
