@@ -1322,7 +1322,15 @@
     transition: all var(--duration-base) var(--ease);
   }
   .cwc-all-dates-btn:hover { background: var(--green); color: var(--void-white); }
-  .cwc-all-dates-btn.confirmed { background: var(--green); color: var(--void-white); border-color: var(--green); }
+  /* Confirmed state — green fill, stays readable when disabled */
+  .cwc-all-dates-btn.confirmed,
+  .cwc-all-dates-btn.confirmed:disabled {
+    background: var(--green);
+    color: var(--void-white);
+    border-color: var(--green);
+    opacity: 1;
+    cursor: default;
+  }
 
   /* Default date chip — neutral pill: white surface, light grey hairline, dark ink.
      Distinct from the green "All dates work" success button. ── */
@@ -5660,6 +5668,17 @@ function cwcMarkAllAvailable(dayName) {
     chip.classList.remove('excluded');
   });
   cwcUpdateDayPriceSummary(dayName);
+
+  // Visual confirmation — flip the button to "confirmed" state with a check + filled green.
+  // This always runs, even when nothing was excluded (so the click feels responsive).
+  const btn = section.querySelector('.cwc-all-dates-btn');
+  if (btn) {
+    btn.classList.add('confirmed');
+    btn.textContent = '✓ Confirmed — all dates work';
+    btn.disabled = true;
+    // Re-enable when teacher excludes any date later (handled in cwcToggleDate)
+    btn.dataset.confirmed = 'true';
+  }
 }
 
 function cwcGetBreakForGap(lastDate, currentDate, breaks) {
@@ -5763,6 +5782,18 @@ function cwcToggleDate(iso, chip, dayName) {
     cwcExcludedDates.add(iso);
     if (cwcExcludedByDay[dayName]) cwcExcludedByDay[dayName].add(iso);
     chip.classList.add('excluded');
+  }
+  // If teacher had clicked "Confirmed all dates" but is now excluding one,
+  // revert the button to its un-confirmed state so they can re-confirm or proceed.
+  const section = document.querySelector(`.cwc-day-section[data-day="${dayName}"]`);
+  if (section) {
+    const btn = section.querySelector('.cwc-all-dates-btn');
+    if (btn && btn.dataset.confirmed === 'true') {
+      btn.classList.remove('confirmed');
+      btn.textContent = '✓ All dates work for me';
+      btn.disabled = false;
+      delete btn.dataset.confirmed;
+    }
   }
   // Update the price bar for this specific day
   cwcUpdateDayPriceSummary(dayName);
