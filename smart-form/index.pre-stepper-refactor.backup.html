@@ -667,167 +667,6 @@
     align-self: baseline;
   }
 
-  /* ── STEPPER — prominent horizontal progress indicator at top of multi-step screens.
-     Replaces the tiny in-title step pill with a navigable, scannable journey marker.
-     Each step has a numbered circle + label. Past steps go green, current is vibrant
-     purple, future steps are quiet. Connectors visualize forward motion. ── */
-  .stepper {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    margin: 0 0 var(--space-3);
-    padding: var(--space-1) 0;
-    border-bottom: var(--line) solid var(--rule);
-    overflow-x: auto;
-  }
-  .stepper__step {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-family: var(--font-body);
-    font-size: var(--type-caption);
-    font-weight: 500;
-    letter-spacing: var(--tracking-caption);
-    text-transform: uppercase;
-    color: var(--fg-3);
-    flex-shrink: 0;
-  }
-  .stepper__num {
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    border: 1px solid var(--rule);
-    display: inline-flex; align-items: center; justify-content: center;
-    font-family: var(--font-body);
-    font-size: var(--type-caption);
-    font-weight: 500;
-    letter-spacing: 0;
-    text-transform: none;
-    background: var(--surface);
-    color: var(--fg-3);
-    flex-shrink: 0;
-    transition: all var(--duration-base) var(--ease);
-  }
-  .stepper__step.is-current { color: var(--fg-1); }
-  .stepper__step.is-current .stepper__num {
-    background: var(--vibrant);
-    color: var(--void-white);
-    border-color: var(--vibrant);
-  }
-  .stepper__step.is-done { color: var(--fg-2); }
-  .stepper__step.is-done .stepper__num {
-    background: var(--green);
-    color: var(--void-white);
-    border-color: var(--green);
-  }
-  .stepper__step.is-done .stepper__num::before { content: '✓'; }
-  .stepper__step.is-done .stepper__num span { display: none; }
-  .stepper__connector {
-    flex: 1 1 24px;
-    min-width: 16px;
-    height: 1px;
-    background: var(--rule);
-    margin: 0 8px;
-  }
-  .stepper__step.is-done + .stepper__connector { background: var(--green); }
-  @media (max-width: 640px) {
-    .stepper__label { display: none; }
-    .stepper { padding: var(--space-1) 0; gap: 0; }
-    .stepper__connector { min-width: 12px; margin: 0 4px; }
-  }
-
-  /* ── UNIFIED FOOTER NAV — sticks at the bottom of multi-step screens.
-     Back (ghost) on the left, Next/Submit (vibrant) on the right. ── */
-  .form-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-2);
-    margin-top: var(--space-3);
-    padding-top: var(--space-2);
-    border-top: var(--line) solid var(--rule);
-  }
-  .form-footer__back {
-    background: transparent;
-    border: none;
-    color: var(--fg-2);
-    font-family: var(--font-body);
-    font-size: var(--type-caption);
-    font-weight: 500;
-    letter-spacing: var(--tracking-caption);
-    text-transform: uppercase;
-    cursor: pointer;
-    padding: 12px 16px;
-    transition: color var(--duration-fast) var(--ease);
-  }
-  .form-footer__back:hover { color: var(--vibrant); }
-  .form-footer__back:disabled { opacity: 0.4; cursor: not-allowed; }
-  .form-footer__next {
-    background: var(--vibrant);
-    color: var(--void-white);
-    border: var(--line) solid var(--vibrant);
-    border-radius: var(--radius-0);
-    padding: 14px 28px;
-    font-family: var(--font-body);
-    font-size: var(--type-caption);
-    font-weight: 500;
-    letter-spacing: var(--tracking-caption);
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all var(--duration-base) var(--ease);
-    min-width: 200px;
-  }
-  .form-footer__next:hover { background: var(--bg); color: var(--fg-1); border-color: var(--fg-1); }
-  .form-footer__next:disabled { background: var(--bg); color: var(--fg-3); border-color: var(--rule); cursor: not-allowed; }
-  @media (max-width: 520px) {
-    .form-footer { flex-direction: column-reverse; align-items: stretch; }
-    .form-footer__next { width: 100%; min-width: 0; }
-    .form-footer__back { width: 100%; }
-  }
-
-  /* Hide step-pill when stepper present — avoid duplicate counters in same view */
-  .has-stepper .step-pill { display: none; }
-
-  /* ── MAX STUDENTS CAPACITY FIELD — vertical, label-above-input pattern.
-     Replaces the old horizontal flex with placeholder "required" overlap bug. ── */
-  .wc-capacity-field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    margin-top: var(--space-2);
-    padding-top: var(--space-2);
-    border-top: var(--hairline) solid var(--rule);
-  }
-  .wc-capacity-field__label {
-    font-family: var(--font-body);
-    font-size: var(--type-body-sm);
-    font-weight: 500;
-    color: var(--fg-1);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .wc-capacity-field__input {
-    width: 140px;
-    padding: 10px 14px;
-    border: var(--line) solid var(--fg-1);
-    border-radius: var(--radius-0);
-    font-size: var(--type-body);
-    font-family: var(--font-body);
-    font-variant-numeric: tabular-nums;
-    background: var(--surface);
-    color: var(--fg-1);
-    transition: border-color var(--duration-base) var(--ease);
-  }
-  .wc-capacity-field__input:focus {
-    outline: 2px solid var(--vibrant);
-    outline-offset: 1px;
-    border-color: var(--vibrant);
-  }
-  .wc-capacity-field__input::placeholder {
-    color: var(--fg-3);
-    opacity: 1;
-  }
-
   .wc-level-block { border: var(--hairline) solid var(--rule); border-radius: var(--radius-0); padding: var(--space-3); margin-bottom: var(--space-2); background: var(--bg); }
   .wc-level-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
   .wc-level-select {
@@ -841,40 +680,19 @@
   .wc-btn-remove { background: none; border: none; color: var(--border-strong); font-size: .95rem; cursor: pointer; padding: 2px 6px; border-radius: 3px; transition: color .15s; }
   .wc-btn-remove:hover { color: var(--red); }
 
-  /* ── SLOT ROW — compact grid: Day · Start–End · Teacher · ✕ ──
-     Tighter columns, smaller gaps. Full mobile collapse below. ── */
   .wc-slot {
-    display: grid;
-    grid-template-columns: 96px 1fr 12px 1fr 1fr 28px;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
-    padding: 6px 8px;
-    border: var(--hairline) solid var(--rule);
-    border-radius: var(--radius-0);
-    background: var(--surface);
+    display: grid; grid-template-columns: 110px 1fr auto 1fr 130px auto;
+    align-items: center; gap: 8px; margin-bottom: 8px;
+    padding: 10px 12px; border: var(--hairline) solid var(--rule); border-radius: var(--radius-0); background: var(--bg);
   }
   .wc-slot select, .wc-slot input[type=time] {
-    padding: 7px 8px;
-    border: var(--hairline) solid var(--rule);
-    border-radius: var(--radius-0);
-    font-size: var(--type-body-sm);
-    font-family: var(--font-body);
-    font-variant-numeric: tabular-nums;
-    color: var(--fg-1);
-    background: var(--surface);
-    width: 100%;
-    min-width: 0; /* allow shrinking inside grid */
-    box-sizing: border-box;
+    padding: 8px 10px; border: var(--hairline) solid var(--rule); border-radius: var(--radius-0);
+    font-size: var(--type-body-sm); width: 100%; font-family: var(--font-body);
+    color: var(--fg-1); background: var(--bg);
   }
-  .wc-slot select:focus, .wc-slot input[type=time]:focus {
-    outline: 2px solid var(--vibrant);
-    outline-offset: 1px;
-    border-color: var(--vibrant);
-  }
-  .wc-slot .wc-arrow { color: var(--fg-3); font-size: .9rem; text-align: center; }
-  .wc-slot .wc-slot-teacher { font-size: var(--type-body-sm); }
-  .wc-slot .wc-btn-remove { padding: 6px; font-size: .9rem; line-height: 1; }
+  .wc-slot select:focus, .wc-slot input[type=time]:focus { outline: 2px solid var(--vibrant); outline-offset: 1px; border-color: var(--vibrant); }
+  .wc-slot .wc-arrow { color: var(--text-light); font-size: .9rem; text-align: center; }
+  .wc-slot .wc-slot-teacher { font-size: .76rem !important; padding: 5px 6px !important; }
 
   .wc-btn-add-slot {
     background: none; border: var(--line) dashed var(--rule);
@@ -906,21 +724,7 @@
   .wc-divider { border: none; border-top: 1px solid var(--border); margin: var(--space-5) 0; }
 
   @media (max-width: 520px) {
-    /* Slot row collapses: Day · Start–End on row 1, Teacher · ✕ on row 2 */
-    .wc-slot {
-      grid-template-columns: 1fr 1fr 12px 1fr 28px;
-      grid-template-areas:
-        "day day day day rm"
-        "start arr end teach teach";
-      gap: 4px;
-      padding: 6px 8px;
-    }
-    .wc-slot > select.wc-slot-day { grid-area: day; }
-    .wc-slot > input.wc-start    { grid-area: start; }
-    .wc-slot > .wc-arrow         { grid-area: arr; }
-    .wc-slot > input.wc-end      { grid-area: end; }
-    .wc-slot > select.wc-slot-teacher { grid-area: teach; }
-    .wc-slot > .wc-btn-remove    { grid-area: rm; }
+    .wc-slot { grid-template-columns: 90px 1fr auto 1fr 100px auto; gap: 4px; padding: 6px 8px; }
   }
 
   /* ── REVIEW ── */
@@ -1360,7 +1164,8 @@
   }
 
   @media (max-width: 680px) {
-    /* Tablet / large phone — slot grid stays in primary 6-col layout from base */
+    /* Tablet / large phone — schedule slot grid becomes awkward */
+    .wc-slot { grid-template-columns: 100px 1fr auto 1fr 110px auto; gap: 4px; }
   }
 
   @media (max-width: 520px) {
@@ -1369,7 +1174,13 @@
     /* Larger touch targets for header controls on mobile */
     .header-nav-btn, .lang-btn { padding: 10px 12px; min-height: 44px; }
 
-    /* .cwc-meta-row is now ALWAYS vertical (Squarespace flow) — no override needed */
+    /* Stack meta key+input vertically — side-by-side is too cramped on phone */
+    .cwc-meta-row { flex-direction: column; gap: 4px; }
+    .cwc-meta-key { min-width: unset; padding-top: 0; }
+
+    /* Slot grid: collapse teacher column on very narrow screens */
+    .wc-slot { grid-template-columns: 80px 1fr auto 1fr auto; gap: 3px; padding: 5px 6px; }
+    .wc-slot .wc-slot-teacher { display: none; }
 
     /* Summary label min-width too wide for phone */
     .summary-label { min-width: 90px; }
@@ -1838,17 +1649,8 @@
       </div>
 
       <!-- Logged in: step 1 — style picker -->
-      <div id="wc-step-style" class="has-stepper" style="display:none;">
-        <nav class="stepper" aria-label="Submission progress">
-          <div class="stepper__step is-current"><span class="stepper__num"><span>1</span></span><span class="stepper__label">Basics</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>2</span></span><span class="stepper__label">Schedule</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>3</span></span><span class="stepper__label">Details</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>4</span></span><span class="stepper__label">Dates</span></div>
-        </nav>
-        <h3 class="card-title" data-lbl="wc-pick-style-title">Weekly class — pick a style</h3>
+      <div id="wc-step-style" style="display:none;">
+        <h3 class="card-title" data-lbl="wc-pick-style-title">Weekly Class — Pick a Style <span class="step-pill">Step 1 of 4</span></h3>
         <div class="wc-section-label" data-lbl="wc-which-style">Which style are you submitting?</div>
         <div id="wc-style-chips" class="wc-chips"></div>
         <div style="display:flex;gap:6px;align-items:center;margin-top:8px;">
@@ -1862,18 +1664,9 @@
       </div>
 
       <!-- Logged in: step 2 — schedule builder -->
-      <div id="wc-step-schedule" class="has-stepper" style="display:none;">
-        <nav class="stepper" aria-label="Submission progress">
-          <div class="stepper__step is-done"><span class="stepper__num"><span>1</span></span><span class="stepper__label">Basics</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step is-current"><span class="stepper__num"><span>2</span></span><span class="stepper__label">Schedule</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>3</span></span><span class="stepper__label">Details</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>4</span></span><span class="stepper__label">Dates</span></div>
-        </nav>
-        <h3 class="card-title" data-lbl="wc-schedule-title">Schedule</h3>
-        <!-- (Top back button removed — unified footer at bottom has Back + Continue) -->
+      <div id="wc-step-schedule" style="display:none;">
+        <button class="btn-step-back" onclick="wcBackToStyle()">← Back</button>
+        <h3 class="card-title" data-lbl="wc-schedule-title">Weekly Class — Schedule <span class="step-pill">Step 2 of 4</span></h3>
 
         <div class="wc-style-banner" id="wc-style-banner">
           <span id="wc-style-banner-label"></span>
@@ -1897,11 +1690,7 @@
         </div>
 
         <div class="err-box" id="err-wc-schedule" style="margin-top:12px;"></div>
-
-        <div class="form-footer">
-          <button class="form-footer__back" onclick="wcBackToStyle()">← Back</button>
-          <button class="form-footer__next" onclick="submitWeeklyClass()" data-lbl="submit-wc-form">Continue →</button>
-        </div>
+        <button class="btn-continue" style="margin-top:16px;" onclick="submitWeeklyClass()" data-lbl="submit-wc-form">Continue — add class details →</button>
       </div>
 
     </div>
@@ -1909,19 +1698,10 @@
   </div>
 
   <!-- ── SCREEN: WEEKLY CLASS CONFIRMATION ──────────── -->
-  <div id="screen-confirm-wc" class="has-stepper" style="display:none;">
+  <div id="screen-confirm-wc" style="display:none;">
     <div class="card">
-      <nav class="stepper" aria-label="Submission progress" id="cwc-stepper">
-        <div class="stepper__step is-done"><span class="stepper__num"><span>1</span></span><span class="stepper__label">Basics</span></div>
-        <div class="stepper__connector"></div>
-        <div class="stepper__step is-done"><span class="stepper__num"><span>2</span></span><span class="stepper__label">Schedule</span></div>
-        <div class="stepper__connector"></div>
-        <div class="stepper__step is-current"><span class="stepper__num"><span>3</span></span><span class="stepper__label">Details</span></div>
-        <div class="stepper__connector"></div>
-        <div class="stepper__step"><span class="stepper__num"><span>4</span></span><span class="stepper__label">Dates</span></div>
-      </nav>
       <button class="btn-step-back" onclick="wcBackFromConfirm()">← Back to schedule</button>
-      <h3 class="card-title"><span id="cwc-style-title">Review your description</span></h3>
+      <h3 class="card-title"><span id="cwc-style-title">Review your description</span> <span class="step-pill">Step 3 of 4</span></h3>
 
       <!-- Schedule summary -->
       <div id="cwc-schedule-summary" style="margin-bottom:18px;"></div>
@@ -2062,17 +1842,8 @@
       </div>
 
       <!-- Step 1 — Format -->
-      <div id="ws-step-format" class="has-stepper">
-        <nav class="stepper" aria-label="Submission progress">
-          <div class="stepper__step is-current"><span class="stepper__num"><span>1</span></span><span class="stepper__label">Format</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>2</span></span><span class="stepper__label">Style</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>3</span></span><span class="stepper__label">Details</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>4</span></span><span class="stepper__label">Review</span></div>
-        </nav>
-        <h3 class="card-title">Workshop — format</h3>
+      <div id="ws-step-format">
+        <h3 class="card-title">🎓 Workshop — Format <span class="step-pill">Step 1 of 3</span></h3>
         <div class="wc-section-label" style="margin-bottom:10px;">What kind of workshop is this?</div>
         <div class="wc-chips" id="ws-format-chips">
           <button class="wc-chip" onclick="wsSelectFormat('single',    this)" data-lbl="ws-fmt-single">Single session</button>
@@ -2083,24 +1854,13 @@
         </div>
         <div id="ws-format-hint" style="display:none;font-size:.8rem;color:#555;background:#F5ECFF;border-left:3px solid var(--purple);padding:10px 12px;border-radius:0 6px 6px 0;margin-top:12px;line-height:1.5;"></div>
         <div class="err-box" id="err-ws-format" style="margin-top:10px;"></div>
-        <div class="form-footer">
-          <span></span>
-          <button class="form-footer__next" id="ws-format-next-btn" style="display:none;" onclick="wsConfirmFormat()">Continue →</button>
-        </div>
+        <button class="btn-continue" id="ws-format-next-btn" style="margin-top:16px;display:none;" onclick="wsConfirmFormat()">Next — pick a style →</button>
       </div>
 
       <!-- Step 2 — Style -->
-      <div id="ws-step-style" class="has-stepper" style="display:none;">
-        <nav class="stepper" aria-label="Submission progress">
-          <div class="stepper__step is-done"><span class="stepper__num"><span>1</span></span><span class="stepper__label">Format</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step is-current"><span class="stepper__num"><span>2</span></span><span class="stepper__label">Style</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>3</span></span><span class="stepper__label">Details</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>4</span></span><span class="stepper__label">Review</span></div>
-        </nav>
-        <h3 class="card-title">Workshop — style</h3>
+      <div id="ws-step-style" style="display:none;">
+        <button class="btn-step-back" onclick="wsBackToFormat()">← Back</button>
+        <h3 class="card-title">🎓 Workshop — Style <span class="step-pill">Step 2 of 3</span></h3>
         <div class="wc-style-banner" id="ws-format-banner" style="margin-bottom:14px;">
           <span id="ws-format-banner-label"></span>
           <button onclick="wsBackToFormat()">Change format</button>
@@ -2115,24 +1875,12 @@
           <button class="wc-btn-add-slot" onclick="wsConfirmOtherStyle()">Use this style →</button>
         </div>
         <div class="err-box" id="err-ws-style" style="margin-top:10px;"></div>
-        <div class="form-footer">
-          <button class="form-footer__back" onclick="wsBackToFormat()">← Back</button>
-          <span></span>
-        </div>
       </div>
 
       <!-- Step 3 — Details + Pricing -->
-      <div id="ws-step-details" class="has-stepper" style="display:none;">
-        <nav class="stepper" aria-label="Submission progress">
-          <div class="stepper__step is-done"><span class="stepper__num"><span>1</span></span><span class="stepper__label">Format</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step is-done"><span class="stepper__num"><span>2</span></span><span class="stepper__label">Style</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step is-current"><span class="stepper__num"><span>3</span></span><span class="stepper__label">Details</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>4</span></span><span class="stepper__label">Review</span></div>
-        </nav>
-        <h3 class="card-title">Workshop — details</h3>
+      <div id="ws-step-details" style="display:none;">
+        <button class="btn-step-back" onclick="wsBackToStyle()">← Back</button>
+        <h3 class="card-title">🎓 Workshop — Details <span class="step-pill">Step 3 of 3</span></h3>
 
         <!-- Breadcrumb banners -->
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;">
@@ -2339,19 +2087,10 @@
   </div>
 
   <!-- ── SCREEN: WORKSHOP CONFIRMATION ────────────── -->
-  <div id="screen-confirm-ws" class="has-stepper" style="display:none;">
+  <div id="screen-confirm-ws" style="display:none;">
     <div class="card">
-      <nav class="stepper" aria-label="Submission progress">
-        <div class="stepper__step is-done"><span class="stepper__num"><span>1</span></span><span class="stepper__label">Format</span></div>
-        <div class="stepper__connector"></div>
-        <div class="stepper__step is-done"><span class="stepper__num"><span>2</span></span><span class="stepper__label">Style</span></div>
-        <div class="stepper__connector"></div>
-        <div class="stepper__step is-done"><span class="stepper__num"><span>3</span></span><span class="stepper__label">Details</span></div>
-        <div class="stepper__connector"></div>
-        <div class="stepper__step is-current"><span class="stepper__num"><span>4</span></span><span class="stepper__label">Review</span></div>
-      </nav>
       <button class="btn-step-back" onclick="wsBackFromConfirm()">← Back to details</button>
-      <h3 class="card-title"><span id="ws-confirm-title-label"></span></h3>
+      <h3 class="card-title">🎓 <span id="ws-confirm-title-label"></span></h3>
 
       <!-- Sessions summary -->
       <div id="ws-sessions-summary" style="margin-bottom:18px;"></div>
@@ -2515,17 +2254,8 @@
       </div>
 
       <!-- Step 1 — Basics -->
-      <div id="ss-step-basics" class="has-stepper">
-        <nav class="stepper" aria-label="Submission progress">
-          <div class="stepper__step is-current"><span class="stepper__num"><span>1</span></span><span class="stepper__label">Basics</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>2</span></span><span class="stepper__label">Programme</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>3</span></span><span class="stepper__label">Pricing</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>4</span></span><span class="stepper__label">Review</span></div>
-        </nav>
-        <h3 class="card-title">Social night — basics</h3>
+      <div id="ss-step-basics">
+        <h3 class="card-title">🎉 Social Night — Basics <span class="step-pill">Step 1 of 3</span></h3>
 
         <!-- Styles first (used to suggest title) -->
         <div style="margin-bottom:14px;">
@@ -2585,17 +2315,9 @@
       </div>
 
       <!-- Step 2 — Programme + Dance night -->
-      <div id="ss-step-programme" class="has-stepper" style="display:none;">
-        <nav class="stepper" aria-label="Submission progress">
-          <div class="stepper__step is-done"><span class="stepper__num"><span>1</span></span><span class="stepper__label">Basics</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step is-current"><span class="stepper__num"><span>2</span></span><span class="stepper__label">Programme</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>3</span></span><span class="stepper__label">Pricing</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>4</span></span><span class="stepper__label">Review</span></div>
-        </nav>
-        <h3 class="card-title">Social night — programme</h3>
+      <div id="ss-step-programme" style="display:none;">
+        <button class="btn-step-back" onclick="ssBackToBasics()">← Back</button>
+        <h3 class="card-title">🎉 Social Night — Programme <span class="step-pill">Step 2 of 3</span></h3>
         <div style="font-size:.8rem;color:#555;margin-bottom:14px;background:#F5ECFF;border-left:3px solid var(--purple);padding:10px 12px;border-radius:0 6px 6px 0;line-height:1.5;">
           Add each workshop in order. The dance night block below is always included — just fill in the timing and music.
         </div>
@@ -2725,18 +2447,9 @@
       </div>
 
       <!-- Step 3 — Pricing -->
-      <div id="ss-step-pricing" class="has-stepper" style="display:none;">
-        <nav class="stepper" aria-label="Submission progress">
-          <div class="stepper__step is-done"><span class="stepper__num"><span>1</span></span><span class="stepper__label">Basics</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step is-done"><span class="stepper__num"><span>2</span></span><span class="stepper__label">Programme</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step is-current"><span class="stepper__num"><span>3</span></span><span class="stepper__label">Pricing</span></div>
-          <div class="stepper__connector"></div>
-          <div class="stepper__step"><span class="stepper__num"><span>4</span></span><span class="stepper__label">Review</span></div>
-        </nav>
+      <div id="ss-step-pricing" style="display:none;">
         <button class="btn-step-back" onclick="ssBackToProgramme()">← Back</button>
-        <h3 class="card-title">Social night — pricing</h3>
+        <h3 class="card-title">🎉 Social Night — Pricing <span class="step-pill">Step 3 of 3</span></h3>
         <div style="font-size:.8rem;color:#555;margin-bottom:14px;background:#F5ECFF;border-left:3px solid var(--purple);padding:10px 12px;border-radius:0 6px 6px 0;line-height:1.5;">
           Add one row per pricing tier. Advance tickets via Zoho — Shoonya sets that up after approval.
         </div>
@@ -2760,19 +2473,10 @@
   </div>
 
   <!-- ── SCREEN: SOCIAL NIGHT CONFIRMATION ──────────── -->
-  <div id="screen-confirm-ss" class="has-stepper" style="display:none;">
+  <div id="screen-confirm-ss" style="display:none;">
     <div class="card">
-      <nav class="stepper" aria-label="Submission progress">
-        <div class="stepper__step is-done"><span class="stepper__num"><span>1</span></span><span class="stepper__label">Basics</span></div>
-        <div class="stepper__connector"></div>
-        <div class="stepper__step is-done"><span class="stepper__num"><span>2</span></span><span class="stepper__label">Programme</span></div>
-        <div class="stepper__connector"></div>
-        <div class="stepper__step is-done"><span class="stepper__num"><span>3</span></span><span class="stepper__label">Pricing</span></div>
-        <div class="stepper__connector"></div>
-        <div class="stepper__step is-current"><span class="stepper__num"><span>4</span></span><span class="stepper__label">Review</span></div>
-      </nav>
       <button class="btn-step-back" onclick="ssBackFromConfirm()">← Back to pricing</button>
-      <h3 class="card-title"><span id="ss-confirm-title"></span></h3>
+      <h3 class="card-title">🎉 <span id="ss-confirm-title"></span></h3>
 
       <!-- Event summary -->
       <div id="ss-event-summary" style="margin-bottom:18px;"></div>
@@ -4202,12 +3906,10 @@ function wcAddLevel(presetLevel, presetSlots) {
     </div>
     <div class="wc-slots-container" id="wc-slots-${idx}"></div>
     <button class="wc-btn-add-slot" onclick="wcAddSlot(${idx})">${t('add-time-slot')}</button>
-    <div class="wc-capacity-field">
-      <label class="wc-capacity-field__label" for="wc-capacity-${idx}">
-        Max students <span class="required-marker">required</span>
-      </label>
-      <input type="number" id="wc-capacity-${idx}" class="wc-capacity-field__input"
-        min="1" max="200" placeholder="e.g. 25" aria-label="Maximum number of students for this level">
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px;">
+      <span style="font-size:.76rem;font-weight:600;color:#777;white-space:nowrap;">Max students: <span style="color:var(--red)">*</span></span>
+      <input aria-label="required" type="number" id="wc-capacity-${idx}" class="cwc-meta-input"
+        min="1" max="200" placeholder="required" style="width:90px;font-size:.82rem;">
     </div>
   `;
   container.appendChild(block);
