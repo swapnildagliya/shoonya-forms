@@ -5127,7 +5127,6 @@ function cwcPopulateMeta(style) {
   const meta = cwcGetMeta(style);
   cwcSelectedAge = (meta && meta.age)  || '12+';
   cwcPartnerReq  = (meta && meta.partner) || false;
-  cwcSelectedCoTeachers = [];
 
   // Age chips
   document.querySelectorAll('#cwc-age-chips .cwc-meta-chip').forEach(btn => {
@@ -5139,8 +5138,12 @@ function cwcPopulateMeta(style) {
   document.getElementById('cwc-partner-yes').classList.toggle('selected',  cwcPartnerReq);
 
   // Co-teacher chip selector
-  const preSelectedCoTeachers = (meta && meta.co) ? meta.co.split(' · ').map(s => s.trim()).filter(Boolean) : [];
-  cwcBuildCoTeacherSelector(preSelectedCoTeachers);
+  // Preserve any edits the teacher made on Step 2. The selector was already
+  // initialized in wcShowScheduleStep() with prefilled co-teachers from meta.co,
+  // and Step 2 edits live in cwcSelectedCoTeachers. Re-render with the CURRENT
+  // state so changes carry through. (Earlier this used to reset to meta.co —
+  // that wiped out edits made on Step 2. Bug fixed 2026-05-07.)
+  cwcBuildCoTeacherSelector(cwcSelectedCoTeachers);
 
   // What to bring
   document.getElementById('cwc-bring-input').value = (meta && meta.bring) || '';
