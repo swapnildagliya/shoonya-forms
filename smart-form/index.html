@@ -1788,7 +1788,14 @@
   <div class="header-nav">
     <button class="header-nav-btn home-btn" id="hdr-home-btn" onclick="navGoHome()" title="Back to home" aria-label="Back to home" style="display:none;">🏠 Home</button>
     <a href="../admin/" class="header-nav-btn" style="font-size:.7rem;padding:4px 10px;opacity:.5;text-decoration:none;color:#fff;" title="Admin dashboard" aria-label="Admin dashboard">⚙</a>
-    <a href="../schedule.html" class="header-nav-btn" id="hdr-schedule-btn" style="text-decoration:none;" title="View weekly schedule" aria-label="View weekly schedule">📅 Schedule</a>
+    <div class="hdr-schedule-wrap" style="position:relative; display:inline-block;">
+      <button type="button" class="header-nav-btn" id="hdr-schedule-btn" title="View schedule" aria-haspopup="true" aria-expanded="false" aria-label="View schedule">📅 Schedule ▾</button>
+      <div id="hdr-schedule-menu" role="menu" hidden style="position:absolute; top:calc(100% + 6px); right:0; background:#1a1a2e; border:1px solid rgba(255,255,255,0.18); border-radius:4px; min-width:170px; z-index:100; padding:4px 0; box-shadow:0 4px 12px rgba(0,0,0,0.25);">
+        <a role="menuitem" href="../schedule.html?view=weekly"    style="display:block; padding:9px 14px; color:#fff; text-decoration:none; font-size:13px;">Weekly classes</a>
+        <a role="menuitem" href="../schedule.html?view=workshops" style="display:block; padding:9px 14px; color:#fff; text-decoration:none; font-size:13px;">Workshops</a>
+        <a role="menuitem" href="../schedule.html?view=socials"   style="display:block; padding:9px 14px; color:#fff; text-decoration:none; font-size:13px;">Social nights</a>
+      </div>
+    </div>
     <a href="../register.html" class="header-nav-btn" id="hdr-register-btn" style="text-decoration:none;" aria-label="Create an account">Register</a>
     <button class="header-nav-btn profile-btn" id="hdr-profile-btn" onclick="navGoProfile()" title="My profile" aria-label="My profile">👤 <span id="hdr-profile-label">Log in</span></button>
   </div>
@@ -7602,6 +7609,36 @@ function navGoHome() {
   if (!confirm('Go back to the start? Any unsaved changes will be lost.')) return;
   resetForm();
 }
+
+// Schedule dropdown — open on click, close on outside click or Esc
+(function wireScheduleDropdown() {
+  const btn  = document.getElementById('hdr-schedule-btn');
+  const menu = document.getElementById('hdr-schedule-menu');
+  if (!btn || !menu) return;
+  btn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const open = !menu.hidden;
+    menu.hidden = open;
+    btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+  });
+  document.addEventListener('click', function(e) {
+    if (!menu.hidden && !menu.contains(e.target) && e.target !== btn) {
+      menu.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && !menu.hidden) {
+      menu.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+  // Hover styling for menu items (inline since CSS isn't easily extended)
+  menu.querySelectorAll('a').forEach(function(a) {
+    a.addEventListener('mouseenter', function() { a.style.background = 'rgba(255,255,255,0.12)'; });
+    a.addEventListener('mouseleave', function() { a.style.background = ''; });
+  });
+})();
 
 function navGoProfile() {
   // If logged in, show name + link to profile page

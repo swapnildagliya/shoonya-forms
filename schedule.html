@@ -838,6 +838,7 @@ function onLoaded(json) {
   buildFilters(allSlots);
   renderEverything();
   renderLegend();
+  applyActiveTab(); // ← honor ?view=workshops or ?view=socials on first render
 }
 
 // ── CONFLICT DETECTION ───────────────────────────────────────────────────
@@ -957,7 +958,15 @@ function isOneOff(slot) {
   return t === 'workshop' || t === 'social';
 }
 
-let activeTab = 'weekly';
+// Initial tab honours the ?view= query param so menu items in the smart-form
+// dropdown land directly on Workshops or Social nights without an extra click.
+let activeTab = (function () {
+  try {
+    const v = (new URLSearchParams(window.location.search)).get('view');
+    if (v === 'workshops' || v === 'socials' || v === 'weekly') return v;
+  } catch (e) {}
+  return 'weekly';
+})();
 
 function renderEverything() {
   const visible   = allSlots.filter(passesFilters);
@@ -982,18 +991,28 @@ function renderEverything() {
   document.getElementById('day-list').hidden = visible.length === 0;
 }
 
+function applyActiveTab() {
+  document.querySelectorAll('.tabs .tab').forEach(b => {
+    const isActive = b.dataset.tab === activeTab;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+  });
+  document.querySelectorAll('[data-tab-panel]').forEach(panel => {
+    panel.hidden = panel.dataset.tabPanel !== activeTab;
+  });
+  // Update URL without reloading so the back button + bookmarks work
+  try {
+    const u = new URL(window.location.href);
+    u.searchParams.set('view', activeTab);
+    history.replaceState(null, '', u.toString());
+  } catch (e) {}
+}
+
 // Tab switching
 document.querySelectorAll('.tabs .tab').forEach(btn => {
   btn.addEventListener('click', () => {
     activeTab = btn.dataset.tab;
-    document.querySelectorAll('.tabs .tab').forEach(b => {
-      const isActive = b.dataset.tab === activeTab;
-      b.classList.toggle('active', isActive);
-      b.setAttribute('aria-selected', isActive ? 'true' : 'false');
-    });
-    document.querySelectorAll('[data-tab-panel]').forEach(panel => {
-      panel.hidden = panel.dataset.tabPanel !== activeTab;
-    });
+    applyActiveTab();
   });
 });
 
