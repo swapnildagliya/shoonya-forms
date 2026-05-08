@@ -342,6 +342,91 @@
     .day-card .time-range { font-size: 13px; color: var(--ink-soft); margin-left: auto; }
     .day-card .row2 { font-size: 12px; color: var(--ink-muted); margin-top: 4px; }
 
+    /* Upcoming workshops & social nights — chronological list below the grid */
+    #upcoming-oneoffs { margin-top: 28px; }
+    .oneoffs-section {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 16px 18px 18px;
+    }
+    .oneoffs-section h2 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 500;
+      margin: 0 0 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--rule);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+    .oneoffs-section h2 .count {
+      font-family: var(--font-body);
+      font-size: 12px;
+      color: var(--ink-muted);
+      font-weight: 400;
+    }
+    .oneoff-month {
+      margin-top: 14px;
+    }
+    .oneoff-month-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--ink-muted);
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px dashed var(--rule);
+    }
+    .oneoff-card {
+      display: grid;
+      grid-template-columns: 100px 1fr auto;
+      gap: 14px;
+      padding: 10px 12px;
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      margin: 6px 0;
+      cursor: pointer;
+      border-left-width: 3px;
+      border-left-style: solid;
+      transition: transform .12s, box-shadow .12s;
+    }
+    .oneoff-card:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+    .oneoff-card.studio-aakash    { border-left-color: var(--studio-aakash-border); }
+    .oneoff-card.studio-ananta1   { border-left-color: var(--studio-ananta1-border); }
+    .oneoff-card.studio-ananta2   { border-left-color: var(--studio-ananta2-border); }
+    .oneoff-card.studio-artdeco   { border-left-color: var(--studio-artdeco-border); }
+    .oneoff-card.studio-unknown   { border-left-color: var(--studio-unknown-border); }
+    .oneoff-date {
+      font-size: 13px;
+      color: var(--ink-soft);
+      line-height: 1.3;
+    }
+    .oneoff-date .day-name { font-size: 11px; text-transform: uppercase; color: var(--ink-muted); letter-spacing: 0.4px; }
+    .oneoff-date .date-num { font-family: var(--font-display); font-size: 22px; color: var(--ink); font-weight: 500; }
+    .oneoff-body .title { font-weight: 500; font-size: 14px; }
+    .oneoff-body .meta { font-size: 12px; color: var(--ink-muted); margin-top: 2px; }
+    .oneoff-body .type-tag {
+      display: inline-block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--vibrant-tint);
+      color: var(--vibrant);
+      margin-right: 6px;
+    }
+    .oneoff-body .type-tag.social { background: #FBEEEA; color: #993C1D; }
+    .oneoff-body .type-tag.series { background: var(--studio-ananta2-bg); color: var(--studio-ananta2-text); }
+    .oneoff-time {
+      font-size: 13px;
+      color: var(--ink-soft);
+      text-align: right;
+      align-self: center;
+    }
+
     .legend {
       margin-top: 16px;
       display: flex;
@@ -484,6 +569,9 @@
     <!-- Per-day tables (Mon–Sat × 4 studios). Used on both desktop and mobile;
          on mobile it scrolls horizontally. -->
     <div id="day-tables"></div>
+
+    <!-- Upcoming workshops & social nights — chronological list -->
+    <div id="upcoming-oneoffs"></div>
 
     <!-- Mobile fallback list — kept hidden by default; CSS shows on small screens -->
     <div class="day-list" id="day-list" hidden></div>
@@ -756,15 +844,23 @@ function passesFilters(slot) {
 }
 
 // ── RENDER ───────────────────────────────────────────────────────────────
+function isOneOff(slot) {
+  return slot.type === 'workshop' || slot.type === 'series' || slot.type === 'social';
+}
+
 function renderEverything() {
   const visible = allSlots.filter(passesFilters);
+  const weekly  = visible.filter(s => !isOneOff(s));
+  const oneOffs = visible.filter(s => isOneOff(s));
+
   renderSummary(visible);
   renderConflicts(visible);
-  renderPerDayTables(visible);
+  renderPerDayTables(weekly);
+  renderUpcomingOneOffs(oneOffs);
   renderDayList(visible);
 
   document.getElementById('empty-state').hidden = visible.length > 0;
-  document.getElementById('day-tables').hidden = visible.length === 0;
+  document.getElementById('day-tables').hidden = weekly.length === 0;
   document.getElementById('day-list').hidden = visible.length === 0;
 }
 
@@ -775,6 +871,18 @@ function displayLevel(lv) {
   if (!lv) return '';
   if (/^\(all levels/i.test(lv)) return '';
   return lv;
+}
+
+// Combine the slot's main teacher with any style-level co-teachers into a single
+// display string. Co-teachers in the data come dot- or comma-separated (e.g.
+// "Ioanna" or "Ann-Sofie · Leni · Sep") so we split, dedupe against the main
+// teacher, and join with " + " for readability on the block.
+function formatTeacherLine(mainTeacher, coTeacherRaw) {
+  const cos = (coTeacherRaw || '').split(/[·,]/).map(s => s.trim()).filter(Boolean);
+  const all = [(mainTeacher || '').trim()].concat(cos).filter(Boolean);
+  const uniq = [];
+  all.forEach(t => { if (!uniq.some(u => u.toLowerCase() === t.toLowerCase())) uniq.push(t); });
+  return uniq.join(' + ');
 }
 
 function renderSummary(visible) {
@@ -945,9 +1053,10 @@ function renderPerDayTables(visible) {
           slot.style.top    = ((a - startHour * 60) * PX_PER_MIN) + 'px';
           slot.style.height = ((b - a) * PX_PER_MIN - 2) + 'px';
           const lvl = displayLevel(s.level);
+          const teacherLine = formatTeacherLine(s.slot_teacher || s.teacher, s.co_teacher);
           slot.innerHTML = `
             <div class="slot-style">${escapeHtml(s.style)}${lvl ? ' · ' + escapeHtml(lvl) : ''}</div>
-            <div class="slot-meta">${escapeHtml(s.slot_teacher || s.teacher || '')}</div>
+            <div class="slot-meta">${escapeHtml(teacherLine)}</div>
             <div class="slot-meta">${escapeHtml(s.start)}–${escapeHtml(s.end)}</div>
           `;
           slot.addEventListener('click', () => openModal(s));
@@ -978,7 +1087,7 @@ function renderPerDayTables(visible) {
             <span class="style-name">${escapeHtml(s.style)}${lvl ? ' · ' + escapeHtml(lvl) : ''}</span>
             <span class="time-range">${escapeHtml(s.start)}–${escapeHtml(s.end)}</span>
           </div>
-          <div class="row2">${escapeHtml(s.slot_teacher || s.teacher || '')}</div>
+          <div class="row2">${escapeHtml(formatTeacherLine(s.slot_teacher || s.teacher, s.co_teacher))}</div>
         `;
         card.addEventListener('click', () => openModal(s));
         unWrap.appendChild(card);
@@ -994,6 +1103,86 @@ function divEl(className) {
   const d = document.createElement('div');
   d.className = className;
   return d;
+}
+
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAY_SHORT   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function renderUpcomingOneOffs(oneOffSlots) {
+  const wrap = document.getElementById('upcoming-oneoffs');
+  wrap.innerHTML = '';
+  if (!oneOffSlots || oneOffSlots.length === 0) return;
+
+  // Sort by date asc (then by start time)
+  const sorted = oneOffSlots.slice().sort(function(a, b) {
+    const da = a.date || '';
+    const db = b.date || '';
+    if (da !== db) return da < db ? -1 : 1;
+    return (toMinutes(a.start) || 0) - (toMinutes(b.start) || 0);
+  });
+
+  // Group by year-month for the section labels
+  const byMonth = {};
+  const monthOrder = [];
+  sorted.forEach(function(s) {
+    if (!s.date) return;
+    const d = new Date(s.date + 'T12:00:00');
+    if (isNaN(d.getTime())) return;
+    const key = d.getFullYear() + '-' + String(d.getMonth()).padStart(2, '0');
+    if (!byMonth[key]) {
+      byMonth[key] = { label: MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear(), items: [] };
+      monthOrder.push(key);
+    }
+    byMonth[key].items.push(s);
+  });
+
+  const section = document.createElement('section');
+  section.className = 'oneoffs-section';
+  const h = document.createElement('h2');
+  h.innerHTML = 'Upcoming workshops & social nights <span class="count">' + sorted.length + ' event' + (sorted.length === 1 ? '' : 's') + '</span>';
+  section.appendChild(h);
+
+  monthOrder.forEach(function(mk) {
+    const monthBucket = byMonth[mk];
+    const mWrap = document.createElement('div');
+    mWrap.className = 'oneoff-month';
+    const mLabel = document.createElement('div');
+    mLabel.className = 'oneoff-month-label';
+    mLabel.textContent = monthBucket.label;
+    mWrap.appendChild(mLabel);
+
+    monthBucket.items.forEach(function(s) {
+      const d = new Date(s.date + 'T12:00:00');
+      const dayName = DAY_SHORT[d.getDay()];
+      const dateNum = d.getDate();
+      const monthAbbr = MONTH_NAMES[d.getMonth()].slice(0, 3);
+      const studio = s.studio || 'studio not assigned';
+      const teacher = formatTeacherLine(s.slot_teacher || s.teacher, s.co_teacher);
+      const typeLabel = s.type === 'social' ? 'Social' : (s.type === 'series' ? 'Series' : 'Workshop');
+      const typeClass = s.type === 'social' ? 'social' : (s.type === 'series' ? 'series' : '');
+
+      const card = document.createElement('div');
+      card.className = 'oneoff-card ' + studioCssClass(s.studio);
+      card.innerHTML = `
+        <div class="oneoff-date">
+          <div class="day-name">${dayName}</div>
+          <div class="date-num">${dateNum}</div>
+          <div>${monthAbbr}</div>
+        </div>
+        <div class="oneoff-body">
+          <div><span class="type-tag ${typeClass}">${typeLabel}</span><span class="title">${escapeHtml(s.title || s.style || '')}</span></div>
+          <div class="meta">${escapeHtml(s.style || '')}${s.style && teacher ? ' · ' : ''}${escapeHtml(teacher)}${teacher ? ' · ' : ''}${escapeHtml(studio)}</div>
+        </div>
+        <div class="oneoff-time">${escapeHtml(s.start || '')}${s.end ? '–' + escapeHtml(s.end) : ''}</div>
+      `;
+      card.addEventListener('click', () => openModal(s));
+      mWrap.appendChild(card);
+    });
+
+    section.appendChild(mWrap);
+  });
+
+  wrap.appendChild(section);
 }
 
 function renderDayList(visible) {
@@ -1020,7 +1209,7 @@ function renderDayList(visible) {
             <span class="style-name">${escapeHtml(s.style)}${s.level ? ' · ' + escapeHtml(s.level) : ''}</span>
             <span class="time-range">${escapeHtml(s.start)}–${escapeHtml(s.end)}</span>
           </div>
-          <div class="row2">${escapeHtml(s.slot_teacher || s.teacher || '')} · ${escapeHtml(s.studio || 'studio not assigned')}${isConflict ? ' · ⚠ studio clash' : ''}</div>
+          <div class="row2">${escapeHtml(formatTeacherLine(s.slot_teacher || s.teacher, s.co_teacher))} · ${escapeHtml(s.studio || 'studio not assigned')}${isConflict ? ' · ⚠ studio clash' : ''}</div>
         `;
         card.addEventListener('click', () => openModal(s));
         sec.appendChild(card);
@@ -1048,8 +1237,19 @@ function renderLegend() {
 
 // ── MODAL ────────────────────────────────────────────────────────────────
 function openModal(slot) {
-  document.getElementById('modal-style').textContent = slot.style + (slot.level ? ' · ' + slot.level : '');
-  document.getElementById('modal-meta').textContent = `${slot.day} · ${slot.start}–${slot.end} · ${slot.studio || 'studio not yet assigned'}`;
+  // Workshops + socials use their Title; weekly classes use Style · Level.
+  const isOne = isOneOff(slot);
+  const headLabel = isOne
+    ? (slot.title || slot.style || '')
+    : (slot.style + (displayLevel(slot.level) ? ' · ' + displayLevel(slot.level) : ''));
+  document.getElementById('modal-style').textContent = headLabel;
+
+  // Meta line: include the actual date for one-offs, fall back to weekday for weekly.
+  const dateLabel = isOne && slot.date
+    ? formatPrettyDate(slot.date)
+    : slot.day;
+  document.getElementById('modal-meta').textContent =
+    `${dateLabel} · ${slot.start}–${slot.end} · ${slot.studio || 'studio not yet assigned'}`;
   const dl = document.getElementById('modal-dl');
   dl.innerHTML = '';
   // Show the slot teacher (the person who actually teaches that level/time)
@@ -1083,6 +1283,14 @@ document.getElementById('modal-overlay').addEventListener('click', (e) => {
 
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// "2026-09-14" → "Mon 14 Sep 2026"
+function formatPrettyDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T12:00:00');
+  if (isNaN(d.getTime())) return iso;
+  return DAY_SHORT[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_NAMES[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear();
 }
 </script>
 </body>
