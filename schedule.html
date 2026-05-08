@@ -820,107 +820,146 @@ function renderConflicts(visible) {
 // Time runs vertically; slots are absolutely positioned within their studio
 // column based on start/end. Skipping days with no classes keeps the page
 // shorter.
+// Group a day's slots into contiguous time windows so empty mid-day hours
+// (e.g. Wednesday 12:00–18:00) collapse into a thin "no classes" divider
+// instead of stretching the day into a tall empty column.
+function clusterDayIntoWindows(daySlots, gapThresholdMin) {
+  const sorted = daySlots.slice().sort(function(a, b) {
+    return (toMinutes(a.start) || 0) - (toMinutes(b.start) || 0);
+  });
+  const windows = [];
+  sorted.forEach(function(slot) {
+    const a = toMinutes(slot.start);
+    const b = toMinutes(slot.end);
+    if (a === null || b === null) return;
+    const cur = windows[windows.length - 1];
+    if (cur && (a - cur.end) <= gapThresholdMin) {
+      cur.end = Math.max(cur.end, b);
+      cur.slots.push(slot);
+    } else {
+      windows.push({ start: a, end: b, slots: [slot] });
+    }
+  });
+  return windows;
+}
+
+function minutesToHHMM(min) {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+}
+
 function renderPerDayTables(visible) {
   const wrap = document.getElementById('day-tables');
   wrap.innerHTML = '';
   if (visible.length === 0) return;
 
-  const PX_PER_MIN = 1.4; // ~84px per hour
+  const PX_PER_MIN = 1.4;          // ~84px per hour
+  const GAP_THRESHOLD_MIN = 90;    // gaps > 90 min split into separate windows
 
   DAYS.forEach(day => {
     const daySlots = visible.filter(s => s.day === day);
-    if (daySlots.length === 0) return; // skip empty days entirely
+    if (daySlots.length === 0) return;
 
-    // Per-day time bounds, snapped to whole hours
-    let minMin = 24 * 60, maxMin = 0;
-    daySlots.forEach(s => {
-      const a = toMinutes(s.start), b = toMinutes(s.end);
-      if (a !== null) minMin = Math.min(minMin, a);
-      if (b !== null) maxMin = Math.max(maxMin, b);
-    });
-    if (minMin === 24 * 60 || maxMin === 0) { minMin = 17 * 60; maxMin = 22 * 60; }
-    const startHour = Math.floor(minMin / 60);
-    const endHour   = Math.ceil(maxMin / 60);
-    const totalMin  = (endHour - startHour) * 60;
-    const colHeight = totalMin * PX_PER_MIN;
+    const conflictsHere = daySlots.filter(s => (s.conflicts_with || []).some(j => passesFilters(allSlots[j])));
 
     // Section frame
     const section = document.createElement('section');
     section.className = 'day-table';
     const header = document.createElement('div');
     header.className = 'day-table-header';
-    const conflictsHere = daySlots.filter(s => (s.conflicts_with || []).some(j => passesFilters(allSlots[j])));
     header.innerHTML = `
       <h2>${day}</h2>
       <div class="class-count">${daySlots.length} class${daySlots.length === 1 ? '' : 'es'}${conflictsHere.length ? ' · <span style="color:var(--conflict-text);">' + conflictsHere.length + ' clash' + (conflictsHere.length === 1 ? '' : 'es') + '</span>' : ''}</div>
     `;
     section.appendChild(header);
 
-    // Grid: corner + 4 studio headers + time gutter + 4 studio columns
-    const grid = document.createElement('div');
-    grid.className = 'day-table-grid';
-    grid.appendChild(divEl('time-corner'));
+    // Studio header bar — rendered ONCE at the top of the day, not per window
+    const studioBar = document.createElement('div');
+    studioBar.className = 'day-table-grid';
+    studioBar.appendChild(divEl('time-corner'));
     STUDIOS.forEach(s => {
       const h = document.createElement('div');
       h.className = 'studio-header studio-' + s.key;
       h.textContent = s.name;
-      grid.appendChild(h);
+      studioBar.appendChild(h);
     });
+    section.appendChild(studioBar);
 
-    // Time gutter
-    const timeCol = document.createElement('div');
-    timeCol.className = 'time-gutter';
-    timeCol.style.height = colHeight + 'px';
-    for (let h = startHour; h <= endHour; h++) {
-      const lbl = document.createElement('div');
-      lbl.className = 'time-label';
-      lbl.textContent = String(h).padStart(2, '0') + ':00';
-      lbl.style.top = ((h - startHour) * 60 * PX_PER_MIN) + 'px';
-      timeCol.appendChild(lbl);
-    }
-    grid.appendChild(timeCol);
+    // Cluster slots in this day into time windows. Slots with no studio
+    // (studio-unknown) are excluded from the grid and rendered separately below.
+    const studioSlots = daySlots.filter(s => studioCssClass(s.studio) !== 'studio-unknown');
+    const windows = clusterDayIntoWindows(studioSlots, GAP_THRESHOLD_MIN);
 
-    // 4 studio columns, each with hour lines + their assigned slots
-    STUDIOS.forEach(studioMeta => {
-      const col = document.createElement('div');
-      col.className = 'studio-col';
-      col.style.height = colHeight + 'px';
-      // Hour lines
-      for (let h = startHour + 1; h < endHour; h++) {
-        const line = document.createElement('div');
-        line.className = 'hour-line';
-        line.style.top = ((h - startHour) * 60 * PX_PER_MIN) + 'px';
-        col.appendChild(line);
+    windows.forEach(function(win, idx) {
+      const startHour = Math.floor(win.start / 60);
+      const endHour   = Math.ceil(win.end / 60);
+      const totalMin  = (endHour - startHour) * 60;
+      const colHeight = Math.max(totalMin * PX_PER_MIN, 60);
+
+      // Gap divider before subsequent windows
+      if (idx > 0) {
+        const prevEnd = windows[idx - 1].end;
+        const gapMin = win.start - prevEnd;
+        const gapHours = (gapMin / 60).toFixed(gapMin % 60 === 0 ? 0 : 1);
+        const divider = document.createElement('div');
+        divider.style.cssText = 'margin: 10px 0; padding: 8px 14px; background: var(--paper); border: 1px dashed var(--rule); border-radius: 4px; text-align: center; font-size: 11px; color: var(--ink-muted); letter-spacing: 0.3px;';
+        divider.textContent = `↓ ${gapHours}h gap — no classes ${minutesToHHMM(prevEnd)}–${minutesToHHMM(win.start)}`;
+        section.appendChild(divider);
       }
-      // Slots for this studio on this day
-      const studioSlots = daySlots.filter(s => studioCssClass(s.studio) === 'studio-' + studioMeta.key);
-      studioSlots.forEach(s => {
-        const a = toMinutes(s.start), b = toMinutes(s.end);
-        if (a === null || b === null) return;
-        const slot = document.createElement('div');
-        slot.className = 'slot ' + studioCssClass(s.studio);
-        const isConflict = (s.conflicts_with || []).some(j => passesFilters(allSlots[j]));
-        if (isConflict) slot.classList.add('is-conflict');
-        slot.style.top    = ((a - startHour * 60) * PX_PER_MIN) + 'px';
-        slot.style.height = ((b - a) * PX_PER_MIN - 2) + 'px';
-        const lvl = displayLevel(s.level);
-        slot.innerHTML = `
-          <div class="slot-style">${escapeHtml(s.style)}${lvl ? ' · ' + escapeHtml(lvl) : ''}</div>
-          <div class="slot-meta">${escapeHtml(s.teacher || s.slot_teacher || '')}</div>
-          <div class="slot-meta">${escapeHtml(s.start)}–${escapeHtml(s.end)}</div>
-        `;
-        slot.addEventListener('click', () => openModal(s));
-        col.appendChild(slot);
+
+      // Window body grid: time gutter + 4 studio columns
+      const grid = document.createElement('div');
+      grid.className = 'day-table-grid';
+
+      const timeCol = document.createElement('div');
+      timeCol.className = 'time-gutter';
+      timeCol.style.height = colHeight + 'px';
+      for (let h = startHour; h <= endHour; h++) {
+        const lbl = document.createElement('div');
+        lbl.className = 'time-label';
+        lbl.textContent = String(h).padStart(2, '0') + ':00';
+        lbl.style.top = ((h - startHour) * 60 * PX_PER_MIN) + 'px';
+        timeCol.appendChild(lbl);
+      }
+      grid.appendChild(timeCol);
+
+      STUDIOS.forEach(studioMeta => {
+        const col = document.createElement('div');
+        col.className = 'studio-col';
+        col.style.height = colHeight + 'px';
+        for (let h = startHour + 1; h < endHour; h++) {
+          const line = document.createElement('div');
+          line.className = 'hour-line';
+          line.style.top = ((h - startHour) * 60 * PX_PER_MIN) + 'px';
+          col.appendChild(line);
+        }
+        const winStudioSlots = win.slots.filter(s => studioCssClass(s.studio) === 'studio-' + studioMeta.key);
+        winStudioSlots.forEach(s => {
+          const a = toMinutes(s.start), b = toMinutes(s.end);
+          if (a === null || b === null) return;
+          const slot = document.createElement('div');
+          slot.className = 'slot ' + studioCssClass(s.studio);
+          const isConflict = (s.conflicts_with || []).some(j => passesFilters(allSlots[j]));
+          if (isConflict) slot.classList.add('is-conflict');
+          slot.style.top    = ((a - startHour * 60) * PX_PER_MIN) + 'px';
+          slot.style.height = ((b - a) * PX_PER_MIN - 2) + 'px';
+          const lvl = displayLevel(s.level);
+          slot.innerHTML = `
+            <div class="slot-style">${escapeHtml(s.style)}${lvl ? ' · ' + escapeHtml(lvl) : ''}</div>
+            <div class="slot-meta">${escapeHtml(s.slot_teacher || s.teacher || '')}</div>
+            <div class="slot-meta">${escapeHtml(s.start)}–${escapeHtml(s.end)}</div>
+          `;
+          slot.addEventListener('click', () => openModal(s));
+          col.appendChild(slot);
+        });
+        grid.appendChild(col);
       });
-      // Render the unassigned slots inside Aakash column? No — put them on a
-      // floating "Unassigned" row below the table. For now, hide them from
-      // the per-studio view (filter chip controls visibility).
-      grid.appendChild(col);
+
+      section.appendChild(grid);
     });
 
-    section.appendChild(grid);
-
-    // Unassigned slots — show below the studio grid since they don't have a column
+    // Unassigned slots — appear below the studio grid since they don't fit a column
     const unassigned = daySlots.filter(s => studioCssClass(s.studio) === 'studio-unknown');
     if (unassigned.length > 0) {
       const unWrap = document.createElement('div');
@@ -939,7 +978,7 @@ function renderPerDayTables(visible) {
             <span class="style-name">${escapeHtml(s.style)}${lvl ? ' · ' + escapeHtml(lvl) : ''}</span>
             <span class="time-range">${escapeHtml(s.start)}–${escapeHtml(s.end)}</span>
           </div>
-          <div class="row2">${escapeHtml(s.teacher || s.slot_teacher || '')}</div>
+          <div class="row2">${escapeHtml(s.slot_teacher || s.teacher || '')}</div>
         `;
         card.addEventListener('click', () => openModal(s));
         unWrap.appendChild(card);
@@ -981,7 +1020,7 @@ function renderDayList(visible) {
             <span class="style-name">${escapeHtml(s.style)}${s.level ? ' · ' + escapeHtml(s.level) : ''}</span>
             <span class="time-range">${escapeHtml(s.start)}–${escapeHtml(s.end)}</span>
           </div>
-          <div class="row2">${escapeHtml(s.teacher || s.slot_teacher || '')} · ${escapeHtml(s.studio || 'studio not assigned')}${isConflict ? ' · ⚠ studio clash' : ''}</div>
+          <div class="row2">${escapeHtml(s.slot_teacher || s.teacher || '')} · ${escapeHtml(s.studio || 'studio not assigned')}${isConflict ? ' · ⚠ studio clash' : ''}</div>
         `;
         card.addEventListener('click', () => openModal(s));
         sec.appendChild(card);
@@ -1013,14 +1052,19 @@ function openModal(slot) {
   document.getElementById('modal-meta').textContent = `${slot.day} · ${slot.start}–${slot.end} · ${slot.studio || 'studio not yet assigned'}`;
   const dl = document.getElementById('modal-dl');
   dl.innerHTML = '';
+  // Show the slot teacher (the person who actually teaches that level/time)
+  // first. Submitter is shown only when different — usually for admin or
+  // lead-teacher-on-behalf-of submissions.
+  const slotTeacher = slot.slot_teacher || slot.teacher;
+  const submitter   = (slot.teacher && slot.teacher !== slotTeacher) ? slot.teacher : '';
   const rows = [
-    ['Teacher',     slot.teacher],
-    ['Slot teacher',slot.slot_teacher && slot.slot_teacher !== slot.teacher ? slot.slot_teacher : ''],
+    ['Teacher',     slotTeacher],
+    ['Submitted by',submitter],
     ['Co-teacher',  slot.co_teacher],
     ['Capacity',    slot.capacity ? slot.capacity + ' students' : ''],
-    ['Semester',    slot.semester],
-    ['Studio',      slot.studio || 'not yet assigned'],
-    ['Source',      slot.source]
+    ['Semester',    slot.semester]
+    // Studio is already in the header meta line; Source / submission_ts are
+    // admin-internal and intentionally hidden from this view.
   ];
   rows.forEach(([k, v]) => {
     if (!v) return;
