@@ -195,55 +195,84 @@
     .conflicts-panel li { margin: 4px 0; }
     .conflicts-panel.empty { display: none; }
 
-    /* Weekly grid */
-    .grid-wrap {
+    /* Per-day tables — one section per day with 4 studio columns */
+    #day-tables { display: flex; flex-direction: column; gap: 24px; }
+    .day-table {
       background: var(--surface);
       border: 1px solid var(--rule);
       border-radius: 4px;
-      padding: 0;
-      overflow-x: auto;
+      padding: 16px 18px 18px;
     }
-    .grid {
-      display: grid;
-      grid-template-columns: 56px repeat(6, minmax(140px, 1fr));
-      min-width: 880px;
+    .day-table-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--rule);
     }
-    .grid-day-header {
-      padding: 12px 8px;
-      text-align: center;
-      font-size: 13px;
+    .day-table-header h2 {
+      font-family: var(--font-display);
+      font-size: 22px;
       font-weight: 500;
-      color: var(--ink-soft);
-      border-bottom: 1px solid var(--rule);
-      background: var(--surface);
-      position: sticky;
-      top: 0;
-      z-index: 2;
+      margin: 0;
+      color: var(--ink);
     }
-    .grid-time-corner {
-      border-bottom: 1px solid var(--rule);
-      background: var(--surface);
-      position: sticky;
-      top: 0;
-      z-index: 2;
-    }
-    .grid-time-cell {
-      font-size: 11px;
+    .day-table-header .class-count {
+      font-size: 12px;
       color: var(--ink-muted);
-      padding: 4px 6px 0 0;
-      text-align: right;
-      border-right: 1px solid var(--rule);
     }
-    .grid-day-col {
+    .day-table-empty {
+      padding: 20px 0;
+      font-size: 13px;
+      color: var(--ink-muted);
+      font-style: italic;
+    }
+    .day-table-grid {
+      display: grid;
+      grid-template-columns: 52px repeat(4, minmax(0, 1fr));
+      gap: 0;
+      position: relative;
+    }
+    .studio-header {
+      padding: 8px 8px 10px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      border-bottom: 1px solid var(--rule);
+      border-left: 1px solid var(--rule);
+    }
+    .studio-header.studio-aakash    { color: var(--studio-aakash-text);    background: var(--studio-aakash-bg); }
+    .studio-header.studio-ananta1   { color: var(--studio-ananta1-text);   background: var(--studio-ananta1-bg); }
+    .studio-header.studio-ananta2   { color: var(--studio-ananta2-text);   background: var(--studio-ananta2-bg); }
+    .studio-header.studio-artdeco   { color: var(--studio-artdeco-text);   background: var(--studio-artdeco-bg); }
+    .time-corner {
+      border-bottom: 1px solid var(--rule);
+    }
+    .time-gutter {
       position: relative;
       border-right: 1px solid var(--rule);
+    }
+    .time-gutter .time-label {
+      position: absolute;
+      right: 8px;
+      font-size: 11px;
+      color: var(--ink-muted);
+      transform: translateY(-50%);
+    }
+    .studio-col {
+      position: relative;
+      border-left: 1px solid var(--rule);
       min-height: 100%;
     }
-    .grid-day-col:last-child { border-right: none; }
-    .hour-line {
+    .studio-col .hour-line {
       position: absolute;
       left: 0; right: 0;
       border-top: 1px dashed var(--rule);
+    }
+    .day-table-grid > .studio-col + .studio-col {
+      border-left: 1px solid var(--rule);
     }
 
     .slot {
@@ -375,8 +404,8 @@
 
     @media (max-width: 740px) {
       main { padding: 14px; }
-      .grid-wrap { display: none; }
-      .day-list { display: block; }
+      #day-tables { display: none; }
+      .day-list { display: block !important; }
       .toolbar { padding: 10px; }
       .filter-chip { font-size: 11px; padding: 4px 10px; }
     }
@@ -452,13 +481,12 @@
       </select>
     </div>
 
-    <!-- Desktop weekly grid -->
-    <div class="grid-wrap" id="grid-wrap">
-      <div class="grid" id="grid"></div>
-    </div>
+    <!-- Per-day tables (Mon–Sat × 4 studios). Used on both desktop and mobile;
+         on mobile it scrolls horizontally. -->
+    <div id="day-tables"></div>
 
-    <!-- Mobile day-by-day list -->
-    <div class="day-list" id="day-list"></div>
+    <!-- Mobile fallback list — kept hidden by default; CSS shows on small screens -->
+    <div class="day-list" id="day-list" hidden></div>
 
     <div class="legend" id="legend"></div>
 
@@ -732,12 +760,21 @@ function renderEverything() {
   const visible = allSlots.filter(passesFilters);
   renderSummary(visible);
   renderConflicts(visible);
-  renderGrid(visible);
+  renderPerDayTables(visible);
   renderDayList(visible);
 
   document.getElementById('empty-state').hidden = visible.length > 0;
-  document.getElementById('grid-wrap').hidden = visible.length === 0;
+  document.getElementById('day-tables').hidden = visible.length === 0;
   document.getElementById('day-list').hidden = visible.length === 0;
+}
+
+// Hide the verbose backfill placeholder "(all levels: Level 1, Level 2, ...)"
+// — only meaningful for legacy backfilled rows. New per-level submissions show
+// the actual level name.
+function displayLevel(lv) {
+  if (!lv) return '';
+  if (/^\(all levels/i.test(lv)) return '';
+  return lv;
 }
 
 function renderSummary(visible) {
@@ -779,86 +816,145 @@ function renderConflicts(visible) {
   panel.classList.toggle('empty', count === 0);
 }
 
-function renderGrid(visible) {
-  const grid = document.getElementById('grid');
-  grid.innerHTML = '';
+// One section per day, each with 4 studio columns.
+// Time runs vertically; slots are absolutely positioned within their studio
+// column based on start/end. Skipping days with no classes keeps the page
+// shorter.
+function renderPerDayTables(visible) {
+  const wrap = document.getElementById('day-tables');
+  wrap.innerHTML = '';
   if (visible.length === 0) return;
 
-  // Compute time range from data, snap to whole hours
-  let minMin = 24 * 60, maxMin = 0;
-  visible.forEach(s => {
-    const a = toMinutes(s.start), b = toMinutes(s.end);
-    if (a !== null) minMin = Math.min(minMin, a);
-    if (b !== null) maxMin = Math.max(maxMin, b);
-  });
-  if (minMin === 24 * 60 || maxMin === 0) { minMin = 17 * 60; maxMin = 22 * 60 + 30; }
-  const startHour = Math.floor(minMin / 60);
-  const endHour   = Math.ceil(maxMin / 60);
-  const totalMin  = (endHour - startHour) * 60;
   const PX_PER_MIN = 1.4; // ~84px per hour
-  const colHeight  = totalMin * PX_PER_MIN;
 
-  // Header row
-  const corner = document.createElement('div'); corner.className = 'grid-time-corner'; grid.appendChild(corner);
   DAYS.forEach(day => {
-    const h = document.createElement('div');
-    h.className = 'grid-day-header';
-    h.textContent = day;
-    grid.appendChild(h);
-  });
-
-  // Time gutter — one cell per hour
-  const timeCol = document.createElement('div');
-  timeCol.style.gridRow = '2 / 3';
-  timeCol.style.position = 'relative';
-  timeCol.style.height = colHeight + 'px';
-  timeCol.style.borderRight = '1px solid var(--rule)';
-  for (let h = startHour; h <= endHour; h++) {
-    const top = (h - startHour) * 60 * PX_PER_MIN;
-    const t = document.createElement('div');
-    t.className = 'grid-time-cell';
-    t.style.position = 'absolute';
-    t.style.top = (top - 6) + 'px';
-    t.style.right = '6px';
-    t.style.left = '0';
-    t.textContent = String(h).padStart(2, '0') + ':00';
-    timeCol.appendChild(t);
-  }
-  grid.appendChild(timeCol);
-
-  // Day columns
-  DAYS.forEach(day => {
-    const col = document.createElement('div');
-    col.className = 'grid-day-col';
-    col.style.height = colHeight + 'px';
-    // Hour lines
-    for (let h = startHour; h <= endHour; h++) {
-      const line = document.createElement('div');
-      line.className = 'hour-line';
-      line.style.top = ((h - startHour) * 60 * PX_PER_MIN) + 'px';
-      col.appendChild(line);
-    }
-    // Slots
     const daySlots = visible.filter(s => s.day === day);
+    if (daySlots.length === 0) return; // skip empty days entirely
+
+    // Per-day time bounds, snapped to whole hours
+    let minMin = 24 * 60, maxMin = 0;
     daySlots.forEach(s => {
       const a = toMinutes(s.start), b = toMinutes(s.end);
-      if (a === null || b === null) return;
-      const slot = document.createElement('div');
-      slot.className = 'slot ' + studioCssClass(s.studio);
-      const isConflict = (s.conflicts_with || []).some(j => passesFilters(allSlots[j]));
-      if (isConflict) slot.classList.add('is-conflict');
-      slot.style.top    = ((a - startHour * 60) * PX_PER_MIN) + 'px';
-      slot.style.height = ((b - a) * PX_PER_MIN - 2) + 'px';
-      slot.innerHTML = `
-        <div class="slot-style">${escapeHtml(s.style)}${s.level ? ' · ' + escapeHtml(s.level) : ''}</div>
-        <div class="slot-meta">${escapeHtml(s.teacher || s.slot_teacher || '')}</div>
-        <div class="slot-meta">${escapeHtml(s.start)}–${escapeHtml(s.end)} · ${escapeHtml(s.studio || 'unassigned')}</div>
-      `;
-      slot.addEventListener('click', () => openModal(s));
-      col.appendChild(slot);
+      if (a !== null) minMin = Math.min(minMin, a);
+      if (b !== null) maxMin = Math.max(maxMin, b);
     });
-    grid.appendChild(col);
+    if (minMin === 24 * 60 || maxMin === 0) { minMin = 17 * 60; maxMin = 22 * 60; }
+    const startHour = Math.floor(minMin / 60);
+    const endHour   = Math.ceil(maxMin / 60);
+    const totalMin  = (endHour - startHour) * 60;
+    const colHeight = totalMin * PX_PER_MIN;
+
+    // Section frame
+    const section = document.createElement('section');
+    section.className = 'day-table';
+    const header = document.createElement('div');
+    header.className = 'day-table-header';
+    const conflictsHere = daySlots.filter(s => (s.conflicts_with || []).some(j => passesFilters(allSlots[j])));
+    header.innerHTML = `
+      <h2>${day}</h2>
+      <div class="class-count">${daySlots.length} class${daySlots.length === 1 ? '' : 'es'}${conflictsHere.length ? ' · <span style="color:var(--conflict-text);">' + conflictsHere.length + ' clash' + (conflictsHere.length === 1 ? '' : 'es') + '</span>' : ''}</div>
+    `;
+    section.appendChild(header);
+
+    // Grid: corner + 4 studio headers + time gutter + 4 studio columns
+    const grid = document.createElement('div');
+    grid.className = 'day-table-grid';
+    grid.appendChild(divEl('time-corner'));
+    STUDIOS.forEach(s => {
+      const h = document.createElement('div');
+      h.className = 'studio-header studio-' + s.key;
+      h.textContent = s.name;
+      grid.appendChild(h);
+    });
+
+    // Time gutter
+    const timeCol = document.createElement('div');
+    timeCol.className = 'time-gutter';
+    timeCol.style.height = colHeight + 'px';
+    for (let h = startHour; h <= endHour; h++) {
+      const lbl = document.createElement('div');
+      lbl.className = 'time-label';
+      lbl.textContent = String(h).padStart(2, '0') + ':00';
+      lbl.style.top = ((h - startHour) * 60 * PX_PER_MIN) + 'px';
+      timeCol.appendChild(lbl);
+    }
+    grid.appendChild(timeCol);
+
+    // 4 studio columns, each with hour lines + their assigned slots
+    STUDIOS.forEach(studioMeta => {
+      const col = document.createElement('div');
+      col.className = 'studio-col';
+      col.style.height = colHeight + 'px';
+      // Hour lines
+      for (let h = startHour + 1; h < endHour; h++) {
+        const line = document.createElement('div');
+        line.className = 'hour-line';
+        line.style.top = ((h - startHour) * 60 * PX_PER_MIN) + 'px';
+        col.appendChild(line);
+      }
+      // Slots for this studio on this day
+      const studioSlots = daySlots.filter(s => studioCssClass(s.studio) === 'studio-' + studioMeta.key);
+      studioSlots.forEach(s => {
+        const a = toMinutes(s.start), b = toMinutes(s.end);
+        if (a === null || b === null) return;
+        const slot = document.createElement('div');
+        slot.className = 'slot ' + studioCssClass(s.studio);
+        const isConflict = (s.conflicts_with || []).some(j => passesFilters(allSlots[j]));
+        if (isConflict) slot.classList.add('is-conflict');
+        slot.style.top    = ((a - startHour * 60) * PX_PER_MIN) + 'px';
+        slot.style.height = ((b - a) * PX_PER_MIN - 2) + 'px';
+        const lvl = displayLevel(s.level);
+        slot.innerHTML = `
+          <div class="slot-style">${escapeHtml(s.style)}${lvl ? ' · ' + escapeHtml(lvl) : ''}</div>
+          <div class="slot-meta">${escapeHtml(s.teacher || s.slot_teacher || '')}</div>
+          <div class="slot-meta">${escapeHtml(s.start)}–${escapeHtml(s.end)}</div>
+        `;
+        slot.addEventListener('click', () => openModal(s));
+        col.appendChild(slot);
+      });
+      // Render the unassigned slots inside Aakash column? No — put them on a
+      // floating "Unassigned" row below the table. For now, hide them from
+      // the per-studio view (filter chip controls visibility).
+      grid.appendChild(col);
+    });
+
+    section.appendChild(grid);
+
+    // Unassigned slots — show below the studio grid since they don't have a column
+    const unassigned = daySlots.filter(s => studioCssClass(s.studio) === 'studio-unknown');
+    if (unassigned.length > 0) {
+      const unWrap = document.createElement('div');
+      unWrap.style.cssText = 'margin-top:14px;padding-top:10px;border-top:1px dashed var(--rule);';
+      const unHdr = document.createElement('div');
+      unHdr.style.cssText = 'font-size:11px;color:var(--ink-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;';
+      unHdr.textContent = 'Studio not yet assigned';
+      unWrap.appendChild(unHdr);
+      unassigned.sort((a, b) => (toMinutes(a.start) || 0) - (toMinutes(b.start) || 0));
+      unassigned.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'day-card studio-unknown';
+        const lvl = displayLevel(s.level);
+        card.innerHTML = `
+          <div class="row1">
+            <span class="style-name">${escapeHtml(s.style)}${lvl ? ' · ' + escapeHtml(lvl) : ''}</span>
+            <span class="time-range">${escapeHtml(s.start)}–${escapeHtml(s.end)}</span>
+          </div>
+          <div class="row2">${escapeHtml(s.teacher || s.slot_teacher || '')}</div>
+        `;
+        card.addEventListener('click', () => openModal(s));
+        unWrap.appendChild(card);
+      });
+      section.appendChild(unWrap);
+    }
+
+    wrap.appendChild(section);
   });
+}
+
+function divEl(className) {
+  const d = document.createElement('div');
+  d.className = className;
+  return d;
 }
 
 function renderDayList(visible) {
