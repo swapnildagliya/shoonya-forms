@@ -482,7 +482,9 @@
 <script>
 'use strict';
 
-const STORAGE_KEY = 'shoonya_schedule_session';
+// Shared login key with the smart-form. If a teacher logs in there, the
+// schedule auto-picks up the same session — no second login.
+const SHARED_SESSION_KEY = 'shoonya_session';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -536,7 +538,9 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
       btn.textContent = 'View schedule →';
       return;
     }
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ email, pin }));
+    // Persist using the same key the smart-form uses, so the next visit
+    // (here OR there) doesn't require logging in again.
+    persistSession(email, pin, json.profile);
     onLoaded(json);
   } catch (err) {
     showError('Network error. Please try again.');
@@ -545,25 +549,53 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   }
 });
 
-// Auto-login if session present
+// Auto-login if a session exists from the smart-form (or this page).
+// Reads localStorage.shoonya_session — same key register.html and
+// smart-form/index.html write to.
 (async function tryAutoLogin() {
-  const raw = sessionStorage.getItem(STORAGE_KEY);
-  if (!raw) return;
+  const stored = readStoredSession();
+  if (!stored) return;
   try {
-    const { email, pin } = JSON.parse(raw);
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'getMasterSchedule', email, pin })
+      body: JSON.stringify({ action: 'getMasterSchedule', email: stored.email, pin: stored.pin })
     });
     const json = await res.json();
     if (json.ok) onLoaded(json);
-    else sessionStorage.removeItem(STORAGE_KEY);
-  } catch (e) { sessionStorage.removeItem(STORAGE_KEY); }
+    // If auth is no longer valid (PIN changed, account removed), don't wipe
+    // the session here — the smart-form may still consider it valid. Just
+    // surface the login form so the teacher can re-enter.
+  } catch (e) { /* fall through to login form */ }
 })();
 
+function readStoredSession() {
+  try {
+    const raw = localStorage.getItem(SHARED_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const email = (parsed.profile && parsed.profile.email) || parsed.email;
+    const pin   = parsed.pin;
+    if (!email || !pin) return null;
+    return { email: String(email).toLowerCase().trim(), pin: String(pin) };
+  } catch (e) { return null; }
+}
+
+function persistSession(email, pin, profile) {
+  try {
+    const existing = JSON.parse(localStorage.getItem(SHARED_SESSION_KEY) || '{}');
+    const merged = Object.assign({}, existing, {
+      profile: profile || existing.profile || { email },
+      pin
+    });
+    localStorage.setItem(SHARED_SESSION_KEY, JSON.stringify(merged));
+  } catch (e) { /* ignore */ }
+}
+
 document.getElementById('logout-btn').addEventListener('click', () => {
-  sessionStorage.removeItem(STORAGE_KEY);
+  // Clearing the shared session logs out of the smart-form too — that's the
+  // expected behavior since they share auth.
+  localStorage.removeItem(SHARED_SESSION_KEY);
   location.reload();
 });
 
@@ -573,7 +605,22 @@ function onLoaded(json) {
   document.getElementById('schedule-screen').hidden = false;
   document.getElementById('logout-btn').hidden = false;
 
-  allSlots = json.slots || [];
+  // Sanity check: if the response doesn't include a slots array, the
+  // deployed Apps Script doesn't recognize getMasterSchedule yet — almost
+  // always means the editor code wasn't pushed via Deploy → Manage
+  // deployments → New version. Surface this loudly so the admin knows.
+  if (!Array.isArray(json.slots)) {
+    document.body.innerHTML = `
+      <div style="max-width:560px;margin:80px auto;padding:32px;background:#FCEBEB;border:1px solid #E24B4A;border-radius:6px;font-family:system-ui,sans-serif;color:#791F1F;">
+        <h2 style="margin:0 0 12px;font-size:20px;">Backend not yet on the right version</h2>
+        <p style="font-size:14px;line-height:1.5;">The Apps Script web app is responding, but it doesn't recognise the <code>getMasterSchedule</code> action — so it's silently routing your request to the submission flow (which is why you keep getting "New undefined submission" emails).</p>
+        <p style="font-size:14px;line-height:1.5;margin-bottom:0;"><strong>Fix:</strong> open the Apps Script editor → <strong>Deploy → Manage deployments</strong> → click the pencil icon on your existing deployment → set Version to <strong>"New version"</strong> → click <strong>Deploy</strong>. Then refresh this page.</p>
+      </div>
+    `;
+    return;
+  }
+
+  allSlots = json.slots;
   detectConflicts(allSlots);
   buildFilters(allSlots);
   renderEverything();
