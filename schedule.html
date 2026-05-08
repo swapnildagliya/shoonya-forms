@@ -195,6 +195,45 @@
     .conflicts-panel li { margin: 4px 0; }
     .conflicts-panel.empty { display: none; }
 
+    /* Tab navigation */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      border-bottom: 1px solid var(--rule);
+      margin-bottom: 18px;
+    }
+    .tab {
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      padding: 10px 16px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink-muted);
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+    }
+    .tab:hover { color: var(--ink-soft); }
+    .tab.active {
+      color: var(--vibrant);
+      border-bottom-color: var(--vibrant);
+    }
+    .tab .tab-count {
+      display: inline-block;
+      margin-left: 6px;
+      font-size: 11px;
+      background: var(--rule);
+      color: var(--ink-soft);
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-weight: 400;
+    }
+    .tab.active .tab-count {
+      background: var(--vibrant-tint);
+      color: var(--vibrant);
+    }
+
     /* Per-day tables — one section per day with 4 studio columns */
     #day-tables { display: flex; flex-direction: column; gap: 24px; }
     .day-table {
@@ -427,6 +466,49 @@
       align-self: center;
     }
 
+    /* Workshop grouped card — one per (email, title), sessions listed inside */
+    .workshop-group {
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      border-left-width: 3px;
+      border-left-style: solid;
+      margin: 10px 0 14px;
+      padding: 12px 14px 8px;
+    }
+    .workshop-group.studio-aakash    { border-left-color: var(--studio-aakash-border); }
+    .workshop-group.studio-ananta1   { border-left-color: var(--studio-ananta1-border); }
+    .workshop-group.studio-ananta2   { border-left-color: var(--studio-ananta2-border); }
+    .workshop-group.studio-artdeco   { border-left-color: var(--studio-artdeco-border); }
+    .workshop-group.studio-unknown   { border-left-color: var(--studio-unknown-border); }
+    .workshop-group__head { margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dashed var(--rule); }
+    .workshop-group__title {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--ink);
+    }
+    .workshop-group__sub {
+      font-size: 12px;
+      color: var(--ink-muted);
+      margin-top: 2px;
+    }
+    .workshop-session-row {
+      display: grid;
+      grid-template-columns: 90px 100px 1fr;
+      gap: 10px;
+      padding: 6px 4px;
+      font-size: 13px;
+      color: var(--ink-soft);
+      border-bottom: 1px dashed var(--rule);
+      cursor: pointer;
+      transition: background .12s;
+    }
+    .workshop-session-row:last-child { border-bottom: none; }
+    .workshop-session-row:hover { background: var(--paper); }
+    .workshop-session-row .ws-date { color: var(--ink); font-weight: 500; }
+    .workshop-session-row .ws-time { color: var(--ink-soft); }
+    .workshop-session-row .ws-topic { color: var(--ink); }
+
     .legend {
       margin-top: 16px;
       display: flex;
@@ -551,6 +633,13 @@
       <ul id="conflicts-list"></ul>
     </div>
 
+    <!-- Tabs: Weekly · Workshops · Social nights. Each tab shows ONE type. -->
+    <div class="tabs" role="tablist">
+      <button class="tab active" data-tab="weekly"    role="tab" aria-selected="true">Weekly classes</button>
+      <button class="tab"        data-tab="workshops" role="tab" aria-selected="false">Workshops</button>
+      <button class="tab"        data-tab="socials"   role="tab" aria-selected="false">Social nights</button>
+    </div>
+
     <div class="toolbar" id="toolbar">
       <span class="toolbar-label">Studio</span>
       <div id="filter-studio-group" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
@@ -566,12 +655,20 @@
       </select>
     </div>
 
-    <!-- Per-day tables (Mon–Sat × 4 studios). Used on both desktop and mobile;
-         on mobile it scrolls horizontally. -->
-    <div id="day-tables"></div>
+    <!-- TAB CONTENT: Weekly classes (per-day × per-studio grid) -->
+    <div id="tab-weekly" data-tab-panel="weekly">
+      <div id="day-tables"></div>
+    </div>
 
-    <!-- Upcoming workshops & social nights — chronological list -->
-    <div id="upcoming-oneoffs"></div>
+    <!-- TAB CONTENT: Workshops (chronological list, grouped by title) -->
+    <div id="tab-workshops" data-tab-panel="workshops" hidden>
+      <div id="workshops-list"></div>
+    </div>
+
+    <!-- TAB CONTENT: Social nights (chronological list) -->
+    <div id="tab-socials" data-tab-panel="socials" hidden>
+      <div id="socials-list"></div>
+    </div>
 
     <!-- Mobile fallback list — kept hidden by default; CSS shows on small screens -->
     <div class="day-list" id="day-list" hidden></div>
@@ -844,25 +941,61 @@ function passesFilters(slot) {
 }
 
 // ── RENDER ───────────────────────────────────────────────────────────────
-function isOneOff(slot) {
-  return slot.type === 'workshop' || slot.type === 'series' || slot.type === 'social';
+function slotTypeOf(slot) {
+  // Treat anything that doesn't have date+title as weekly. Backwards compat
+  // for older Master Schedule rows that pre-date the Type column.
+  const t = String(slot.type || '').toLowerCase();
+  if (t === 'workshop' || t === 'series') return 'workshop';
+  if (t === 'social') return 'social';
+  // Heuristic fallback: if a row has a specific Date OR Title set, it can't be weekly.
+  if ((slot.date && slot.date.length === 10) || slot.title) return 'workshop';
+  return 'weekly';
 }
 
+function isOneOff(slot) {
+  const t = slotTypeOf(slot);
+  return t === 'workshop' || t === 'social';
+}
+
+let activeTab = 'weekly';
+
 function renderEverything() {
-  const visible = allSlots.filter(passesFilters);
-  const weekly  = visible.filter(s => !isOneOff(s));
-  const oneOffs = visible.filter(s => isOneOff(s));
+  const visible   = allSlots.filter(passesFilters);
+  const weekly    = visible.filter(s => slotTypeOf(s) === 'weekly');
+  const workshops = visible.filter(s => slotTypeOf(s) === 'workshop');
+  const socials   = visible.filter(s => slotTypeOf(s) === 'social');
 
   renderSummary(visible);
   renderConflicts(visible);
   renderPerDayTables(weekly);
-  renderUpcomingOneOffs(oneOffs);
+  renderWorkshopsList(workshops);
+  renderSocialsList(socials);
   renderDayList(visible);
+
+  // Tab counts
+  document.querySelector('.tab[data-tab="weekly"]').innerHTML    = 'Weekly classes <span class="tab-count">' + weekly.length + '</span>';
+  document.querySelector('.tab[data-tab="workshops"]').innerHTML = 'Workshops <span class="tab-count">' + workshops.length + '</span>';
+  document.querySelector('.tab[data-tab="socials"]').innerHTML   = 'Social nights <span class="tab-count">' + socials.length + '</span>';
 
   document.getElementById('empty-state').hidden = visible.length > 0;
   document.getElementById('day-tables').hidden = weekly.length === 0;
   document.getElementById('day-list').hidden = visible.length === 0;
 }
+
+// Tab switching
+document.querySelectorAll('.tabs .tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    activeTab = btn.dataset.tab;
+    document.querySelectorAll('.tabs .tab').forEach(b => {
+      const isActive = b.dataset.tab === activeTab;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    document.querySelectorAll('[data-tab-panel]').forEach(panel => {
+      panel.hidden = panel.dataset.tabPanel !== activeTab;
+    });
+  });
+});
 
 // Hide the verbose backfill placeholder "(all levels: Level 1, Level 2, ...)"
 // — only meaningful for legacy backfilled rows. New per-level submissions show
@@ -1108,81 +1241,129 @@ function divEl(className) {
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAY_SHORT   = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-function renderUpcomingOneOffs(oneOffSlots) {
-  const wrap = document.getElementById('upcoming-oneoffs');
+// ── WORKSHOPS TAB ────────────────────────────────────────────────────────
+// Group sessions by (email, title) so a 6-session workshop appears as ONE
+// expandable card rather than 6 repeated rows.
+function renderWorkshopsList(workshopSlots) {
+  const wrap = document.getElementById('workshops-list');
   wrap.innerHTML = '';
-  if (!oneOffSlots || oneOffSlots.length === 0) return;
+  if (!workshopSlots || workshopSlots.length === 0) {
+    wrap.innerHTML = '<div class="empty-state"><h3>No workshops yet</h3><p>Workshop submissions will appear here.</p></div>';
+    return;
+  }
 
-  // Sort by date asc (then by start time)
-  const sorted = oneOffSlots.slice().sort(function(a, b) {
-    const da = a.date || '';
-    const db = b.date || '';
-    if (da !== db) return da < db ? -1 : 1;
-    return (toMinutes(a.start) || 0) - (toMinutes(b.start) || 0);
+  // Group by (email, title)
+  const groups = {};
+  workshopSlots.forEach(s => {
+    const key = (s.email || '') + '|' + (s.title || s.style || '');
+    if (!groups[key]) groups[key] = { title: s.title || s.style, sessions: [], meta: s };
+    groups[key].sessions.push(s);
   });
 
-  // Group by year-month for the section labels
-  const byMonth = {};
-  const monthOrder = [];
-  sorted.forEach(function(s) {
-    if (!s.date) return;
-    const d = new Date(s.date + 'T12:00:00');
-    if (isNaN(d.getTime())) return;
-    const key = d.getFullYear() + '-' + String(d.getMonth()).padStart(2, '0');
-    if (!byMonth[key]) {
-      byMonth[key] = { label: MONTH_NAMES[d.getMonth()] + ' ' + d.getFullYear(), items: [] };
-      monthOrder.push(key);
-    }
-    byMonth[key].items.push(s);
+  // Sort each group's sessions by date+time, then sort groups by earliest date
+  Object.keys(groups).forEach(k => {
+    groups[k].sessions.sort((a, b) => {
+      if (a.date !== b.date) return (a.date || '') < (b.date || '') ? -1 : 1;
+      return (toMinutes(a.start) || 0) - (toMinutes(b.start) || 0);
+    });
+    groups[k].firstDate = groups[k].sessions[0].date || '';
+  });
+  const sortedGroups = Object.keys(groups)
+    .map(k => groups[k])
+    .sort((a, b) => (a.firstDate || '') < (b.firstDate || '') ? -1 : 1);
+
+  const section = document.createElement('section');
+  section.className = 'oneoffs-section';
+  section.innerHTML = '<h2>Workshops <span class="count">' + workshopSlots.length + ' session' + (workshopSlots.length === 1 ? '' : 's') + ' across ' + sortedGroups.length + ' workshop' + (sortedGroups.length === 1 ? '' : 's') + '</span></h2>';
+
+  sortedGroups.forEach(g => {
+    const m = g.meta;
+    const teacher = formatTeacherLine(m.slot_teacher || m.teacher, m.co_teacher);
+    const studio = m.studio || g.sessions[0].studio || 'studio not assigned';
+    const firstD = new Date(g.firstDate + 'T12:00:00');
+    const lastD  = new Date((g.sessions[g.sessions.length - 1].date || g.firstDate) + 'T12:00:00');
+    const dateRange = formatDateRange(firstD, lastD);
+
+    const card = document.createElement('div');
+    card.className = 'workshop-group studio-' + studioCssClass(m.studio).replace('studio-', '');
+    card.innerHTML = `
+      <div class="workshop-group__head">
+        <div class="workshop-group__title">${escapeHtml(g.title)}</div>
+        <div class="workshop-group__sub">${escapeHtml(dateRange)} · ${escapeHtml(teacher)} · ${escapeHtml(studio)}${g.sessions.length > 1 ? ' · ' + g.sessions.length + ' sessions' : ''}</div>
+      </div>
+      <div class="workshop-group__sessions"></div>
+    `;
+    const sessionsWrap = card.querySelector('.workshop-group__sessions');
+    g.sessions.forEach(s => {
+      const d = new Date((s.date || g.firstDate) + 'T12:00:00');
+      const sRow = document.createElement('div');
+      sRow.className = 'workshop-session-row';
+      sRow.innerHTML = `
+        <span class="ws-date">${DAY_SHORT[d.getDay()]} ${d.getDate()} ${MONTH_NAMES[d.getMonth()].slice(0, 3)}</span>
+        <span class="ws-time">${escapeHtml(s.start || '')}${s.end ? '–' + escapeHtml(s.end) : ''}</span>
+        <span class="ws-topic">${escapeHtml(s.level || s.style || '')}</span>
+      `;
+      sRow.addEventListener('click', () => openModal(s));
+      sessionsWrap.appendChild(sRow);
+    });
+    section.appendChild(card);
+  });
+
+  wrap.appendChild(section);
+}
+
+// ── SOCIAL NIGHTS TAB ────────────────────────────────────────────────────
+function renderSocialsList(socialSlots) {
+  const wrap = document.getElementById('socials-list');
+  wrap.innerHTML = '';
+  if (!socialSlots || socialSlots.length === 0) {
+    wrap.innerHTML = '<div class="empty-state"><h3>No social nights yet</h3><p>Social night submissions will appear here.</p></div>';
+    return;
+  }
+
+  const sorted = socialSlots.slice().sort((a, b) => {
+    if (a.date !== b.date) return (a.date || '') < (b.date || '') ? -1 : 1;
+    return (toMinutes(a.start) || 0) - (toMinutes(b.start) || 0);
   });
 
   const section = document.createElement('section');
   section.className = 'oneoffs-section';
-  const h = document.createElement('h2');
-  h.innerHTML = 'Upcoming workshops & social nights <span class="count">' + sorted.length + ' event' + (sorted.length === 1 ? '' : 's') + '</span>';
-  section.appendChild(h);
+  section.innerHTML = '<h2>Social nights <span class="count">' + sorted.length + ' event' + (sorted.length === 1 ? '' : 's') + '</span></h2>';
 
-  monthOrder.forEach(function(mk) {
-    const monthBucket = byMonth[mk];
-    const mWrap = document.createElement('div');
-    mWrap.className = 'oneoff-month';
-    const mLabel = document.createElement('div');
-    mLabel.className = 'oneoff-month-label';
-    mLabel.textContent = monthBucket.label;
-    mWrap.appendChild(mLabel);
-
-    monthBucket.items.forEach(function(s) {
-      const d = new Date(s.date + 'T12:00:00');
-      const dayName = DAY_SHORT[d.getDay()];
-      const dateNum = d.getDate();
-      const monthAbbr = MONTH_NAMES[d.getMonth()].slice(0, 3);
-      const studio = s.studio || 'studio not assigned';
-      const teacher = formatTeacherLine(s.slot_teacher || s.teacher, s.co_teacher);
-      const typeLabel = s.type === 'social' ? 'Social' : (s.type === 'series' ? 'Series' : 'Workshop');
-      const typeClass = s.type === 'social' ? 'social' : (s.type === 'series' ? 'series' : '');
-
-      const card = document.createElement('div');
-      card.className = 'oneoff-card ' + studioCssClass(s.studio);
-      card.innerHTML = `
-        <div class="oneoff-date">
-          <div class="day-name">${dayName}</div>
-          <div class="date-num">${dateNum}</div>
-          <div>${monthAbbr}</div>
-        </div>
-        <div class="oneoff-body">
-          <div><span class="type-tag ${typeClass}">${typeLabel}</span><span class="title">${escapeHtml(s.title || s.style || '')}</span></div>
-          <div class="meta">${escapeHtml(s.style || '')}${s.style && teacher ? ' · ' : ''}${escapeHtml(teacher)}${teacher ? ' · ' : ''}${escapeHtml(studio)}</div>
-        </div>
-        <div class="oneoff-time">${escapeHtml(s.start || '')}${s.end ? '–' + escapeHtml(s.end) : ''}</div>
-      `;
-      card.addEventListener('click', () => openModal(s));
-      mWrap.appendChild(card);
-    });
-
-    section.appendChild(mWrap);
+  sorted.forEach(s => {
+    const d = new Date((s.date || '') + 'T12:00:00');
+    const dayName = isNaN(d.getTime()) ? '' : DAY_SHORT[d.getDay()];
+    const dateNum = isNaN(d.getTime()) ? '' : d.getDate();
+    const monthAbbr = isNaN(d.getTime()) ? '' : MONTH_NAMES[d.getMonth()].slice(0, 3);
+    const studio = s.studio || 'studio not assigned';
+    const teacher = formatTeacherLine(s.slot_teacher || s.teacher, s.co_teacher);
+    const card = document.createElement('div');
+    card.className = 'oneoff-card ' + studioCssClass(s.studio);
+    card.innerHTML = `
+      <div class="oneoff-date">
+        <div class="day-name">${dayName}</div>
+        <div class="date-num">${dateNum}</div>
+        <div>${monthAbbr}</div>
+      </div>
+      <div class="oneoff-body">
+        <div><span class="type-tag social">Social</span><span class="title">${escapeHtml(s.title || s.style || '')}</span></div>
+        <div class="meta">${escapeHtml(s.style || '')}${s.style && teacher ? ' · ' : ''}${escapeHtml(teacher)}${teacher ? ' · ' : ''}${escapeHtml(studio)}</div>
+      </div>
+      <div class="oneoff-time">${escapeHtml(s.start || '')}${s.end ? '–' + escapeHtml(s.end) : ''}</div>
+    `;
+    card.addEventListener('click', () => openModal(s));
+    section.appendChild(card);
   });
 
   wrap.appendChild(section);
+}
+
+// "Sat 23 Jan 2027 – Sun 24 Jan 2027" or single date
+function formatDateRange(d1, d2) {
+  if (isNaN(d1.getTime())) return '';
+  const fmt = d => DAY_SHORT[d.getDay()] + ' ' + d.getDate() + ' ' + MONTH_NAMES[d.getMonth()].slice(0, 3) + ' ' + d.getFullYear();
+  if (isNaN(d2.getTime()) || d1.getTime() === d2.getTime()) return fmt(d1);
+  return fmt(d1) + ' – ' + fmt(d2);
 }
 
 function renderDayList(visible) {
