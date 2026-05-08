@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weekly schedule — Shoonya</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <script src="config.js"></script>
+  <style>
+    :root {
+      --vibrant:        #B564F7;
+      --vibrant-tint:   #F5ECFF;
+      --paper:          #FAF7F0;
+      --surface:        #FFFFFF;
+      --ink:            #1A1A1A;
+      --ink-soft:       #4A4A4A;
+      --ink-muted:      #8A8A8A;
+      --rule:           rgba(0,0,0,0.10);
+      --rule-strong:    rgba(0,0,0,0.18);
+      --conflict-bg:    #FCEBEB;
+      --conflict-border:#E24B4A;
+      --conflict-text:  #791F1F;
+      /* studio palette — distinct, accessible, all from the same warm-cool family */
+      --studio-aakash-bg:    #E6F1FB;  /* soft blue (yoga/calm) */
+      --studio-aakash-border:#1F6FBE;
+      --studio-aakash-text:  #0C447C;
+      --studio-ananta1-bg:   #EEEDFE;  /* purple */
+      --studio-ananta1-border:#7F77DD;
+      --studio-ananta1-text: #3C3489;
+      --studio-ananta2-bg:   #E1F5EE;  /* teal/green */
+      --studio-ananta2-border:#1D9E75;
+      --studio-ananta2-text: #085041;
+      --studio-artdeco-bg:   #FAEEDA;  /* amber */
+      --studio-artdeco-border:#BA7517;
+      --studio-artdeco-text: #633806;
+      --studio-unknown-bg:   #F1EFE8;
+      --studio-unknown-border:#888780;
+      --studio-unknown-text: #2C2C2A;
+      --font-display: 'Playfair Display', Georgia, serif;
+      --font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background: var(--paper);
+      color: var(--ink);
+      font-size: 16px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+    a { color: var(--vibrant); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    button { font-family: inherit; cursor: pointer; }
+
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--rule);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .topbar h1 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 500;
+      margin: 0;
+    }
+    .topbar .topbar-right { font-size: 13px; color: var(--ink-muted); }
+    .topbar .logout-btn {
+      background: none;
+      border: 1px solid var(--rule-strong);
+      padding: 6px 14px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: var(--ink-soft);
+    }
+    .topbar .logout-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+    main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+    /* Login card */
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      max-width: 420px;
+      margin: 60px auto;
+      padding: 36px 32px;
+    }
+    .login-card h2 {
+      font-family: var(--font-display);
+      font-size: 26px;
+      font-weight: 500;
+      margin: 0 0 8px;
+    }
+    .login-card p { font-size: 14px; color: var(--ink-soft); margin: 0 0 24px; }
+    .login-card label { display: block; font-size: 13px; font-weight: 500; margin: 14px 0 6px; }
+    .login-card input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--rule-strong);
+      border-radius: 4px;
+      font-size: 15px;
+      font-family: inherit;
+      background: var(--surface);
+    }
+    .login-card input:focus { outline: 2px solid var(--vibrant); outline-offset: -2px; }
+    .login-card .submit-btn {
+      width: 100%;
+      margin-top: 22px;
+      padding: 12px;
+      background: var(--vibrant);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 500;
+    }
+    .login-card .submit-btn:disabled { opacity: 0.5; cursor: wait; }
+    .login-card .err {
+      color: var(--conflict-text);
+      background: var(--conflict-bg);
+      padding: 10px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      margin-top: 14px;
+      display: none;
+    }
+    .login-card .err.visible { display: block; }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+    }
+    .toolbar-label { font-size: 12px; font-weight: 500; color: var(--ink-muted); margin-right: 4px; }
+    .filter-chip {
+      background: var(--surface);
+      border: 1px solid var(--rule-strong);
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--ink-soft);
+      transition: all .15s;
+    }
+    .filter-chip.active {
+      background: var(--ink);
+      color: white;
+      border-color: var(--ink);
+    }
+    .filter-chip:hover:not(.active) { border-color: var(--ink); color: var(--ink); }
+    .filter-divider { width: 1px; height: 18px; background: var(--rule); margin: 0 4px; }
+
+    .summary-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .summary-card {
+      flex: 1 1 140px;
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 12px 14px;
+    }
+    .summary-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-muted); }
+    .summary-card .value { font-family: var(--font-display); font-size: 22px; font-weight: 500; margin-top: 4px; }
+    .summary-card.conflict { border-color: var(--conflict-border); background: var(--conflict-bg); }
+    .summary-card.conflict .value { color: var(--conflict-text); }
+
+    /* Conflict warning panel */
+    .conflicts-panel {
+      background: var(--conflict-bg);
+      border: 1px solid var(--conflict-border);
+      border-radius: 4px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+    .conflicts-panel h3 {
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--conflict-text);
+      margin: 0 0 8px;
+    }
+    .conflicts-panel ul { margin: 0; padding-left: 20px; font-size: 13px; color: var(--conflict-text); }
+    .conflicts-panel li { margin: 4px 0; }
+    .conflicts-panel.empty { display: none; }
+
+    /* Weekly grid */
+    .grid-wrap {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 0;
+      overflow-x: auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 56px repeat(6, minmax(140px, 1fr));
+      min-width: 880px;
+    }
+    .grid-day-header {
+      padding: 12px 8px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--ink-soft);
+      border-bottom: 1px solid var(--rule);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .grid-time-corner {
+      border-bottom: 1px solid var(--rule);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .grid-time-cell {
+      font-size: 11px;
+      color: var(--ink-muted);
+      padding: 4px 6px 0 0;
+      text-align: right;
+      border-right: 1px solid var(--rule);
+    }
+    .grid-day-col {
+      position: relative;
+      border-right: 1px solid var(--rule);
+      min-height: 100%;
+    }
+    .grid-day-col:last-child { border-right: none; }
+    .hour-line {
+      position: absolute;
+      left: 0; right: 0;
+      border-top: 1px dashed var(--rule);
+    }
+
+    .slot {
+      position: absolute;
+      left: 4px;
+      right: 4px;
+      border-radius: 4px;
+      padding: 6px 8px;
+      font-size: 11px;
+      line-height: 1.3;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .12s, box-shadow .12s;
+      border-left-width: 3px;
+      border-left-style: solid;
+    }
+    .slot:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.08); z-index: 5; }
+    .slot .slot-style { font-weight: 500; font-size: 12px; }
+    .slot .slot-meta { font-size: 10.5px; opacity: 0.85; margin-top: 1px; }
+    .slot.studio-aakash    { background: var(--studio-aakash-bg);    border-left-color: var(--studio-aakash-border);    color: var(--studio-aakash-text); }
+    .slot.studio-ananta1   { background: var(--studio-ananta1-bg);   border-left-color: var(--studio-ananta1-border);   color: var(--studio-ananta1-text); }
+    .slot.studio-ananta2   { background: var(--studio-ananta2-bg);   border-left-color: var(--studio-ananta2-border);   color: var(--studio-ananta2-text); }
+    .slot.studio-artdeco   { background: var(--studio-artdeco-bg);   border-left-color: var(--studio-artdeco-border);   color: var(--studio-artdeco-text); }
+    .slot.studio-unknown   { background: var(--studio-unknown-bg);   border-left-color: var(--studio-unknown-border);   color: var(--studio-unknown-text); }
+    .slot.is-conflict {
+      box-shadow: inset 0 0 0 2px var(--conflict-border);
+    }
+    .slot.is-conflict::after {
+      content: '⚠';
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      font-size: 12px;
+      color: var(--conflict-border);
+    }
+    .slot.is-hidden { display: none !important; }
+
+    /* Mobile day-list fallback */
+    .day-list { display: none; }
+    .day-section { margin-bottom: 18px; }
+    .day-section h3 {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 500;
+      margin: 0 0 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--rule);
+    }
+    .day-section .empty-day { font-size: 13px; color: var(--ink-muted); font-style: italic; }
+    .day-card {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 4px;
+      padding: 10px 14px;
+      margin: 6px 0;
+      border-left-width: 3px;
+      border-left-style: solid;
+    }
+    .day-card.studio-aakash    { border-left-color: var(--studio-aakash-border); }
+    .day-card.studio-ananta1   { border-left-color: var(--studio-ananta1-border); }
+    .day-card.studio-ananta2   { border-left-color: var(--studio-ananta2-border); }
+    .day-card.studio-artdeco   { border-left-color: var(--studio-artdeco-border); }
+    .day-card.studio-unknown   { border-left-color: var(--studio-unknown-border); }
+    .day-card.is-conflict { border: 2px solid var(--conflict-border); }
+    .day-card .row1 { display: flex; gap: 12px; align-items: baseline; }
+    .day-card .style-name { font-weight: 500; font-size: 14px; }
+    .day-card .time-range { font-size: 13px; color: var(--ink-soft); margin-left: auto; }
+    .day-card .row2 { font-size: 12px; color: var(--ink-muted); margin-top: 4px; }
+
+    .legend {
+      margin-top: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      font-size: 12px;
+      color: var(--ink-muted);
+    }
+    .legend-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      vertical-align: middle;
+      margin-right: 5px;
+    }
+
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--ink-muted); }
+    .empty-state h3 { font-family: var(--font-display); font-size: 22px; color: var(--ink-soft); margin: 0 0 8px; }
+
+    /* Detail modal */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+    .modal-overlay.visible { display: flex; }
+    .modal {
+      background: var(--surface);
+      border-radius: 4px;
+      padding: 24px;
+      max-width: 420px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal h3 {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 500;
+      margin: 0 0 4px;
+    }
+    .modal .modal-meta { font-size: 13px; color: var(--ink-muted); margin-bottom: 16px; }
+    .modal dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; font-size: 13px; }
+    .modal dt { color: var(--ink-muted); }
+    .modal dd { margin: 0; color: var(--ink); }
+    .modal .close-btn {
+      background: var(--ink);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 740px) {
+      main { padding: 14px; }
+      .grid-wrap { display: none; }
+      .day-list { display: block; }
+      .toolbar { padding: 10px; }
+      .filter-chip { font-size: 11px; padding: 4px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <h1>Weekly schedule</h1>
+  <div class="topbar-right" id="topbar-right">
+    <a href="smart-form/index.html" style="margin-right: 14px;">← Submit a class</a>
+    <button class="logout-btn" id="logout-btn" hidden>Log out</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- LOGIN SCREEN -->
+  <section id="login-screen">
+    <div class="login-card">
+      <h2>Sign in to view the schedule</h2>
+      <p>Use the same email and PIN you set up for the submission form.</p>
+      <form id="login-form" autocomplete="on">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" autocomplete="email" required>
+        <label for="login-pin">PIN</label>
+        <input type="password" id="login-pin" inputmode="numeric" pattern="[0-9]*" autocomplete="current-password" required>
+        <button type="submit" class="submit-btn" id="login-submit">View schedule →</button>
+        <div class="err" id="login-err" role="alert"></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- SCHEDULE SCREEN -->
+  <section id="schedule-screen" hidden>
+
+    <div class="summary-row">
+      <div class="summary-card">
+        <div class="label">Classes</div>
+        <div class="value" id="summary-classes">—</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Teachers</div>
+        <div class="value" id="summary-teachers">—</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Studios in use</div>
+        <div class="value" id="summary-studios">—</div>
+      </div>
+      <div class="summary-card conflict" id="summary-conflicts-card" style="display:none;">
+        <div class="label">Studio clashes</div>
+        <div class="value" id="summary-conflicts">—</div>
+      </div>
+    </div>
+
+    <div class="conflicts-panel empty" id="conflicts-panel">
+      <h3>Studio clashes detected</h3>
+      <ul id="conflicts-list"></ul>
+    </div>
+
+    <div class="toolbar" id="toolbar">
+      <span class="toolbar-label">Studio</span>
+      <div id="filter-studio-group" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+      <div class="filter-divider"></div>
+      <span class="toolbar-label">Teacher</span>
+      <select id="filter-teacher" style="padding:5px 10px; border:1px solid var(--rule-strong); border-radius:999px; font-size:12px; background: var(--surface); font-family: inherit;">
+        <option value="">All</option>
+      </select>
+      <div class="filter-divider"></div>
+      <span class="toolbar-label">Style</span>
+      <select id="filter-style" style="padding:5px 10px; border:1px solid var(--rule-strong); border-radius:999px; font-size:12px; background: var(--surface); font-family: inherit;">
+        <option value="">All</option>
+      </select>
+    </div>
+
+    <!-- Desktop weekly grid -->
+    <div class="grid-wrap" id="grid-wrap">
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <!-- Mobile day-by-day list -->
+    <div class="day-list" id="day-list"></div>
+
+    <div class="legend" id="legend"></div>
+
+    <div class="empty-state" id="empty-state" hidden>
+      <h3>No classes match these filters</h3>
+      <p>Try clearing the filters above.</p>
+    </div>
+  </section>
+</main>
+
+<!-- Detail modal -->
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h3 id="modal-style">—</h3>
+    <div class="modal-meta" id="modal-meta">—</div>
+    <dl id="modal-dl"></dl>
+    <button class="close-btn" id="modal-close">Close</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const STORAGE_KEY = 'shoonya_schedule_session';
+
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+// Studio metadata for rendering
+const STUDIOS = [
+  { name: 'Aakash',   key: 'aakash',   color: 'var(--studio-aakash-border)',   bg: 'var(--studio-aakash-bg)' },
+  { name: 'Ananta 1', key: 'ananta1',  color: 'var(--studio-ananta1-border)',  bg: 'var(--studio-ananta1-bg)' },
+  { name: 'Ananta 2', key: 'ananta2',  color: 'var(--studio-ananta2-border)',  bg: 'var(--studio-ananta2-bg)' },
+  { name: 'Art Deco', key: 'artdeco',  color: 'var(--studio-artdeco-border)',  bg: 'var(--studio-artdeco-bg)' }
+];
+
+const studioCssClass = (studio) => {
+  const s = String(studio || '').toLowerCase();
+  if (s === 'aakash')   return 'studio-aakash';
+  if (s === 'ananta 1') return 'studio-ananta1';
+  if (s === 'ananta 2') return 'studio-ananta2';
+  if (s === 'art deco') return 'studio-artdeco';
+  return 'studio-unknown';
+};
+
+let allSlots = [];
+let activeFilters = { studios: new Set(STUDIOS.map(s => s.key)), teacher: '', style: '' };
+
+// ── LOGIN ────────────────────────────────────────────────────────────────
+function showError(msg) {
+  const el = document.getElementById('login-err');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+function clearError() { document.getElementById('login-err').classList.remove('visible'); }
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  clearError();
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pin   = document.getElementById('login-pin').value.trim();
+  const btn   = document.getElementById('login-submit');
+  btn.disabled = true;
+  btn.textContent = 'Signing in…';
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'getMasterSchedule', email, pin })
+    });
+    const json = await res.json();
+    if (!json.ok) {
+      showError(json.error || 'Sign-in failed.');
+      btn.disabled = false;
+      btn.textContent = 'View schedule →';
+      return;
+    }
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ email, pin }));
+    onLoaded(json);
+  } catch (err) {
+    showError('Network error. Please try again.');
+    btn.disabled = false;
+    btn.textContent = 'View schedule →';
+  }
+});
+
+// Auto-login if session present
+(async function tryAutoLogin() {
+  const raw = sessionStorage.getItem(STORAGE_KEY);
+  if (!raw) return;
+  try {
+    const { email, pin } = JSON.parse(raw);
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'getMasterSchedule', email, pin })
+    });
+    const json = await res.json();
+    if (json.ok) onLoaded(json);
+    else sessionStorage.removeItem(STORAGE_KEY);
+  } catch (e) { sessionStorage.removeItem(STORAGE_KEY); }
+})();
+
+document.getElementById('logout-btn').addEventListener('click', () => {
+  sessionStorage.removeItem(STORAGE_KEY);
+  location.reload();
+});
+
+// ── DATA LOADED — render everything ──────────────────────────────────────
+function onLoaded(json) {
+  document.getElementById('login-screen').hidden = true;
+  document.getElementById('schedule-screen').hidden = false;
+  document.getElementById('logout-btn').hidden = false;
+
+  allSlots = json.slots || [];
+  detectConflicts(allSlots);
+  buildFilters(allSlots);
+  renderEverything();
+  renderLegend();
+}
+
+// ── CONFLICT DETECTION ───────────────────────────────────────────────────
+// Two slots conflict if SAME studio + SAME day + overlapping times.
+// Slots with studio === '' or 'Ananta' (ambiguous) are NOT auto-flagged
+// because we don't know which exact room they're in.
+function detectConflicts(slots) {
+  slots.forEach(s => { s.conflicts_with = []; });
+  for (let i = 0; i < slots.length; i++) {
+    for (let j = i + 1; j < slots.length; j++) {
+      const a = slots[i], b = slots[j];
+      if (!a.studio || !b.studio) continue;
+      if (a.studio === 'Ananta' || b.studio === 'Ananta') continue;
+      if (a.studio !== b.studio) continue;
+      if (a.day !== b.day) continue;
+      const aStart = toMinutes(a.start), aEnd = toMinutes(a.end);
+      const bStart = toMinutes(b.start), bEnd = toMinutes(b.end);
+      if (aStart === null || aEnd === null || bStart === null || bEnd === null) continue;
+      if (aStart < bEnd && bStart < aEnd) {
+        a.conflicts_with.push(j);
+        b.conflicts_with.push(i);
+      }
+    }
+  }
+}
+
+function toMinutes(t) {
+  if (!t) return null;
+  const m = String(t).match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+function fromMinutes(min) {
+  const h = Math.floor(min / 60), m = min % 60;
+  return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+}
+
+// ── FILTERS ──────────────────────────────────────────────────────────────
+function buildFilters(slots) {
+  // Studio filter chips — always show all 4
+  const studioGroup = document.getElementById('filter-studio-group');
+  studioGroup.innerHTML = '';
+  STUDIOS.forEach(s => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'filter-chip active';
+    chip.dataset.studio = s.key;
+    chip.innerHTML = `<span class="legend-dot" style="background:${s.color};"></span>${s.name}`;
+    chip.addEventListener('click', () => {
+      if (activeFilters.studios.has(s.key)) activeFilters.studios.delete(s.key);
+      else activeFilters.studios.add(s.key);
+      chip.classList.toggle('active');
+      renderEverything();
+    });
+    studioGroup.appendChild(chip);
+  });
+
+  // Unknown chip if any unknown slots
+  const hasUnknown = slots.some(x => !x.studio || x.studio === 'Ananta');
+  if (hasUnknown) {
+    activeFilters.studios.add('unknown');
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'filter-chip active';
+    chip.dataset.studio = 'unknown';
+    chip.innerHTML = `<span class="legend-dot" style="background:var(--studio-unknown-border);"></span>Unassigned`;
+    chip.addEventListener('click', () => {
+      if (activeFilters.studios.has('unknown')) activeFilters.studios.delete('unknown');
+      else activeFilters.studios.add('unknown');
+      chip.classList.toggle('active');
+      renderEverything();
+    });
+    studioGroup.appendChild(chip);
+  }
+
+  // Teacher dropdown
+  const teacherSel = document.getElementById('filter-teacher');
+  const teachers = [...new Set(slots.map(s => s.teacher).filter(Boolean))].sort();
+  teachers.forEach(t => {
+    const opt = document.createElement('option'); opt.value = t; opt.textContent = t;
+    teacherSel.appendChild(opt);
+  });
+  teacherSel.addEventListener('change', () => { activeFilters.teacher = teacherSel.value; renderEverything(); });
+
+  // Style dropdown
+  const styleSel = document.getElementById('filter-style');
+  const styles = [...new Set(slots.map(s => s.style).filter(Boolean))].sort();
+  styles.forEach(s => {
+    const opt = document.createElement('option'); opt.value = s; opt.textContent = s;
+    styleSel.appendChild(opt);
+  });
+  styleSel.addEventListener('change', () => { activeFilters.style = styleSel.value; renderEverything(); });
+}
+
+function passesFilters(slot) {
+  const k = studioCssClass(slot.studio).replace('studio-', '');
+  if (!activeFilters.studios.has(k)) return false;
+  if (activeFilters.teacher && slot.teacher !== activeFilters.teacher) return false;
+  if (activeFilters.style && slot.style !== activeFilters.style) return false;
+  return true;
+}
+
+// ── RENDER ───────────────────────────────────────────────────────────────
+function renderEverything() {
+  const visible = allSlots.filter(passesFilters);
+  renderSummary(visible);
+  renderConflicts(visible);
+  renderGrid(visible);
+  renderDayList(visible);
+
+  document.getElementById('empty-state').hidden = visible.length > 0;
+  document.getElementById('grid-wrap').hidden = visible.length === 0;
+  document.getElementById('day-list').hidden = visible.length === 0;
+}
+
+function renderSummary(visible) {
+  document.getElementById('summary-classes').textContent = visible.length;
+  document.getElementById('summary-teachers').textContent = new Set(visible.map(s => s.teacher).filter(Boolean)).size;
+  document.getElementById('summary-studios').textContent = new Set(visible.map(s => s.studio).filter(Boolean)).size;
+  const conflicts = visible.filter(s => (s.conflicts_with || []).some(j => passesFilters(allSlots[j])));
+  const conflictCard = document.getElementById('summary-conflicts-card');
+  if (conflicts.length > 0) {
+    conflictCard.style.display = '';
+    document.getElementById('summary-conflicts').textContent = conflicts.length;
+  } else {
+    conflictCard.style.display = 'none';
+  }
+}
+
+function renderConflicts(visible) {
+  const panel = document.getElementById('conflicts-panel');
+  const list  = document.getElementById('conflicts-list');
+  list.innerHTML = '';
+  const seen = new Set();
+  let count = 0;
+  visible.forEach((s, i) => {
+    (s.conflicts_with || []).forEach(j => {
+      if (!passesFilters(allSlots[j])) return;
+      const a = allSlots[allSlots.indexOf(s)];
+      const b = allSlots[j];
+      const ai = allSlots.indexOf(s);
+      const bi = j;
+      const key = [Math.min(ai, bi), Math.max(ai, bi)].join('|');
+      if (seen.has(key)) return;
+      seen.add(key);
+      const li = document.createElement('li');
+      li.textContent = `${a.studio} · ${a.day} ${a.start}–${a.end} — ${a.style} (${a.teacher}) clashes with ${b.style} (${b.teacher}) ${b.start}–${b.end}`;
+      list.appendChild(li);
+      count++;
+    });
+  });
+  panel.classList.toggle('empty', count === 0);
+}
+
+function renderGrid(visible) {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  if (visible.length === 0) return;
+
+  // Compute time range from data, snap to whole hours
+  let minMin = 24 * 60, maxMin = 0;
+  visible.forEach(s => {
+    const a = toMinutes(s.start), b = toMinutes(s.end);
+    if (a !== null) minMin = Math.min(minMin, a);
+    if (b !== null) maxMin = Math.max(maxMin, b);
+  });
+  if (minMin === 24 * 60 || maxMin === 0) { minMin = 17 * 60; maxMin = 22 * 60 + 30; }
+  const startHour = Math.floor(minMin / 60);
+  const endHour   = Math.ceil(maxMin / 60);
+  const totalMin  = (endHour - startHour) * 60;
+  const PX_PER_MIN = 1.4; // ~84px per hour
+  const colHeight  = totalMin * PX_PER_MIN;
+
+  // Header row
+  const corner = document.createElement('div'); corner.className = 'grid-time-corner'; grid.appendChild(corner);
+  DAYS.forEach(day => {
+    const h = document.createElement('div');
+    h.className = 'grid-day-header';
+    h.textContent = day;
+    grid.appendChild(h);
+  });
+
+  // Time gutter — one cell per hour
+  const timeCol = document.createElement('div');
+  timeCol.style.gridRow = '2 / 3';
+  timeCol.style.position = 'relative';
+  timeCol.style.height = colHeight + 'px';
+  timeCol.style.borderRight = '1px solid var(--rule)';
+  for (let h = startHour; h <= endHour; h++) {
+    const top = (h - startHour) * 60 * PX_PER_MIN;
+    const t = document.createElement('div');
+    t.className = 'grid-time-cell';
+    t.style.position = 'absolute';
+    t.style.top = (top - 6) + 'px';
+    t.style.right = '6px';
+    t.style.left = '0';
+    t.textContent = String(h).padStart(2, '0') + ':00';
+    timeCol.appendChild(t);
+  }
+  grid.appendChild(timeCol);
+
+  // Day columns
+  DAYS.forEach(day => {
+    const col = document.createElement('div');
+    col.className = 'grid-day-col';
+    col.style.height = colHeight + 'px';
+    // Hour lines
+    for (let h = startHour; h <= endHour; h++) {
+      const line = document.createElement('div');
+      line.className = 'hour-line';
+      line.style.top = ((h - startHour) * 60 * PX_PER_MIN) + 'px';
+      col.appendChild(line);
+    }
+    // Slots
+    const daySlots = visible.filter(s => s.day === day);
+    daySlots.forEach(s => {
+      const a = toMinutes(s.start), b = toMinutes(s.end);
+      if (a === null || b === null) return;
+      const slot = document.createElement('div');
+      slot.className = 'slot ' + studioCssClass(s.studio);
+      const isConflict = (s.conflicts_with || []).some(j => passesFilters(allSlots[j]));
+      if (isConflict) slot.classList.add('is-conflict');
+      slot.style.top    = ((a - startHour * 60) * PX_PER_MIN) + 'px';
+      slot.style.height = ((b - a) * PX_PER_MIN - 2) + 'px';
+      slot.innerHTML = `
+        <div class="slot-style">${escapeHtml(s.style)}${s.level ? ' · ' + escapeHtml(s.level) : ''}</div>
+        <div class="slot-meta">${escapeHtml(s.teacher || s.slot_teacher || '')}</div>
+        <div class="slot-meta">${escapeHtml(s.start)}–${escapeHtml(s.end)} · ${escapeHtml(s.studio || 'unassigned')}</div>
+      `;
+      slot.addEventListener('click', () => openModal(s));
+      col.appendChild(slot);
+    });
+    grid.appendChild(col);
+  });
+}
+
+function renderDayList(visible) {
+  const wrap = document.getElementById('day-list');
+  wrap.innerHTML = '';
+  DAYS.forEach(day => {
+    const sec = document.createElement('div');
+    sec.className = 'day-section';
+    const h = document.createElement('h3'); h.textContent = day; sec.appendChild(h);
+    const daySlots = visible.filter(s => s.day === day).sort((a, b) => (toMinutes(a.start) || 0) - (toMinutes(b.start) || 0));
+    if (daySlots.length === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'empty-day';
+      empty.textContent = 'No classes';
+      sec.appendChild(empty);
+    } else {
+      daySlots.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'day-card ' + studioCssClass(s.studio);
+        const isConflict = (s.conflicts_with || []).some(j => passesFilters(allSlots[j]));
+        if (isConflict) card.classList.add('is-conflict');
+        card.innerHTML = `
+          <div class="row1">
+            <span class="style-name">${escapeHtml(s.style)}${s.level ? ' · ' + escapeHtml(s.level) : ''}</span>
+            <span class="time-range">${escapeHtml(s.start)}–${escapeHtml(s.end)}</span>
+          </div>
+          <div class="row2">${escapeHtml(s.teacher || s.slot_teacher || '')} · ${escapeHtml(s.studio || 'studio not assigned')}${isConflict ? ' · ⚠ studio clash' : ''}</div>
+        `;
+        card.addEventListener('click', () => openModal(s));
+        sec.appendChild(card);
+      });
+    }
+    wrap.appendChild(sec);
+  });
+}
+
+function renderLegend() {
+  const wrap = document.getElementById('legend');
+  wrap.innerHTML = '';
+  STUDIOS.forEach(s => {
+    const span = document.createElement('span');
+    span.innerHTML = `<span class="legend-dot" style="background:${s.color};"></span>${s.name}`;
+    wrap.appendChild(span);
+  });
+  const unknown = document.createElement('span');
+  unknown.innerHTML = `<span class="legend-dot" style="background:var(--studio-unknown-border);"></span>Unassigned`;
+  wrap.appendChild(unknown);
+  const clash = document.createElement('span');
+  clash.innerHTML = `<span class="legend-dot" style="background:var(--conflict-bg); border:1.5px solid var(--conflict-border);"></span>Studio clash`;
+  wrap.appendChild(clash);
+}
+
+// ── MODAL ────────────────────────────────────────────────────────────────
+function openModal(slot) {
+  document.getElementById('modal-style').textContent = slot.style + (slot.level ? ' · ' + slot.level : '');
+  document.getElementById('modal-meta').textContent = `${slot.day} · ${slot.start}–${slot.end} · ${slot.studio || 'studio not yet assigned'}`;
+  const dl = document.getElementById('modal-dl');
+  dl.innerHTML = '';
+  const rows = [
+    ['Teacher',     slot.teacher],
+    ['Slot teacher',slot.slot_teacher && slot.slot_teacher !== slot.teacher ? slot.slot_teacher : ''],
+    ['Co-teacher',  slot.co_teacher],
+    ['Capacity',    slot.capacity ? slot.capacity + ' students' : ''],
+    ['Semester',    slot.semester],
+    ['Studio',      slot.studio || 'not yet assigned'],
+    ['Source',      slot.source]
+  ];
+  rows.forEach(([k, v]) => {
+    if (!v) return;
+    const dt = document.createElement('dt'); dt.textContent = k;
+    const dd = document.createElement('dd'); dd.textContent = v;
+    dl.appendChild(dt); dl.appendChild(dd);
+  });
+  document.getElementById('modal-overlay').classList.add('visible');
+}
+document.getElementById('modal-close').addEventListener('click', () => {
+  document.getElementById('modal-overlay').classList.remove('visible');
+});
+document.getElementById('modal-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'modal-overlay') document.getElementById('modal-overlay').classList.remove('visible');
+});
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+</script>
+</body>
+</html>
