@@ -4248,18 +4248,28 @@ function wcShowScheduleStep(style) {
     cwcBuildCoTeacherSelector([]);
   }
 
-  // Check for saved schedule for this style (profile first, then local fallback)
+  // Check for saved schedule for this style (profile first, then local fallback).
+  // Modern shape: { levels: [...], meta: {...} }.  Legacy shape: just the array of levels.
   let savedLevels = null;
+  let savedMeta   = null;
   try {
     const actP = getActingProfile();
     const ae = typeof actP.associated_events === 'string'
       ? JSON.parse(actP.associated_events)
       : (actP.associated_events || {});
     const ws = ae.weekly_schedule || {};
-    if (ws[style] && ws[style].length > 0) {
-      savedLevels = ws[style];
+    const entry = ws[style];
+    if (entry) {
+      if (Array.isArray(entry) && entry.length > 0) {
+        savedLevels = entry; // legacy shape
+      } else if (entry.levels && entry.levels.length > 0) {
+        savedLevels = entry.levels;
+        savedMeta   = entry.meta || null;
+      }
     }
   } catch (e) {}
+  // Stash savedMeta for the meta pre-fill code below to consume
+  window.__cwcSavedMeta = savedMeta;
 
   // Fallback 1: use locally known schedules keyed by email
   if (!savedLevels && getActingProfile() && getActingProfile().email) {
@@ -4559,7 +4569,7 @@ async function submitWeeklyClass() {
   cwcPopulateConfirmation();
 }
 
-async function wcSaveScheduleToProfile(style, levels) {
+async function wcSaveScheduleToProfile(style, levels, meta) {
   if (!loggedInProfile || !APPS_SCRIPT_URL) return;
   // When admin acts-as a teacher, save to the acting-as teacher's profile via
   // the admin-bypass endpoint (not the admin's own profile). This was previously
@@ -4576,7 +4586,8 @@ async function wcSaveScheduleToProfile(style, levels) {
         : (targetProfile.associated_events || {});
     } catch (e) {}
     if (!ae.weekly_schedule) ae.weekly_schedule = {};
-    ae.weekly_schedule[style] = levels;
+    // New shape: { levels, meta }. Back-compat: load code accepts both array and object.
+    ae.weekly_schedule[style] = { levels: levels, meta: (meta || null) };
 
     // Build payload — admin-bypass when acting-as, normal PIN flow otherwise
     let payload;
@@ -4898,7 +4909,7 @@ function cwcShowReview(action) {
           ${odLines ? `<div style="font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--purple);margin:14px 0 6px;">Opendeurdag availability</div>${odLines}` : ''}
 
           <div style="background:var(--yellow-light);border:1px solid var(--yellow-border);border-radius:6px;padding:10px 12px;font-size:.8rem;color:var(--text-mid);margin:18px 0 0;">
-            ℹ️ Once submitted, your previous entry for this style will be updated. If you need to change something after submitting, reply to your confirmation email.
+            ℹ️ Once submitted, your previous entry for this style will be updated. If you need to change something later, just open the form again — it will pre-fill with your last submission so you can edit and resubmit.
           </div>
 
           <div style="display:flex;gap:10px;margin-top:20px;">
@@ -5030,6 +5041,15 @@ function cwcLoadDescriptions(style, levels) {
   document.getElementById('cwc-desc-block').style.display = 'none';
 
   try {
+    // HIGHEST PRIORITY: descriptions the teacher saved on a previous submission.
+    // Stashed by wcShowScheduleStep when it loaded the saved schedule from
+    // associated_events.weekly_schedule[style].meta. Survives across semesters.
+    // We prefer this over the hardcoded CLASS_DESCRIPTIONS map and the
+    // general WC_STYLE_DESCRIPTIONS fallback because Claude regen drops
+    // teacher-specific edits the website cares about.
+    const savedMeta  = window.__cwcSavedMeta || null;
+    const savedDescs = (savedMeta && savedMeta.descriptions_by_level) || null;
+
     const email      = (getActingProfile() && getActingProfile().email) ? getActingProfile().email.toLowerCase() : '';
     const emailDescs = CLASS_DESCRIPTIONS[email] || {};
     const styleDescs = emailDescs[style] || {};
@@ -5040,6 +5060,10 @@ function cwcLoadDescriptions(style, levels) {
       const teacherName = (getActingProfile() && getActingProfile().name) ? getActingProfile().name.toLowerCase().trim() : '';
       const nameDescs = CLASS_DESCRIPTIONS_BY_NAME[teacherName] || {};
       finalStyleDescs = nameDescs[style] || {};
+    }
+    // Saved descriptions win over the hardcoded map
+    if (savedDescs && Object.keys(savedDescs).length) {
+      finalStyleDescs = Object.assign({}, finalStyleDescs, savedDescs);
     }
 
     // General style description from website (fallback for levels without specific text)
@@ -5198,9 +5222,15 @@ function cwcGetMeta(style) {
 }
 
 function cwcPopulateMeta(style) {
-  const meta = cwcGetMeta(style);
-  cwcSelectedAge = (meta && meta.age)  || '12+';
-  cwcPartnerReq  = (meta && meta.partner) || false;
+  const meta  = cwcGetMeta(style);
+  // savedMeta = teacher's last submission for this style (set by wcShowScheduleStep)
+  // Pulls the actual values they typed last time, instead of always starting from
+  // CLASS_META_BY_NAME defaults. Falls back to meta when savedMeta is null.
+  const saved = window.__cwcSavedMeta || null;
+
+  cwcSelectedAge = (saved && saved.age_min)            || (meta && meta.age)     || '12+';
+  cwcPartnerReq  = (saved && saved.partner_required != null) ? !!saved.partner_required
+                                                              : ((meta && meta.partner) || false);
 
   // Age chips
   document.querySelectorAll('#cwc-age-chips .cwc-meta-chip').forEach(btn => {
@@ -5220,18 +5250,22 @@ function cwcPopulateMeta(style) {
   cwcBuildCoTeacherSelector(cwcSelectedCoTeachers);
 
   // What to bring
-  document.getElementById('cwc-bring-input').value = (meta && meta.bring) || '';
+  document.getElementById('cwc-bring-input').value =
+    (saved && saved.what_to_bring) || (meta && meta.bring) || '';
 
   // Prerequisites — surface the stored prereq so teachers can review and edit
   const prereqInput = document.getElementById('cwc-prereq-input');
   if (prereqInput) {
-    prereqInput.value = (meta && meta.prereq) || '';
+    prereqInput.value = (saved && saved.prereq) || (meta && meta.prereq) || '';
     prereqInput.style.height = 'auto';
     prereqInput.style.height = Math.min(prereqInput.scrollHeight + 4, 200) + 'px';
   }
 
-  // Website note — style-specific, semester-aware; only show row if there's content
-  const websiteNote = cwcGetStyleWebsiteNote(style);
+  // Website note — prefer the teacher's last edit (saved), fall back to the
+  // style-specific helper. Only show the row if either source has content.
+  const savedNote   = (saved && saved.website_note) || '';
+  const fallbackNote = cwcGetStyleWebsiteNote(style);
+  const websiteNote = savedNote || fallbackNote;
   const noteRow     = document.getElementById('cwc-website-note-row');
   const noteInput   = document.getElementById('cwc-website-note-input');
   if (websiteNote && noteRow && noteInput) {
@@ -6032,8 +6066,12 @@ async function cwcNext(action, triggerBtn) {
     // Opendeurdag availability
     cwcCurrentData.payload.opendeur_availability = cwcOpendeurAvailability || {};
 
-    // Collect description from per-level text blocks
-    const descParts = [];
+    // Collect description from per-level text blocks. Capture both:
+    //  - class_description (concatenated string) — back-compat for downstream consumers
+    //  - descriptions_by_level (object) — used for profile save so next-time pre-fill
+    //    can hydrate each level's block individually with the teacher's actual text
+    const descParts   = [];
+    const descByLevel = {};
     document.querySelectorAll('#cwc-desc-text .cwc-desc-level-block').forEach(block => {
       const levelLabel = (block.querySelector('.cwc-desc-level-label') || {}).textContent || '';
       // Text could be in view div or textarea if currently editing
@@ -6041,8 +6079,10 @@ async function cwcNext(action, triggerBtn) {
       const taEl   = block.querySelector('[id^="cwc-desc-ta-"]');
       const text   = (viewEl && viewEl.style.display !== 'none' ? viewEl.textContent : (taEl ? taEl.value : '')).trim();
       if (text) descParts.push((levelLabel ? levelLabel + ':\n' : '') + text);
+      if (levelLabel && text) descByLevel[levelLabel] = text;
     });
-    cwcCurrentData.payload.class_description = descParts.join('\n\n');
+    cwcCurrentData.payload.class_description      = descParts.join('\n\n');
+    cwcCurrentData.payload.descriptions_by_level  = descByLevel;
 
     // Submit to Apps Script — awaited so we can catch failures
     if (APPS_SCRIPT_URL) {
@@ -6079,8 +6119,25 @@ async function cwcNext(action, triggerBtn) {
       cwcSubmitting = false;
     }
 
-    // Save schedule to profile for next-semester pre-fill (fire-and-forget)
-    wcSaveScheduleToProfile(cwcCurrentData.style, cwcCurrentData.levels).catch(() => {});
+    // Save schedule + meta fields to profile for next-time pre-fill (fire-and-forget).
+    // Meta = the editable text/choice fields the teacher set on the Details step.
+    // NOTE: keys MUST match the actual payload field names (e.g. `prereq` not
+    // `prerequisites`, `class_description` not `description`).
+    const __meta = (function() {
+      const p = (cwcCurrentData && cwcCurrentData.payload) || {};
+      return {
+        age_min:               p.age_min,
+        partner_required:      p.partner_required,
+        what_to_bring:         p.what_to_bring,
+        prereq:                p.prereq,
+        co_teacher:            p.co_teacher,
+        teaching_language:     p.teaching_language,
+        website_note:          p.website_note,
+        class_description:     p.class_description,
+        descriptions_by_level: p.descriptions_by_level || {},
+      };
+    }());
+    wcSaveScheduleToProfile(cwcCurrentData.style, cwcCurrentData.levels, __meta).catch(() => {});
   }
 
   // Navigate to the next step
