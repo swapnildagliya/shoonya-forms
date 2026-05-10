@@ -4378,7 +4378,14 @@ function wcSelectStyle(style, btn) {
   setTimeout(() => wcShowScheduleStep(style), 160);
 }
 
-function wcShowScheduleStep(style) {
+async function wcShowScheduleStep(style) {
+  // If admin just selected a teacher, wait for the profile fetch to complete
+  // before reading getActingProfile() — otherwise we get the empty stub and
+  // fall through to hardcoded fallback even when saved schedule data exists.
+  if (typeof _adminProfileLoadPromise !== 'undefined') {
+    try { await _adminProfileLoadPromise; } catch (e) {}
+  }
+
   document.getElementById('wc-step-style').style.display    = 'none';
   document.getElementById('wc-step-schedule').style.display = '';
   document.getElementById('wc-style-banner-label').textContent = style;
@@ -7474,18 +7481,30 @@ function adminGetAllTeachers() {
   ];
 }
 
-function adminSelectTeacher(teacherName) {
+// Promise that resolves when the most-recent fetchTeacherByName call completes.
+// `wcShowScheduleStep` and other pre-fill paths await this, so they always see
+// the full profile (with associated_events.weekly_schedule) instead of the
+// initial empty stub. Race condition that previously caused Ann-Sofie's saved
+// Lindy Hop schedule to be invisible (form fell through to hardcoded fallback
+// because adminActingAs was still {name, email:''} when style was clicked).
+let _adminProfileLoadPromise = Promise.resolve();
+
+async function adminSelectTeacher(teacherName) {
   if (!teacherName) {
     adminClearTeacher();
     return;
   }
-  // Build a minimal acting profile from the selected name
-  // CLASS_META and CLASS_DESCRIPTIONS look up by name (already supported)
+  // Build a minimal acting profile from the selected name as a placeholder
   adminActingAs = { name: teacherName, email: '', bio_short: '', dance_styles: '' };
+  adminUpdateBadge(teacherName);
 
-  // Try to look up email via Apps Script if available
+  // Show a loading hint on the schedule chips while the full profile loads
+  const chipsBox = document.getElementById('wc-style-chips');
+  if (chipsBox) chipsBox.dataset.loading = '1';
+
+  // Fetch full profile (includes associated_events with saved schedules)
   if (APPS_SCRIPT_URL) {
-    fetch(APPS_SCRIPT_URL, {
+    _adminProfileLoadPromise = fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({ action: 'fetchTeacherByName', name: teacherName,
@@ -7496,16 +7515,17 @@ function adminSelectTeacher(teacherName) {
       if (data.ok && data.profile) {
         adminActingAs = data.profile;
         adminUpdateBadge(teacherName);
+        // Re-render the form's profile card with the now-complete profile
+        adminRefreshFormForTeacher(adminActingAs);
       }
     })
-    .catch(() => {});
+    .catch(() => {})
+    .finally(() => { if (chipsBox) delete chipsBox.dataset.loading; });
+
+    await _adminProfileLoadPromise;
+  } else {
+    adminRefreshFormForTeacher(adminActingAs);
   }
-
-  adminUpdateBadge(teacherName);
-
-  // Refresh profile card display so pre-fills work
-  // (Don't call showTeacherProfileCard as that replaces loggedInProfile)
-  adminRefreshFormForTeacher(adminActingAs);
 }
 
 function adminUpdateBadge(name) {
