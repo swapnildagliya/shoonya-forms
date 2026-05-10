@@ -1996,7 +1996,7 @@
         </div>
 
         <div class="wc-prefill-banner" id="wc-prefill-banner" style="display:none;">
-          <span data-lbl="wc-prefill-banner-text">✅ Pre-filled from last semester — update anything that's changed.</span>
+          <span data-lbl="wc-prefill-banner-text">✅ Pre-filled from your last submission — update anything that's changed.</span>
         </div>
 
         <div id="wc-levels-container"></div>
@@ -3101,7 +3101,7 @@ const T = {
     'wc-pick-style-title':   'Weekly Class — Pick a Style',
     'wc-which-style':        'Which style are you submitting?',
     'wc-schedule-title':     'Weekly Class — Schedule',
-    'wc-prefill-banner-text':'✅ Pre-filled from last semester — update anything that\'s changed.',
+    'wc-prefill-banner-text':'✅ Pre-filled from your last submission — update anything that\'s changed.',
     'teaching-language':     'Teaching language',
     'add-another-level':     '+ Add another level',
     'change-style':          'Change style',
@@ -3188,7 +3188,7 @@ const T = {
     'wc-pick-style-title':   'Wekelijkse Les — Stijl Kiezen',
     'wc-which-style':        'Welke stijl wil je indienen?',
     'wc-schedule-title':     'Wekelijkse Les — Rooster',
-    'wc-prefill-banner-text':'✅ Vooraf ingevuld van vorig semester — pas aan wat veranderd is.',
+    'wc-prefill-banner-text':'✅ Vooraf ingevuld op basis van je vorige inzending — pas aan wat veranderd is.',
     'teaching-language':     'Onderwijstaal',
     'add-another-level':     '+ Nog een niveau toevoegen',
     'change-style':          'Stijl wijzigen',
@@ -3278,7 +3278,7 @@ const T = {
     'wc-pick-style-title':   'Cours Hebdomadaire — Choisir un Style',
     'wc-which-style':        'Quel style soumettez-vous ?',
     'wc-schedule-title':     'Cours Hebdomadaire — Horaire',
-    'wc-prefill-banner-text':'✅ Pré-rempli du semestre précédent — mettez à jour ce qui a changé.',
+    'wc-prefill-banner-text':'✅ Pré-rempli à partir de votre dernière soumission — mettez à jour ce qui a changé.',
     'teaching-language':     'Langue d\'enseignement',
     'add-another-level':     '+ Ajouter un autre niveau',
     'change-style':          'Changer de style',
@@ -4561,42 +4561,63 @@ async function submitWeeklyClass() {
 
 async function wcSaveScheduleToProfile(style, levels) {
   if (!loggedInProfile || !APPS_SCRIPT_URL) return;
-  if (adminActingAs) return; // Admin submissions don't update profiles
+  // When admin acts-as a teacher, save to the acting-as teacher's profile via
+  // the admin-bypass endpoint (not the admin's own profile). This was previously
+  // skipping the save entirely → next form load fell back to stale defaults.
+  const isAdminActing = !!adminActingAs;
+  const targetProfile = isAdminActing ? adminActingAs : loggedInProfile;
+  if (!targetProfile) return;
   try {
-    // Read current associated_events, merge in new weekly_schedule
+    // Read current associated_events from the TARGET profile, merge in new weekly_schedule
     let ae = {};
     try {
-      ae = typeof loggedInProfile.associated_events === 'string'
-        ? JSON.parse(loggedInProfile.associated_events)
-        : (loggedInProfile.associated_events || {});
+      ae = typeof targetProfile.associated_events === 'string'
+        ? JSON.parse(targetProfile.associated_events)
+        : (targetProfile.associated_events || {});
     } catch (e) {}
     if (!ae.weekly_schedule) ae.weekly_schedule = {};
     ae.weekly_schedule[style] = levels;
 
-    // Read PIN from session
-    let pin = '';
-    try { pin = JSON.parse(localStorage.getItem('shoonya_session') || '{}').pin || ''; } catch(e) {}
+    // Build payload — admin-bypass when acting-as, normal PIN flow otherwise
+    let payload;
+    if (isAdminActing) {
+      payload = {
+        action:        'updateAnyProfile',
+        admin_email:   loggedInProfile.email,
+        target_email:  targetProfile.email || '',
+        target_name:   targetProfile.name  || '',
+        updates:       { associated_events: JSON.stringify(ae) },
+      };
+    } else {
+      let pin = '';
+      try { pin = JSON.parse(localStorage.getItem('shoonya_session') || '{}').pin || ''; } catch(e) {}
+      payload = {
+        action:  'updateProfile',
+        email:   targetProfile.email,
+        pin,
+        updates: { associated_events: JSON.stringify(ae) },
+      };
+    }
 
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        action:  'updateProfile',
-        email:   loggedInProfile.email,
-        pin,
-        updates: { associated_events: JSON.stringify(ae) }
-      })
+      body: JSON.stringify(payload)
     });
-    // Update local profile so next navigation pre-fills immediately
-    loggedInProfile.associated_events = JSON.stringify(ae);
-    // Also persist to localStorage session so it survives page reload
-    try {
-      const sess = JSON.parse(localStorage.getItem('shoonya_session') || '{}');
-      if (sess.profile) {
-        sess.profile.associated_events = JSON.stringify(ae);
-        localStorage.setItem('shoonya_session', JSON.stringify(sess));
-      }
-    } catch(e) {}
+    // Update the in-memory profile object that the form reads from on next render.
+    // For admin acting-as: update adminActingAs (so the form's pre-fill chain
+    // sees the new schedule next time this teacher is selected).
+    // For self-submissions: update loggedInProfile (and persist to localStorage).
+    targetProfile.associated_events = JSON.stringify(ae);
+    if (!isAdminActing) {
+      try {
+        const sess = JSON.parse(localStorage.getItem('shoonya_session') || '{}');
+        if (sess.profile) {
+          sess.profile.associated_events = JSON.stringify(ae);
+          localStorage.setItem('shoonya_session', JSON.stringify(sess));
+        }
+      } catch(e) {}
+    }
   } catch (e) {}
 }
 
