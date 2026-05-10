@@ -651,6 +651,14 @@
     border-radius: var(--radius-0); padding: var(--space-1) var(--space-2); margin-bottom: var(--space-2);
     font-size: var(--type-body-sm); color: var(--success-text);
   }
+  /* Fallback variant — used when pre-fill came from a generic template, NOT
+     from the teacher's last submission. Grey/amber tone signals "starting
+     point — please verify" instead of "your verified data". */
+  .wc-prefill-banner.wc-prefill-banner--fallback {
+    background: #fff8e6; border-color: #f3d989;
+    border-left-color: #d4a017;
+    color: #6b4e09;
+  }
 
   /* ── STEP PILL (card-title step counter) — eyebrow style, in-line, no float ── */
   .step-pill {
@@ -3138,6 +3146,7 @@ const T = {
     'wc-which-style':        'Which style are you submitting?',
     'wc-schedule-title':     'Weekly Class — Schedule',
     'wc-prefill-banner-text':'✅ Pre-filled from your last submission — update anything that\'s changed.',
+    'wc-prefill-banner-fallback':'⚠️ Starting from a generic template — please verify everything before submitting.',
     'teaching-language':     'Teaching language',
     'add-another-level':     '+ Add another level',
     'change-style':          'Change style',
@@ -3226,6 +3235,7 @@ const T = {
     'wc-which-style':        'Welke stijl wil je indienen?',
     'wc-schedule-title':     'Wekelijkse Les — Rooster',
     'wc-prefill-banner-text':'✅ Vooraf ingevuld op basis van je vorige inzending — pas aan wat veranderd is.',
+    'wc-prefill-banner-fallback':'⚠️ Vertrekt vanuit een algemene sjabloon — controleer alles vóór je indient.',
     'teaching-language':     'Onderwijstaal',
     'add-another-level':     '+ Nog een niveau toevoegen',
     'change-style':          'Stijl wijzigen',
@@ -3317,6 +3327,7 @@ const T = {
     'wc-which-style':        'Quel style soumettez-vous ?',
     'wc-schedule-title':     'Cours Hebdomadaire — Horaire',
     'wc-prefill-banner-text':'✅ Pré-rempli à partir de votre dernière soumission — mettez à jour ce qui a changé.',
+    'wc-prefill-banner-fallback':'⚠️ Départ d\'un modèle générique — vérifiez tout avant d\'envoyer.',
     'teaching-language':     'Langue d\'enseignement',
     'add-another-level':     '+ Ajouter un autre niveau',
     'change-style':          'Changer de style',
@@ -4151,6 +4162,7 @@ const SEMESTER_CONFIG = {
         '70': { total: 223, student: 197, uitpas: 44.60 }, // Tap Dance (70 min)
         '75': { total: 223, student: 197, uitpas: 44.60 }, // Lindy Hop (75 min) — same price as 70
         '90': { total: 248, student: 219, uitpas: 49.60 },
+        '105': { total: 290, student: 256, uitpas: 58.00 }, // Oriental Flow (1h45) — Spring 272/240 × 16/15
       }
     },
     {
@@ -4179,6 +4191,7 @@ const SEMESTER_CONFIG = {
         '70': { total: 209, student: 184, uitpas: 41.80 }, // Tap Dance (70 min)
         '75': { total: 209, student: 184, uitpas: 41.80 }, // Lindy Hop (75 min) — same price as 70
         '90': { total: 232, student: 205, uitpas: 46.40 },
+        '105': { total: 272, student: 240, uitpas: 54.40 }, // Oriental Flow (1h45)
       }
     }
   ]
@@ -4264,8 +4277,22 @@ function wcShowStyleStep() {
 
 function wcAddCustomStyle() {
   const input = document.getElementById('wc-style-custom');
-  const val = input.value.trim();
-  if (!val) { input.focus(); return; }
+  const raw = input.value.trim();
+  if (!raw) { input.focus(); return; }
+  // Normalize: Title Case each word (so "ORIENTAL FLOW" → "Oriental Flow",
+  // "bachata" → "Bachata") and reject obvious junk (language codes, single
+  // letters, etc.). Keeps the dance_styles cell clean across teachers.
+  const val = raw.split(/\s+/)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ')
+    .trim();
+  const upper = val.toUpperCase();
+  const BANNED = ['EN', 'NL', 'FR', 'DE', 'ES', 'IT'];
+  if (val.length < 2 || BANNED.indexOf(upper) !== -1) {
+    alert('Please enter a real dance style name (not "' + raw + '").');
+    input.focus();
+    return;
+  }
   // Add as a chip and auto-select it
   const chips = document.getElementById('wc-style-chips');
   const btn = document.createElement('button');
@@ -4307,8 +4334,13 @@ function wcShowScheduleStep(style) {
 
   // Check for saved schedule for this style (profile first, then local fallback).
   // Modern shape: { levels: [...], meta: {...} }.  Legacy shape: just the array of levels.
+  // `prefillSource` tracks where the data came from so the banner is honest:
+  //   'profile' → green "your last submission" banner
+  //   'fallback' → grey "starting template — please verify" banner
+  //   null      → no banner, empty form
   let savedLevels = null;
   let savedMeta   = null;
+  let prefillSource = null;
   try {
     const actP = getActingProfile();
     const ae = typeof actP.associated_events === 'string'
@@ -4323,6 +4355,7 @@ function wcShowScheduleStep(style) {
         savedLevels = entry.levels;
         savedMeta   = entry.meta || null;
       }
+      if (savedLevels) prefillSource = 'profile';
     }
   } catch (e) {}
   // Stash savedMeta for the meta pre-fill code below to consume
@@ -4334,6 +4367,7 @@ function wcShowScheduleStep(style) {
     const knownForEmail = WC_KNOWN_SCHEDULES[email] || {};
     if (knownForEmail[style] && knownForEmail[style].length > 0) {
       savedLevels = knownForEmail[style];
+      prefillSource = 'fallback';
     }
   }
 
@@ -4343,6 +4377,7 @@ function wcShowScheduleStep(style) {
     const knownForName = WC_KNOWN_SCHEDULES_BY_NAME[nameKey] || {};
     if (knownForName[style] && knownForName[style].length > 0) {
       savedLevels = knownForName[style];
+      prefillSource = 'fallback';
     }
   }
 
@@ -4352,6 +4387,7 @@ function wcShowScheduleStep(style) {
     for (const [, teacherSched] of Object.entries(WC_KNOWN_SCHEDULES_BY_NAME)) {
       if (teacherSched[style] && teacherSched[style].length > 0) {
         savedLevels = teacherSched[style];
+        prefillSource = 'fallback';
         break;
       }
     }
@@ -4362,11 +4398,27 @@ function wcShowScheduleStep(style) {
   container.innerHTML = '';
   wcLevelCount = 0;
 
+  // Honest banner: only show "from your last submission" when truly from profile
+  const banner = document.getElementById('wc-prefill-banner');
+  if (banner) {
+    if (prefillSource === 'profile') {
+      banner.style.display = '';
+      banner.classList.remove('wc-prefill-banner--fallback');
+      const txt = banner.querySelector('[data-lbl="wc-prefill-banner-text"]');
+      if (txt) txt.textContent = t('wc-prefill-banner-text');
+    } else if (prefillSource === 'fallback') {
+      banner.style.display = '';
+      banner.classList.add('wc-prefill-banner--fallback');
+      const txt = banner.querySelector('[data-lbl="wc-prefill-banner-text"]');
+      if (txt) txt.textContent = t('wc-prefill-banner-fallback');
+    } else {
+      banner.style.display = 'none';
+    }
+  }
+
   if (savedLevels) {
-    document.getElementById('wc-prefill-banner').style.display = '';
     savedLevels.forEach(lv => wcAddLevel(lv.level, lv.slots));
   } else {
-    document.getElementById('wc-prefill-banner').style.display = 'none';
     wcAddLevel(); // start with one empty level
   }
 }
@@ -5156,26 +5208,23 @@ function cwcLoadDescriptions(style, levels) {
 
     let descHtml = '';
     let anyMissing = false;
-    let allUsedGeneral = true; // track if we only used the general description
 
+    // Always render one description block per level — even if multiple levels
+    // start with the same general description. Teachers expect a 1:1 mapping
+    // between levels in Schedule and description boxes in Details, and want
+    // to be able to tailor each level's description independently.
     levels.forEach(lv => {
       const text = finalStyleDescs[lv.level];
       if (text) {
         descHtml += cwcLevelDescHtml(lv.level, text, false);
-        allUsedGeneral = false;
       } else if (generalDesc) {
-        // Use general style description for this level
+        // Seed each level with the general style description as a starting point
         descHtml += cwcLevelDescHtml(lv.level, generalDesc, false);
       } else {
         anyMissing = true;
         descHtml += cwcLevelDescHtml(lv.level, '', true);
       }
     });
-
-    // If all levels used the same general description, simplify: show it once
-    if (allUsedGeneral && generalDesc && levels.length > 1) {
-      descHtml = cwcLevelDescHtml('All levels', generalDesc, false);
-    }
 
     // Last-resort fallback: if nothing was built but a general desc exists, show it
     if (!descHtml && generalDesc) {
@@ -5536,13 +5585,14 @@ function cwcGetDurationMins(levels) {
 }
 
 function cwcGetPriceTier(durationMins, semPrices) {
-  // Maps duration to exact price tier: 30/60/70/75/90
+  // Maps duration to exact price tier: 30/60/70/75/90/105
   const p = semPrices || {};
   if (durationMins <= 30) return p['30'] || p['60'];
   if (durationMins <= 60) return p['60'];
   if (durationMins <= 70) return p['70'] || p['60'];
   if (durationMins <= 75) return p['75'] || p['70'] || p['60'];
-  return p['90'] || p['75'] || p['70'] || p['60'];
+  if (durationMins <= 90) return p['90'] || p['75'] || p['70'] || p['60'];
+  return p['105'] || p['90'] || p['75'] || p['70'] || p['60'];
 }
 
 function cwcFormatChip(iso) {
@@ -5838,15 +5888,20 @@ function cwcBuildDateGrid(style, levels) {
 
 // Helper: get duration in minutes from day-level entries
 function cwcGetDayDurationMins(dayLevels) {
+  // Returns the LONGEST duration across this day's levels — so the price bar
+  // never under-quotes when levels on the same day have different durations
+  // (e.g. Foundation 60min + Open Level 75min). The teacher sees the higher
+  // tier and knows shorter levels will be cheaper in the per-level breakdown.
+  let max = 0;
   for (const dl of (dayLevels || [])) {
     if (dl.slot && dl.slot.start && dl.slot.end) {
       const [sh, sm] = dl.slot.start.split(':').map(Number);
       const [eh, em] = dl.slot.end.split(':').map(Number);
       const mins = (eh * 60 + em) - (sh * 60 + sm);
-      if (mins > 0) return mins;
+      if (mins > max) max = mins;
     }
   }
-  return 60;
+  return max > 0 ? max : 60;
 }
 
 // Mark all dates in a day section as available (un-exclude all)
@@ -6111,14 +6166,53 @@ async function cwcNext(action, triggerBtn) {
     });
     cwcCurrentData.payload.per_day_dates = perDayData;
 
-    // Compute prices PER DAY — a student pays for one level, not all levels combined
+    // Compute prices PER LEVEL — a student pays for one level, and each level
+    // can have its own duration (e.g. Foundation 60min, Open Level 75min).
     const sem     = cwcGetActiveSemester();
     const base    = sem ? sem.sessions : 16;
-    const durMins = cwcGetDurationMins(cwcCurrentData.levels);
-    const tier    = cwcGetPriceTier(durMins, sem ? sem.prices : {}) || { total: 198, student: 175 };
 
+    // Helper: compute a single level's duration from its first slot
+    const levelDur = (lv) => {
+      for (const s of (lv && lv.slots) || []) {
+        if (s.start && s.end) {
+          const [sh, sm] = s.start.split(':').map(Number);
+          const [eh, em] = s.end.split(':').map(Number);
+          const m = (eh * 60 + em) - (sh * 60 + sm);
+          if (m > 0) return m;
+        }
+      }
+      return 60;
+    };
+
+    // Per-level price (each level has its own duration → its own tier)
+    const perLevelPrices = (cwcCurrentData.levels || []).map(lv => {
+      const durMins  = levelDur(lv);
+      const tier     = cwcGetPriceTier(durMins, sem ? sem.prices : {}) || { total: 198, student: 175 };
+      // Sessions for this level = sum across its days
+      const days     = [...new Set(((lv.slots) || []).map(s => s.day).filter(Boolean))];
+      const sessions = days.reduce((a, d) => a + ((perDayData[d] && perDayData[d].count) || 0), 0);
+      const full     = Math.round(tier.total / base * sessions);
+      const student  = tier.student ? Math.ceil(tier.student / base * sessions) : null;
+      const uitpas   = parseFloat((full * 0.2).toFixed(2));
+      return { level: lv.level, duration_mins: durMins, sessions, full, student, uitpas };
+    });
+    cwcCurrentData.payload.per_level_prices = perLevelPrices;
+
+    // Per-day prices (kept for back-compat) — uses each day's worst-case (longest) level
     const perDayPrices = {};
     Object.entries(perDayData).forEach(([day, dayInfo]) => {
+      // Find the longest-duration level that runs on this day
+      let bestTier = null, bestDur = 0;
+      (cwcCurrentData.levels || []).forEach(lv => {
+        const onThisDay = (lv.slots || []).some(s => s.day === day);
+        if (!onThisDay) return;
+        const d = levelDur(lv);
+        if (d > bestDur) {
+          bestDur = d;
+          bestTier = cwcGetPriceTier(d, sem ? sem.prices : {});
+        }
+      });
+      const tier    = bestTier || { total: 198, student: 175 };
       const count   = dayInfo.count;
       const full    = Math.round(tier.total / base * count);
       const student = tier.student ? Math.ceil(tier.student / base * count) : null;
@@ -6127,11 +6221,13 @@ async function cwcNext(action, triggerBtn) {
     });
     cwcCurrentData.payload.per_day_prices = perDayPrices;
 
-    // price_total = what a student pays for ONE level (first day as reference)
-    const refDay = Object.values(perDayPrices)[0] || { full: tier.total, student: tier.student, uitpas: parseFloat((tier.total * 0.2).toFixed(2)) };
-    cwcCurrentData.payload.price_total    = refDay.full;
-    cwcCurrentData.payload.price_student  = refDay.student;
-    cwcCurrentData.payload.price_uitpas   = refDay.uitpas;
+    // price_total = headline price (lowest level — most accessible entry point)
+    const ref = perLevelPrices.length
+      ? perLevelPrices.reduce((a, b) => (a.full <= b.full ? a : b))
+      : { full: 198, student: 175, uitpas: 39.6 };
+    cwcCurrentData.payload.price_total    = ref.full;
+    cwcCurrentData.payload.price_student  = ref.student;
+    cwcCurrentData.payload.price_uitpas   = ref.uitpas;
     cwcCurrentData.payload.semester_name  = sem ? sem.name : '';
 
     // Class meta fields
