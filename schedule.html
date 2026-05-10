@@ -642,6 +642,45 @@
 
 <main>
 
+  <!-- Inline pre-render check: if we have any auth signal in storage, hide
+       the login screen immediately so there's no flicker before auto-login
+       resolves. Logic mirrors tryAutoLogin's isAdminFromStorage() check. -->
+  <script>
+    (function() {
+      try {
+        if (sessionStorage.getItem('shoonya_admin') === '1') {
+          document.documentElement.dataset.preauth = '1';
+          return;
+        }
+        var raw = localStorage.getItem('shoonya_session');
+        if (raw) {
+          var sess = JSON.parse(raw);
+          var role = sess && sess.profile && (sess.profile.role || '').toString().toLowerCase();
+          var hasTeacher = sess && sess.pin && sess.profile && sess.profile.email;
+          if (role === 'admin' || hasTeacher) document.documentElement.dataset.preauth = '1';
+        }
+      } catch (e) {}
+    })();
+  </script>
+  <style>
+    /* Hide login + schedule until JS decides which to show.
+       data-preauth on <html> means we'll attempt auto-login → hide login form
+       to avoid flicker. If auto-login fails, JS reveals the form. */
+    html[data-preauth="1"] #login-screen { display: none; }
+    /* Show a thin "Loading…" hint while auto-login resolves */
+    html[data-preauth="1"] body::before {
+      content: 'Loading schedule…';
+      display: block;
+      text-align: center;
+      padding: 40px 20px;
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-size: 0.95rem;
+      color: #888;
+    }
+    html[data-preauth="1"].auth-failed body::before { display: none; }
+    html[data-preauth="1"].auth-failed #login-screen { display: block; }
+  </style>
+
   <!-- LOGIN SCREEN -->
   <section id="login-screen">
     <div class="login-card">
@@ -829,6 +868,12 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     } catch (e) { return false; }
   }
 
+  // If auto-login fails at any point, mark the page so the login form is shown
+  // (the inline pre-render script hid it to avoid flicker).
+  function revealLoginForm() {
+    document.documentElement.classList.add('auth-failed');
+  }
+
   // Path A: admin shortcut — backend bypasses PIN when admin_password matches.
   if (isAdminFromStorage()) {
     try {
@@ -844,7 +889,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
 
   // Path B: teacher session — email + PIN
   const stored = readStoredSession();
-  if (!stored) return;
+  if (!stored) { revealLoginForm(); return; }
   try {
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -852,11 +897,11 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
       body: JSON.stringify({ action: 'getMasterSchedule', email: stored.email, pin: stored.pin })
     });
     const json = await res.json();
-    if (json.ok) onLoaded(json);
-    // If auth is no longer valid (PIN changed, account removed), don't wipe
-    // the session here — the smart-form may still consider it valid. Just
-    // surface the login form so the teacher can re-enter.
-  } catch (e) { /* fall through to login form */ }
+    if (json.ok) { onLoaded(json); return; }
+    revealLoginForm();
+  } catch (e) {
+    revealLoginForm();
+  }
 })();
 
 function readStoredSession() {
