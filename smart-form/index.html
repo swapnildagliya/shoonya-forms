@@ -4526,19 +4526,15 @@ function wcAddLevel(presetLevel, presetSlots, presetDisplayLabel, presetCapacity
     .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 
   block.innerHTML = `
-    <div class="wc-level-header">
-      <select class="wc-level-select" id="wc-level-select-${idx}" aria-label="Class level">${opts}</select>
-      <button class="wc-btn-remove" onclick="wcRemoveLevel(this)" title="Remove level">✕</button>
-    </div>
-    <div class="wc-level-display-label" style="margin-top:8px;">
+    <div class="wc-level-header" style="display:flex;gap:8px;align-items:center;">
+      <select class="wc-level-select" id="wc-level-select-${idx}" aria-label="Class level" style="flex:0 0 auto;">${opts}</select>
       <input type="text" id="wc-display-label-${idx}" class="wc-display-label-input"
-        placeholder="optional display name — e.g. Foundation, Beginner, All levels"
+        placeholder="+ display name (optional)"
         value="${safeLabel}"
-        aria-label="Optional display label for this level"
-        style="width:100%;padding:8px 10px;border:1px solid var(--rule);border-radius:var(--radius-0);font-size:.85rem;font-family:inherit;background:var(--bg);color:var(--fg-1);box-sizing:border-box;">
-      <div style="font-size:.7rem;color:var(--fg-3);margin-top:3px;line-height:1.3;">
-        Stored as <strong>${presetLevel || 'Level 1'}</strong> in our system; shown on the website as e.g. "Level 1 — Foundation".
-      </div>
+        aria-label="Optional display label — appears as e.g. 'Level 1 — Foundation' on the website"
+        title="Optional. Shown on the website as 'Level 1 — Foundation'."
+        style="flex:1;min-width:0;padding:7px 10px;border:1px solid var(--rule);border-radius:var(--radius-0);font-size:.85rem;font-family:inherit;background:var(--bg);color:var(--fg-1);box-sizing:border-box;">
+      <button class="wc-btn-remove" onclick="wcRemoveLevel(this)" title="Remove level">✕</button>
     </div>
     <div class="wc-slots-container" id="wc-slots-${idx}"></div>
     <button class="wc-btn-add-slot" onclick="wcAddSlot(${idx})">${t('add-time-slot')}</button>
@@ -4553,18 +4549,6 @@ function wcAddLevel(presetLevel, presetSlots, presetDisplayLabel, presetCapacity
     </div>
   `;
   container.appendChild(block);
-
-  // Live-update the helper text under the display-label input when the
-  // level dropdown changes — so the teacher sees what will be stored.
-  const sel = block.querySelector('.wc-level-select');
-  const helper = block.querySelector('.wc-level-display-label > div');
-  if (sel && helper) {
-    sel.addEventListener('change', () => {
-      const lbl = block.querySelector('.wc-display-label-input').value.trim();
-      const composed = lbl ? `Level "${sel.value}" — shown as "${sel.value} — ${lbl}"` : sel.value;
-      helper.innerHTML = `Stored as <strong>${sel.value}</strong> in our system; shown on the website as e.g. "${sel.value} — Foundation".`;
-    });
-  }
 
   // Add preset slots or one empty slot
   if (presetSlots && presetSlots.length > 0) {
@@ -5030,11 +5014,30 @@ function cwcShowReview(action) {
     const classDates = [];
     allChips.forEach(function(chip) { if (!chip.classList.contains('excluded')) classDates.push(chip.dataset.date); });
 
-    // Pricing
+    // Pricing — per-level (each level can have its own duration → its own tier)
     const sem2 = sem || {};
     const base  = sem2.sessions || 16;
-    const durMins = cwcGetDurationMins(levels);
-    const tier  = cwcGetPriceTier(durMins, sem2.prices || {}) || {};
+    // Compute per-level prices upfront (used in priceHtml below).
+    const perLevelPrices = levels.map(function(lv) {
+      let lvDur = 60;
+      const slot = (lv.slots || []).find(function(s) { return s.start && s.end; });
+      if (slot) {
+        const sm = slot.start.split(':').map(Number);
+        const em = slot.end.split(':').map(Number);
+        const m = (em[0]*60+em[1]) - (sm[0]*60+sm[1]);
+        if (m > 0) lvDur = m;
+      }
+      const t = cwcGetPriceTier(lvDur, sem2.prices || {}) || {};
+      const days = [...new Set(((lv.slots) || []).map(function(s) { return s.day; }).filter(Boolean))];
+      const dayCounts = days.map(function(day) {
+        return Array.from(document.querySelectorAll(`#cwc-schedule-container .cwc-day-section[data-day="${day}"] .cwc-date-chip:not(.excluded)`)).length;
+      });
+      const sessions = dayCounts.reduce(function(a,b){return a+b;}, 0);
+      const full     = t.total ? Math.round(t.total / base * sessions) : null;
+      const student  = t.student ? Math.ceil(t.student / base * sessions) : null;
+      const labelComposed = lv.display_label ? `${lv.level || 'Open Level'} — ${lv.display_label}` : (lv.level || 'Open Level');
+      return { level: labelComposed, mins: lvDur, sessions, full, student };
+    });
 
     // Opendeurdag
     const opendeur = cwcOpendeurAvailability || {};
@@ -5050,34 +5053,36 @@ function cwcShowReview(action) {
            + (avail ? '✅ Available' + esc(pref) : '❌ Not available') + '</span></div>';
     }).join('');
 
-    // Schedule rows
+    // Schedule rows — show display_label when present (e.g. "Level 1 — Foundation")
     const schedRows = levels.map(function(lv) {
+      const labelComposed = lv.display_label ? `${lv.level || 'Open Level'} — ${lv.display_label}` : (lv.level || 'Open Level');
       return (Array.isArray(lv.slots) ? lv.slots : []).map(function(s) {
         const cap = lv.max_capacity ? ' · max ' + lv.max_capacity : '';
         return '<div style="font-size:.82rem;padding:2px 0;">'
-             + '<strong>' + esc(lv.level || 'Open Level') + '</strong>'
+             + '<strong>' + esc(labelComposed) + '</strong>'
              + ' — ' + esc(s.day) + ' ' + esc(s.start || '') + '–' + esc(s.end || '') + esc(cap) + '</div>';
       }).join('');
     }).join('');
 
-    // Per-day price summary
+    // Pricing — render per-level when prices differ across levels, single line otherwise.
     let priceHtml = '';
-    if (tier.total) {
-      const perDay = {};
-      document.querySelectorAll('#cwc-schedule-container .cwc-day-section').forEach(function(sec) {
-        const day   = sec.dataset.day;
-        const count = sec.querySelectorAll('.cwc-date-chip:not(.excluded)').length;
-        if (day && count > 0) {
-          const full = Math.round(tier.total / base * count);
-          const stu  = tier.student ? Math.ceil(tier.student / base * count) : null;
-          perDay[day] = { count, full, stu };
-        }
-      });
-      priceHtml = Object.entries(perDay).map(function([day, p]) {
-        return '<div style="font-size:.82rem;padding:2px 0;display:flex;justify-content:space-between;">'
-             + '<span>' + esc(day) + ' (' + p.count + ' sessions)</span>'
-             + '<span style="font-weight:600;">€' + p.full + (p.stu ? ' <span style="color:var(--text-light);font-weight:400;">/ Student €' + p.stu + '</span>' : '') + '</span></div>';
+    const validPrices = perLevelPrices.filter(function(p) { return p.full !== null; });
+    const uniquePrices = [...new Set(validPrices.map(function(p) { return p.full; }))];
+    if (uniquePrices.length > 1) {
+      // Per-level breakdown
+      priceHtml = validPrices.map(function(p) {
+        const stu = p.student ? ' <span style="color:var(--text-light);font-weight:400;">/ Student €' + p.student + '</span>' : '';
+        return '<div style="font-size:.82rem;padding:3px 0;display:flex;justify-content:space-between;gap:12px;">'
+             + '<span>' + esc(p.level) + ' <span style="color:var(--text-light);font-size:.76rem;">(' + p.mins + ' min · ' + p.sessions + ' sessions)</span></span>'
+             + '<span style="font-weight:600;">€' + p.full + stu + '</span></div>';
       }).join('');
+    } else if (validPrices.length) {
+      // Single price (all levels share duration)
+      const p = validPrices[0];
+      const stu = p.student ? ' <span style="color:var(--text-light);font-weight:400;">/ Student €' + p.student + '</span>' : '';
+      priceHtml = '<div style="font-size:.82rem;padding:3px 0;display:flex;justify-content:space-between;gap:12px;">'
+                + '<span>' + p.sessions + ' sessions</span>'
+                + '<span style="font-weight:600;">€' + p.full + stu + '</span></div>';
     }
 
     function row(label, val) {
