@@ -4275,6 +4275,46 @@ function wcShowStyleStep() {
   });
 }
 
+// Levenshtein distance — minimum edits to turn a into b. Used for fuzzy match.
+function wcLevenshtein(a, b) {
+  a = String(a || '').toLowerCase();
+  b = String(b || '').toLowerCase();
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  const m = [];
+  for (let i = 0; i <= b.length; i++) m[i] = [i];
+  for (let j = 0; j <= a.length; j++) m[0][j] = j;
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      m[i][j] = b.charAt(i - 1) === a.charAt(j - 1)
+        ? m[i - 1][j - 1]
+        : Math.min(m[i - 1][j - 1] + 1, m[i][j - 1] + 1, m[i - 1][j] + 1);
+    }
+  }
+  return m[b.length][a.length];
+}
+
+// Find the closest canonical style to a typed input. Returns the canonical
+// name if "close enough" (within edit distance threshold scaled by length),
+// or null if no good match. Also catches case + spacing variants:
+// "lindyhop" → "Lindy Hop", "BACHATA" → "Bachata", "tap dance" → "Tap Dance".
+function wcFuzzyMatchStyle(typed) {
+  const v = String(typed || '').trim().toLowerCase().replace(/[^a-z]/g, '');
+  if (!v) return null;
+  let best = null, bestDist = Infinity;
+  for (const canonical of WC_STYLES) {
+    const c = canonical.toLowerCase().replace(/[^a-z]/g, '');
+    if (c === v) return canonical; // exact match modulo case/spacing
+    const d = wcLevenshtein(v, c);
+    if (d < bestDist) { bestDist = d; best = canonical; }
+  }
+  // Allow up to 1 edit per 4 chars (so "Bachta" → "Bachata" matches but
+  // "Salsa" doesn't snap to "Bachata"). Cap minimum threshold at 1.
+  const threshold = Math.max(1, Math.floor(v.length / 4));
+  return bestDist <= threshold ? best : null;
+}
+
 function wcAddCustomStyle() {
   const input = document.getElementById('wc-style-custom');
   const raw = input.value.trim();
@@ -4293,16 +4333,40 @@ function wcAddCustomStyle() {
     input.focus();
     return;
   }
-  // Add as a chip and auto-select it
+
+  // FUZZY MATCH against canonical WC_STYLES list. If the typed input is a
+  // close variant of a known style, ask the teacher to confirm before adding
+  // a new chip. Catches "Lindyhop" → "Lindy Hop", "Bachta" → "Bachata", etc.
+  const match = wcFuzzyMatchStyle(val);
+  let finalStyle = val;
+  if (match && match.toLowerCase() !== val.toLowerCase()) {
+    const useCanonical = confirm(
+      '"' + val + '" looks like "' + match + '". Use the existing style "' +
+      match + '" instead? (Click OK to use "' + match + '", or Cancel to add "' +
+      val + '" as a new style.)'
+    );
+    if (useCanonical) finalStyle = match;
+  }
+
+  // If the final style is already in the chips (canonical or duplicate add),
+  // just select that chip instead of creating a new one.
   const chips = document.getElementById('wc-style-chips');
+  const existing = Array.from(chips.querySelectorAll('.wc-chip'))
+    .find(c => c.textContent.trim().toLowerCase() === finalStyle.toLowerCase());
+  if (existing) {
+    input.value = '';
+    wcSelectStyle(finalStyle, existing);
+    return;
+  }
+
+  // Add as a new chip and auto-select it
   const btn = document.createElement('button');
   btn.className = 'wc-chip';
-  btn.textContent = val;
-  btn.onclick = () => wcSelectStyle(val, btn);
+  btn.textContent = finalStyle;
+  btn.onclick = () => wcSelectStyle(finalStyle, btn);
   chips.appendChild(btn);
   input.value = '';
-  // Auto-select the newly added style
-  wcSelectStyle(val, btn);
+  wcSelectStyle(finalStyle, btn);
 }
 
 function wcSelectStyle(style, btn) {
