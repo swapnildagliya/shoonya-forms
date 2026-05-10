@@ -841,11 +841,12 @@
   .wc-btn-remove { background: none; border: none; color: var(--border-strong); font-size: .95rem; cursor: pointer; padding: 2px 6px; border-radius: 3px; transition: color .15s; }
   .wc-btn-remove:hover { color: var(--red); }
 
-  /* ── SLOT ROW — compact grid: Day · Start–End · Teacher · ✕ ──
-     Tighter columns, smaller gaps. Full mobile collapse below. ── */
+  /* ── SLOT ROW — compact grid: Day · Start–End · Label · Teacher · ✕ ──
+     Tighter columns, smaller gaps. Full mobile collapse below.
+     "Label" column is the optional slot suffix (early/late/+). ── */
   .wc-slot {
     display: grid;
-    grid-template-columns: 96px 1fr 12px 1fr 1fr 28px;
+    grid-template-columns: 96px 1fr 12px 1fr 80px 1fr 28px;
     align-items: center;
     gap: 6px;
     margin-bottom: 6px;
@@ -853,6 +854,25 @@
     border: var(--hairline) solid var(--rule);
     border-radius: var(--radius-0);
     background: var(--surface);
+  }
+  .wc-slot input.wc-slot-label {
+    padding: 7px 8px;
+    border: var(--hairline) solid var(--rule);
+    border-radius: var(--radius-0);
+    font-size: var(--type-body-sm);
+    font-family: var(--font-body);
+    color: var(--fg-1);
+    background: var(--surface);
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    text-align: center;
+  }
+  .wc-slot input.wc-slot-label::placeholder { color: var(--fg-3); font-style: italic; }
+  .wc-slot input.wc-slot-label:focus {
+    outline: 2px solid var(--vibrant);
+    outline-offset: 1px;
+    border-color: var(--vibrant);
   }
   .wc-slot select, .wc-slot input[type=time] {
     padding: 7px 8px;
@@ -906,21 +926,26 @@
   .wc-divider { border: none; border-top: 1px solid var(--border); margin: var(--space-5) 0; }
 
   @media (max-width: 520px) {
-    /* Slot row collapses: Day · Start–End on row 1, Teacher · ✕ on row 2 */
+    /* Slot row collapses to 3 rows:
+         Row 1: Day · ✕
+         Row 2: Start–End · Label
+         Row 3: Teacher (full width) */
     .wc-slot {
       grid-template-columns: 1fr 1fr 12px 1fr 28px;
       grid-template-areas:
         "day day day day rm"
-        "start arr end teach teach";
+        "start arr end label label"
+        "teach teach teach teach teach";
       gap: 4px;
       padding: 6px 8px;
     }
-    .wc-slot > select.wc-slot-day { grid-area: day; }
-    .wc-slot > input.wc-start    { grid-area: start; }
-    .wc-slot > .wc-arrow         { grid-area: arr; }
-    .wc-slot > input.wc-end      { grid-area: end; }
+    .wc-slot > select.wc-slot-day     { grid-area: day; }
+    .wc-slot > input.wc-start         { grid-area: start; }
+    .wc-slot > .wc-arrow              { grid-area: arr; }
+    .wc-slot > input.wc-end           { grid-area: end; }
+    .wc-slot > input.wc-slot-label    { grid-area: label; }
     .wc-slot > select.wc-slot-teacher { grid-area: teach; }
-    .wc-slot > .wc-btn-remove    { grid-area: rm; }
+    .wc-slot > .wc-btn-remove         { grid-area: rm; }
   }
 
   /* ── REVIEW ── */
@@ -4402,6 +4427,7 @@ function wcAddSlot(levelIdx, presetDay, presetStart, presetEnd, presetLevel) {
     <input type="time" class="wc-start" aria-label="Class start time" oninput="wcAutoFillEnd(this, ${levelIdx})" step="60">
     <span class="wc-arrow">→</span>
     <input type="time" class="wc-end" aria-label="Class end time" step="60">
+    <input type="text" class="wc-slot-label" aria-label="Optional label like early, late, or +" placeholder="early/late/+" maxlength="20">
     <select class="wc-slot-teacher" aria-label="Teacher for this slot">${teacherOpts}</select>
     <button class="wc-btn-remove" onclick="wcRemoveSlot(this)" title="Remove slot">✕</button>
   `;
@@ -4461,7 +4487,9 @@ function wcCollectData() {
       const start   = slot.querySelector('.wc-start').value;
       const end     = slot.querySelector('.wc-end').value;
       const teacher = slot.querySelector('.wc-slot-teacher') ? slot.querySelector('.wc-slot-teacher').value : '';
-      if (day && start && end) slots.push({ day, start, end, teacher });
+      const labelEl = slot.querySelector('.wc-slot-label');
+      const label   = labelEl ? labelEl.value.trim() : '';
+      if (day && start && end) slots.push({ day, start, end, teacher, label });
     });
     // Collect unique teachers across all slots for this level (for backward compat)
     const teachers = [...new Set(slots.map(s => s.teacher).filter(Boolean))];
