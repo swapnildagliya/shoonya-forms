@@ -4488,7 +4488,7 @@ async function wcShowScheduleStep(style) {
   }
 
   if (savedLevels) {
-    savedLevels.forEach(lv => wcAddLevel(lv.level, lv.slots));
+    savedLevels.forEach(lv => wcAddLevel(lv.level, lv.slots, lv.display_label, lv.max_capacity));
   } else {
     wcAddLevel(); // start with one empty level
   }
@@ -4507,22 +4507,38 @@ function wcBackFromConfirm() {
   document.getElementById('wc-login-required').style.display = 'none';
 }
 
-function wcAddLevel(presetLevel, presetSlots) {
+function wcAddLevel(presetLevel, presetSlots, presetDisplayLabel, presetCapacity) {
   const idx       = wcLevelCount++;
   const container = document.getElementById('wc-levels-container');
   const block     = document.createElement('div');
   block.className = 'wc-level-block';
   block.dataset.levelIdx = idx;
 
-  // Level select options
+  // Level select options. Default: "Level 1". Pre-fill keeps whatever was
+  // saved (incl. legacy "Foundation"/"Open Level" so older data still loads
+  // — but the optional display_label is the new home for those names).
   const opts = WC_LEVELS.map(l =>
     `<option value="${l}" ${l === (presetLevel || 'Level 1') ? 'selected' : ''}>${l}</option>`
   ).join('');
+
+  // Escape preset values for safe insertion
+  const safeLabel = (presetDisplayLabel || '').toString()
+    .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 
   block.innerHTML = `
     <div class="wc-level-header">
       <select class="wc-level-select" id="wc-level-select-${idx}" aria-label="Class level">${opts}</select>
       <button class="wc-btn-remove" onclick="wcRemoveLevel(this)" title="Remove level">✕</button>
+    </div>
+    <div class="wc-level-display-label" style="margin-top:8px;">
+      <input type="text" id="wc-display-label-${idx}" class="wc-display-label-input"
+        placeholder="optional display name — e.g. Foundation, Beginner, All levels"
+        value="${safeLabel}"
+        aria-label="Optional display label for this level"
+        style="width:100%;padding:8px 10px;border:1px solid var(--rule);border-radius:var(--radius-0);font-size:.85rem;font-family:inherit;background:var(--bg);color:var(--fg-1);box-sizing:border-box;">
+      <div style="font-size:.7rem;color:var(--fg-3);margin-top:3px;line-height:1.3;">
+        Stored as <strong>${presetLevel || 'Level 1'}</strong> in our system; shown on the website as e.g. "Level 1 — Foundation".
+      </div>
     </div>
     <div class="wc-slots-container" id="wc-slots-${idx}"></div>
     <button class="wc-btn-add-slot" onclick="wcAddSlot(${idx})">${t('add-time-slot')}</button>
@@ -4531,14 +4547,28 @@ function wcAddLevel(presetLevel, presetSlots) {
         Max students <span class="required-marker">required</span>
       </label>
       <input type="number" id="wc-capacity-${idx}" class="wc-capacity-field__input"
-        min="1" max="200" placeholder="e.g. 25" aria-label="Maximum number of students for this level">
+        min="1" max="200" placeholder="e.g. 25"
+        value="${presetCapacity != null ? presetCapacity : ''}"
+        aria-label="Maximum number of students for this level">
     </div>
   `;
   container.appendChild(block);
 
+  // Live-update the helper text under the display-label input when the
+  // level dropdown changes — so the teacher sees what will be stored.
+  const sel = block.querySelector('.wc-level-select');
+  const helper = block.querySelector('.wc-level-display-label > div');
+  if (sel && helper) {
+    sel.addEventListener('change', () => {
+      const lbl = block.querySelector('.wc-display-label-input').value.trim();
+      const composed = lbl ? `Level "${sel.value}" — shown as "${sel.value} — ${lbl}"` : sel.value;
+      helper.innerHTML = `Stored as <strong>${sel.value}</strong> in our system; shown on the website as e.g. "${sel.value} — Foundation".`;
+    });
+  }
+
   // Add preset slots or one empty slot
   if (presetSlots && presetSlots.length > 0) {
-    presetSlots.forEach(s => wcAddSlot(idx, s.day, s.start, s.end, presetLevel));
+    presetSlots.forEach(s => wcAddSlot(idx, s.day, s.start, s.end, presetLevel, s.label, s.teacher));
   } else {
     wcAddSlot(idx);
   }
@@ -4713,7 +4743,11 @@ function wcCollectData() {
     const teachers = [...new Set(slots.map(s => s.teacher).filter(Boolean))];
     const capInput = block.querySelector(`#wc-capacity-${idx}`);
     const maxCap   = capInput && capInput.value ? parseInt(capInput.value) : null;
-    if (slots.length > 0) levels.push({ level: levelName, slots, teachers, max_capacity: maxCap });
+    // Optional display label — extra context to render alongside the canonical
+    // level name (e.g. Level 1 stored, "Level 1 — Foundation" shown).
+    const dlInput  = block.querySelector(`#wc-display-label-${idx}`);
+    const display_label = dlInput ? dlInput.value.trim() : '';
+    if (slots.length > 0) levels.push({ level: levelName, slots, teachers, max_capacity: maxCap, display_label });
   });
 
   const langs = Array.from(document.querySelectorAll('#wc-lang-chips .wc-chip.selected'))
@@ -5743,14 +5777,14 @@ function cwcBuildDateGrid(style, levels) {
   if (existingInfo) existingInfo.remove();
 
   // ── Group levels by day ──
-  // dayGroups: { "Wednesday": [{ level, slots, daySlot }], ... }
+  // dayGroups: { "Wednesday": [{ level, display_label, slot }], ... }
   const dayOrder = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   const dayGroups = {};
   (levels || []).forEach(lv => {
     (lv.slots || []).forEach(s => {
       if (!s.day) return;
       if (!dayGroups[s.day]) dayGroups[s.day] = [];
-      dayGroups[s.day].push({ level: lv.level, slot: s });
+      dayGroups[s.day].push({ level: lv.level, display_label: lv.display_label || '', slot: s });
     });
   });
 
@@ -5792,8 +5826,9 @@ function cwcBuildDateGrid(style, levels) {
     header.style.alignItems = 'flex-start';
     const levelLines = dayLevels.map(dl => {
       const lvName = dl.level || 'Open Level';
+      const display = dl.display_label ? `${lvName} — ${dl.display_label}` : lvName;
       const time = dl.slot.start + '–' + dl.slot.end;
-      return `<div class="cwc-day-detail" style="margin-top:4px;font-size:.78rem;">◎ ${lvName} · ${time}</div>`;
+      return `<div class="cwc-day-detail" style="margin-top:4px;font-size:.78rem;">◎ ${display} · ${time}</div>`;
     }).join('');
     header.innerHTML = `<div class="cwc-day-name" style="font-size:.9rem;font-weight:500;letter-spacing:1.6px;">${dayName.toUpperCase()}</div>${levelLines}`;
     section.appendChild(header);
@@ -5847,21 +5882,54 @@ function cwcBuildDateGrid(style, levels) {
     section.appendChild(grid);
 
     // ── Per-day price bar ──
+    // When levels on this day have DIFFERENT durations (e.g. Foundation 60min +
+    // Open Level 75min), render one price per level so the teacher sees the
+    // correct breakdown. When all levels share a duration, fall back to a
+    // single price line.
     const priceBar = document.createElement('div');
     priceBar.className = 'cwc-price-bar';
     priceBar.dataset.day = dayName;
-    // Compute initial price for this day
-    const durationMins = cwcGetDayDurationMins(dayLevels);
-    const tier = cwcGetPriceTier(durationMins, sem ? sem.prices : {});
     const baseSessions = sem ? sem.sessions : 16;
     const count = dates.length;
-    if (tier) {
-      const pTotal   = Math.round(tier.total / baseSessions * count);
-      const pStudent = tier.student ? Math.ceil(tier.student / baseSessions * count) : null;
-      const classWord = count === 1 ? t('course') : t('courses');
+    const classWord = count === 1 ? t('course') : t('courses');
+
+    // Compute (level, duration, tier) per level on this day
+    const perLevel = dayLevels.map(dl => {
+      let mins = 60;
+      if (dl.slot && dl.slot.start && dl.slot.end) {
+        const [sh, sm] = dl.slot.start.split(':').map(Number);
+        const [eh, em] = dl.slot.end.split(':').map(Number);
+        const d = (eh*60+em) - (sh*60+sm);
+        if (d > 0) mins = d;
+      }
+      const tier = cwcGetPriceTier(mins, sem ? sem.prices : {});
+      const full    = tier ? Math.round(tier.total / baseSessions * count) : null;
+      const student = tier && tier.student ? Math.ceil(tier.student / baseSessions * count) : null;
+      const label = dl.display_label ? `${dl.level || 'Open Level'} — ${dl.display_label}` : (dl.level || 'Open Level');
+      return { level: label, mins, full, student };
+    });
+
+    // Detect if prices differ across levels on this day
+    const uniquePrices = [...new Set(perLevel.map(p => p.full).filter(v => v !== null))];
+    const pricesDiffer = uniquePrices.length > 1;
+
+    if (pricesDiffer) {
+      // Per-level breakdown
+      const lines = perLevel
+        .filter(p => p.full !== null)
+        .map(p => {
+          const studentBit = p.student !== null
+            ? ` <span style="font-size:.78rem;color:var(--text-light);">(Student: €${p.student})</span>`
+            : '';
+          return `<div style="font-size:.85rem;margin-top:2px;"><span style="color:var(--text-light);">${p.level} (${p.mins} min):</span> <span style="font-weight:500;">€${p.full}</span>${studentBit}</div>`;
+        }).join('');
+      priceBar.innerHTML = `<div><span class="cwc-count-label">${count} ${classWord}</span></div>${lines}`;
+    } else if (perLevel.length && perLevel[0].full !== null) {
+      // Single price (all levels share duration)
+      const p = perLevel[0];
       priceBar.innerHTML = `<span class="cwc-count-label">${count} ${classWord}</span>`
-        + ` <span class="cwc-price-dot">·</span> <span class="cwc-price-total" style="font-weight:500;">€${pTotal}</span>`
-        + (pStudent !== null ? ` <span class="cwc-price-dot">·</span> <span class="cwc-price-student" style="font-size:.8rem;color:var(--text-light);">Student: €${pStudent}</span>` : '');
+        + ` <span class="cwc-price-dot">·</span> <span class="cwc-price-total" style="font-weight:500;">€${p.full}</span>`
+        + (p.student !== null ? ` <span class="cwc-price-dot">·</span> <span class="cwc-price-student" style="font-size:.8rem;color:var(--text-light);">Student: €${p.student}</span>` : '');
     }
     section.appendChild(priceBar);
 
@@ -6136,23 +6204,47 @@ function cwcUpdateDayPriceSummary(dayName) {
     });
   });
 
-  const durationMins = cwcGetDayDurationMins(dayLevels);
-  const tier = cwcGetPriceTier(durationMins, sem ? sem.prices : {});
-  if (!tier) return;
-
   const totalChips = section.querySelectorAll('.cwc-date-chip').length;
   const excluded   = cwcExcludedByDay[dayName] ? cwcExcludedByDay[dayName].size : 0;
   const count      = totalChips - excluded;
-
-  const pTotal   = Math.round(tier.total / baseSessions * count);
-  const pStudent = tier.student ? Math.ceil(tier.student / baseSessions * count) : null;
   const classWord = count === 1 ? t('course') : t('courses');
 
+  // Per-level pricing (matches initial render in cwcRenderSchedule)
+  const perLevel = dayLevels.map(dl => {
+    let mins = 60;
+    if (dl.slot && dl.slot.start && dl.slot.end) {
+      const [sh, sm] = dl.slot.start.split(':').map(Number);
+      const [eh, em] = dl.slot.end.split(':').map(Number);
+      const d = (eh*60+em) - (sh*60+sm);
+      if (d > 0) mins = d;
+    }
+    const tier = cwcGetPriceTier(mins, sem ? sem.prices : {});
+    const full    = tier ? Math.round(tier.total / baseSessions * count) : null;
+    const student = tier && tier.student ? Math.ceil(tier.student / baseSessions * count) : null;
+    return { level: dl.level || 'Open Level', mins, full, student };
+  });
+
+  const uniquePrices = [...new Set(perLevel.map(p => p.full).filter(v => v !== null))];
+  const pricesDiffer = uniquePrices.length > 1;
+
   const priceBar = section.querySelector('.cwc-price-bar');
-  if (priceBar) {
+  if (!priceBar) return;
+
+  if (pricesDiffer) {
+    const lines = perLevel
+      .filter(p => p.full !== null)
+      .map(p => {
+        const studentBit = p.student !== null
+          ? ` <span style="font-size:.78rem;color:var(--text-light);">(Student: €${p.student})</span>`
+          : '';
+        return `<div style="font-size:.85rem;margin-top:2px;"><span style="color:var(--text-light);">${p.level} (${p.mins} min):</span> <span style="font-weight:500;">€${p.full}</span>${studentBit}</div>`;
+      }).join('');
+    priceBar.innerHTML = `<div><span class="cwc-count-label">${count} ${classWord}</span></div>${lines}`;
+  } else if (perLevel.length && perLevel[0].full !== null) {
+    const p = perLevel[0];
     priceBar.innerHTML = `<span class="cwc-count-label">${count} ${classWord}</span>`
-      + ` <span class="cwc-price-dot">·</span> <span class="cwc-price-total" style="font-weight:500;">€${pTotal}</span>`
-      + (pStudent !== null ? ` <span class="cwc-price-dot">·</span> <span class="cwc-price-student" style="font-size:.8rem;color:var(--text-light);">Student: €${pStudent}</span>` : '');
+      + ` <span class="cwc-price-dot">·</span> <span class="cwc-price-total" style="font-weight:500;">€${p.full}</span>`
+      + (p.student !== null ? ` <span class="cwc-price-dot">·</span> <span class="cwc-price-student" style="font-size:.8rem;color:var(--text-light);">Student: €${p.student}</span>` : '');
   }
 }
 
