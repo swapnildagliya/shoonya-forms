@@ -841,12 +841,20 @@
   .wc-btn-remove { background: none; border: none; color: var(--border-strong); font-size: .95rem; cursor: pointer; padding: 2px 6px; border-radius: 3px; transition: color .15s; }
   .wc-btn-remove:hover { color: var(--red); }
 
-  /* ── SLOT ROW — compact grid: Day · Start–End · Label · Teacher · ✕ ──
-     Tighter columns, smaller gaps. Full mobile collapse below.
-     "Label" column is the optional slot suffix (early/late/+). ── */
+  /* ── SLOT ROW — three-row grid:
+       Row 1: Day · Start → End · Teacher · ✕
+       Row 2: optional Label (early/late/+) — full width
+       Row 3: live preview — only visible when label has content,
+              shows the resulting level name (e.g. "Level 2 (early)")
+     Stops the teacher dropdown from being truncated, and makes it clear
+     the label appends to the level. Mobile collapses further (see media query). ── */
   .wc-slot {
     display: grid;
-    grid-template-columns: 96px 1fr 12px 1fr 80px 1fr 28px;
+    grid-template-columns: 96px 1fr 12px 1fr 1fr 28px;
+    grid-template-areas:
+      "day start arr end teach rm"
+      "label label label label label ."
+      "preview preview preview preview preview .";
     align-items: center;
     gap: 6px;
     margin-bottom: 6px;
@@ -855,6 +863,22 @@
     border-radius: var(--radius-0);
     background: var(--surface);
   }
+  .wc-slot > select.wc-slot-day     { grid-area: day; }
+  .wc-slot > input.wc-start         { grid-area: start; }
+  .wc-slot > .wc-arrow              { grid-area: arr; }
+  .wc-slot > input.wc-end           { grid-area: end; }
+  .wc-slot > select.wc-slot-teacher { grid-area: teach; }
+  .wc-slot > .wc-btn-remove         { grid-area: rm; }
+  .wc-slot > input.wc-slot-label    { grid-area: label; }
+  .wc-slot > .wc-label-preview {
+    grid-area: preview;
+    font-size: .75rem;
+    font-style: italic;
+    color: var(--vibrant);
+    padding-left: 4px;
+    display: none; /* shown by JS only when the label has content */
+  }
+  .wc-slot > .wc-label-preview.visible { display: block; }
   .wc-slot input.wc-slot-label {
     padding: 7px 8px;
     border: var(--hairline) solid var(--rule);
@@ -926,16 +950,18 @@
   .wc-divider { border: none; border-top: 1px solid var(--border); margin: var(--space-5) 0; }
 
   @media (max-width: 520px) {
-    /* Slot row collapses to 3 rows:
+    /* Slot row collapses to 4 rows:
          Row 1: Day · ✕
          Row 2: Start–End · Label
-         Row 3: Teacher (full width) */
+         Row 3: Teacher (full width)
+         Row 4: live preview (only visible when label has content) */
     .wc-slot {
       grid-template-columns: 1fr 1fr 12px 1fr 28px;
       grid-template-areas:
         "day day day day rm"
         "start arr end label label"
-        "teach teach teach teach teach";
+        "teach teach teach teach teach"
+        "preview preview preview preview preview";
       gap: 4px;
       padding: 6px 8px;
     }
@@ -946,6 +972,7 @@
     .wc-slot > input.wc-slot-label    { grid-area: label; }
     .wc-slot > select.wc-slot-teacher { grid-area: teach; }
     .wc-slot > .wc-btn-remove         { grid-area: rm; }
+    .wc-slot > .wc-label-preview      { grid-area: preview; }
   }
 
   /* ── REVIEW ── */
@@ -2158,10 +2185,16 @@
       <div class="cwc-section-label" data-lbl="what-next">What would you like to do next?</div>
       <div class="err-box" id="cwc-submit-error" style="display:none;margin-bottom:8px;" aria-live="assertive" role="alert"></div>
       <div class="cwc-next-btns">
-        <button class="cwc-next-btn" onclick="cwcNext('weekly', this)"   data-lbl="submit-weekly">Submit another weekly class →</button>
-        <button class="cwc-next-btn" onclick="cwcNext('workshop', this)" data-lbl="submit-workshop">Submit a workshop or miniseries →</button>
-        <button class="cwc-next-btn" onclick="cwcNext('social', this)"   data-lbl="submit-social">Submit a social event →</button>
-        <button class="cwc-next-btn outline" onclick="cwcNext('done', this)" data-lbl="done-for-now">I'm done for now</button>
+        <!-- Primary action — most teachers finish after one or two submissions.
+             Was previously last and styled as a ghost outline button (looked unclickable);
+             now first + purple to match the other actions. -->
+        <button class="cwc-next-btn" onclick="cwcNext('done', this)" data-lbl="done-for-now">✓ I'm done for now</button>
+
+        <div style="font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--fg-3);margin:12px 0 6px;text-align:center;" data-lbl="or-add-another">— or add another —</div>
+
+        <button class="cwc-next-btn outline" onclick="cwcNext('weekly', this)"   data-lbl="submit-weekly">Submit another weekly class →</button>
+        <button class="cwc-next-btn outline" onclick="cwcNext('workshop', this)" data-lbl="submit-workshop">Submit a workshop or miniseries →</button>
+        <button class="cwc-next-btn outline" onclick="cwcNext('social', this)"   data-lbl="submit-social">Submit a social event →</button>
       </div>
     </div>
   </div>
@@ -2611,10 +2644,11 @@
       <div class="cwc-divider" id="ws-what-next-divider"></div>
       <div class="cwc-section-label" id="ws-what-next-label">What would you like to do next?</div>
       <div class="cwc-next-btns" id="ws-what-next-btns">
-        <button class="cwc-next-btn" onclick="wsNext('workshop')">Submit another workshop →</button>
-        <button class="cwc-next-btn" onclick="wsNext('weekly')">Submit a weekly class →</button>
-        <button class="cwc-next-btn" onclick="wsNext('social')">Submit a social event →</button>
-        <button class="cwc-next-btn outline" onclick="wsNext('done')">I'm done for now</button>
+        <button class="cwc-next-btn" onclick="wsNext('done')" data-lbl="done-for-now">✓ I'm done for now</button>
+        <div style="font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--fg-3);margin:12px 0 6px;text-align:center;" data-lbl="or-add-another">— or add another —</div>
+        <button class="cwc-next-btn outline" onclick="wsNext('workshop')">Submit another workshop →</button>
+        <button class="cwc-next-btn outline" onclick="wsNext('weekly')">Submit a weekly class →</button>
+        <button class="cwc-next-btn outline" onclick="wsNext('social')">Submit a social event →</button>
       </div>
     </div>
   </div>
@@ -2956,9 +2990,10 @@
       <div class="cwc-divider" id="ss-what-next-divider"></div>
       <div class="cwc-section-label" id="ss-what-next-label" data-lbl="what-next">What would you like to do next?</div>
       <div class="cwc-next-btns" id="ss-what-next-btns">
-        <button class="cwc-next-btn" onclick="ssNext('workshop')">Submit a workshop →</button>
-        <button class="cwc-next-btn" onclick="ssNext('weekly')">Submit a weekly class →</button>
-        <button class="cwc-next-btn outline" onclick="ssNext('done')">I'm done for now</button>
+        <button class="cwc-next-btn" onclick="ssNext('done')" data-lbl="done-for-now">✓ I'm done for now</button>
+        <div style="font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:1px;color:var(--fg-3);margin:12px 0 6px;text-align:center;" data-lbl="or-add-another">— or add another —</div>
+        <button class="cwc-next-btn outline" onclick="ssNext('workshop')">Submit a workshop →</button>
+        <button class="cwc-next-btn outline" onclick="ssNext('weekly')">Submit a weekly class →</button>
       </div>
     </div>
   </div>
@@ -3040,7 +3075,7 @@ const T = {
     'confirm-submit':   'Confirm & Submit',
     'back-to-input':    '← Edit my description',
     'success-title':    'Submission received!',
-    'success-sub':      'Your details have been saved and Shoonya has been notified. You\'ll receive a confirmation email shortly — check info@shoonyadance.com if you don\'t see it.',
+    'success-sub':      'Your details have been saved and Shoonya has been notified. You\'ll receive a confirmation email shortly.',
     'submit-another':   'Submit another',
     'note-from-us':     'Heads up',
     'low-confidence':   'We extracted your details but weren\'t fully confident — please check everything carefully before submitting.',
@@ -3070,7 +3105,8 @@ const T = {
     'submit-weekly':    'Submit another weekly class →',
     'submit-workshop':  'Submit a workshop or miniseries →',
     'submit-social':    'Submit a social event →',
-    'done-for-now':     'I\'m done for now',
+    'done-for-now':     '✓ I\'m done for now',
+    'or-add-another':   '— or add another —',
     'submit-wc-form':   'Continue — add class details →',
     'edit-desc':        'Edit',
     'approve-desc':     'Looks good ✓',
@@ -3144,7 +3180,7 @@ const T = {
     'confirm-submit':   'Bevestigen & Verzenden',
     'back-to-input':    '← Beschrijving aanpassen',
     'success-title':    'Inzending ontvangen!',
-    'success-sub':      'Je gegevens zijn opgeslagen en Shoonya is op de hoogte gesteld. Je ontvangt binnenkort een bevestigingsmail — check info@shoonyadance.com als je die niet ziet.',
+    'success-sub':      'Je gegevens zijn opgeslagen en Shoonya is op de hoogte gesteld. Je ontvangt binnenkort een bevestigingsmail.',
     'submit-another':   'Nog een inzending',
     'note-from-us':     'Let op',
     'low-confidence':   'We hebben je gegevens uitgelezen maar waren niet volledig zeker — controleer alles goed voor je indient.',
@@ -3174,7 +3210,8 @@ const T = {
     'submit-weekly':    'Nog een wekelijkse les indienen →',
     'submit-workshop':  'Workshop of minireeks indienen →',
     'submit-social':    'Sociaal evenement indienen →',
-    'done-for-now':     'Ik ben klaar voor nu',
+    'done-for-now':     '✓ Ik ben klaar voor nu',
+    'or-add-another':   '— of voeg er nog een toe —',
     'submit-wc-form':   'Verder — lesgegevens invullen →',
     'edit-desc':        'Bewerken',
     'approve-desc':     'Ziet er goed uit ✓',
@@ -3234,7 +3271,7 @@ const T = {
     'confirm-submit':   'Confirmer & Envoyer',
     'back-to-input':    '← Modifier ma description',
     'success-title':    'Soumission reçue !',
-    'success-sub':      'Vos informations ont été enregistrées et Shoonya a été informé. Vous recevrez un e-mail de confirmation sous peu — vérifiez info@shoonyadance.com si vous ne le voyez pas.',
+    'success-sub':      'Vos informations ont été enregistrées et Shoonya a été informé. Vous recevrez un e-mail de confirmation sous peu.',
     'submit-another':   'Soumettre une autre',
     'note-from-us':     'À noter',
     'low-confidence':   'Nous avons extrait vos informations mais n\'étions pas entièrement certains — vérifiez tout attentivement avant de soumettre.',
@@ -3264,7 +3301,8 @@ const T = {
     'submit-weekly':    'Soumettre un autre cours hebdomadaire →',
     'submit-workshop':  'Soumettre un atelier ou une minisérie →',
     'submit-social':    'Soumettre un événement social →',
-    'done-for-now':     'J\'ai terminé pour l\'instant',
+    'done-for-now':     '✓ J\'ai terminé pour l\'instant',
+    'or-add-another':   '— ou en ajouter un autre —',
     'submit-wc-form':   'Continuer — ajouter les détails →',
     'edit-desc':        'Modifier',
     'approve-desc':     'C\'est bon ✓',
@@ -4456,9 +4494,14 @@ function wcAddSlot(levelIdx, presetDay, presetStart, presetEnd, presetLevel) {
     <input type="time" class="wc-start" aria-label="Class start time" oninput="wcAutoFillEnd(this, ${levelIdx})" step="60">
     <span class="wc-arrow">→</span>
     <input type="time" class="wc-end" aria-label="Class end time" step="60">
-    <input type="text" class="wc-slot-label" aria-label="Optional label like early, late, or +" placeholder="early/late/+" maxlength="20">
     <select class="wc-slot-teacher" aria-label="Teacher for this slot">${teacherOpts}</select>
     <button class="wc-btn-remove" onclick="wcRemoveSlot(this)" title="Remove slot">✕</button>
+    <input type="text" class="wc-slot-label"
+      aria-label="Optional label appended to the level name"
+      placeholder="optional label — e.g. early, late, +"
+      oninput="wcUpdateLabelPreview(this)"
+      maxlength="20">
+    <span class="wc-label-preview" aria-live="polite"></span>
   `;
 
   // Set values via JS properties — required for Safari to display them correctly
@@ -4488,6 +4531,29 @@ function wcRemoveSlot(btn) {
   const container = slot.parentElement;
   if (container.querySelectorAll('.wc-slot').length <= 1) return; // keep at least one
   slot.remove();
+}
+
+// Live preview for the optional slot label. Updates as the teacher types.
+// "early" → "→ Saves as: Level 2 (early)"
+// "+"     → "→ Saves as: Level 1+"
+// (empty) → preview hidden
+function wcUpdateLabelPreview(input) {
+  const slotDiv     = input.closest('.wc-slot');
+  const levelBlock  = slotDiv && slotDiv.closest('.wc-level-block');
+  const levelSelect = levelBlock && levelBlock.querySelector('.wc-level-select');
+  const previewEl   = slotDiv && slotDiv.querySelector('.wc-label-preview');
+  if (!previewEl) return;
+  const level = levelSelect ? levelSelect.value : 'Level';
+  const label = (input.value || '').trim();
+  if (!label) {
+    previewEl.classList.remove('visible');
+    previewEl.textContent = '';
+    return;
+  }
+  // Same formatting rule as the backend's appendSlotLabel + the Details-step preview
+  const display = /^[+\-]+$/.test(label) ? level + label : level + ' (' + label + ')';
+  previewEl.textContent = '→ Saves as: ' + display;
+  previewEl.classList.add('visible');
 }
 
 function wcAutoFillEnd(startInput, levelIdx) {
