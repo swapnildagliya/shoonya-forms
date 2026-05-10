@@ -814,18 +814,23 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
   }
 });
 
-// Auto-login if a session exists from the smart-form (or this page), OR if
-// the admin sessionStorage flag is set (admin entered the password elsewhere
-// in this same browser session). Reads:
-//   - localStorage.shoonya_session — teacher session, written by login-panel
-//   - sessionStorage.shoonya_admin === '1' — admin password entered on /admin
-//                                            or via smart-form admin login
-// Either path skips the login form below.
+// Auto-login from any of these signals (in order):
+//   1. sessionStorage.shoonya_admin === '1' — set by /admin password gate
+//   2. localStorage.shoonya_session.profile.role === 'admin' — set by smart-form slpLogin
+//   3. localStorage.shoonya_session — teacher email + PIN
+// Any path that succeeds skips the login form.
 (async function tryAutoLogin() {
-  // Path A: admin shortcut — backend bypasses PIN check when admin_password
-  // matches. Same trust bar as /admin's password gate.
-  const isAdmin = sessionStorage.getItem('shoonya_admin') === '1';
-  if (isAdmin) {
+  function isAdminFromStorage() {
+    if (sessionStorage.getItem('shoonya_admin') === '1') return true;
+    try {
+      const sess = JSON.parse(localStorage.getItem(SHARED_SESSION_KEY) || '{}');
+      const role = sess && sess.profile && (sess.profile.role || '').toString().toLowerCase();
+      return role === 'admin';
+    } catch (e) { return false; }
+  }
+
+  // Path A: admin shortcut — backend bypasses PIN when admin_password matches.
+  if (isAdminFromStorage()) {
     try {
       const res = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
