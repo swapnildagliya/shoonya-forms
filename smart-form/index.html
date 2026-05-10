@@ -3711,15 +3711,20 @@ const CLASS_DESCRIPTIONS_BY_NAME = {
   },
   'lenka badriyah': {
     'Raqs Sharqi': {
-      'Level 1': 'Foundational belly dance exploring hip and arm engagement with various shimmies and accents. Learn the musical traditions of this beautiful dance form. For beginners or those with some experience. Age 12+.',
-      'Level 2': 'Veil work introduced as complementary prop, with crisp isolations, fluid undulations, intricate footwork, and classical choreography with props. Requires 1–3 years prior belly dance experience. Age 12+.',
-      'Level 3': 'Baladi style focus with Taqsim phrasing, melaya draping, finger cymbals, and musical interpretation for soulful movement. For experienced belly dancers ready for advanced study. Age 12+.',
+      'Level 1': 'This class is your entry point into the world of raqs sharqi — the elegant classical dance of Egypt. We work on building solid foundations: correct posture and alignment, essential body mechanics, and the basic vocabulary of movement that Raqs Sharqi (oriental dance / bellydance) is built on. Alongside technique, we begin developing musical awareness — learning to listen to the music and respond to it with our bodies. Through dance combinations and guided movement exploration, you\'ll start to discover what your body is capable of and how to move with intention and ease. No previous dance experience is required.',
+      'Level 2': 'This class is for dancers who already have a solid grounding in raqs sharqi fundamentals (equivalent to Level 1 or comparable experience). Each year, the group focuses on a specific thematic topic. This year, we work with a variety of Egyptian rhythmic patterns — saidi, baladi, malfuf, ayoub, fellahi, vox, masmoudi kabir, samai and others — and through them, we explore the distinct dance styles, aesthetics and characters that belong to each tradition. Hip technique is refined and deepened in context, so the body learns not just how to move, but why.',
+      'Level 3': 'This is the most advanced group, and a space for dancers who are ready to expand beyond the familiar. This year, building on a strong foundation in traditional raqs sharqi, we explore a conscious, feeling-full approach to movement — bringing sensitivity and personal artistry into dialogue with the dance. This year, we are drawn into the world of contemporary qanun music, moving to the lyrical and luminous sounds of artists such as Farah Fersi and Maya Youssef. Here, tradition and innovation meet, and you are invited to shape your own dance expression — refined, personal, and alive.',
+    },
+    'Pilates for Dancers': {
+      'Open Level': 'This class bridges the discipline of mat pilates with the practical demands of dance. Each session, we work through carefully structured mat pilates sequences — always responsive to the needs and strengths of the group — building core awareness, stability, and ease of movement from the inside out. Every class then takes the principles we\'ve practised and applies them directly to a specific element of dance technique, so what you learn on the mat stays with you on the dance floor. Suitable for dancers of all styles and levels.',
+    },
+    'Dance & Fit': {
+      'Open Level': 'A fresh and energising class that combines the joy of dance with the benefits of a full-body workout. Every session follows five modules: we open with cardio through dance sequences and combinations — drawing from bellydance or bachata — to get the body moving and the spirit lifted. From there, we move into a short targeted workout for legs, abs, back and arms, followed by a drill session where we return to cardio by deepening a specific dance technique. We then focus on stability and balance, and close every class with stretching to restore and integrate. Come ready to dance, sweat and feel good.',
     },
   },
   'zoe bizoe': {
     'Burlesque': {
       'Level 1': 'Introductory course for complete beginners exploring the fundamentals of this performance art form. Learn core principles of teasing and audience interaction, basic sensual movement, body expression, and introduction to theatrical elements. Age 12+.',
-      'Level 1+': 'Intermediate course offering deeper, more focused experience with extended skill development. Refined movement vocabulary, advanced teasing techniques, character work, and preparation for advanced choreography. Age 12+.',
       'Level 2': 'Advanced course for experienced burlesque dancers featuring complex choreography, professional-level execution and stage presence, and advanced artistic interpretation and storytelling. Age 12+.',
     },
   },
@@ -3838,6 +3843,8 @@ const WC_STYLE_DESCRIPTIONS = {
   'African Congolese Dance': 'Vibrant, high-energy sessions blending traditional and contemporary Afro and Congolese styles, including the dynamic Congolese Rumba. Features intense movement, authentic Congolese rhythms, and occasional live percussion accompaniment.',
   'Congolese Rumba':         'Partner dance rooted in authentic Congolese rhythms. Dynamic high-energy choreography blending traditional and contemporary styles.',
   'Argentine Tango':         'A floating, intense, and timeless dance where two bodies gracefully unite in space — barriers of age or language dissolve in this improvised partner experience. Progressive programme from foundational embrace and counterclockwise floor navigation to the traditional codes and musicality of the milonga. Partner registration required. Age 16+.',
+  'Pilates for Dancers':     'Bridges the discipline of mat pilates with the practical demands of dance. Carefully structured mat sequences responsive to the group, building core awareness, stability, and ease of movement from the inside out. Each class applies the principles to a specific element of dance technique. Suitable for dancers of all styles and levels.',
+  'Dance & Fit':             'A fresh and energising class combining the joy of dance with a full-body workout. Five modules per session: cardio dance, targeted strength work, dance-technique drills, stability and balance, then closing stretching. Come ready to dance, sweat, and feel good. Every body welcome.',
 };
 
 // ─── CLASS META STORE ────────────────────────────────────────────────
@@ -3875,8 +3882,10 @@ const CLASS_META_BY_NAME = {
     'Bachata':     { age:'12+', partner:true,  co:'Alex', prereq:'Partner registration required. Substantial Bachata training for L3.', bring:'Comfortable, breathable clothing • Indoor dance shoes (suede or smooth leather soles) or socks • Water bottle • Small towel • No street shoes in the studios' },
   },
   'lenka badriyah': {
-    'Raqs Sharqi': { age:'12+', partner:false, co:'', prereq:'L1: Beginners welcome. L2: 1–3 years belly dance experience. L3: Experienced belly dancers.', bring:'Comfortable, form-fitting clothing (leggings + top so isolations are visible) • We dance barefoot • A bottle of water' },
-    'Bachata':     { age:'12+', partner:true,  co:'Alex', prereq:'Partner registration required.', bring:'Comfortable, breathable clothing • Indoor dance shoes (suede or smooth leather soles) or socks • Water bottle • Small towel • No street shoes in the studios' },
+    'Raqs Sharqi':         { age:'12+', partner:false, co:'', prereq:'L1: Beginners welcome — no previous experience required. L2: Solid grounding in raqs sharqi fundamentals (Level 1 or comparable). L3: Strong foundation in traditional raqs sharqi.', bring:'Comfortable, form-fitting clothing (leggings + top so isolations are visible) • We dance barefoot • A bottle of water' },
+    'Bachata':             { age:'12+', partner:true,  co:'Alex', prereq:'Partner registration required.', bring:'Comfortable, breathable clothing • Indoor dance shoes (suede or smooth leather soles) or socks • Water bottle • Small towel • No street shoes in the studios' },
+    'Pilates for Dancers': { age:'14+', partner:false, co:'', prereq:'All levels welcome — suitable for dancers of all styles and levels.', bring:'Comfortable clothing for movement • A mat (we have spares) • A bottle of water' },
+    'Dance & Fit':         { age:'14+', partner:false, co:'', prereq:'All levels welcome — every body.', bring:'Comfortable clothing you can move in • Indoor sneakers or bare feet • A bottle of water • A small towel' },
   },
   'sonja kikizomba': {
     'Kizomba': { age:'12+', partner:true, co:'', prereq:'Prior Kizomba experience. Partner registration required.', bring:'Comfortable clothing • Indoor dance shoes (smooth soles) or socks • A bottle of water' },
