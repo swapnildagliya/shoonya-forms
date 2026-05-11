@@ -4160,9 +4160,9 @@ const SEMESTER_CONFIG = {
         '30': { total: 116, student: null, uitpas: 23.20 }, // Ballet Pointes — no student discount
         '60': { total: 198, student: 175, uitpas: 39.60 },
         '70': { total: 223, student: 197, uitpas: 44.60 }, // Tap Dance (70 min)
-        '75': { total: 223, student: 197, uitpas: 44.60 }, // Lindy Hop (75 min) — same price as 70
+        '75': { total: 231, student: 204, uitpas: 46.20 }, // 75 min — own tier (Indian Semi-Classical, Ballet L2, Lindy Hop Open)
         '90': { total: 248, student: 219, uitpas: 49.60 },
-        '105': { total: 290, student: 256, uitpas: 58.00 }, // Oriental Flow (1h45) — Spring 272/240 × 16/15
+        '105': { total: 290, student: 256, uitpas: 58.00 }, // Oriental Flow (1h45)
       }
     },
     {
@@ -4189,7 +4189,7 @@ const SEMESTER_CONFIG = {
         '30': { total: 109, student: null, uitpas: 21.80 }, // Ballet Pointes — no student discount
         '60': { total: 186, student: 164, uitpas: 37.20 },
         '70': { total: 209, student: 184, uitpas: 41.80 }, // Tap Dance (70 min)
-        '75': { total: 209, student: 184, uitpas: 41.80 }, // Lindy Hop (75 min) — same price as 70
+        '75': { total: 216, student: 191, uitpas: 43.20 }, // 75 min — own tier
         '90': { total: 232, student: 205, uitpas: 46.40 },
         '105': { total: 272, student: 240, uitpas: 54.40 }, // Oriental Flow (1h45)
       }
@@ -6321,18 +6321,36 @@ async function cwcNext(action, triggerBtn) {
     });
     cwcCurrentData.payload.class_dates     = classDates;
     cwcCurrentData.payload.excluded_dates  = [...cwcExcludedDates];
-    cwcCurrentData.payload.total_classes   = classDates.length;
 
-    // Per-day breakdown for the payload
+    // Per-day breakdown for the payload (built first so total_classes can use it).
+    // Dedupe dates within each day: if a day hosts multiple slots (Burlesque
+    // Mon early + Mon late; Cuban Salsa L1/L2/L3 all Monday) the same Monday
+    // appears once per slot. We want unique class dates per day, not chip count.
     const perDayData = {};
     document.querySelectorAll('#cwc-schedule-container .cwc-day-section').forEach(section => {
       const day = section.dataset.day;
       const dayChips = section.querySelectorAll('.cwc-date-chip');
+      const seen = {};
       const dayDates = [];
-      dayChips.forEach(c => { if (!c.classList.contains('excluded')) dayDates.push(c.dataset.date); });
+      dayChips.forEach(c => {
+        if (c.classList.contains('excluded')) return;
+        const iso = c.dataset.date;
+        if (!iso || seen[iso]) return;
+        seen[iso] = true;
+        dayDates.push(iso);
+      });
       perDayData[day] = { dates: dayDates, count: dayDates.length };
     });
     cwcCurrentData.payload.per_day_dates = perDayData;
+
+    // total_classes = MAX sessions per day (≤16 per level), not the aggregate sum
+    // across all submitted slots. Matches output-generator.gs computeMaxAcrossLevels
+    // logic so MS column J reflects "what a student in one level actually attends".
+    // Sum of per-day counts (the old behaviour, capped at 16×days) is stored as
+    // total_classes_sum for analytics / teacher-attendance reporting.
+    const perDayCounts = Object.keys(perDayData).map(function(d){ return perDayData[d].count; });
+    cwcCurrentData.payload.total_classes     = perDayCounts.length ? Math.max.apply(null, perDayCounts) : 0;
+    cwcCurrentData.payload.total_classes_sum = classDates.length;
 
     // Compute prices PER LEVEL — a student pays for one level, and each level
     // can have its own duration (e.g. Foundation 60min, Open Level 75min).
@@ -6352,13 +6370,18 @@ async function cwcNext(action, triggerBtn) {
       return 60;
     };
 
-    // Per-level price (each level has its own duration → its own tier)
+    // Per-level price (each level has its own duration → its own tier).
+    // Multi-slot levels are PARALLEL — student picks ONE slot per week — so
+    // sessions per level = MAX across the level's days, NOT the sum. Was a bug
+    // pre-2026-05-11 that doubled prices for Tap L1 (Mon + Wed) etc.
     const perLevelPrices = (cwcCurrentData.levels || []).map(lv => {
       const durMins  = levelDur(lv);
       const tier     = cwcGetPriceTier(durMins, sem ? sem.prices : {}) || { total: 198, student: 175 };
-      // Sessions for this level = sum across its days
       const days     = [...new Set(((lv.slots) || []).map(s => s.day).filter(Boolean))];
-      const sessions = days.reduce((a, d) => a + ((perDayData[d] && perDayData[d].count) || 0), 0);
+      const sessions = days.reduce((max, d) => {
+        const c = (perDayData[d] && perDayData[d].count) || 0;
+        return c > max ? c : max;
+      }, 0);
       const full     = Math.round(tier.total / base * sessions);
       const student  = tier.student ? Math.ceil(tier.student / base * sessions) : null;
       const uitpas   = parseFloat((full * 0.2).toFixed(2));
