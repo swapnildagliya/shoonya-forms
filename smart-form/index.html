@@ -2124,6 +2124,7 @@
         <div class="cwc-meta-row">
           <div class="cwc-meta-key" data-lbl="what-to-bring">What to bring</div>
           <textarea aria-label="What students should bring" id="cwc-bring-input" class="cwc-meta-input" rows="2"
+            oninput="this.dataset.userEdited='true';(window.__cwcSessionMeta=window.__cwcSessionMeta||{}).what_to_bring=this.value;"
             placeholder="e.g. Comfortable clothes, clean non-marking shoes."></textarea>
         </div>
 
@@ -2131,6 +2132,7 @@
           <div class="cwc-meta-key">Prerequisites</div>
           <textarea id="cwc-prereq-input" class="cwc-meta-input" rows="2"
             aria-label="Prerequisites"
+            oninput="this.dataset.userEdited='true';(window.__cwcSessionMeta=window.__cwcSessionMeta||{}).prereq=this.value;"
             placeholder="Level requirements and prior experience needed."></textarea>
         </div>
 
@@ -2142,6 +2144,7 @@
           </div>
           <textarea id="cwc-website-note-input" class="cwc-meta-input" rows="3"
             aria-label="Website note — published on class page"
+            oninput="this.dataset.userEdited='true';(window.__cwcSessionMeta=window.__cwcSessionMeta||{}).website_note=this.value;"
             placeholder="Extra information shown on the Squarespace class page."></textarea>
         </div>
 
@@ -4236,6 +4239,13 @@ function wcShowStyleStep() {
   document.getElementById('wc-step-style').style.display     = '';
   document.getElementById('wc-step-schedule').style.display  = 'none';
 
+  // Reset session edit state from any previous submission.
+  // __cwcSessionDescs and __cwcSessionMeta preserve in-session edits across
+  // re-renders of the confirmation step (bug fix 2026-05-11). Must clear on
+  // new submission so previous style's edits don't bleed into the new style.
+  window.__cwcSessionDescs = {};
+  window.__cwcSessionMeta  = {};
+
   // Populate style chips from profile
   const chips = document.getElementById('wc-style-chips');
   chips.innerHTML = '';
@@ -5312,6 +5322,14 @@ function cwcLoadDescriptions(style, levels) {
     if (savedDescs && Object.keys(savedDescs).length) {
       finalStyleDescs = Object.assign({}, finalStyleDescs, savedDescs);
     }
+    // HIGHEST PRIORITY: in-session edits the teacher made via cwcSaveLevelDesc
+    // earlier in THIS submission flow. Persisted to window.__cwcSessionDescs so
+    // navigating back+forward doesn't overwrite edits with prefill text. Fixed
+    // 2026-05-11 after La Liz lost her L2/L3 Flamenco edits on re-navigation.
+    const sessionDescs = window.__cwcSessionDescs || {};
+    if (Object.keys(sessionDescs).length) {
+      finalStyleDescs = Object.assign({}, finalStyleDescs, sessionDescs);
+    }
 
     // General style description from website (fallback for levels without specific text)
     const generalDesc = WC_STYLE_DESCRIPTIONS[style] || '';
@@ -5442,6 +5460,14 @@ function cwcSaveLevelDesc(levelName) {
   taEl.style.display  = 'none';
   if (saveBtn) saveBtn.style.display = 'none';
   if (editBtn) editBtn.style.display = '';
+
+  // Persist to session state so subsequent re-renders (e.g. when user
+  // navigates back to confirmation step) don't overwrite this edit with
+  // the prefilled CLASS_DESCRIPTIONS_BY_NAME default.
+  // Fixed 2026-05-11 after La Liz reported L2/L3 Flamenco edits being lost.
+  if (!window.__cwcSessionDescs) window.__cwcSessionDescs = {};
+  if (edited) window.__cwcSessionDescs[levelName] = edited;
+  else delete window.__cwcSessionDescs[levelName];
 }
 
 function cwcSetAvail(isFull) {
@@ -5472,9 +5498,19 @@ function cwcPopulateMeta(style) {
   // CLASS_META_BY_NAME defaults. Falls back to meta when savedMeta is null.
   const saved = window.__cwcSavedMeta || null;
 
-  cwcSelectedAge = (saved && saved.age_min)            || (meta && meta.age)     || '12+';
-  cwcPartnerReq  = (saved && saved.partner_required != null) ? !!saved.partner_required
-                                                              : ((meta && meta.partner) || false);
+  // In-session edits (from oninput handlers + age/partner chip clicks) win
+  // over saved+meta defaults. Without this, navigating back+forward to the
+  // confirmation step wipes the teacher's edits. Same bug pattern that lost
+  // La Liz's L2/L3 Flamenco descriptions; fixed 2026-05-11.
+  const sm = window.__cwcSessionMeta || {};
+
+  cwcSelectedAge = sm.age_min
+                || (saved && saved.age_min)
+                || (meta && meta.age)
+                || '12+';
+  cwcPartnerReq  = (sm.partner_required != null) ? !!sm.partner_required
+                : (saved && saved.partner_required != null) ? !!saved.partner_required
+                : ((meta && meta.partner) || false);
 
   // Age chips
   document.querySelectorAll('#cwc-age-chips .cwc-meta-chip').forEach(btn => {
@@ -5493,23 +5529,30 @@ function cwcPopulateMeta(style) {
   // that wiped out edits made on Step 2. Bug fixed 2026-05-07.)
   cwcBuildCoTeacherSelector(cwcSelectedCoTeachers);
 
-  // What to bring
-  document.getElementById('cwc-bring-input').value =
-    (saved && saved.what_to_bring) || (meta && meta.bring) || '';
+  // What to bring — in-session edit wins over saved/meta defaults
+  const bringInput = document.getElementById('cwc-bring-input');
+  if (bringInput) {
+    bringInput.value = (typeof sm.what_to_bring === 'string')
+      ? sm.what_to_bring
+      : ((saved && saved.what_to_bring) || (meta && meta.bring) || '');
+  }
 
   // Prerequisites — surface the stored prereq so teachers can review and edit
   const prereqInput = document.getElementById('cwc-prereq-input');
   if (prereqInput) {
-    prereqInput.value = (saved && saved.prereq) || (meta && meta.prereq) || '';
+    prereqInput.value = (typeof sm.prereq === 'string')
+      ? sm.prereq
+      : ((saved && saved.prereq) || (meta && meta.prereq) || '');
     prereqInput.style.height = 'auto';
     prereqInput.style.height = Math.min(prereqInput.scrollHeight + 4, 200) + 'px';
   }
 
   // Website note — prefer the teacher's last edit (saved), fall back to the
-  // style-specific helper. Only show the row if either source has content.
+  // style-specific helper. In-session edit wins. Only show the row if either
+  // source has content (or there's an in-session edit).
   const savedNote   = (saved && saved.website_note) || '';
   const fallbackNote = cwcGetStyleWebsiteNote(style);
-  const websiteNote = savedNote || fallbackNote;
+  const websiteNote = (typeof sm.website_note === 'string') ? sm.website_note : (savedNote || fallbackNote);
   const noteRow     = document.getElementById('cwc-website-note-row');
   const noteInput   = document.getElementById('cwc-website-note-input');
   if (websiteNote && noteRow && noteInput) {
@@ -5620,12 +5663,18 @@ function cwcSetAge(val) {
   document.querySelectorAll('#cwc-age-chips .cwc-meta-chip').forEach(btn => {
     btn.classList.toggle('selected', btn.textContent === val);
   });
+  // Persist to session so re-render of cwcPopulateMeta preserves the edit
+  if (!window.__cwcSessionMeta) window.__cwcSessionMeta = {};
+  window.__cwcSessionMeta.age_min = val;
 }
 
 function cwcSetPartner(isRequired) {
   cwcPartnerReq = isRequired;
   document.getElementById('cwc-partner-no').classList.toggle('selected',  !isRequired);
   document.getElementById('cwc-partner-yes').classList.toggle('selected',  isRequired);
+  // Persist to session so re-render of cwcPopulateMeta preserves the edit
+  if (!window.__cwcSessionMeta) window.__cwcSessionMeta = {};
+  window.__cwcSessionMeta.partner_required = !!isRequired;
 }
 
 // ─── DATE GRID FUNCTIONS ──────────────────────────────────────────────
