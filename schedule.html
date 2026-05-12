@@ -33,9 +33,12 @@
       --studio-ananta2-bg:   #E1F5EE;  /* teal/green */
       --studio-ananta2-border:#1D9E75;
       --studio-ananta2-text: #085041;
-      --studio-artdeco-bg:   #FAEEDA;  /* amber */
+      --studio-artdeco-bg:   #FAEEDA;  /* amber (Art Deco 1) */
       --studio-artdeco-border:#BA7517;
       --studio-artdeco-text: #633806;
+      --studio-artdeco2-bg:    #FCE2E2;  /* rose (Art Deco 2) */
+      --studio-artdeco2-border:#C45A5A;
+      --studio-artdeco2-text:  #6A1F1F;
       --studio-unknown-bg:   #F1EFE8;
       --studio-unknown-border:#888780;
       --studio-unknown-text: #2C2C2A;
@@ -73,6 +76,9 @@
         --studio-artdeco-bg:   #2C1E0B;
         --studio-artdeco-border:#D49B47;
         --studio-artdeco-text: #EBC78A;
+        --studio-artdeco2-bg:    #2E1010;
+        --studio-artdeco2-border:#D77777;
+        --studio-artdeco2-text:  #F0BABA;
         --studio-unknown-bg:   #25241F;
         --studio-unknown-border:#9C9A8A;
         --studio-unknown-text: #C8C5B6;
@@ -336,6 +342,8 @@
     .studio-header.studio-ananta1   { color: var(--studio-ananta1-text);   background: var(--studio-ananta1-bg); }
     .studio-header.studio-ananta2   { color: var(--studio-ananta2-text);   background: var(--studio-ananta2-bg); }
     .studio-header.studio-artdeco   { color: var(--studio-artdeco-text);   background: var(--studio-artdeco-bg); }
+    .studio-header.studio-artdeco1  { color: var(--studio-artdeco-text);   background: var(--studio-artdeco-bg); }
+    .studio-header.studio-artdeco2  { color: var(--studio-artdeco2-text);  background: var(--studio-artdeco2-bg); }
     .time-corner {
       border-bottom: 1px solid var(--rule);
     }
@@ -385,6 +393,8 @@
     .slot.studio-ananta1   { background: var(--studio-ananta1-bg);   border-left-color: var(--studio-ananta1-border);   color: var(--studio-ananta1-text); }
     .slot.studio-ananta2   { background: var(--studio-ananta2-bg);   border-left-color: var(--studio-ananta2-border);   color: var(--studio-ananta2-text); }
     .slot.studio-artdeco   { background: var(--studio-artdeco-bg);   border-left-color: var(--studio-artdeco-border);   color: var(--studio-artdeco-text); }
+    .slot.studio-artdeco1  { background: var(--studio-artdeco-bg);   border-left-color: var(--studio-artdeco-border);   color: var(--studio-artdeco-text); }
+    .slot.studio-artdeco2  { background: var(--studio-artdeco2-bg);  border-left-color: var(--studio-artdeco2-border);  color: var(--studio-artdeco2-text); }
     .slot.studio-unknown   { background: var(--studio-unknown-bg);   border-left-color: var(--studio-unknown-border);   color: var(--studio-unknown-text); }
     .slot.is-conflict {
       box-shadow: inset 0 0 0 2px var(--conflict-border);
@@ -424,6 +434,8 @@
     .day-card.studio-ananta1   { border-left-color: var(--studio-ananta1-border); }
     .day-card.studio-ananta2   { border-left-color: var(--studio-ananta2-border); }
     .day-card.studio-artdeco   { border-left-color: var(--studio-artdeco-border); }
+    .day-card.studio-artdeco1  { border-left-color: var(--studio-artdeco-border); }
+    .day-card.studio-artdeco2  { border-left-color: var(--studio-artdeco2-border); }
     .day-card.studio-unknown   { border-left-color: var(--studio-unknown-border); }
     .day-card.is-conflict { border: 2px solid var(--conflict-border); }
     .day-card .row1 { display: flex; gap: 12px; align-items: baseline; }
@@ -486,6 +498,8 @@
     .oneoff-card.studio-ananta1   { border-left-color: var(--studio-ananta1-border); }
     .oneoff-card.studio-ananta2   { border-left-color: var(--studio-ananta2-border); }
     .oneoff-card.studio-artdeco   { border-left-color: var(--studio-artdeco-border); }
+    .oneoff-card.studio-artdeco1  { border-left-color: var(--studio-artdeco-border); }
+    .oneoff-card.studio-artdeco2  { border-left-color: var(--studio-artdeco2-border); }
     .oneoff-card.studio-unknown   { border-left-color: var(--studio-unknown-border); }
     .oneoff-date {
       font-size: 13px;
@@ -529,6 +543,8 @@
     .workshop-group.studio-ananta1   { border-left-color: var(--studio-ananta1-border); }
     .workshop-group.studio-ananta2   { border-left-color: var(--studio-ananta2-border); }
     .workshop-group.studio-artdeco   { border-left-color: var(--studio-artdeco-border); }
+    .workshop-group.studio-artdeco1  { border-left-color: var(--studio-artdeco-border); }
+    .workshop-group.studio-artdeco2  { border-left-color: var(--studio-artdeco2-border); }
     .workshop-group.studio-unknown   { border-left-color: var(--studio-unknown-border); }
     .workshop-group__head { margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dashed var(--rule); }
     .workshop-group__title {
@@ -794,18 +810,21 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 
 // Studio metadata for rendering
 const STUDIOS = [
-  { name: 'Aakash',   key: 'aakash',   color: 'var(--studio-aakash-border)',   bg: 'var(--studio-aakash-bg)' },
-  { name: 'Ananta 1', key: 'ananta1',  color: 'var(--studio-ananta1-border)',  bg: 'var(--studio-ananta1-bg)' },
-  { name: 'Ananta 2', key: 'ananta2',  color: 'var(--studio-ananta2-border)',  bg: 'var(--studio-ananta2-bg)' },
-  { name: 'Art Deco', key: 'artdeco',  color: 'var(--studio-artdeco-border)',  bg: 'var(--studio-artdeco-bg)' }
+  { name: 'Aakash',     key: 'aakash',    color: 'var(--studio-aakash-border)',    bg: 'var(--studio-aakash-bg)' },
+  { name: 'Ananta 1',   key: 'ananta1',   color: 'var(--studio-ananta1-border)',   bg: 'var(--studio-ananta1-bg)' },
+  { name: 'Ananta 2',   key: 'ananta2',   color: 'var(--studio-ananta2-border)',   bg: 'var(--studio-ananta2-bg)' },
+  { name: 'Art Deco 1', key: 'artdeco1',  color: 'var(--studio-artdeco-border)',   bg: 'var(--studio-artdeco-bg)' },
+  { name: 'Art Deco 2', key: 'artdeco2',  color: 'var(--studio-artdeco2-border)',  bg: 'var(--studio-artdeco2-bg)' }
 ];
 
 const studioCssClass = (studio) => {
-  const s = String(studio || '').toLowerCase();
-  if (s === 'aakash')   return 'studio-aakash';
-  if (s === 'ananta 1') return 'studio-ananta1';
-  if (s === 'ananta 2') return 'studio-ananta2';
-  if (s === 'art deco') return 'studio-artdeco';
+  const s = String(studio || '').toLowerCase().trim();
+  if (s === 'aakash')     return 'studio-aakash';
+  if (s === 'ananta 1')   return 'studio-ananta1';
+  if (s === 'ananta 2')   return 'studio-ananta2';
+  if (s === 'art deco 1') return 'studio-artdeco1';
+  if (s === 'art deco 2') return 'studio-artdeco2';
+  if (s === 'art deco')   return 'studio-artdeco1';  // legacy / workshops using both — render under Art Deco 1
   return 'studio-unknown';
 };
 
