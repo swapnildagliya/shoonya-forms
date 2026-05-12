@@ -4184,7 +4184,7 @@ const SEMESTER_CONFIG = {
         '70': { total: 223, student: 197, uitpas: 44.60 }, // Tap Dance (70 min)
         '75': { total: 231, student: 204, uitpas: 46.20 }, // 75 min — own tier (Indian Semi-Classical, Ballet L2, Lindy Hop Open)
         '90': { total: 248, student: 219, uitpas: 49.60 },
-        '105': { total: 290, student: 256, uitpas: 58.00 }, // Oriental Flow (1h45)
+        // '105' tier removed 2026-05-12 — Oriental Flow shortened from 1h45 → 1h30 (uses '90' tier now)
       }
     },
     {
@@ -4213,7 +4213,7 @@ const SEMESTER_CONFIG = {
         '70': { total: 209, student: 184, uitpas: 41.80 }, // Tap Dance (70 min)
         '75': { total: 216, student: 191, uitpas: 43.20 }, // 75 min — own tier
         '90': { total: 232, student: 205, uitpas: 46.40 },
-        '105': { total: 272, student: 240, uitpas: 54.40 }, // Oriental Flow (1h45)
+        // '105' tier removed 2026-05-12 — Oriental Flow shortened from 1h45 → 1h30 (uses '90' tier now)
       }
     }
   ]
@@ -4232,6 +4232,7 @@ const WC_DURATIONS = {
   'Jazzy Workout':            75,
   'Tap Dance':                70,
   'Tap':                      70,
+  'Oriental Flow':            90, // shortened from 105 → 90 on 2026-05-12 (price too high)
 };
 
 function wcGetDuration(style) {
