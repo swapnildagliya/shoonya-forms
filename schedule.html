@@ -325,7 +325,8 @@
     }
     .day-table-grid {
       display: grid;
-      grid-template-columns: 52px repeat(4, minmax(0, 1fr));
+      /* Column count comes from --studio-count set inline per render (default 5). */
+      grid-template-columns: 52px repeat(var(--studio-count, 5), minmax(0, 1fr));
       gap: 0;
       position: relative;
     }
@@ -1286,6 +1287,7 @@ function renderPerDayTables(visible) {
     // Studio header bar — rendered ONCE at the top of the day, not per window
     const studioBar = document.createElement('div');
     studioBar.className = 'day-table-grid';
+    studioBar.style.setProperty('--studio-count', STUDIOS.length);
     studioBar.appendChild(divEl('time-corner'));
     STUDIOS.forEach(s => {
       const h = document.createElement('div');
@@ -1317,9 +1319,10 @@ function renderPerDayTables(visible) {
         section.appendChild(divider);
       }
 
-      // Window body grid: time gutter + 4 studio columns
+      // Window body grid: time gutter + N studio columns (N = STUDIOS.length)
       const grid = document.createElement('div');
       grid.className = 'day-table-grid';
+      grid.style.setProperty('--studio-count', STUDIOS.length);
 
       const timeCol = document.createElement('div');
       timeCol.className = 'time-gutter';
