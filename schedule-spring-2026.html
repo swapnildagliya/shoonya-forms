@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light" />
-  <title>September 2026 schedule · Shoonya Dance Centre · Ghent</title>
-  <meta name="description" content="Shoonya Dance Centre weekly class schedule for the September 2026 — January 2027 school year. Filter by day, category, or style." />
+  <title>Spring 2026 schedule · Shoonya Dance Centre · Ghent</title>
+  <meta name="description" content="Shoonya Dance Centre weekly class schedule for the Spring 2026 semester (Feb–Jun). Filter by day, category, or style." />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -26,8 +26,7 @@
       --muted-soft: rgba(0, 0, 0, 0.4);
       --shadow-slot: rgba(0, 0, 0, 0.08);
 
-      /* Studio palette — matches web/schedule.html (the teacher tool / master schedule)
-         so students see the same colour cues they're used to. */
+      /* Spring 2026 had 4 studios — Art Deco not yet split */
       --studio-aakash-bg:     #E6F1FB;
       --studio-aakash-border: #1F6FBE;
       --studio-aakash-text:   #0C447C;
@@ -37,12 +36,9 @@
       --studio-ananta2-bg:    #E1F5EE;
       --studio-ananta2-border:#1D9E75;
       --studio-ananta2-text:  #085041;
-      --studio-artdeco1-bg:   #FAEEDA;
-      --studio-artdeco1-border:#BA7517;
-      --studio-artdeco1-text: #633806;
-      --studio-artdeco2-bg:   #FCE2E2;
-      --studio-artdeco2-border:#C45A5A;
-      --studio-artdeco2-text: #6A1F1F;
+      --studio-artdeco-bg:    #FAEEDA;
+      --studio-artdeco-border:#BA7517;
+      --studio-artdeco-text:  #633806;
 
       --font-serif: 'Playfair Display', Georgia, serif;
       --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
@@ -71,6 +67,7 @@
 
     a { color: inherit; text-decoration: none; }
     button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+
     :focus-visible { outline: 2px solid var(--vibrant-purple); outline-offset: 3px; }
 
     /* Dual-ring focus for chips — P1 harden */
@@ -104,7 +101,7 @@
     }
     .kicker--purple { color: var(--vibrant-purple-ink); }
 
-    /* ───────── P2 S1 · hero ───────── */
+    /* ───────── hero ───────── */
 
     .hero {
       padding: var(--space-6) 0 var(--space-4);
@@ -175,7 +172,7 @@
       padding: 5px 9px;
     }
 
-    /* ───────── P2 S2 · filter toolbar ───────── */
+    /* ───────── filter toolbar ───────── */
 
     .filters {
       padding: var(--space-3) 0;
@@ -203,9 +200,7 @@
       padding: 4px 0;
     }
 
-    .filter-row--days .chips {
-      flex: 1;
-    }
+    .filter-row--days .chips { flex: 1; }
 
     .filters__disclosure {
       font-family: var(--font-sans);
@@ -219,12 +214,7 @@
     }
     .filters__disclosure:hover { opacity: 0.7; }
 
-    .filters__expanded {
-      margin-top: var(--space-2);
-      padding-top: var(--space-2);
-      border-top: 0.5px solid var(--mist);
-    }
-
+    .filters__expanded { margin-top: var(--space-2); padding-top: var(--space-2); border-top: 0.5px solid var(--mist); }
     .filters__expanded[hidden] { display: none; }
 
     .filters__active {
@@ -240,13 +230,8 @@
       color: var(--muted);
       flex-wrap: wrap;
     }
-
     .filters__active[hidden] { display: none; }
-
-    .filters__active strong {
-      color: var(--vibrant-purple-ink);
-      font-weight: 500;
-    }
+    .filters__active strong { color: var(--vibrant-purple-ink); font-weight: 500; }
 
     .filters__clear {
       font-family: var(--font-sans);
@@ -269,11 +254,7 @@
       padding-top: 9px;
     }
 
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
     .chip {
       font-family: var(--font-sans);
@@ -288,40 +269,24 @@
       position: relative;
       white-space: nowrap;
     }
-
-    .chip:hover {
-      background: var(--vibrant-purple-tint);
-    }
-
-    .chip[aria-pressed="true"] {
-      background: var(--void-black);
-      color: var(--void-white);
-    }
-
-    .chip[aria-pressed="true"]:hover {
-      background: var(--void-black);
-    }
+    .chip:hover { background: var(--vibrant-purple-tint); }
+    .chip[aria-pressed="true"] { background: var(--void-black); color: var(--void-white); }
+    .chip[aria-pressed="true"]:hover { background: var(--void-black); }
 
     .chip--today[aria-pressed="true"]::after {
       content: '';
       position: absolute;
-      left: 0;
-      right: 0;
+      left: 0; right: 0;
       bottom: -5px;
       height: 3px;
       background: var(--highlight-yellow);
     }
 
-    .chip--style {
-      font-size: 11px;
-      padding: 6px 10px;
-    }
+    .chip--style { font-size: 11px; padding: 6px 10px; }
 
-    /* ───────── P2 S4 · schedule grid (per-day time × studio) ───────── */
+    /* ───────── schedule grid ───────── */
 
-    .schedule {
-      padding: var(--space-5) 0 var(--space-6);
-    }
+    .schedule { padding: var(--space-5) 0 var(--space-6); }
 
     .schedule__header {
       display: flex;
@@ -347,15 +312,9 @@
       color: var(--muted);
       font-variant-numeric: tabular-nums;
     }
+    .schedule__meta strong { color: var(--void-black); font-weight: 500; }
 
-    .schedule__meta strong {
-      color: var(--void-black);
-      font-weight: 500;
-    }
-
-    .day-section {
-      margin-bottom: var(--space-6);
-    }
+    .day-section { margin-bottom: var(--space-6); }
 
     .day-section__header {
       display: flex;
@@ -378,8 +337,7 @@
     .day-section--today .day-section__name::after {
       content: '';
       position: absolute;
-      left: 0;
-      right: 0;
+      left: 0; right: 0;
       bottom: -4px;
       height: 4px;
       background: var(--highlight-yellow);
@@ -400,9 +358,10 @@
       font-style: italic;
     }
 
+    /* 4 studios for Spring (no Art Deco split yet) */
     .window-grid {
       display: grid;
-      grid-template-columns: 52px repeat(5, minmax(0, 1fr));
+      grid-template-columns: 52px repeat(4, minmax(0, 1fr));
       position: relative;
     }
 
@@ -417,9 +376,7 @@
       letter-spacing: 0.04em;
     }
 
-    .time-corner {
-      border-bottom: 0.5px solid var(--mist);
-    }
+    .time-corner { border-bottom: 0.5px solid var(--mist); }
 
     .studio-header {
       padding: 10px 6px;
@@ -433,16 +390,12 @@
       border-left: 0.5px solid var(--mist);
     }
 
-    .studio-header.studio-aakash   { background: var(--studio-aakash-bg);   color: var(--studio-aakash-text); }
-    .studio-header.studio-ananta1  { background: var(--studio-ananta1-bg);  color: var(--studio-ananta1-text); }
-    .studio-header.studio-ananta2  { background: var(--studio-ananta2-bg);  color: var(--studio-ananta2-text); }
-    .studio-header.studio-artdeco1 { background: var(--studio-artdeco1-bg); color: var(--studio-artdeco1-text); }
-    .studio-header.studio-artdeco2 { background: var(--studio-artdeco2-bg); color: var(--studio-artdeco2-text); }
+    .studio-header.studio-aakash  { background: var(--studio-aakash-bg);  color: var(--studio-aakash-text); }
+    .studio-header.studio-ananta1 { background: var(--studio-ananta1-bg); color: var(--studio-ananta1-text); }
+    .studio-header.studio-ananta2 { background: var(--studio-ananta2-bg); color: var(--studio-ananta2-text); }
+    .studio-header.studio-artdeco { background: var(--studio-artdeco-bg); color: var(--studio-artdeco-text); }
 
-    .time-gutter {
-      position: relative;
-      border-right: 0.5px solid var(--mist);
-    }
+    .time-gutter { position: relative; border-right: 0.5px solid var(--mist); }
 
     .time-label {
       position: absolute;
@@ -454,7 +407,7 @@
       font-variant-numeric: tabular-nums;
       transform: translateY(-50%);
       background: var(--void-white);
-      padding: 0 4px;       /* wider bg covers border cleanly — P3 polish */
+      padding: 0 4px;
       z-index: 1;
     }
 
@@ -466,15 +419,13 @@
 
     .hour-line {
       position: absolute;
-      left: 0;
-      right: 0;
+      left: 0; right: 0;
       border-top: 0.5px dashed var(--mist);
     }
 
     .slot {
       position: absolute;
-      left: 3px;
-      right: 3px;
+      left: 3px; right: 3px;
       padding: 6px 8px;
       background: var(--void-white);
       border: 0.5px solid var(--mist);
@@ -487,29 +438,24 @@
       color: inherit;
       display: block;
     }
-
     .slot:hover {
       transform: translateY(-1px);
       box-shadow: 0 2px 6px var(--shadow-slot);
       z-index: 5;
     }
-
     .slot--faded {
       opacity: 0.18;
       pointer-events: none;
     }
 
-    /* Studio-coloured slot variants — match the master schedule */
-    .slot.studio-aakash    { background: var(--studio-aakash-bg);    border-left-color: var(--studio-aakash-border);    color: var(--studio-aakash-text); }
-    .slot.studio-ananta1   { background: var(--studio-ananta1-bg);   border-left-color: var(--studio-ananta1-border);   color: var(--studio-ananta1-text); }
-    .slot.studio-ananta2   { background: var(--studio-ananta2-bg);   border-left-color: var(--studio-ananta2-border);   color: var(--studio-ananta2-text); }
-    .slot.studio-artdeco1  { background: var(--studio-artdeco1-bg);  border-left-color: var(--studio-artdeco1-border);  color: var(--studio-artdeco1-text); }
-    .slot.studio-artdeco2  { background: var(--studio-artdeco2-bg);  border-left-color: var(--studio-artdeco2-border);  color: var(--studio-artdeco2-text); }
+    .slot.studio-aakash  { background: var(--studio-aakash-bg);  border-left-color: var(--studio-aakash-border);  color: var(--studio-aakash-text); }
+    .slot.studio-ananta1 { background: var(--studio-ananta1-bg); border-left-color: var(--studio-ananta1-border); color: var(--studio-ananta1-text); }
+    .slot.studio-ananta2 { background: var(--studio-ananta2-bg); border-left-color: var(--studio-ananta2-border); color: var(--studio-ananta2-text); }
+    .slot.studio-artdeco { background: var(--studio-artdeco-bg); border-left-color: var(--studio-artdeco-border); color: var(--studio-artdeco-text); }
 
     .slot__studio-tag {
       position: absolute;
-      top: 5px;
-      right: 6px;
+      top: 5px; right: 6px;
       font-family: var(--font-sans);
       font-weight: 500;
       font-size: 9px;
@@ -525,7 +471,6 @@
       margin: 0 0 2px;
       font-variant-numeric: tabular-nums;
     }
-
     .slot__style {
       font-family: var(--font-sans);
       font-weight: 500;
@@ -533,20 +478,6 @@
       line-height: 1.3;
       margin: 0 0 1px;
     }
-
-    .slot__style--new::after {
-      content: 'NEW';
-      display: inline-block;
-      margin-left: 4px;
-      padding: 0 4px;
-      background: var(--vibrant-purple-tint);
-      color: var(--vibrant-purple-ink);
-      font-size: 8px;
-      font-weight: 500;
-      letter-spacing: 0.06em;
-      vertical-align: 1px;
-    }
-
     .slot__teacher {
       font-family: var(--font-sans);
       font-size: 11px;
@@ -555,6 +486,7 @@
       margin: 0;
     }
 
+    /* Legend */
     .schedule__legend {
       margin-top: var(--space-4);
       padding-top: var(--space-3);
@@ -586,26 +518,23 @@
 
     .legend__swatch {
       display: inline-block;
-      width: 14px;
-      height: 4px;
+      width: 14px; height: 4px;
       background: var(--highlight-yellow);
     }
 
     .studio-swatch {
       display: inline-block;
-      width: 14px;
-      height: 14px;
+      width: 14px; height: 14px;
       vertical-align: -2px;
       margin-right: 6px;
       border: 0.5px solid var(--mist);
     }
-    .studio-swatch.studio-aakash    { background: var(--studio-aakash-bg);    border-left: 3px solid var(--studio-aakash-border); }
-    .studio-swatch.studio-ananta1   { background: var(--studio-ananta1-bg);   border-left: 3px solid var(--studio-ananta1-border); }
-    .studio-swatch.studio-ananta2   { background: var(--studio-ananta2-bg);   border-left: 3px solid var(--studio-ananta2-border); }
-    .studio-swatch.studio-artdeco1  { background: var(--studio-artdeco1-bg);  border-left: 3px solid var(--studio-artdeco1-border); }
-    .studio-swatch.studio-artdeco2  { background: var(--studio-artdeco2-bg);  border-left: 3px solid var(--studio-artdeco2-border); }
+    .studio-swatch.studio-aakash  { background: var(--studio-aakash-bg);  border-left: 3px solid var(--studio-aakash-border); }
+    .studio-swatch.studio-ananta1 { background: var(--studio-ananta1-bg); border-left: 3px solid var(--studio-ananta1-border); }
+    .studio-swatch.studio-ananta2 { background: var(--studio-ananta2-bg); border-left: 3px solid var(--studio-ananta2-border); }
+    .studio-swatch.studio-artdeco { background: var(--studio-artdeco-bg); border-left: 3px solid var(--studio-artdeco-border); }
 
-    /* ───────── P2 S6 · closing ───────── */
+    /* ───────── closing ───────── */
 
     .closing {
       padding: var(--space-6) var(--space-3);
@@ -613,13 +542,7 @@
       border-top: 0.5px solid var(--mist);
     }
 
-    .closing__mark {
-      display: block;
-      margin: 0 auto var(--space-3);
-      width: 32px;
-      height: 16px;
-    }
-
+    .closing__mark { display: block; margin: 0 auto var(--space-3); width: 32px; height: 16px; }
     .closing__kicker { margin-bottom: var(--space-2); }
 
     .closing__h1 {
@@ -630,11 +553,10 @@
       letter-spacing: -0.01em;
       margin: 0;
     }
-
     .closing__h1 em {
       font-style: italic;
       font-weight: 400;
-      color: var(--vibrant-purple);
+      color: var(--vibrant-purple-ink);
     }
 
     .closing__sub {
@@ -690,7 +612,6 @@
       flex-wrap: wrap;
       gap: var(--space-2);
     }
-
     .footer__brand,
     .footer__nav {
       font-family: var(--font-sans);
@@ -700,13 +621,12 @@
       text-transform: uppercase;
       color: var(--muted);
     }
-
     .footer__nav { display: flex; gap: 18px; }
     .footer__nav a:hover { color: var(--vibrant-purple-ink); }
 
     /* ───────── responsive ───────── */
 
-    /* P3 polish — 720-900px label dead zone: reduce label column width */
+    /* P3 polish — 720-900px label dead zone */
     @media (min-width: 701px) and (max-width: 900px) {
       .filter-row {
         grid-template-columns: 72px 1fr;
@@ -718,10 +638,7 @@
     }
 
     @media (max-width: 900px) {
-      .filter-row {
-        grid-template-columns: 1fr;
-        gap: 8px;
-      }
+      .filter-row { grid-template-columns: 1fr; gap: 8px; }
       .filter-row__label { padding-top: 0; }
     }
 
@@ -735,33 +652,17 @@
     }
 
     @media (max-width: 700px) {
-      /* Collapse time × studio grid to a single time-ordered list per day */
-      .window-grid {
-        grid-template-columns: 1fr;
-        height: auto !important;
-      }
-      .studio-header,
-      .time-corner,
-      .time-gutter,
-      .hour-line {
-        display: none;
-      }
-      .studio-col {
-        border-left: 0;
-        height: auto !important;
-        min-height: 0;
-        padding: 0;
-      }
+      .window-grid { grid-template-columns: 1fr; height: auto !important; }
+      .studio-header, .time-corner, .time-gutter, .hour-line { display: none; }
+      .studio-col { border-left: 0; height: auto !important; min-height: 0; padding: 0; }
       .slot {
         position: relative !important;
-        left: 0 !important;
-        right: 0 !important;
-        top: 0 !important;
+        left: 0 !important; right: 0 !important; top: 0 !important;
         height: auto !important;
         margin-bottom: 6px;
         padding: 10px 12px;
       }
-      /* P2 adapt — restore studio context on mobile (was suppressed by low opacity) */
+      /* P2 adapt — restore studio context on mobile */
       .slot__studio-tag {
         position: static;
         display: inline-block;
@@ -781,7 +682,7 @@
         --void-white: #111111;
         --void-black: #ECECEC;
         --vibrant-purple: #B564F7;
-        --vibrant-purple-ink: #C98EFF;   /* lighter on dark bg, still readable */
+        --vibrant-purple-ink: #C98EFF;
         --vibrant-purple-tint: #1E1040;
         --vibrant-purple-tint-2: #2A1A55;
         --mist: rgba(255, 255, 255, 0.12);
@@ -799,12 +700,9 @@
         --studio-ananta2-bg:    #071A14;
         --studio-ananta2-border:#25B589;
         --studio-ananta2-text:  #6EDCB8;
-        --studio-artdeco1-bg:   #1A1100;
-        --studio-artdeco1-border:#D48B2A;
-        --studio-artdeco1-text: #F0C87A;
-        --studio-artdeco2-bg:   #1A0808;
-        --studio-artdeco2-border:#D47070;
-        --studio-artdeco2-text: #F0A8A8;
+        --studio-artdeco-bg:    #1A1100;
+        --studio-artdeco-border:#D48B2A;
+        --studio-artdeco-text:  #F0C87A;
       }
       body { background: var(--void-white); color: var(--void-black); }
       .filters { background: #111111; }
@@ -839,9 +737,7 @@
 <body>
   <main>
 
-    <!-- ═══════════════════════════════════════════════════
-         P2 S1 · Hero
-         ═══════════════════════════════════════════════════ -->
+    <!-- Hero -->
     <section class="hero">
       <div class="hero__top">
         <span class="hero__rule" aria-hidden="true"></span>
@@ -849,27 +745,23 @@
         <button class="lang-btn" id="lang-btn" type="button" aria-label="Taal wisselen / Switch language">NL</button>
       </div>
 
-      <div class="kicker kicker--purple hero__eyebrow" data-i18n="hero-eyebrow">season 2026 / 2027</div>
+      <div class="kicker kicker--purple hero__eyebrow" data-i18n="hero-eyebrow">spring semester 2026</div>
 
-      <h1 class="hero__h1">September → January.</h1>
+      <h1 class="hero__h1" data-i18n="hero-h1">February → June.</h1>
 
-      <p class="hero__sub">Filter by day, category, or style. Every slot below is pulled from this year's roster.</p>
+      <p class="hero__sub" data-i18n="hero-sub">The final weeks of the spring semester. Filter by day, category, or style.</p>
 
       <div class="hero__strip">
         <div class="hero__dates">
-          <span><strong style="color:var(--void-black);font-weight:500;">Sep 14</strong> <span data-i18n="date-first">first class</span></span>
-          <span><strong style="color:var(--void-black);font-weight:500;">Jan 30</strong> <span data-i18n="date-last">last class</span></span>
-          <span><strong style="color:var(--void-black);font-weight:500;">May 15</strong> <span data-i18n="date-reg">registration opens</span></span>
+          <span><strong style="color:var(--void-black);font-weight:500;">Feb 9</strong> <span data-i18n="date-first">first class</span></span>
+          <span><strong style="color:var(--void-black);font-weight:500;">Jun 14</strong> <span data-i18n="date-last">last class</span></span>
+          <span><strong style="color:var(--void-black);font-weight:500;">4</strong> studios</span>
         </div>
-        <span class="hero__tag" id="hero-tag">live</span>
+        <span class="hero__tag">spring 2026</span>
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════
-         P2 S2 · Filter toolbar
-         Default state: just day chips inline + 'more filters' disclosure.
-         Category + style chips reveal on disclosure click.
-         ═══════════════════════════════════════════════════ -->
+    <!-- Filter toolbar -->
     <section class="filters" aria-label="Filters">
       <div class="filter-row filter-row--days">
         <div class="chips" id="day-chips" role="group" aria-label="Day filter"></div>
@@ -883,7 +775,6 @@
           <span class="filter-row__label" data-i18n="catLabel">Category</span>
           <div class="chips" id="category-chips" role="group" aria-label="Category filter"></div>
         </div>
-
         <div class="filter-row">
           <span class="filter-row__label" data-i18n="styleLabel">Style</span>
           <div class="chips" id="style-chips" role="group" aria-label="Style filter"></div>
@@ -896,26 +787,21 @@
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════
-         P2 S4 · Schedule grid
-         ═══════════════════════════════════════════════════ -->
+    <!-- Schedule grid -->
     <section class="schedule" aria-label="Weekly schedule">
       <div class="schedule__header">
         <h2 class="schedule__week" id="week-label" data-i18n="weekLabel">A typical week</h2>
-        <span class="schedule__meta" id="schedule-meta"><strong>54</strong> weekly slots · 6 days · 5 studios</span>
+        <span class="schedule__meta" id="schedule-meta"><strong>47</strong> weekly slots · 6 days · 4 studios</span>
       </div>
 
-      <div id="schedule-grid">
-        <!-- Day sections rendered by JS -->
-      </div>
+      <div id="schedule-grid"></div>
 
       <div class="schedule__legend">
         <div class="legend__studios">
           <span><span class="studio-swatch studio-aakash" aria-hidden="true"></span>Aakash</span>
           <span><span class="studio-swatch studio-ananta1" aria-hidden="true"></span>Ananta 1</span>
           <span><span class="studio-swatch studio-ananta2" aria-hidden="true"></span>Ananta 2</span>
-          <span><span class="studio-swatch studio-artdeco1" aria-hidden="true"></span>Art Deco 1</span>
-          <span><span class="studio-swatch studio-artdeco2" aria-hidden="true"></span>Art Deco 2</span>
+          <span><span class="studio-swatch studio-artdeco" aria-hidden="true"></span>Art Deco</span>
         </div>
         <span class="legend__today">
           <span class="legend__swatch" aria-hidden="true"></span>
@@ -924,20 +810,18 @@
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════
-         P2 S6 · Closing CTA
-         ═══════════════════════════════════════════════════ -->
+    <!-- Closing CTA -->
     <section class="closing" aria-label="Next step">
       <svg class="closing__mark" viewBox="0 0 32 16" aria-hidden="true">
         <path d="M 4 8 C 4 4, 8 4, 12 8 S 20 12, 24 8 S 28 4, 28 8" stroke="#B564F7" stroke-width="1" fill="none" />
       </svg>
 
-      <div class="kicker closing__kicker" data-i18n="closing-kicker">end of season list</div>
-      <h2 class="closing__h1" data-i18n="closing-h1">Found your class?<br/><em>The style page handles the rest.</em></h2>
-      <p class="closing__sub" data-i18n="closing-sub">Click a slot to land on its style page — pricing, teacher bio, full schedule for the season, and a single registration button.</p>
+      <div class="kicker closing__kicker" data-i18n="closing-kicker">new school year opens soon</div>
+      <h2 class="closing__h1" data-i18n="closing-h1">September 2026 is<br/><em>around the corner.</em></h2>
+      <p class="closing__sub" data-i18n="closing-sub">Registration for the new school year opens May 15 for returning students, May 21 for everyone.</p>
 
       <div class="closing__cta-row">
-        <a class="closing__cta" href="https://www.shoonyadance.com/classes" data-i18n="closing-cta">browse all 24 styles <span aria-hidden="true">→</span></a>
+        <a class="closing__cta" href="./schedule-sep-2026.html" data-i18n="closing-cta">browse the new school year <span aria-hidden="true">→</span></a>
         <button class="closing__back" onclick="window.scrollTo({top:0,behavior:'smooth'})" data-i18n="closing-back">back to top</button>
       </div>
     </section>
@@ -946,7 +830,7 @@
       <div class="footer__brand">shoonya · school of movement · ghent</div>
       <nav class="footer__nav">
         <a href="./schedule-landing.html">home</a>
-        <a href="./schedule-spring-2026.html" data-i18n="footer-spring">spring 2026</a>
+        <a href="./schedule-sep-2026.html" data-i18n="footer-sep">sep 2026</a>
         <a href="https://www.shoonyadance.com/teachers" data-i18n="footer-teachers">teachers</a>
         <a href="https://www.shoonyadance.com/contact">contact</a>
       </nav>
@@ -955,14 +839,6 @@
   </main>
 
   <script>
-    /* ─────────────────────────────────────────────────
-       SLOTS — Sep 2026 master schedule
-       Source: docs/sem1-2026-2027-pricing-check.html (2026-05-12 snapshot)
-       Studio inference: backend/code.gs STUDIO_FIXED_BY_STYLE + STUDIO_HINTS
-       Categories: partner-social, classical-technique, culture-wellness
-       Days: mon, tue, wed, thu, fri, sat
-       Studio codes: AKH, AN1, AN2, AD1, AD2
-       ─────────────────────────────────────────────── */
     /* ─── Language support ──────────────────── */
     let lang = localStorage.getItem('shoonya-lang') || 'en';
 
@@ -982,14 +858,16 @@
         activeFiltersStr: (n, list) => '<strong>' + n + ' active filter' + (n===1?'':'s') + '</strong> — ' + list,
         today: '(today)', legendToday: 'today',
         'hero-kicker': 'shoonya · weekly schedule',
-        'hero-eyebrow': 'season 2026 / 2027',
-        'date-first': 'first class', 'date-last': 'last class', 'date-reg': 'registration opens',
-        'closing-kicker': 'end of season list',
-        'closing-h1': 'Found your class?<br/><em>The style page handles the rest.</em>',
-        'closing-sub': 'Click a slot to land on its style page — pricing, teacher bio, full schedule for the season, and a single registration button.',
-        'closing-cta': 'browse all 24 styles <span aria-hidden="true">→</span>',
+        'hero-eyebrow': 'spring 2026',
+        'hero-h1': 'Spring → June.',
+        'hero-sub': 'A snapshot of the current semester. Filter by day, category, or style.',
+        'date-first': 'first class', 'date-last': 'last class',
+        'closing-kicker': 'new school year opens soon',
+        'closing-h1': 'September 2026 is<br/><em>around the corner.</em>',
+        'closing-sub': 'Registration for the new school year opens May 15 for returning students, May 21 for everyone.',
+        'closing-cta': 'browse the new school year <span aria-hidden="true">→</span>',
         'closing-back': 'back to top',
-        'footer-teachers': 'teachers', 'footer-spring': 'spring 2026',
+        'footer-sep': 'sep 2026', 'footer-teachers': 'teachers',
       },
       nl: {
         d:   { mon:'Ma',  tue:'Di',  wed:'Wo',  thu:'Do',  fri:'Vr',  sat:'Za' },
@@ -1006,96 +884,87 @@
         activeFiltersStr: (n, list) => '<strong>' + n + ' actief filter' + (n===1?'':'s') + '</strong> — ' + list,
         today: '(vandaag)', legendToday: 'vandaag',
         'hero-kicker': 'shoonya · weekrooster',
-        'hero-eyebrow': 'seizoen 2026 / 2027',
-        'date-first': 'eerste les', 'date-last': 'laatste les', 'date-reg': 'inschrijvingen open',
-        'closing-kicker': 'overzicht seizoen',
-        'closing-h1': 'Klas gevonden?<br/><em>De stijlpagina regelt de rest.</em>',
-        'closing-sub': 'Klik op een tijdslot voor de stijlpagina — prijzen, leraarsprofiel, volledig rooster en een inschrijfknop.',
-        'closing-cta': 'bekijk alle 24 stijlen <span aria-hidden="true">→</span>',
+        'hero-eyebrow': 'lente 2026',
+        'hero-h1': 'Lente → Juni.',
+        'hero-sub': 'Een overzicht van het huidige semester. Filter op dag, categorie of stijl.',
+        'date-first': 'eerste les', 'date-last': 'laatste les',
+        'closing-kicker': 'nieuw schooljaar opent binnenkort',
+        'closing-h1': 'September 2026<br/><em>is in zicht.</em>',
+        'closing-sub': 'Inschrijvingen voor het nieuwe schooljaar openen op 15 mei voor terugkerende studenten, 21 mei voor iedereen.',
+        'closing-cta': 'bekijk het nieuwe schooljaar <span aria-hidden="true">→</span>',
         'closing-back': 'naar boven',
-        'footer-teachers': 'docenten', 'footer-spring': 'lente 2026',
+        'footer-sep': 'sep 2026', 'footer-teachers': 'docenten',
       }
     };
 
-    // ─── APPS SCRIPT ENDPOINT ───────────────────────────────────────────────
-    // Shared with web/config.js — keep in sync if the deployment URL changes.
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwh9PSrNxMUkBaMayhyfnU3XDzL76khEm7RL932CJ83qqm7dTG9afA-WB1cZYKSrcs3/exec';
-
-    // ─── SLOT DATA ─────────────────────────────────────────────────────────
-    // SLOTS_FALLBACK: hardcoded snapshot — used for instant first render and
-    // as a safety net when the live fetch fails or is slow.
-    // The async syncLive() function below replaces SLOTS with live data
-    // from the Master Schedule sheet after the page paints.
-    const SLOTS_FALLBACK = [
+    /* ─────────────────────────────────────────────────
+       SLOTS — Spring 2026 schedule
+       Source: _archive/old-schedules/shoonya-schedule-2026-04-23.html
+       Studio codes: AKH, AN1, AN2, AD (4 studios — Art Deco not yet split)
+       ─────────────────────────────────────────────── */
+    const SLOTS = [
       // ─── Monday
-      { day:'mon', time:'18:00–19:10', style:'Tap Dance',        level:'L3',           teacher:'Lut',                       studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
-      { day:'mon', time:'19:00–20:00', style:'Cuban Salsa',      level:'L1',           teacher:'Alex (Ioanna)',             studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
-      { day:'mon', time:'19:00–20:00', style:'Raqs Sharqi',      level:'L1',           teacher:'Lenka Badriyah',            studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
-      { day:'mon', time:'19:00–20:30', style:'Burlesque',        level:'L1 early',     teacher:'Zoe Bizoe',                 studio:'AD1', studioName:'Art Deco 1',  duration:90, category:'culture-wellness' },
-      { day:'mon', time:'19:15–20:25', style:'Tap Dance',        level:'L2',           teacher:'Jordan',                    studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
-      { day:'mon', time:'20:00–21:00', style:'Cuban Salsa',      level:'L2',           teacher:'Alex (Ioanna)',             studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
-      { day:'mon', time:'20:00–21:00', style:'Raqs Sharqi',      level:'L2',           teacher:'Lenka',                     studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
-      { day:'mon', time:'20:30–21:40', style:'Tap Dance',        level:'L1',           teacher:'Jordan (Lut lead)',         studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
-      { day:'mon', time:'20:30–22:00', style:'Burlesque',        level:'L1 late',      teacher:'Zoe Bizoe',                 studio:'AD1', studioName:'Art Deco 1',  duration:90, category:'culture-wellness' },
-      { day:'mon', time:'20:30–22:00', style:'Cissy Ball',       level:'Open',         teacher:'Hendrik Lebon',             studio:'AN2', studioName:'Ananta 2',    duration:90, category:'culture-wellness' },
-      { day:'mon', time:'21:00–22:00', style:'Cuban Salsa',      level:'L3',           teacher:'Alex',                      studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
-      { day:'mon', time:'21:00–22:00', style:'Raqs Sharqi',      level:'L3',           teacher:'Lenka',                     studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
+      { day:'mon', time:'18:00–19:10', style:'Tap Dance',              level:'L3',        teacher:'Lut',                    studio:'AN2', studioName:'Ananta 2', duration:70, category:'classical-technique' },
+      { day:'mon', time:'18:50–19:50', style:'Raqs Sharqi',            level:'L1',        teacher:'Badriyah',               studio:'AKH', studioName:'Aakash',   duration:60, category:'culture-wellness' },
+      { day:'mon', time:'19:00–20:00', style:'Cuban Salsa',            level:'L1',        teacher:'Alex & Ioanna',          studio:'AN1', studioName:'Ananta 1', duration:60, category:'partner-social' },
+      { day:'mon', time:'19:00–20:30', style:'Burlesque',              level:'L2 Early',  teacher:'Zoe, Tine & Hendrik',    studio:'AD',  studioName:'Art Deco', duration:90, category:'culture-wellness' },
+      { day:'mon', time:'19:20–20:30', style:'Tap Dance',              level:'L1',        teacher:'Jordan',                 studio:'AN2', studioName:'Ananta 2', duration:70, category:'classical-technique' },
+      { day:'mon', time:'19:55–20:55', style:'Raqs Sharqi',            level:'L2',        teacher:'Badriyah',               studio:'AKH', studioName:'Aakash',   duration:60, category:'culture-wellness' },
+      { day:'mon', time:'20:00–21:00', style:'Cuban Salsa',            level:'L2',        teacher:'Alex & Ioanna',          studio:'AN1', studioName:'Ananta 1', duration:60, category:'partner-social' },
+      { day:'mon', time:'20:30–22:00', style:'Burlesque',              level:'L2 Late',   teacher:'Zoe, Tine & Hendrik',    studio:'AD',  studioName:'Art Deco', duration:90, category:'culture-wellness' },
+      { day:'mon', time:'20:30–22:00', style:'Cissy Ball',             level:'Open',      teacher:'Hendrik',                studio:'AN2', studioName:'Ananta 2', duration:90, category:'culture-wellness' },
+      { day:'mon', time:'21:00–22:00', style:'Raqs Sharqi',            level:'L3',        teacher:'Badriyah',               studio:'AKH', studioName:'Aakash',   duration:60, category:'culture-wellness' },
+      { day:'mon', time:'21:00–22:00', style:'Bachata',                level:'L3',        teacher:'Alex & Ioanna',          studio:'AN1', studioName:'Ananta 1', duration:60, category:'partner-social' },
 
       // ─── Tuesday
-      { day:'tue', time:'17:30–18:30', style:'Pilates for Dancers', level:'Open',     teacher:'Lenka Badriyah',            studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness', isNew:true },
-      { day:'tue', time:'18:20–19:20', style:'Flamenco',         level:'L2',           teacher:'La Liz',                    studio:'AN1', studioName:'Ananta 1',    duration:60, category:'classical-technique' },
-      { day:'tue', time:'18:30–19:30', style:'Bollyfolk',        level:'Open',         teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
-      { day:'tue', time:'19:00–20:00', style:'Bachata',          level:'L1',           teacher:'Alex (Lenka)',              studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
-      { day:'tue', time:'19:00–20:30', style:'Burlesque',        level:'L2 early',     teacher:'Zoe Bizoe',                 studio:'AD1', studioName:'Art Deco 1',  duration:90, category:'culture-wellness' },
-      { day:'tue', time:'19:30–20:30', style:'Flamenco',         level:'L3',           teacher:'La Liz',                    studio:'AN1', studioName:'Ananta 1',    duration:60, category:'classical-technique' },
-      { day:'tue', time:'19:35–20:35', style:'Yoga',             level:'Open',         teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
-      { day:'tue', time:'20:00–21:00', style:'Bachata',          level:'L2',           teacher:'Alex (Lenka)',              studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
-      { day:'tue', time:'20:30–22:00', style:'Burlesque',        level:'L2 late',      teacher:'Zoe Bizoe',                 studio:'AD1', studioName:'Art Deco 1',  duration:90, category:'culture-wellness' },
-      { day:'tue', time:'20:40–21:40', style:'Flamenco',         level:'L1',           teacher:'La Liz',                    studio:'AN1', studioName:'Ananta 1',    duration:60, category:'classical-technique' },
-      { day:'tue', time:'20:40–21:40', style:'Indian Dance Technique', level:'Open',  teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'classical-technique' },
-      { day:'tue', time:'21:00–22:00', style:'Bachata',          level:'L3',           teacher:'Alex (Ioanna)',             studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
+      { day:'tue', time:'18:20–19:20', style:'Flamenco',               level:'L2',        teacher:'La Liz',                 studio:'AN1', studioName:'Ananta 1', duration:60, category:'classical-technique' },
+      { day:'tue', time:'18:30–19:30', style:'Bollyfolk',              level:'Open',      teacher:'Swapnil',                studio:'AKH', studioName:'Aakash',   duration:60, category:'culture-wellness' },
+      { day:'tue', time:'19:00–20:00', style:'Bachata',                level:'L1',        teacher:'Alex & Badriyah',        studio:'AN2', studioName:'Ananta 2', duration:60, category:'partner-social' },
+      { day:'tue', time:'19:00–20:30', style:'Burlesque',              level:'L1',        teacher:'Zoe, Tine & Hendrik',    studio:'AD',  studioName:'Art Deco', duration:90, category:'culture-wellness' },
+      { day:'tue', time:'19:30–20:30', style:'Flamenco',               level:'L3',        teacher:'La Liz',                 studio:'AN1', studioName:'Ananta 1', duration:60, category:'classical-technique' },
+      { day:'tue', time:'19:30–20:30', style:'Yoga',                   level:'Open',      teacher:'Swapnil',                studio:'AKH', studioName:'Aakash',   duration:60, category:'culture-wellness' },
+      { day:'tue', time:'20:00–21:00', style:'Bachata',                level:'L2',        teacher:'Alex & Badriyah',        studio:'AN2', studioName:'Ananta 2', duration:60, category:'partner-social' },
+      { day:'tue', time:'20:30–21:30', style:'Indian Dance Technique', level:'Open',      teacher:'Swapnil',                studio:'AKH', studioName:'Aakash',   duration:60, category:'classical-technique' },
+      { day:'tue', time:'20:30–22:00', style:'Burlesque',              level:'L1+',       teacher:'Zoe, Tine & Hendrik',    studio:'AD',  studioName:'Art Deco', duration:90, category:'culture-wellness' },
+      { day:'tue', time:'20:40–21:40', style:'Flamenco',               level:'L1',        teacher:'La Liz',                 studio:'AN1', studioName:'Ananta 1', duration:60, category:'classical-technique' },
+      { day:'tue', time:'21:00–22:00', style:'Bachata Choreo',         level:'Miniseries',teacher:'Alex & Badriyah',        studio:'AN2', studioName:'Ananta 2', duration:60, category:'partner-social' },
 
       // ─── Wednesday
-      { day:'wed', time:'10:00–11:00', style:'Dance & Fit',      level:'Open',         teacher:'Lenka Badriyah',            studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness', isNew:true },
-      { day:'wed', time:'11:00–12:00', style:'Pilates for Dancers', level:'Open',     teacher:'Lenka',                     studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness', isNew:true },
-      { day:'wed', time:'18:30–19:30', style:'Bollyfolk',        level:'Open',         teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
-      { day:'wed', time:'18:30–19:40', style:'Tap Dance',        level:'L2',           teacher:'Teddy',                     studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
-      { day:'wed', time:'18:45–19:45', style:'Lindy Hop',        level:'L1 Foundation', teacher:'Ann-Sofie',                studio:'AD1', studioName:'Art Deco 1',  duration:60, category:'partner-social' },
-      { day:'wed', time:'19:00–20:00', style:'Kizomba',          level:'L1',           teacher:'Sonja KikiZomba',           studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
-      { day:'wed', time:'19:30–20:30', style:'Bhangra',          level:'L2',           teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
-      { day:'wed', time:'19:45–20:55', style:'Tap Dance',        level:'L3',           teacher:'Teddy',                     studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
-      { day:'wed', time:'19:45–21:00', style:'Lindy Hop',        level:'Open',         teacher:'Ann-Sofie',                 studio:'AD1', studioName:'Art Deco 1',  duration:75, category:'partner-social' },
-      { day:'wed', time:'20:00–21:00', style:'Kizomba',          level:'L2',           teacher:'Sonja',                     studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
-      { day:'wed', time:'20:30–21:45', style:'Indian Semi-Classical', level:'L2',     teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:75, category:'classical-technique' },
-      { day:'wed', time:'21:00–22:10', style:'Tap Dance',        level:'L1',           teacher:'Teddy',                     studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
-      { day:'wed', time:'21:00–22:00', style:'Solo Jazz',        level:'Open',         teacher:'Ann-Sofie',                 studio:'AD1', studioName:'Art Deco 1',  duration:60, category:'classical-technique' },
-      { day:'wed', time:'21:00–22:00', style:'Kizomba',          level:'L3',           teacher:'Sonja',                     studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
+      { day:'wed', time:'18:30–19:30', style:'Garba & Kalbeliya',      level:'Open',      teacher:'Swapnil',                studio:'AKH', studioName:'Aakash',   duration:60, category:'culture-wellness' },
+      { day:'wed', time:'18:30–19:30', style:'Jazzy Workout',          level:'Open',      teacher:'Upside Down',            studio:'AD',  studioName:'Art Deco', duration:60, category:'culture-wellness' },
+      { day:'wed', time:'18:30–19:40', style:'Tap Dance',              level:'L2',        teacher:'Teddy',                  studio:'AN2', studioName:'Ananta 2', duration:70, category:'classical-technique' },
+      { day:'wed', time:'19:00–20:00', style:'Kizomba',                level:'L2',        teacher:'Sonja KikiZomba',        studio:'AN1', studioName:'Ananta 1', duration:60, category:'partner-social' },
+      { day:'wed', time:'19:30–20:30', style:'Bhangra',                level:'L2/3',      teacher:'Swapnil',                studio:'AKH', studioName:'Aakash',   duration:60, category:'culture-wellness' },
+      { day:'wed', time:'19:30–20:50', style:'Lindy Hop',              level:'L1',        teacher:'Upside Down',            studio:'AD',  studioName:'Art Deco', duration:80, category:'partner-social' },
+      { day:'wed', time:'19:45–20:55', style:'Tap Dance',              level:'L3',        teacher:'Teddy',                  studio:'AN2', studioName:'Ananta 2', duration:70, category:'classical-technique' },
+      { day:'wed', time:'20:00–21:00', style:'Kizomba',                level:'L4',        teacher:'Sonja KikiZomba',        studio:'AN1', studioName:'Ananta 1', duration:60, category:'partner-social' },
+      { day:'wed', time:'20:30–21:45', style:'Indian Semi-Classical',  level:'L2',        teacher:'Swapnil',                studio:'AKH', studioName:'Aakash',   duration:75, category:'classical-technique' },
+      { day:'wed', time:'21:00–22:00', style:'Kizomba',                level:'L3',        teacher:'Sonja KikiZomba',        studio:'AN1', studioName:'Ananta 1', duration:60, category:'partner-social' },
+      { day:'wed', time:'21:00–22:10', style:'Tap Dance',              level:'L1',        teacher:'Teddy',                  studio:'AN2', studioName:'Ananta 2', duration:70, category:'classical-technique' },
+      { day:'wed', time:'21:00–22:00', style:'Solo Jazz',              level:'Open',      teacher:'Upside Down',            studio:'AD',  studioName:'Art Deco', duration:60, category:'classical-technique' },
 
       // ─── Thursday
-      { day:'thu', time:'18:30–19:30', style:'Bollywood',        level:'L2',           teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
-      { day:'thu', time:'18:30–19:40', style:'Tap Dance',        level:'L4',           teacher:'Alexandre',                 studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
-      { day:'thu', time:'19:00–20:00', style:'Bachata Lady Style', level:'L1',        teacher:'Ioanna',                    studio:'AN2', studioName:'Ananta 2',    duration:60, category:'partner-social' },
-      { day:'thu', time:'19:00–20:00', style:'Rueda de Casino',  level:'L1',           teacher:'Alex',                      studio:'AD1', studioName:'Art Deco 1',  duration:60, category:'partner-social' },
-      { day:'thu', time:'19:30–20:30', style:'Bollywood',        level:'L3',           teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
-      { day:'thu', time:'19:45–20:55', style:'Tap Dance',        level:'L5',           teacher:'Alexandre',                 studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
-      { day:'thu', time:'20:00–21:00', style:'Argentine Tango',  level:'L1',           teacher:'Sergio & Gisela',           studio:'AD1', studioName:'Art Deco 1',  duration:60, category:'partner-social' },
-      { day:'thu', time:'20:00–21:00', style:'Rueda de Casino',  level:'L2',           teacher:'Alex',                      studio:'AD1', studioName:'Art Deco 1',  duration:60, category:'partner-social' },
-      { day:'thu', time:'21:00–22:00', style:'Argentine Tango',  level:'L2',           teacher:'Sergio & Gisela',           studio:'AD1', studioName:'Art Deco 1',  duration:60, category:'partner-social' },
-      { day:'thu', time:'21:00–22:10', style:'Tap Dance',        level:'L6',           teacher:'Alexandre',                 studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
-      { day:'thu', time:'21:00–22:00', style:'Cuban Salsa',      level:'L4',           teacher:'Alex',                      studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
+      { day:'thu', time:'18:30–19:30', style:'Bollywood',              level:'L2',        teacher:'Swapnil',                studio:'AKH', studioName:'Aakash',   duration:60, category:'culture-wellness' },
+      { day:'thu', time:'18:30–19:40', style:'Tap Dance',              level:'L4',        teacher:'Alexandre',              studio:'AN1', studioName:'Ananta 1', duration:70, category:'classical-technique' },
+      { day:'thu', time:'19:00–20:00', style:'Bachata Lady Styling',   level:'Miniseries',teacher:'Ioanna',                 studio:'AN2', studioName:'Ananta 2', duration:60, category:'partner-social' },
+      { day:'thu', time:'19:00–20:00', style:'Cuban Salsa',            level:'L3',        teacher:'Alex',                   studio:'AD',  studioName:'Art Deco', duration:60, category:'partner-social' },
+      { day:'thu', time:'19:30–20:30', style:'Bollywood',              level:'L3',        teacher:'Swapnil',                studio:'AKH', studioName:'Aakash',   duration:60, category:'culture-wellness' },
+      { day:'thu', time:'19:45–20:55', style:'Tap Dance',              level:'L5',        teacher:'Alexandre',              studio:'AN1', studioName:'Ananta 1', duration:70, category:'classical-technique' },
+      { day:'thu', time:'20:00–21:00', style:'Argentine Tango',        level:'L1',        teacher:'Gisela & Sergio',        studio:'AN2', studioName:'Ananta 2', duration:60, category:'partner-social' },
+      { day:'thu', time:'20:00–21:00', style:'Rueda de Casino',        level:'L2/3',      teacher:'Alex',                   studio:'AD',  studioName:'Art Deco', duration:60, category:'partner-social' },
+      { day:'thu', time:'21:00–22:00', style:'Tap Dance',              level:'L6',        teacher:'Alexandre',              studio:'AN1', studioName:'Ananta 1', duration:70, category:'classical-technique' },
+      { day:'thu', time:'21:00–22:00', style:'Cuban Salsa',            level:'L4',        teacher:'Alex',                   studio:'AN2', studioName:'Ananta 2', duration:60, category:'partner-social' },
+      { day:'thu', time:'21:00–22:00', style:'Argentine Tango',        level:'L2/3',      teacher:'Gisela & Sergio',        studio:'AD',  studioName:'Art Deco', duration:60, category:'partner-social' },
 
       // ─── Friday
-      { day:'fri', time:'18:00–19:00', style:'Ballet',           level:'L1 Foundation', teacher:'Shirley De Muer',          studio:'AKH', studioName:'Aakash',      duration:60, category:'classical-technique' },
-      { day:'fri', time:'19:00–20:15', style:'Ballet',           level:'L2',           teacher:'Shirley',                   studio:'AKH', studioName:'Aakash',      duration:75, category:'classical-technique' },
-      { day:'fri', time:'20:15–21:45', style:'Ballet',           level:'Open',         teacher:'Shirley',                   studio:'AKH', studioName:'Aakash',      duration:90, category:'classical-technique' },
+      { day:'fri', time:'18:30–20:00', style:'Ballet',                 level:'Foundations (L1)', teacher:'Shirley', studio:'AKH', studioName:'Aakash',   duration:90, category:'classical-technique' },
+      { day:'fri', time:'19:30–20:30', style:'High Heels',             level:'Miniseries',teacher:'Kitty',                  studio:'AN1', studioName:'Ananta 1', duration:60, category:'culture-wellness' },
+      { day:'fri', time:'20:00–21:30', style:'Ballet',                 level:'Open',      teacher:'Shirley',                studio:'AKH', studioName:'Aakash',   duration:90, category:'classical-technique' },
+      { day:'fri', time:'21:30–22:00', style:'Ballet Pointes',         level:'L2',        teacher:'Shirley',                studio:'AKH', studioName:'Aakash',   duration:30, category:'classical-technique' },
 
       // ─── Saturday
-      { day:'sat', time:'10:30–12:00', style:'African Congolese', level:'Open',        teacher:'Joseph Saidi Simako',       studio:'AN1', studioName:'Ananta 1',    duration:90, category:'culture-wellness' },
-      { day:'sat', time:'10:30–12:00', style:'Oriental Flow',    level:'Open',         teacher:'Nathalie El Ghoul',         studio:'AKH', studioName:'Aakash',      duration:90, category:'classical-technique', isNew:true }
+      { day:'sat', time:'10:30–12:00', style:'African Congolese Dance',level:'Open',      teacher:'Joseph Saidi Simako',    studio:'AN1', studioName:'Ananta 1', duration:90, category:'culture-wellness' }
     ];
-
-    // Working copy — replaced by live data after syncLive() completes.
-    let SLOTS = SLOTS_FALLBACK.slice();
 
     const DAYS = [
       { code:'mon', label:'Mon', long:'Monday' },
@@ -1112,9 +981,7 @@
       { code:'culture-wellness',    label:'Culture & wellness' }
     ];
 
-    // STYLES is recomputed from SLOTS at the top of buildChips() so it stays
-    // fresh after the live data fetch replaces SLOTS.
-    let STYLES = [];
+    const STYLES = [...new Set(SLOTS.map(s => s.style))].sort((a, b) => a.localeCompare(b));
 
     function styleHref(style) {
       const slug = style.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -1122,31 +989,25 @@
     }
 
     function todayDayCode() {
-      const idx = (new Date().getDay() + 6) % 7; // 0 = Mon
+      const idx = (new Date().getDay() + 6) % 7;
       return DAYS[idx] ? DAYS[idx].code : null;
     }
 
-    /* ─── Filter state ─────────────────────────── */
-    const state = {
-      day: null,
-      category: null,
-      styles: new Set()
-    };
+    const state = { day: null, category: null, styles: new Set() };
 
-    /* ─── Globals for efficient re-filtering (P2 optimize) ─────── */
-    const dayChipEls   = {};   // dayCode  → <button>
-    const catChipEls   = {};   // catCode  → <button>
-    const styleChipEls = {};   // style    → <button>
-    const slotNodes    = [];   // [{el, slot}]
-    const dayCounts    = {};   // dayCode  → {total, countEl}
+    /* ─── Globals for efficient re-filtering ─── */
+    const dayChipEls   = {};
+    const catChipEls   = {};
+    const styleChipEls = {};
+    const slotNodes    = [];
+    const dayCounts    = {};
 
-    /* ─── Studio order (left-to-right columns) ─────── */
+    /* ─── 4-studio order (Spring 2026) ─────── */
     const STUDIOS = [
-      { code:'AKH', name:'Aakash',     cls:'studio-aakash'   },
-      { code:'AN1', name:'Ananta 1',   cls:'studio-ananta1'  },
-      { code:'AN2', name:'Ananta 2',   cls:'studio-ananta2'  },
-      { code:'AD1', name:'Art Deco 1', cls:'studio-artdeco1' },
-      { code:'AD2', name:'Art Deco 2', cls:'studio-artdeco2' }
+      { code:'AKH', name:'Aakash',   cls:'studio-aakash'  },
+      { code:'AN1', name:'Ananta 1', cls:'studio-ananta1' },
+      { code:'AN2', name:'Ananta 2', cls:'studio-ananta2' },
+      { code:'AD',  name:'Art Deco', cls:'studio-artdeco' }
     ];
 
     function studioClass(code) {
@@ -1154,7 +1015,6 @@
       return s ? s.cls : '';
     }
 
-    /* ─── Time helpers ─────────────────────────── */
     const PX_PER_MIN = 1.4;
     const GAP_THRESHOLD_MIN = 90;
 
@@ -1201,10 +1061,8 @@
       return true;
     }
 
-    /* ─── Build chips once (P2 optimize) ─────── */
+    /* ─── Build chips once ─────────────────── */
     function buildChips() {
-      // Recompute STYLES from current SLOTS — stays correct after live sync.
-      STYLES = [...new Set(SLOTS.map(s => s.style))].sort((a, b) => a.localeCompare(b));
       const today = todayDayCode();
 
       const dayWrap = document.getElementById('day-chips');
@@ -1216,7 +1074,6 @@
         b.setAttribute('aria-pressed', 'false');
         b.textContent = UI[lang].d[d.code];
         if (isToday) {
-          /* P1 harden — sr-only "(today)" so screen readers get the cue */
           const sr = document.createElement('span');
           sr.className = 'sr-only';
           sr.textContent = ' ' + UI[lang].today;
@@ -1274,7 +1131,7 @@
       });
     }
 
-    /* ─── Build grid once (P2 optimize) ─────── */
+    /* ─── Build grid once ──────────────────── */
     function buildGrid() {
       const wrap = document.getElementById('schedule-grid');
       const today = todayDayCode();
@@ -1295,7 +1152,6 @@
         nameEl.className = 'day-section__name';
         nameEl.textContent = UI[lang].dl[d.code];
         if (d.code === today) {
-          /* P1 harden — sr-only "(today)" on day heading yellow-underline */
           const sr = document.createElement('span');
           sr.className = 'sr-only';
           sr.textContent = ' ' + UI[lang].today;
@@ -1333,7 +1189,7 @@
           }
 
           const startHour = Math.floor(win.startMin / 60);
-          const endHour = Math.ceil(win.endMin / 60);
+          const endHour   = Math.ceil(win.endMin / 60);
           const colHeight = Math.max((endHour - startHour) * 60 * PX_PER_MIN, 80);
 
           const grid = document.createElement('div');
@@ -1378,13 +1234,13 @@
               const slotEl = document.createElement('a');
               slotEl.className = 'slot ' + studioClass(s.studio);
               slotEl.href = styleHref(s.style);
-              slotEl.style.top  = ((s.startMin - startHour * 60) * PX_PER_MIN) + 'px';
+              slotEl.style.top    = ((s.startMin - startHour * 60) * PX_PER_MIN) + 'px';
               slotEl.style.height = ((s.endMin - s.startMin) * PX_PER_MIN - 2) + 'px';
               slotEl.setAttribute('aria-label',
                 s.style + ' ' + s.level + ' in ' + s.studioName + ', ' + d.long + ' ' + s.time);
               slotEl.innerHTML =
                 '<p class="slot__time">' + s.time + '</p>' +
-                '<p class="slot__style' + (s.isNew ? ' slot__style--new' : '') + '">' + s.style + ' · ' + s.level + '</p>' +
+                '<p class="slot__style">' + s.style + ' · ' + s.level + '</p>' +
                 '<p class="slot__teacher">' + s.teacher + '</p>' +
                 '<span class="slot__studio-tag" aria-hidden="true">' + s.studioName + '</span>';
               col.appendChild(slotEl);
@@ -1401,13 +1257,11 @@
       });
     }
 
-    /* ─── Apply filters without DOM rebuild (P2 optimize) ── */
+    /* ─── Apply filters without DOM rebuild ── */
     function applyFilters() {
       const hasFilters = state.day !== null || state.category !== null || state.styles.size > 0;
       let totalMatching = 0;
 
-      /* Toggle faded class + aria attrs on existing slot elements.
-         P1 harden: faded slots get tabindex="-1" + aria-hidden="true" */
       slotNodes.forEach(({ el, slot }) => {
         const faded = !matchesFilters(slot);
         el.classList.toggle('slot--faded', faded);
@@ -1421,7 +1275,6 @@
         }
       });
 
-      /* Update day section count labels */
       DAYS.forEach(d => {
         const info = dayCounts[d.code];
         if (!info) return;
@@ -1429,21 +1282,19 @@
         info.countEl.textContent = UI[lang].classes(info.total) + (hasFilters ? UI[lang].match(matching) : '');
       });
 
-      /* Schedule header meta */
       const total = SLOTS.length;
       const meta = document.getElementById('schedule-meta');
       if (hasFilters) {
         meta.innerHTML = UI[lang].slotsFiltered(totalMatching, total);
       } else {
         meta.innerHTML = lang === 'en'
-          ? '<strong>' + total + '</strong> weekly slots · 6 days · 5 studios'
-          : '<strong>' + total + '</strong> tijdsloten · 6 dagen · 5 studio\'s';
+          ? '<strong>' + total + '</strong> weekly slots · 5 days · 4 studios'
+          : '<strong>' + total + '</strong> tijdsloten · 5 dagen · 4 studio\'s';
       }
 
-      /* Active-filters strip */
       const activeBits = [];
-      if (state.day)           activeBits.push(UI[lang].df[state.day]);
-      if (state.category)      activeBits.push(UI[lang].cat[state.category]);
+      if (state.day)             activeBits.push(UI[lang].df[state.day]);
+      if (state.category)        activeBits.push(UI[lang].cat[state.category]);
       if (state.styles.size > 0) activeBits.push(lang === 'en' ? state.styles.size + (state.styles.size === 1 ? ' style' : ' styles') : state.styles.size + (state.styles.size === 1 ? ' stijl' : ' stijlen'));
 
       const activeStrip = document.getElementById('filters-active');
@@ -1476,7 +1327,6 @@
     function setLang(l) {
       lang = l;
       localStorage.setItem('shoonya-lang', l);
-      // Clear existing built DOM
       slotNodes.length = 0;
       Object.keys(dayCounts).forEach(function(k) { delete dayCounts[k]; });
       Object.keys(dayChipEls).forEach(function(k) { delete dayChipEls[k]; });
@@ -1492,7 +1342,7 @@
       applyStaticLang();
     }
 
-    /* ─── Init ─────────────────────────────────── */
+    /* ─── Init ─────────────────────────────── */
     document.getElementById('clear-filters').addEventListener('click', () => {
       state.day = null;
       state.category = null;
@@ -1519,59 +1369,15 @@
       }
     });
 
-    /* Build DOM once, then apply initial (empty) filter state */
     buildChips();
     buildGrid();
     applyFilters();
-
     document.getElementById('lang-btn').addEventListener('click', function() {
       setLang(lang === 'en' ? 'nl' : 'en');
     });
     applyStaticLang();
 
-    /* ─── Live sync — replace fallback data with Master Schedule sheet ─── */
-    // Fires after initial render so the page is instantly usable.
-    // Silently falls back to SLOTS_FALLBACK on any error.
-    (async function syncLive() {
-      try {
-        const url = APPS_SCRIPT_URL + '?action=publicSchedule&semester=' +
-                    encodeURIComponent('Semester 1 — 2026/2027');
-        const res  = await fetch(url);
-        if (!res.ok) return;
-        const json = await res.json();
-        if (!json.ok || !Array.isArray(json.slots) || json.slots.length === 0) return;
-
-        // Map server format → client format
-        const live = json.slots.map(s => {
-          const obj = {
-            day:       s.day,           // already 3-char: 'mon', 'tue', …
-            time:      s.start + '–' + s.end,  // en-dash "18:30–19:30"
-            style:     s.style,
-            level:     s.level,
-            teacher:   s.teacher,
-            studio:    s.studio,
-            studioName: s.studioName,
-            duration:  s.duration,
-            category:  s.category
-          };
-          if (s.slotDates && s.slotDates.length) obj.slotDates = s.slotDates;
-          if (s.coTeachers && s.coTeachers.length) obj.coTeachers = s.coTeachers;
-          return obj;
-        });
-
-        // Only update if the live data is different (avoids unnecessary flicker)
-        const liveSig = live.length + '|' + live.map(s => s.day + s.time + s.style).join(',');
-        const fallSig = SLOTS_FALLBACK.length + '|' + SLOTS_FALLBACK.map(s => s.day + s.time + s.style).join(',');
-        if (liveSig === fallSig) return; // identical — nothing to do
-
-        SLOTS = live;
-        setLang(lang); // full rebuild: chips (recomputes STYLES) + grid + applyFilters
-      } catch (_) {
-        // Network error, CORS issue, GAS error — stay on fallback silently
-      }
-    })();
-
-    /* ─── postMessage height reporting for Squarespace iframe ─── */
+    /* ─── postMessage height reporting ─── */
     function reportHeight() {
       const h = document.documentElement.scrollHeight;
       if (window.parent && window.parent !== window) {

@@ -15,7 +15,8 @@
     :root {
       --void-white: #FFFFFF;
       --void-black: #000000;
-      --vibrant-purple: #B564F7;
+      --vibrant-purple: #B564F7;       /* fills / backgrounds only */
+      --vibrant-purple-ink: #7E3FBF;   /* text / icons — passes WCAG AA on white */
       --vibrant-purple-tint: #F5ECFF;
       --vibrant-purple-tint-2: #E2CCFF;
       --highlight-yellow: #FBC70F;
@@ -76,7 +77,7 @@
       color: var(--muted);
     }
 
-    .kicker--purple { color: var(--vibrant-purple); }
+    .kicker--purple { color: var(--vibrant-purple-ink); }
 
     .caption {
       font-family: var(--font-sans);
@@ -119,7 +120,7 @@
     .hero__h1 em {
       font-style: italic;
       font-weight: 400;
-      color: var(--vibrant-purple);
+      color: var(--vibrant-purple-ink);
     }
 
     .hero__sub {
@@ -236,7 +237,7 @@
       font-weight: 500;
       font-size: 11px;
       letter-spacing: 0.12em;
-      color: var(--vibrant-purple);
+      color: var(--vibrant-purple-ink);
     }
 
     .stat-row__value {
@@ -292,11 +293,11 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      color: var(--vibrant-purple);
+      color: var(--vibrant-purple-ink);
       font-family: var(--font-sans);
       font-weight: 500;
       font-size: 14px;
-      border-bottom: 1px solid var(--vibrant-purple);
+      border-bottom: 1px solid var(--vibrant-purple-ink);
       padding-bottom: 2px;
       cursor: pointer;
       transition: opacity 240ms var(--ease);
@@ -351,7 +352,7 @@
       margin: 0 0 var(--space-1);
     }
 
-    .metric__number--purple { color: var(--vibrant-purple); }
+    .metric__number--purple { color: var(--vibrant-purple-ink); }
 
     .metric__label {
       font-family: var(--font-sans);
@@ -396,7 +397,7 @@
     .closing__h1 em {
       font-style: italic;
       font-weight: 400;
-      color: var(--vibrant-purple);
+      color: var(--vibrant-purple-ink);
     }
 
     .closing__sub {
@@ -460,7 +461,7 @@
 
     .footer__nav { display: flex; gap: 18px; }
     .footer__nav a { color: inherit; }
-    .footer__nav a:hover { color: var(--vibrant-purple); }
+    .footer__nav a:hover { color: var(--vibrant-purple-ink); }
 
     /* ───────── responsive ───────── */
 
@@ -498,6 +499,22 @@
         transition-duration: 0.01ms !important;
       }
     }
+
+    /* ───────── language toggle ───────── */
+    .lang-btn {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border: 1px solid var(--mist);
+      padding: 5px 9px;
+      cursor: pointer;
+      background: none;
+      transition: color 200ms var(--ease), border-color 200ms var(--ease);
+    }
+    .lang-btn:hover { color: var(--vibrant-purple-ink); border-color: var(--vibrant-purple-ink); }
   </style>
 </head>
 <body>
@@ -510,15 +527,16 @@
       <div class="hero__year">2026 — 2027</div>
 
       <div class="hero__top">
-        <div class="kicker">shoonya · school of movement</div>
+        <div class="kicker" data-i18n="hero-kicker">shoonya · school of movement</div>
         <div class="kicker">est. ghent</div>
+        <button class="lang-btn" id="lang-btn" type="button" aria-label="Taal wisselen / Switch language">NL</button>
       </div>
 
-      <div class="kicker kicker--purple hero__eyebrow">choose your semester</div>
+      <div class="kicker kicker--purple hero__eyebrow" data-i18n="hero-eyebrow">choose your semester</div>
 
-      <h1 class="hero__h1">Two semesters.<br/><em>One stage.</em></h1>
+      <h1 class="hero__h1" data-i18n="hero-h1">Two semesters.<br/><em>One stage.</em></h1>
 
-      <p class="hero__sub">Spring is in its final weeks. September opens a new school year — 24 styles, 22 teachers, six days a week.</p>
+      <p class="hero__sub" data-i18n="hero-sub">Spring is in its final weeks. September opens a new school year — 24 styles, 22 teachers, six days a week.</p>
     </section>
 
     <!-- ═══════════════════════════════════════════════════
@@ -534,21 +552,21 @@
         <article class="card card--sep" id="card-sep">
           <div class="card__pill">OPENS MAY 15</div>
 
-          <div class="kicker kicker--purple card__eyebrow">new school year</div>
+          <div class="kicker kicker--purple card__eyebrow" data-i18n="sep-eyebrow">new school year</div>
           <p class="card__display">Sep 2026 → Jan 2027</p>
-          <p class="card__sub">Registration · May 15 returning · May 21 everyone</p>
+          <p class="card__sub" data-i18n="sep-sub">Registration · May 15 returning · May 21 everyone</p>
 
           <div class="stat-list">
             <div class="stat-row">
-              <span class="stat-row__label">Start</span>
+              <span class="stat-row__label" data-i18n="stat-start">Start</span>
               <span class="stat-row__value">Sep 14, 2026</span>
             </div>
             <div class="stat-row">
-              <span class="stat-row__label">End</span>
+              <span class="stat-row__label" data-i18n="stat-end">End</span>
               <span class="stat-row__value">Jan 30, 2027</span>
             </div>
             <div class="stat-row" data-row="free-trial">
-              <span class="stat-row__label">Free trial</span>
+              <span class="stat-row__label" data-i18n="stat-free-trial">Free trial</span>
               <span class="stat-row__value">Sep 14–19</span>
             </div>
             <div class="stat-row" data-row="opendeurdag">
@@ -565,24 +583,24 @@
 
           <div class="progress" id="progress-sep" data-semester="sep" data-total="16" data-mode="upcoming"></div>
 
-          <a class="card__cta" href="./schedule-sep-2026.html">browse the new school year <span aria-hidden="true">→</span></a>
+          <a class="card__cta" href="./schedule-sep-2026.html" data-i18n="sep-cta">browse the new school year <span aria-hidden="true">→</span></a>
         </article>
 
         <div class="diptych__divider" aria-hidden="true"></div>
 
         <!-- Right card · Spring 2026 (the quieter, ongoing card) -->
         <article class="card card--spring" id="card-spring">
-          <div class="kicker card__eyebrow">ongoing</div>
-          <p class="card__display">Spring 2026</p>
+          <div class="kicker card__eyebrow" data-i18n="spring-eyebrow">ongoing</div>
+          <p class="card__display" data-i18n="spring-display">Spring 2026</p>
           <p class="card__sub" id="spring-sessions-meta">4 sessions remaining</p>
 
           <div class="stat-list">
             <div class="stat-row">
-              <span class="stat-row__label">Start</span>
+              <span class="stat-row__label" data-i18n="stat-start">Start</span>
               <span class="stat-row__value">Feb 9, 2026</span>
             </div>
             <div class="stat-row">
-              <span class="stat-row__label">End</span>
+              <span class="stat-row__label" data-i18n="stat-end">End</span>
               <span class="stat-row__value">Jun 14, 2026</span>
             </div>
           </div>
@@ -591,7 +609,7 @@
 
           <div class="progress" id="progress-spring" data-semester="spring" data-total="14" data-mode="running"></div>
 
-          <a class="card__link" href="./schedule-spring-2026.html">view spring schedule <span aria-hidden="true">→</span></a>
+          <a class="card__link" href="./schedule-spring-2026.html" data-i18n="spring-link">view spring schedule <span aria-hidden="true">→</span></a>
         </article>
 
       </div>
@@ -601,29 +619,29 @@
          P1 S3 · Catalogue metrics strip
          ═══════════════════════════════════════════════════ -->
     <section class="catalogue" aria-label="The catalogue">
-      <div class="kicker catalogue__kicker">the catalogue</div>
-      <h2 class="catalogue__display">what the new school year holds</h2>
+      <div class="kicker catalogue__kicker" data-i18n="cat-kicker">the catalogue</div>
+      <h2 class="catalogue__display" data-i18n="cat-h2">what the new school year holds</h2>
 
       <div class="metrics">
         <div class="metric">
           <p class="metric__number">24</p>
-          <p class="metric__label">dance styles</p>
+          <p class="metric__label" data-i18n="metric-styles">dance styles</p>
         </div>
         <div class="metric">
           <p class="metric__number">22</p>
-          <p class="metric__label">resident teachers</p>
+          <p class="metric__label" data-i18n="metric-teachers">resident teachers</p>
         </div>
         <div class="metric">
           <p class="metric__number">6</p>
-          <p class="metric__label">days a week</p>
+          <p class="metric__label" data-i18n="metric-days">days a week</p>
         </div>
         <div class="metric">
           <p class="metric__number metric__number--purple">5</p>
-          <p class="metric__label">studios</p>
+          <p class="metric__label" data-i18n="metric-studios">studios</p>
         </div>
       </div>
 
-      <p class="catalogue__note">indexed live from the Master Schedule · refreshed every 10 minutes</p>
+      <p class="catalogue__note" data-i18n="cat-note">indexed live from the Master Schedule · refreshed every 10 minutes</p>
     </section>
 
     <!-- ═══════════════════════════════════════════════════
@@ -631,14 +649,14 @@
          ═══════════════════════════════════════════════════ -->
     <section class="closing" aria-label="Open the September schedule">
       <div class="closing__content">
-        <div class="kicker closing__kicker">next on stage</div>
-        <h2 class="closing__h1">September brings<br/><em>a new school year.</em></h2>
-        <p class="closing__sub">Browse all 24 styles, find your slot, click through to register on the style page.</p>
+        <div class="kicker closing__kicker" data-i18n="closing-kicker">next on stage</div>
+        <h2 class="closing__h1" data-i18n="closing-h1">September brings<br/><em>a new school year.</em></h2>
+        <p class="closing__sub" data-i18n="closing-sub">Browse all 24 styles, find your slot, click through to register on the style page.</p>
       </div>
 
       <div class="closing__cta-cluster">
-        <a class="closing__cta" href="./schedule-sep-2026.html">browse the new school year <span aria-hidden="true">→</span></a>
-        <p class="closing__cta-meta">no account required to browse</p>
+        <a class="closing__cta" href="./schedule-sep-2026.html" data-i18n="closing-cta">browse the new school year <span aria-hidden="true">→</span></a>
+        <p class="closing__cta-meta" data-i18n="closing-meta">no account required to browse</p>
       </div>
     </section>
 
@@ -649,8 +667,8 @@
       <div class="footer__brand">shoonya · school of movement · ghent</div>
       <nav class="footer__nav">
         <a href="https://www.shoonyadance.com">home</a>
-        <a href="./schedule-sep-2026.html">schedule</a>
-        <a href="https://www.shoonyadance.com/teachers">teachers</a>
+        <a href="./schedule-sep-2026.html" data-i18n="footer-schedule">schedule</a>
+        <a href="https://www.shoonyadance.com/teachers" data-i18n="footer-teachers">teachers</a>
         <a href="https://www.shoonyadance.com/contact">contact</a>
       </nav>
     </footer>
@@ -722,6 +740,65 @@
     }
 
     /* ───────────────────────────────────────────────
+       Language strings — declared early so renderProgressBar
+       can reference LANDING_STRINGS / landingLang.
+       ─────────────────────────────────────────────── */
+    const LANDING_STRINGS = {
+      en: {
+        'hero-kicker': 'shoonya · school of movement',
+        'hero-eyebrow': 'choose your semester',
+        'hero-h1': 'Two semesters.<br/><em>One stage.</em>',
+        'hero-sub': 'Spring is in its final weeks. September opens a new school year — 24 styles, 22 teachers, six days a week.',
+        'sep-eyebrow': 'new school year',
+        'sep-sub': 'Registration · May 15 returning · May 21 everyone',
+        'stat-start': 'Start', 'stat-end': 'End', 'stat-free-trial': 'Free trial',
+        'sep-cta': 'browse the new school year <span aria-hidden="true">→</span>',
+        'spring-eyebrow': 'ongoing',
+        'spring-display': 'Spring 2026',
+        'spring-link': 'view spring schedule <span aria-hidden="true">→</span>',
+        'cat-kicker': 'the catalogue',
+        'cat-h2': 'what the new school year holds',
+        'metric-styles': 'dance styles', 'metric-teachers': 'resident teachers',
+        'metric-days': 'days a week', 'metric-studios': 'studios',
+        'cat-note': 'indexed live from the Master Schedule · refreshed every 10 minutes',
+        'closing-kicker': 'next on stage',
+        'closing-h1': 'September brings<br/><em>a new school year.</em>',
+        'closing-sub': 'Browse all 24 styles, find your slot, click through to register on the style page.',
+        'closing-cta': 'browse the new school year <span aria-hidden="true">→</span>',
+        'closing-meta': 'no account required to browse',
+        'footer-teachers': 'teachers', 'footer-schedule': 'schedule',
+        'sessions-remaining': function(n) { return n === 1 ? '1 session remaining' : n + ' sessions remaining'; }
+      },
+      nl: {
+        'hero-kicker': 'shoonya · school of beweging',
+        'hero-eyebrow': 'kies je semester',
+        'hero-h1': 'Twee semesters.<br/><em>Één podium.</em>',
+        'hero-sub': 'Lente is in de laatste weken. September opent een nieuw schooljaar — 24 stijlen, 22 docenten, zes dagen per week.',
+        'sep-eyebrow': 'nieuw schooljaar',
+        'sep-sub': 'Inschrijving · 15 mei terugkerend · 21 mei iedereen',
+        'stat-start': 'Start', 'stat-end': 'Einde', 'stat-free-trial': 'Proefweek',
+        'sep-cta': 'bekijk het nieuwe schooljaar <span aria-hidden="true">→</span>',
+        'spring-eyebrow': 'lopend',
+        'spring-display': 'Lente 2026',
+        'spring-link': 'bekijk lenteagenda <span aria-hidden="true">→</span>',
+        'cat-kicker': 'het aanbod',
+        'cat-h2': 'wat het nieuwe schooljaar brengt',
+        'metric-styles': 'dansstijlen', 'metric-teachers': 'vaste docenten',
+        'metric-days': 'dagen per week', 'metric-studios': 'studio\'s',
+        'cat-note': 'live bijgewerkt vanuit het Hoofdrooster · elke 10 minuten',
+        'closing-kicker': 'volgende op het podium',
+        'closing-h1': 'September brengt<br/><em>een nieuw schooljaar.</em>',
+        'closing-sub': 'Bekijk alle 24 stijlen, vind je tijdslot, en ga door naar de stijlpagina om je in te schrijven.',
+        'closing-cta': 'bekijk het nieuwe schooljaar <span aria-hidden="true">→</span>',
+        'closing-meta': 'geen account nodig om te bladeren',
+        'footer-teachers': 'docenten', 'footer-schedule': 'rooster',
+        'sessions-remaining': function(n) { return n === 1 ? '1 sessie resterend' : n + ' sessies resterend'; }
+      }
+    };
+
+    let landingLang = localStorage.getItem('shoonya-lang') || 'en';
+
+    /* ───────────────────────────────────────────────
        Render a progress bar given a semester key.
        For 'upcoming' mode: first segment vibrant purple, rest mist.
        For 'running' mode: N segments filled black, rest mist.
@@ -758,9 +835,9 @@
         const remaining = Math.max(0, total - filled);
         const subEl = document.getElementById('spring-sessions-meta');
         if (subEl) {
-          subEl.textContent = remaining === 1
-            ? '1 session remaining'
-            : remaining + ' sessions remaining';
+          subEl.dataset.remaining = remaining;
+          const fn = LANDING_STRINGS[landingLang]['sessions-remaining'];
+          subEl.textContent = fn ? fn(remaining) : remaining + ' sessions remaining';
         }
       }
     }
@@ -801,7 +878,7 @@
        future semester (e.g. Spring 2027 registration window).
        ─────────────────────────────────────────────── */
     const REGISTRATION_FULLY_OPEN_ISO = '2026-05-21';
-    const SPRING_CUTOFF_ISO           = '2026-06-14';
+    const SPRING_CUTOFF_ISO           = '2026-06-13';
     const SEP_RUNNING_ISO             = '2026-09-14';
     const FREE_TRIAL_END_ISO          = '2026-09-19';
 
@@ -897,6 +974,36 @@
     if (typeof ResizeObserver !== 'undefined') {
       new ResizeObserver(reportHeight).observe(document.body);
     }
+
+    /* ───────────────────────────────────────────────
+       Language toggle — shared localStorage key 'shoonya-lang'
+       persists across landing, sep-2026, and spring-2026 pages.
+       ─────────────────────────────────────────────── */
+    function applyLang(l) {
+      const strings = LANDING_STRINGS[l];
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        const key = el.getAttribute('data-i18n');
+        const val = strings[key];
+        if (val !== undefined && typeof val !== 'function') el.innerHTML = val;
+      });
+      // Update sessions-remaining separately (it may have been updated by renderProgressBar)
+      const sessionsEl = document.getElementById('spring-sessions-meta');
+      if (sessionsEl && sessionsEl.dataset.remaining !== undefined) {
+        const n = parseInt(sessionsEl.dataset.remaining, 10);
+        const fn = strings['sessions-remaining'];
+        if (fn) sessionsEl.textContent = fn(n);
+      }
+      const btn = document.getElementById('lang-btn');
+      if (btn) btn.textContent = l === 'en' ? 'NL' : 'EN';
+    }
+
+    document.getElementById('lang-btn').addEventListener('click', function() {
+      landingLang = landingLang === 'en' ? 'nl' : 'en';
+      localStorage.setItem('shoonya-lang', landingLang);
+      applyLang(landingLang);
+    });
+
+    applyLang(landingLang);
   </script>
 </body>
 </html>
