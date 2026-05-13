@@ -6571,6 +6571,12 @@ async function cwcNext(action, triggerBtn) {
         }
         return;
       }
+      // Re-enable buttons and restore the trigger label on success too.
+      // Without this, the success-screen action buttons (e.g. "Submit another
+      // weekly class →") stay disabled with "Submitting…" text after the
+      // first submission, blocking chained submissions until page reload.
+      nextBtns.forEach(b => { b.disabled = false; });
+      if (triggerBtn && triggerBtn.dataset.lbl) triggerBtn.textContent = t(triggerBtn.dataset.lbl);
       cwcSubmitting = false;
     }
 

@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
+  <title>September 2026 schedule · Shoonya Dance Centre · Ghent</title>
+  <meta name="description" content="Shoonya Dance Centre weekly class schedule for the September 2026 — January 2027 school year. Filter by day, category, or style." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:ital,wght@0,500;1,400&display=swap" />
+
+  <style>
+    :root {
+      --void-white: #FFFFFF;
+      --void-black: #000000;
+      --vibrant-purple: #B564F7;
+      --vibrant-purple-tint: #F5ECFF;
+      --vibrant-purple-tint-2: #E2CCFF;
+      --highlight-yellow: #FBC70F;
+      --mist: rgba(0, 0, 0, 0.12);
+      --mist-strong: rgba(0, 0, 0, 0.24);
+      --muted: rgba(0, 0, 0, 0.6);
+      --muted-soft: rgba(0, 0, 0, 0.4);
+      --font-serif: 'Playfair Display', Georgia, serif;
+      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+      --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+      --space-1: 8px;
+      --space-2: 16px;
+      --space-3: 24px;
+      --space-4: 32px;
+      --space-5: 48px;
+      --space-6: 64px;
+      --space-7: 96px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.55;
+      color: var(--void-black);
+      background: var(--void-white);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+    :focus-visible { outline: 2px solid var(--vibrant-purple); outline-offset: 3px; }
+
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0);
+      white-space: nowrap; border: 0;
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 var(--space-3);
+    }
+
+    .kicker {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .kicker--purple { color: var(--vibrant-purple); }
+
+    /* ───────── P2 S1 · hero ───────── */
+
+    .hero {
+      padding: var(--space-6) 0 var(--space-4);
+      position: relative;
+    }
+
+    .hero__top {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: var(--space-3);
+    }
+
+    .hero__rule {
+      width: 18px;
+      height: 1px;
+      background: var(--void-black);
+    }
+
+    .hero__eyebrow { margin-bottom: var(--space-3); }
+
+    .hero__h1 {
+      font-family: var(--font-serif);
+      font-weight: 500;
+      font-size: clamp(40px, 5vw, 64px);
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      margin: 0 0 var(--space-3);
+    }
+
+    .hero__sub {
+      font-family: var(--font-sans);
+      font-size: 17px;
+      line-height: 1.55;
+      color: var(--muted);
+      max-width: 480px;
+      margin: 0 0 var(--space-5);
+    }
+
+    .hero__strip {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-3);
+      padding-top: var(--space-3);
+      border-top: 0.5px solid var(--mist);
+      flex-wrap: wrap;
+    }
+
+    .hero__dates {
+      display: flex;
+      gap: var(--space-4);
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      flex-wrap: wrap;
+    }
+
+    .hero__tag {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border: 1px solid var(--mist);
+      padding: 5px 9px;
+    }
+
+    /* ───────── P2 S2 · filter toolbar ───────── */
+
+    .filters {
+      padding: var(--space-3) 0;
+      border-top: 0.5px solid var(--mist);
+      border-bottom: 0.5px solid var(--mist);
+      position: sticky;
+      top: 0;
+      background: var(--void-white);
+      z-index: 10;
+    }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: 90px 1fr;
+      gap: 12px var(--space-3);
+      align-items: start;
+      padding: 10px 0;
+    }
+
+    .filter-row--days {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: var(--space-2);
+      padding: 4px 0;
+    }
+
+    .filter-row--days .chips {
+      flex: 1;
+    }
+
+    .filters__disclosure {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--vibrant-purple);
+      border-bottom: 1px solid var(--vibrant-purple);
+      padding-bottom: 2px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .filters__disclosure:hover { opacity: 0.7; }
+
+    .filters__expanded {
+      margin-top: var(--space-2);
+      padding-top: var(--space-2);
+      border-top: 0.5px solid var(--mist);
+    }
+
+    .filters__expanded[hidden] { display: none; }
+
+    .filters__active {
+      margin-top: var(--space-2);
+      padding-top: var(--space-2);
+      border-top: 1px dashed var(--mist);
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: var(--space-2);
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: var(--muted);
+      flex-wrap: wrap;
+    }
+
+    .filters__active[hidden] { display: none; }
+
+    .filters__active strong {
+      color: var(--vibrant-purple);
+      font-weight: 500;
+    }
+
+    .filters__clear {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--vibrant-purple);
+      border-bottom: 1px solid var(--vibrant-purple);
+      padding-bottom: 2px;
+      cursor: pointer;
+    }
+    .filters__clear:hover { opacity: 0.7; }
+
+    .filter-row__label {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-top: 9px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 12px;
+      padding: 7px 12px;
+      border: 1px solid var(--void-black);
+      background: var(--void-white);
+      color: var(--void-black);
+      cursor: pointer;
+      transition: background 240ms var(--ease), color 240ms var(--ease);
+      position: relative;
+      white-space: nowrap;
+    }
+
+    .chip:hover {
+      background: var(--vibrant-purple-tint);
+    }
+
+    .chip[aria-pressed="true"] {
+      background: var(--void-black);
+      color: var(--void-white);
+    }
+
+    .chip[aria-pressed="true"]:hover {
+      background: var(--void-black);
+    }
+
+    .chip--today[aria-pressed="true"]::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -5px;
+      height: 3px;
+      background: var(--highlight-yellow);
+    }
+
+    .chip--style {
+      font-size: 11px;
+      padding: 6px 10px;
+    }
+
+    /* ───────── P2 S4 · schedule grid (per-day time × studio) ───────── */
+
+    .schedule {
+      padding: var(--space-5) 0 var(--space-6);
+    }
+
+    .schedule__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: var(--space-5);
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .schedule__week {
+      font-family: var(--font-serif);
+      font-weight: 500;
+      font-size: clamp(20px, 2.4vw, 28px);
+      line-height: 1.2;
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+
+    .schedule__meta {
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .schedule__meta strong {
+      color: var(--void-black);
+      font-weight: 500;
+    }
+
+    .day-section {
+      margin-bottom: var(--space-6);
+    }
+
+    .day-section__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: var(--space-3);
+      padding-bottom: 10px;
+      border-bottom: 0.5px solid var(--mist);
+    }
+
+    .day-section__name {
+      font-family: var(--font-serif);
+      font-weight: 500;
+      font-size: 22px;
+      margin: 0;
+      position: relative;
+      display: inline-block;
+    }
+
+    .day-section--today .day-section__name::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -4px;
+      height: 4px;
+      background: var(--highlight-yellow);
+    }
+
+    .day-section__count {
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .day-section__empty {
+      padding: var(--space-3) 0;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .window-grid {
+      display: grid;
+      grid-template-columns: 52px repeat(5, minmax(0, 1fr));
+      position: relative;
+    }
+
+    .window-gap {
+      margin: var(--space-2) 0;
+      padding: 10px 14px;
+      border: 1px dashed var(--mist);
+      text-align: center;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+    }
+
+    .time-corner {
+      border-bottom: 0.5px solid var(--mist);
+    }
+
+    .studio-header {
+      padding: 10px 6px;
+      text-align: center;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 0.5px solid var(--mist);
+      border-left: 0.5px solid var(--mist);
+    }
+
+    .time-gutter {
+      position: relative;
+      border-right: 0.5px solid var(--mist);
+    }
+
+    .time-label {
+      position: absolute;
+      right: 6px;
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      transform: translateY(-50%);
+    }
+
+    .studio-col {
+      position: relative;
+      border-left: 0.5px solid var(--mist);
+      min-height: 100%;
+    }
+
+    .hour-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      border-top: 0.5px dashed var(--mist);
+    }
+
+    .slot {
+      position: absolute;
+      left: 3px;
+      right: 3px;
+      padding: 6px 8px;
+      background: var(--void-white);
+      border: 0.5px solid var(--mist);
+      border-left: 2px solid var(--vibrant-purple);
+      cursor: pointer;
+      overflow: hidden;
+      transition: opacity 240ms var(--ease), background 240ms var(--ease);
+      z-index: 1;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .slot:hover {
+      background: var(--vibrant-purple-tint);
+      z-index: 5;
+    }
+
+    .slot--faded {
+      opacity: 0.15;
+      pointer-events: none;
+    }
+
+    .slot__studio-tag {
+      position: absolute;
+      top: 5px;
+      right: 6px;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    .slot__time {
+      font-family: var(--font-serif);
+      font-weight: 500;
+      font-size: 13px;
+      line-height: 1.1;
+      margin: 0 0 2px;
+      font-variant-numeric: tabular-nums;
+      padding-right: 32px;
+    }
+
+    .slot__style {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 11px;
+      line-height: 1.3;
+      margin: 0 0 1px;
+      padding-right: 32px;
+    }
+
+    .slot__style--new::after {
+      content: 'NEW';
+      display: inline-block;
+      margin-left: 4px;
+      padding: 0 4px;
+      background: var(--vibrant-purple-tint);
+      color: var(--vibrant-purple);
+      font-size: 8px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      vertical-align: 1px;
+    }
+
+    .slot__teacher {
+      font-family: var(--font-sans);
+      font-size: 10px;
+      color: var(--muted);
+      line-height: 1.3;
+      margin: 0;
+    }
+
+    .schedule__legend {
+      margin-top: var(--space-4);
+      padding-top: var(--space-3);
+      border-top: 0.5px solid var(--mist);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+    }
+
+    .legend__studios {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .legend__today {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .legend__swatch {
+      display: inline-block;
+      width: 14px;
+      height: 4px;
+      background: var(--highlight-yellow);
+    }
+
+    .studio-tag {
+      display: inline-block;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: var(--vibrant-purple);
+      margin-right: 4px;
+    }
+
+    /* ───────── P2 S6 · closing ───────── */
+
+    .closing {
+      padding: var(--space-6) var(--space-3);
+      text-align: center;
+      border-top: 0.5px solid var(--mist);
+    }
+
+    .closing__mark {
+      display: block;
+      margin: 0 auto var(--space-3);
+      width: 32px;
+      height: 16px;
+    }
+
+    .closing__kicker { margin-bottom: var(--space-2); }
+
+    .closing__h1 {
+      font-family: var(--font-serif);
+      font-weight: 500;
+      font-size: clamp(28px, 3.4vw, 40px);
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+
+    .closing__h1 em {
+      font-style: italic;
+      font-weight: 400;
+      color: var(--vibrant-purple);
+    }
+
+    .closing__sub {
+      font-family: var(--font-sans);
+      font-size: 15px;
+      color: var(--muted);
+      max-width: 460px;
+      margin: var(--space-2) auto var(--space-4);
+    }
+
+    .closing__cta-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .closing__cta {
+      background: var(--vibrant-purple);
+      color: var(--void-white);
+      padding: 14px 22px;
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      border: 0;
+      transition: background 240ms var(--ease);
+    }
+    .closing__cta:hover { background: var(--void-black); }
+
+    .closing__back {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--vibrant-purple);
+      border-bottom: 1px solid var(--vibrant-purple);
+      padding-bottom: 2px;
+      cursor: pointer;
+    }
+    .closing__back:hover { opacity: 0.7; }
+
+    .footer {
+      margin-top: var(--space-3);
+      padding: var(--space-3) 0;
+      border-top: 0.5px solid var(--mist);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+
+    .footer__brand,
+    .footer__nav {
+      font-family: var(--font-sans);
+      font-weight: 500;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .footer__nav { display: flex; gap: 18px; }
+    .footer__nav a:hover { color: var(--vibrant-purple); }
+
+    /* ───────── responsive ───────── */
+
+    @media (max-width: 900px) {
+      .filter-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+      .filter-row__label { padding-top: 0; }
+    }
+
+    @media (max-width: 700px) {
+      /* Collapse time × studio grid to a single time-ordered list per day */
+      .window-grid {
+        grid-template-columns: 1fr;
+        height: auto !important;
+      }
+      .studio-header,
+      .time-corner,
+      .time-gutter,
+      .hour-line {
+        display: none;
+      }
+      .studio-col {
+        border-left: 0;
+        height: auto !important;
+        min-height: 0;
+        padding: 0;
+      }
+      .slot {
+        position: relative !important;
+        left: 0 !important;
+        right: 0 !important;
+        top: 0 !important;
+        height: auto !important;
+        margin-bottom: 6px;
+        padding: 10px 12px;
+      }
+      .slot__studio-tag {
+        top: 10px;
+        right: 12px;
+        font-size: 10px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .hero__strip { flex-direction: column; align-items: flex-start; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+
+    <!-- ═══════════════════════════════════════════════════
+         P2 S1 · Hero
+         ═══════════════════════════════════════════════════ -->
+    <section class="hero">
+      <div class="hero__top">
+        <span class="hero__rule" aria-hidden="true"></span>
+        <span class="kicker">shoonya · weekly schedule</span>
+      </div>
+
+      <div class="kicker kicker--purple hero__eyebrow">season 2026 / 2027</div>
+
+      <h1 class="hero__h1">September → January.</h1>
+
+      <p class="hero__sub">Filter by day, category, or style. Every slot below is pulled from this year's roster.</p>
+
+      <div class="hero__strip">
+        <div class="hero__dates">
+          <span><strong style="color:var(--void-black);font-weight:500;">Sep 14</strong> first class</span>
+          <span><strong style="color:var(--void-black);font-weight:500;">Jan 30</strong> last class</span>
+          <span><strong style="color:var(--void-black);font-weight:500;">May 15</strong> registration opens</span>
+        </div>
+        <span class="hero__tag" id="hero-tag">live</span>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         P2 S2 · Filter toolbar
+         Default state: just day chips inline + 'more filters' disclosure.
+         Category + style chips reveal on disclosure click.
+         ═══════════════════════════════════════════════════ -->
+    <section class="filters" aria-label="Filters">
+      <div class="filter-row filter-row--days">
+        <div class="chips" id="day-chips" role="group" aria-label="Day filter"></div>
+        <button class="filters__disclosure" id="filters-disclosure" type="button" aria-expanded="false" aria-controls="filters-expanded">
+          more filters <span aria-hidden="true" id="filters-disclosure-arrow">↓</span>
+        </button>
+      </div>
+
+      <div class="filters__expanded" id="filters-expanded" hidden>
+        <div class="filter-row">
+          <span class="filter-row__label">Category</span>
+          <div class="chips" id="category-chips" role="group" aria-label="Category filter"></div>
+        </div>
+
+        <div class="filter-row">
+          <span class="filter-row__label">Style</span>
+          <div class="chips" id="style-chips" role="group" aria-label="Style filter"></div>
+        </div>
+      </div>
+
+      <div class="filters__active" id="filters-active" hidden>
+        <span id="active-filters-text"></span>
+        <button class="filters__clear" id="clear-filters" type="button">clear all filters</button>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         P2 S4 · Schedule grid
+         ═══════════════════════════════════════════════════ -->
+    <section class="schedule" aria-label="Weekly schedule">
+      <div class="schedule__header">
+        <h2 class="schedule__week" id="week-label">A typical week</h2>
+        <span class="schedule__meta" id="schedule-meta"><strong>50</strong> weekly slots · 6 days · 5 studios</span>
+      </div>
+
+      <div id="schedule-grid">
+        <!-- Day sections rendered by JS -->
+      </div>
+
+      <div class="schedule__legend">
+        <div class="legend__studios">
+          <span><span class="studio-tag">AKH</span>Aakash</span>
+          <span><span class="studio-tag">AN1</span>Ananta 1</span>
+          <span><span class="studio-tag">AN2</span>Ananta 2</span>
+          <span><span class="studio-tag">AD1</span>Art Deco 1</span>
+          <span><span class="studio-tag">AD2</span>Art Deco 2</span>
+        </div>
+        <span class="legend__today">
+          <span class="legend__swatch" aria-hidden="true"></span>
+          today
+        </span>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════
+         P2 S6 · Closing CTA
+         ═══════════════════════════════════════════════════ -->
+    <section class="closing" aria-label="Next step">
+      <svg class="closing__mark" viewBox="0 0 32 16" aria-hidden="true">
+        <path d="M 4 8 C 4 4, 8 4, 12 8 S 20 12, 24 8 S 28 4, 28 8" stroke="#B564F7" stroke-width="1" fill="none" />
+      </svg>
+
+      <div class="kicker closing__kicker">end of season list</div>
+      <h2 class="closing__h1">Found your class?<br/><em>The style page handles the rest.</em></h2>
+      <p class="closing__sub">Click a slot to land on its style page — pricing, teacher bio, full schedule for the season, and a single registration button.</p>
+
+      <div class="closing__cta-row">
+        <a class="closing__cta" href="https://www.shoonyadance.com/classes">browse all 24 styles <span aria-hidden="true">→</span></a>
+        <button class="closing__back" onclick="window.scrollTo({top:0,behavior:'smooth'})">back to top</button>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="footer__brand">shoonya · school of movement · ghent</div>
+      <nav class="footer__nav">
+        <a href="./schedule-landing.html">home</a>
+        <a href="./schedule-spring-2026.html">spring 2026</a>
+        <a href="https://www.shoonyadance.com/teachers">teachers</a>
+        <a href="https://www.shoonyadance.com/contact">contact</a>
+      </nav>
+    </footer>
+
+  </main>
+
+  <script>
+    /* ─────────────────────────────────────────────────
+       SLOTS — Sep 2026 master schedule
+       Source: docs/sem1-2026-2027-pricing-check.html (2026-05-12 snapshot)
+       Studio inference: backend/code.gs STUDIO_FIXED_BY_STYLE + STUDIO_HINTS
+       Categories: partner-social, classical-technique, culture-wellness
+       Days: mon, tue, wed, thu, fri, sat
+       Studio codes: AKH, AN1, AN2, AD1, AD2
+       ───────────────────────────────────────────────── */
+    const SLOTS = [
+      // ─── Monday
+      { day:'mon', time:'18:00–19:10', style:'Tap Dance',        level:'L3',           teacher:'Lut',                       studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
+      { day:'mon', time:'19:00–20:00', style:'Cuban Salsa',      level:'L1',           teacher:'Alex (Ioanna)',             studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
+      { day:'mon', time:'19:00–20:00', style:'Raqs Sharqi',      level:'L1',           teacher:'Lenka Badriyah',            studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
+      { day:'mon', time:'19:00–20:30', style:'Burlesque',        level:'L1 early',     teacher:'Zoe Bizoe',                 studio:'AD1', studioName:'Art Deco 1',  duration:90, category:'classical-technique' },
+      { day:'mon', time:'19:15–20:25', style:'Tap Dance',        level:'L2',           teacher:'Jordan',                    studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
+      { day:'mon', time:'20:00–21:00', style:'Cuban Salsa',      level:'L2',           teacher:'Alex (Ioanna)',             studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
+      { day:'mon', time:'20:00–21:00', style:'Raqs Sharqi',      level:'L2',           teacher:'Lenka',                     studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
+      { day:'mon', time:'20:30–21:40', style:'Tap Dance',        level:'L1',           teacher:'Jordan (Lut lead)',         studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
+      { day:'mon', time:'20:30–22:00', style:'Burlesque',        level:'L1 late',      teacher:'Zoe Bizoe',                 studio:'AD1', studioName:'Art Deco 1',  duration:90, category:'classical-technique' },
+      { day:'mon', time:'20:30–22:00', style:'Cissy Ball',       level:'Open',         teacher:'Hendrik Lebon',             studio:'AN2', studioName:'Ananta 2',    duration:90, category:'partner-social' },
+      { day:'mon', time:'21:00–22:00', style:'Cuban Salsa',      level:'L3',           teacher:'Alex',                      studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
+      { day:'mon', time:'21:00–22:00', style:'Raqs Sharqi',      level:'L3',           teacher:'Lenka',                     studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
+
+      // ─── Tuesday
+      { day:'tue', time:'17:30–18:30', style:'Pilates for Dancers', level:'Open',     teacher:'Lenka Badriyah',            studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness', isNew:true },
+      { day:'tue', time:'18:30–19:30', style:'Bollyfolk',        level:'Open',         teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
+      { day:'tue', time:'19:00–20:00', style:'Bachata',          level:'L1',           teacher:'Alex (Lenka)',              studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
+      { day:'tue', time:'19:00–20:30', style:'Burlesque',        level:'L2 early',     teacher:'Zoe Bizoe',                 studio:'AD1', studioName:'Art Deco 1',  duration:90, category:'classical-technique' },
+      { day:'tue', time:'19:35–20:35', style:'Yoga',             level:'Open',         teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
+      { day:'tue', time:'20:00–21:00', style:'Bachata',          level:'L2',           teacher:'Alex (Lenka)',              studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
+      { day:'tue', time:'20:30–22:00', style:'Burlesque',        level:'L2 late',      teacher:'Zoe Bizoe',                 studio:'AD1', studioName:'Art Deco 1',  duration:90, category:'classical-technique' },
+      { day:'tue', time:'20:40–21:40', style:'Indian Dance Technique', level:'Open',  teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
+      { day:'tue', time:'21:00–22:00', style:'Bachata',          level:'L3',           teacher:'Alex (Ioanna)',             studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
+
+      // ─── Wednesday
+      { day:'wed', time:'10:00–11:00', style:'Dance & Fit',      level:'Open',         teacher:'Lenka Badriyah',            studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness', isNew:true },
+      { day:'wed', time:'11:00–12:00', style:'Pilates for Dancers', level:'Open',     teacher:'Lenka',                     studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness', isNew:true },
+      { day:'wed', time:'18:30–19:40', style:'Tap Dance',        level:'L2',           teacher:'Teddy',                     studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
+      { day:'wed', time:'18:45–19:45', style:'Lindy Hop',        level:'L1 Foundation', teacher:'Ann-Sofie',                studio:'AD1', studioName:'Art Deco 1',  duration:60, category:'partner-social' },
+      { day:'wed', time:'19:00–20:00', style:'Kizomba',          level:'L1',           teacher:'Sonja KikiZomba',           studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
+      { day:'wed', time:'19:30–20:30', style:'Bhangra',          level:'L2',           teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
+      { day:'wed', time:'19:45–20:55', style:'Tap Dance',        level:'L3',           teacher:'Teddy',                     studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
+      { day:'wed', time:'19:45–21:00', style:'Lindy Hop',        level:'Open',         teacher:'Ann-Sofie',                 studio:'AD1', studioName:'Art Deco 1',  duration:75, category:'partner-social' },
+      { day:'wed', time:'20:00–21:00', style:'Kizomba',          level:'L2',           teacher:'Sonja',                     studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
+      { day:'wed', time:'20:30–21:45', style:'Indian Semi-Classical', level:'L2',     teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:75, category:'culture-wellness' },
+      { day:'wed', time:'21:00–22:10', style:'Tap Dance',        level:'L1',           teacher:'Teddy',                     studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
+      { day:'wed', time:'21:00–22:00', style:'Solo Jazz',        level:'Open',         teacher:'Ann-Sofie',                 studio:'AD1', studioName:'Art Deco 1',  duration:60, category:'partner-social' },
+      { day:'wed', time:'21:00–22:00', style:'Kizomba',          level:'L3',           teacher:'Sonja',                     studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
+
+      // ─── Thursday
+      { day:'thu', time:'18:30–19:30', style:'Bollywood',        level:'L2',           teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
+      { day:'thu', time:'18:30–19:40', style:'Tap Dance',        level:'L4',           teacher:'Alexandre',                 studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
+      { day:'thu', time:'19:00–20:00', style:'Bachata Lady Style', level:'L1',        teacher:'Ioanna',                    studio:'AN2', studioName:'Ananta 2',    duration:60, category:'partner-social' },
+      { day:'thu', time:'19:00–20:00', style:'Rueda de Casino',  level:'L1',           teacher:'Alex',                      studio:'AD1', studioName:'Art Deco 1',  duration:60, category:'partner-social' },
+      { day:'thu', time:'19:30–20:30', style:'Bollywood',        level:'L3',           teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
+      { day:'thu', time:'19:45–20:55', style:'Tap Dance',        level:'L5',           teacher:'Alexandre',                 studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
+      { day:'thu', time:'20:00–21:00', style:'Argentine Tango',  level:'L1',           teacher:'Sergio & Gisela',           studio:'AD1', studioName:'Art Deco 1',  duration:60, category:'partner-social' },
+      { day:'thu', time:'20:00–21:00', style:'Rueda de Casino',  level:'L2',           teacher:'Alex',                      studio:'AD1', studioName:'Art Deco 1',  duration:60, category:'partner-social' },
+      { day:'thu', time:'21:00–22:00', style:'Argentine Tango',  level:'L2',           teacher:'Sergio & Gisela',           studio:'AD1', studioName:'Art Deco 1',  duration:60, category:'partner-social' },
+      { day:'thu', time:'21:00–22:10', style:'Tap Dance',        level:'L6',           teacher:'Alexandre',                 studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
+      { day:'thu', time:'21:00–22:00', style:'Cuban Salsa',      level:'L4',           teacher:'Alex',                      studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
+
+      // ─── Friday
+      { day:'fri', time:'18:00–19:00', style:'Ballet',           level:'L1 Foundation', teacher:'Shirley De Muer',          studio:'AKH', studioName:'Aakash',      duration:60, category:'classical-technique' },
+      { day:'fri', time:'19:00–20:15', style:'Ballet',           level:'L2',           teacher:'Shirley',                   studio:'AKH', studioName:'Aakash',      duration:75, category:'classical-technique' },
+      { day:'fri', time:'20:15–21:45', style:'Ballet',           level:'Open',         teacher:'Shirley',                   studio:'AKH', studioName:'Aakash',      duration:90, category:'classical-technique' },
+
+      // ─── Saturday
+      { day:'sat', time:'10:30–12:00', style:'African Congolese', level:'Open',        teacher:'Joseph Saidi Simako',       studio:'AN1', studioName:'Ananta 1',    duration:90, category:'culture-wellness' },
+      { day:'sat', time:'10:30–12:00', style:'Oriental Flow',    level:'Open',         teacher:'Nathalie El Ghoul',         studio:'AKH', studioName:'Aakash',      duration:90, category:'culture-wellness', isNew:true }
+    ];
+
+    const DAYS = [
+      { code:'mon', label:'Mon', long:'Monday' },
+      { code:'tue', label:'Tue', long:'Tuesday' },
+      { code:'wed', label:'Wed', long:'Wednesday' },
+      { code:'thu', label:'Thu', long:'Thursday' },
+      { code:'fri', label:'Fri', long:'Friday' },
+      { code:'sat', label:'Sat', long:'Saturday' }
+    ];
+
+    const CATEGORIES = [
+      { code:'partner-social',      label:'Partner & social' },
+      { code:'classical-technique', label:'Classical & technique' },
+      { code:'culture-wellness',    label:'Culture & wellness' }
+    ];
+
+    // Unique alphabetized style list
+    const STYLES = [...new Set(SLOTS.map(s => s.style))].sort((a, b) => a.localeCompare(b));
+
+    // Build a slug for a style → its style page on shoonyadance.com
+    function styleHref(style) {
+      const slug = style.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      return 'https://www.shoonyadance.com/' + slug;
+    }
+
+    // Today's day code (0 = Sun, 1 = Mon, ...)
+    function todayDayCode() {
+      const idx = (new Date().getDay() + 6) % 7; // 0 = Mon
+      return DAYS[idx] ? DAYS[idx].code : null;
+    }
+
+    /* ─── Filter state ─────────────────────────────────── */
+    const state = {
+      day: null,           // single day code or null = all
+      category: null,      // single category code or null = all
+      styles: new Set()    // multiple styles or empty = all
+    };
+
+    function chip(text, opts) {
+      const b = document.createElement('button');
+      b.className = 'chip' + (opts.modifier ? ' ' + opts.modifier : '');
+      b.type = 'button';
+      b.setAttribute('aria-pressed', opts.pressed ? 'true' : 'false');
+      b.textContent = text;
+      b.addEventListener('click', opts.onClick);
+      return b;
+    }
+
+    /* ─── Render chip rows ─────────────────────────────── */
+    function renderDayChips() {
+      const wrap = document.getElementById('day-chips');
+      wrap.innerHTML = '';
+      const today = todayDayCode();
+      DAYS.forEach(d => {
+        const isToday = d.code === today;
+        const c = chip(d.label, {
+          modifier: isToday ? 'chip--today' : '',
+          pressed: state.day === d.code,
+          onClick: () => {
+            state.day = state.day === d.code ? null : d.code;
+            renderAll();
+          }
+        });
+        wrap.appendChild(c);
+      });
+    }
+
+    function renderCategoryChips() {
+      const wrap = document.getElementById('category-chips');
+      wrap.innerHTML = '';
+      CATEGORIES.forEach(cat => {
+        const c = chip(cat.label, {
+          pressed: state.category === cat.code,
+          onClick: () => {
+            state.category = state.category === cat.code ? null : cat.code;
+            renderAll();
+          }
+        });
+        wrap.appendChild(c);
+      });
+    }
+
+    function renderStyleChips() {
+      const wrap = document.getElementById('style-chips');
+      wrap.innerHTML = '';
+      STYLES.forEach(st => {
+        const c = chip(st, {
+          modifier: 'chip--style',
+          pressed: state.styles.has(st),
+          onClick: () => {
+            if (state.styles.has(st)) state.styles.delete(st);
+            else state.styles.add(st);
+            renderAll();
+          }
+        });
+        wrap.appendChild(c);
+      });
+    }
+
+    /* ─── Studio order (left-to-right columns) ─────────── */
+    const STUDIOS = [
+      { code:'AKH', name:'Aakash' },
+      { code:'AN1', name:'Ananta 1' },
+      { code:'AN2', name:'Ananta 2' },
+      { code:'AD1', name:'Art Deco 1' },
+      { code:'AD2', name:'Art Deco 2' }
+    ];
+
+    /* ─── Time helpers ─────────────────────────────────── */
+    const PX_PER_MIN = 1.4;
+    const GAP_THRESHOLD_MIN = 90;
+
+    function toMinutes(t) {
+      const m = String(t).trim().match(/^(\d{1,2}):(\d{2})$/);
+      if (!m) return null;
+      return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+    }
+
+    function minutesToHHMM(min) {
+      const h = Math.floor(min / 60);
+      const m = min % 60;
+      return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    }
+
+    function parseTimeRange(range) {
+      const parts = String(range).split(/[–\-]/).map(s => s.trim());
+      return { startMin: toMinutes(parts[0]), endMin: toMinutes(parts[1]) };
+    }
+
+    /* Cluster a day's slots into contiguous time windows.
+       A gap > GAP_THRESHOLD_MIN (default 90 min) splits into separate windows. */
+    function clusterWindows(slots) {
+      if (slots.length === 0) return [];
+      const sorted = slots.slice().sort((a, b) => a.startMin - b.startMin);
+      const windows = [];
+      let cur = { startMin: sorted[0].startMin, endMin: sorted[0].endMin, slots: [sorted[0]] };
+      for (let i = 1; i < sorted.length; i++) {
+        const s = sorted[i];
+        if (s.startMin - cur.endMin > GAP_THRESHOLD_MIN) {
+          windows.push(cur);
+          cur = { startMin: s.startMin, endMin: s.endMin, slots: [s] };
+        } else {
+          cur.endMin = Math.max(cur.endMin, s.endMin);
+          cur.slots.push(s);
+        }
+      }
+      windows.push(cur);
+      return windows;
+    }
+
+    /* ─── Filter match (returns true if slot matches active filters) ───── */
+    function matchesFilters(s) {
+      if (state.day && s.day !== state.day) return false;
+      if (state.category && s.category !== state.category) return false;
+      if (state.styles.size > 0 && !state.styles.has(s.style)) return false;
+      return true;
+    }
+
+    /* ─── Render the per-day time × studio grid ────────── */
+    function renderGrid() {
+      const wrap = document.getElementById('schedule-grid');
+      wrap.innerHTML = '';
+      const today = todayDayCode();
+
+      let totalMatching = 0;
+
+      DAYS.forEach(d => {
+        const section = document.createElement('section');
+        section.className = 'day-section' + (d.code === today ? ' day-section--today' : '');
+
+        const allDaySlots = SLOTS
+          .filter(s => s.day === d.code)
+          .map(s => Object.assign({}, s, parseTimeRange(s.time)))
+          .filter(s => s.startMin !== null && s.endMin !== null);
+
+        const matchingCount = allDaySlots.filter(matchesFilters).length;
+        totalMatching += matchingCount;
+
+        const header = document.createElement('div');
+        header.className = 'day-section__header';
+        const nameLabel = d.code === today ? d.long + ' · today' : d.long;
+        const countText = allDaySlots.length + ' classes' +
+          (state.day || state.category || state.styles.size > 0
+            ? ' · ' + matchingCount + ' match'
+            : '');
+        header.innerHTML =
+          '<h3 class="day-section__name">' + nameLabel + '</h3>' +
+          '<span class="day-section__count">' + countText + '</span>';
+        section.appendChild(header);
+
+        if (allDaySlots.length === 0) {
+          const empty = document.createElement('p');
+          empty.className = 'day-section__empty';
+          empty.textContent = 'no classes scheduled';
+          section.appendChild(empty);
+          wrap.appendChild(section);
+          return;
+        }
+
+        const windows = clusterWindows(allDaySlots);
+
+        windows.forEach(function (win, idx) {
+          // Gap divider before subsequent windows
+          if (idx > 0) {
+            const prev = windows[idx - 1];
+            const gapMin = win.startMin - prev.endMin;
+            const gapHours = (gapMin / 60).toFixed(gapMin % 60 === 0 ? 0 : 1);
+            const divider = document.createElement('div');
+            divider.className = 'window-gap';
+            divider.textContent = '↓ ' + gapHours + 'h gap · no classes ' + minutesToHHMM(prev.endMin) + '–' + minutesToHHMM(win.startMin);
+            section.appendChild(divider);
+          }
+
+          const startHour = Math.floor(win.startMin / 60);
+          const endHour = Math.ceil(win.endMin / 60);
+          const colHeight = Math.max((endHour - startHour) * 60 * PX_PER_MIN, 80);
+
+          const grid = document.createElement('div');
+          grid.className = 'window-grid';
+
+          // Header row: empty corner cell + 5 studio headers
+          const corner = document.createElement('div');
+          corner.className = 'time-corner';
+          grid.appendChild(corner);
+
+          STUDIOS.forEach(st => {
+            const h = document.createElement('div');
+            h.className = 'studio-header';
+            h.textContent = st.name;
+            grid.appendChild(h);
+          });
+
+          // Time gutter
+          const gutter = document.createElement('div');
+          gutter.className = 'time-gutter';
+          gutter.style.height = colHeight + 'px';
+          for (let h = startHour; h <= endHour; h++) {
+            const lbl = document.createElement('div');
+            lbl.className = 'time-label';
+            lbl.textContent = String(h).padStart(2, '0') + ':00';
+            lbl.style.top = ((h - startHour) * 60 * PX_PER_MIN) + 'px';
+            gutter.appendChild(lbl);
+          }
+          grid.appendChild(gutter);
+
+          // 5 studio columns
+          STUDIOS.forEach(st => {
+            const col = document.createElement('div');
+            col.className = 'studio-col';
+            col.style.height = colHeight + 'px';
+
+            // Hour dashed lines
+            for (let h = startHour + 1; h < endHour; h++) {
+              const line = document.createElement('div');
+              line.className = 'hour-line';
+              line.style.top = ((h - startHour) * 60 * PX_PER_MIN) + 'px';
+              col.appendChild(line);
+            }
+
+            // Slots in this studio for this window
+            const colSlots = win.slots.filter(s => s.studio === st.code);
+            colSlots.forEach(s => {
+              const slot = document.createElement('a');
+              const faded = !matchesFilters(s);
+              slot.className = 'slot' + (faded ? ' slot--faded' : '');
+              slot.href = styleHref(s.style);
+              slot.style.top = ((s.startMin - startHour * 60) * PX_PER_MIN) + 'px';
+              slot.style.height = ((s.endMin - s.startMin) * PX_PER_MIN - 2) + 'px';
+              slot.innerHTML =
+                '<span class="slot__studio-tag">' + s.studio + '</span>' +
+                '<p class="slot__time">' + s.time + '</p>' +
+                '<p class="slot__style' + (s.isNew ? ' slot__style--new' : '') + '">' + s.style + ' · ' + s.level + '</p>' +
+                '<p class="slot__teacher">' + s.teacher + '</p>';
+              col.appendChild(slot);
+            });
+
+            grid.appendChild(col);
+          });
+
+          section.appendChild(grid);
+        });
+
+        wrap.appendChild(section);
+      });
+
+      // Counts + summary
+      const total = SLOTS.length;
+      const showing = totalMatching;
+
+      const activeBits = [];
+      if (state.day) activeBits.push(DAYS.find(d => d.code === state.day).long + 's');
+      if (state.category) activeBits.push(CATEGORIES.find(c => c.code === state.category).label);
+      if (state.styles.size > 0) activeBits.push(state.styles.size + ' ' + (state.styles.size === 1 ? 'style' : 'styles'));
+
+      const hasFilters = activeBits.length > 0;
+
+      // Schedule header meta — slot count lives here now
+      const meta = document.getElementById('schedule-meta');
+      if (hasFilters) {
+        meta.innerHTML = '<strong>showing ' + showing + ' of ' + total + '</strong> weekly slots';
+      } else {
+        meta.innerHTML = '<strong>' + total + '</strong> weekly slots · 6 days · 5 studios';
+      }
+
+      // Active-filters strip — only shows when any filter is on
+      const activeStrip = document.getElementById('filters-active');
+      const filtersEl = document.getElementById('active-filters-text');
+      if (hasFilters) {
+        activeStrip.hidden = false;
+        filtersEl.innerHTML = '<strong>' + activeBits.length + ' active filter' + (activeBits.length === 1 ? '' : 's') + '</strong> — ' + activeBits.join(', ');
+      } else {
+        activeStrip.hidden = true;
+        filtersEl.textContent = '';
+      }
+    }
+
+    function renderAll() {
+      renderDayChips();
+      renderCategoryChips();
+      renderStyleChips();
+      renderGrid();
+    }
+
+    document.getElementById('clear-filters').addEventListener('click', () => {
+      state.day = null;
+      state.category = null;
+      state.styles.clear();
+      renderAll();
+    });
+
+    /* ─── More-filters disclosure ──────────────────── */
+    const discBtn   = document.getElementById('filters-disclosure');
+    const discPanel = document.getElementById('filters-expanded');
+    const discArrow = document.getElementById('filters-disclosure-arrow');
+    discBtn.addEventListener('click', () => {
+      const open = discPanel.hasAttribute('hidden') ? false : true;
+      if (open) {
+        discPanel.setAttribute('hidden', '');
+        discBtn.setAttribute('aria-expanded', 'false');
+        discBtn.firstChild.textContent = 'more filters ';
+        discArrow.textContent = '↓';
+      } else {
+        discPanel.removeAttribute('hidden');
+        discBtn.setAttribute('aria-expanded', 'true');
+        discBtn.firstChild.textContent = 'fewer filters ';
+        discArrow.textContent = '↑';
+      }
+    });
+
+    renderAll();
+
+    /* ─── postMessage height reporting for Squarespace iframe ─── */
+    function reportHeight() {
+      const h = document.documentElement.scrollHeight;
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'shoonya:height', height: h }, '*');
+      }
+    }
+    window.addEventListener('load', reportHeight);
+    window.addEventListener('resize', reportHeight);
+    if (typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(reportHeight).observe(document.body);
+    }
+  </script>
+</body>
+</html>
