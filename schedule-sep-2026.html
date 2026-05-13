@@ -23,6 +23,25 @@
       --mist-strong: rgba(0, 0, 0, 0.24);
       --muted: rgba(0, 0, 0, 0.6);
       --muted-soft: rgba(0, 0, 0, 0.4);
+
+      /* Studio palette — matches web/schedule.html (the teacher tool / master schedule)
+         so students see the same colour cues they're used to. */
+      --studio-aakash-bg:     #E6F1FB;
+      --studio-aakash-border: #1F6FBE;
+      --studio-aakash-text:   #0C447C;
+      --studio-ananta1-bg:    #EEEDFE;
+      --studio-ananta1-border:#7F77DD;
+      --studio-ananta1-text:  #3C3489;
+      --studio-ananta2-bg:    #E1F5EE;
+      --studio-ananta2-border:#1D9E75;
+      --studio-ananta2-text:  #085041;
+      --studio-artdeco1-bg:   #FAEEDA;
+      --studio-artdeco1-border:#BA7517;
+      --studio-artdeco1-text: #633806;
+      --studio-artdeco2-bg:   #FCE2E2;
+      --studio-artdeco2-border:#C45A5A;
+      --studio-artdeco2-text: #6A1F1F;
+
       --font-serif: 'Playfair Display', Georgia, serif;
       --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
       --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
@@ -398,13 +417,18 @@
       text-align: center;
       font-family: var(--font-sans);
       font-weight: 500;
-      font-size: 11px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      color: var(--void-black);
       border-bottom: 0.5px solid var(--mist);
       border-left: 0.5px solid var(--mist);
     }
+
+    .studio-header.studio-aakash   { background: var(--studio-aakash-bg);   color: var(--studio-aakash-text); }
+    .studio-header.studio-ananta1  { background: var(--studio-ananta1-bg);  color: var(--studio-ananta1-text); }
+    .studio-header.studio-ananta2  { background: var(--studio-ananta2-bg);  color: var(--studio-ananta2-text); }
+    .studio-header.studio-artdeco1 { background: var(--studio-artdeco1-bg); color: var(--studio-artdeco1-text); }
+    .studio-header.studio-artdeco2 { background: var(--studio-artdeco2-bg); color: var(--studio-artdeco2-text); }
 
     .time-gutter {
       position: relative;
@@ -413,12 +437,15 @@
 
     .time-label {
       position: absolute;
-      right: 6px;
+      right: 8px;
       font-family: var(--font-sans);
-      font-size: 10px;
-      color: var(--muted);
+      font-weight: 500;
+      font-size: 11px;
+      color: var(--void-black);
       font-variant-numeric: tabular-nums;
       transform: translateY(-50%);
+      background: var(--void-white);
+      padding: 0 2px;
     }
 
     .studio-col {
@@ -441,10 +468,10 @@
       padding: 6px 8px;
       background: var(--void-white);
       border: 0.5px solid var(--mist);
-      border-left: 2px solid var(--vibrant-purple);
+      border-left: 3px solid var(--mist-strong);
       cursor: pointer;
       overflow: hidden;
-      transition: opacity 240ms var(--ease), background 240ms var(--ease);
+      transition: opacity 240ms var(--ease), transform 120ms var(--ease), box-shadow 120ms var(--ease);
       z-index: 1;
       text-decoration: none;
       color: inherit;
@@ -452,14 +479,22 @@
     }
 
     .slot:hover {
-      background: var(--vibrant-purple-tint);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
       z-index: 5;
     }
 
     .slot--faded {
-      opacity: 0.15;
+      opacity: 0.18;
       pointer-events: none;
     }
+
+    /* Studio-coloured slot variants — match the master schedule */
+    .slot.studio-aakash    { background: var(--studio-aakash-bg);    border-left-color: var(--studio-aakash-border);    color: var(--studio-aakash-text); }
+    .slot.studio-ananta1   { background: var(--studio-ananta1-bg);   border-left-color: var(--studio-ananta1-border);   color: var(--studio-ananta1-text); }
+    .slot.studio-ananta2   { background: var(--studio-ananta2-bg);   border-left-color: var(--studio-ananta2-border);   color: var(--studio-ananta2-text); }
+    .slot.studio-artdeco1  { background: var(--studio-artdeco1-bg);  border-left-color: var(--studio-artdeco1-border);  color: var(--studio-artdeco1-text); }
+    .slot.studio-artdeco2  { background: var(--studio-artdeco2-bg);  border-left-color: var(--studio-artdeco2-border);  color: var(--studio-artdeco2-text); }
 
     .slot__studio-tag {
       position: absolute;
@@ -469,7 +504,7 @@
       font-weight: 500;
       font-size: 9px;
       letter-spacing: 0.06em;
-      color: var(--muted);
+      opacity: 0.55;
     }
 
     .slot__time {
@@ -479,16 +514,14 @@
       line-height: 1.1;
       margin: 0 0 2px;
       font-variant-numeric: tabular-nums;
-      padding-right: 32px;
     }
 
     .slot__style {
       font-family: var(--font-sans);
       font-weight: 500;
-      font-size: 11px;
+      font-size: 12px;
       line-height: 1.3;
       margin: 0 0 1px;
-      padding-right: 32px;
     }
 
     .slot__style--new::after {
@@ -506,8 +539,8 @@
 
     .slot__teacher {
       font-family: var(--font-sans);
-      font-size: 10px;
-      color: var(--muted);
+      font-size: 11px;
+      opacity: 0.78;
       line-height: 1.3;
       margin: 0;
     }
@@ -548,15 +581,19 @@
       background: var(--highlight-yellow);
     }
 
-    .studio-tag {
+    .studio-swatch {
       display: inline-block;
-      font-family: var(--font-sans);
-      font-weight: 500;
-      font-size: 10px;
-      letter-spacing: 0.08em;
-      color: var(--vibrant-purple);
-      margin-right: 4px;
+      width: 14px;
+      height: 14px;
+      vertical-align: -2px;
+      margin-right: 6px;
+      border: 0.5px solid var(--mist);
     }
+    .studio-swatch.studio-aakash    { background: var(--studio-aakash-bg);    border-left: 3px solid var(--studio-aakash-border); }
+    .studio-swatch.studio-ananta1   { background: var(--studio-ananta1-bg);   border-left: 3px solid var(--studio-ananta1-border); }
+    .studio-swatch.studio-ananta2   { background: var(--studio-ananta2-bg);   border-left: 3px solid var(--studio-ananta2-border); }
+    .studio-swatch.studio-artdeco1  { background: var(--studio-artdeco1-bg);  border-left: 3px solid var(--studio-artdeco1-border); }
+    .studio-swatch.studio-artdeco2  { background: var(--studio-artdeco2-bg);  border-left: 3px solid var(--studio-artdeco2-border); }
 
     /* ───────── P2 S6 · closing ───────── */
 
@@ -787,11 +824,11 @@
 
       <div class="schedule__legend">
         <div class="legend__studios">
-          <span><span class="studio-tag">AKH</span>Aakash</span>
-          <span><span class="studio-tag">AN1</span>Ananta 1</span>
-          <span><span class="studio-tag">AN2</span>Ananta 2</span>
-          <span><span class="studio-tag">AD1</span>Art Deco 1</span>
-          <span><span class="studio-tag">AD2</span>Art Deco 2</span>
+          <span><span class="studio-swatch studio-aakash" aria-hidden="true"></span>Aakash</span>
+          <span><span class="studio-swatch studio-ananta1" aria-hidden="true"></span>Ananta 1</span>
+          <span><span class="studio-swatch studio-ananta2" aria-hidden="true"></span>Ananta 2</span>
+          <span><span class="studio-swatch studio-artdeco1" aria-hidden="true"></span>Art Deco 1</span>
+          <span><span class="studio-swatch studio-artdeco2" aria-hidden="true"></span>Art Deco 2</span>
         </div>
         <span class="legend__today">
           <span class="legend__swatch" aria-hidden="true"></span>
@@ -1003,12 +1040,17 @@
 
     /* ─── Studio order (left-to-right columns) ─────────── */
     const STUDIOS = [
-      { code:'AKH', name:'Aakash' },
-      { code:'AN1', name:'Ananta 1' },
-      { code:'AN2', name:'Ananta 2' },
-      { code:'AD1', name:'Art Deco 1' },
-      { code:'AD2', name:'Art Deco 2' }
+      { code:'AKH', name:'Aakash',     cls:'studio-aakash'   },
+      { code:'AN1', name:'Ananta 1',   cls:'studio-ananta1'  },
+      { code:'AN2', name:'Ananta 2',   cls:'studio-ananta2'  },
+      { code:'AD1', name:'Art Deco 1', cls:'studio-artdeco1' },
+      { code:'AD2', name:'Art Deco 2', cls:'studio-artdeco2' }
     ];
+
+    function studioClass(code) {
+      const s = STUDIOS.find(x => x.code === code);
+      return s ? s.cls : '';
+    }
 
     /* ─── Time helpers ─────────────────────────────────── */
     const PX_PER_MIN = 1.4;
@@ -1129,7 +1171,7 @@
 
           STUDIOS.forEach(st => {
             const h = document.createElement('div');
-            h.className = 'studio-header';
+            h.className = 'studio-header ' + st.cls;
             h.textContent = st.name;
             grid.appendChild(h);
           });
@@ -1166,12 +1208,12 @@
             colSlots.forEach(s => {
               const slot = document.createElement('a');
               const faded = !matchesFilters(s);
-              slot.className = 'slot' + (faded ? ' slot--faded' : '');
+              slot.className = 'slot ' + studioClass(s.studio) + (faded ? ' slot--faded' : '');
               slot.href = styleHref(s.style);
               slot.style.top = ((s.startMin - startHour * 60) * PX_PER_MIN) + 'px';
               slot.style.height = ((s.endMin - s.startMin) * PX_PER_MIN - 2) + 'px';
+              slot.setAttribute('aria-label', s.style + ' ' + s.level + ' in ' + s.studioName + ', ' + d.long + ' ' + s.time);
               slot.innerHTML =
-                '<span class="slot__studio-tag">' + s.studio + '</span>' +
                 '<p class="slot__time">' + s.time + '</p>' +
                 '<p class="slot__style' + (s.isNew ? ' slot__style--new' : '') + '">' + s.style + ' · ' + s.level + '</p>' +
                 '<p class="slot__teacher">' + s.teacher + '</p>';
