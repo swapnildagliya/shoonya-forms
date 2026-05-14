@@ -547,6 +547,19 @@
       vertical-align: 1px;
     }
 
+    .slot__dropin-tag {
+      display: inline-block;
+      margin-left: 4px;
+      padding: 0 4px;
+      background: rgba(0, 0, 0, 0.06);
+      color: var(--muted);
+      font-size: 8px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      vertical-align: 1px;
+    }
+
     .slot__teacher {
       font-family: var(--font-sans);
       font-size: 11px;
@@ -981,6 +994,7 @@
         noClasses: 'no classes scheduled',
         activeFiltersStr: (n, list) => '<strong>' + n + ' active filter' + (n===1?'':'s') + '</strong> — ' + list,
         today: '(today)', legendToday: 'today',
+        dropIn: 'drop-in ok',
         'hero-kicker': 'shoonya · weekly schedule',
         'hero-eyebrow': 'season 2026 / 2027',
         'date-first': 'first class', 'date-last': 'last class', 'date-reg': 'registration opens',
@@ -1005,6 +1019,7 @@
         noClasses: 'geen lessen gepland',
         activeFiltersStr: (n, list) => '<strong>' + n + ' actief filter' + (n===1?'':'s') + '</strong> — ' + list,
         today: '(vandaag)', legendToday: 'vandaag',
+        dropIn: 'losse les ok',
         'hero-kicker': 'shoonya · weekrooster',
         'hero-eyebrow': 'seizoen 2026 / 2027',
         'date-first': 'eerste les', 'date-last': 'laatste les', 'date-reg': 'inschrijvingen open',
@@ -1042,7 +1057,7 @@
       { day:'mon', time:'21:00–22:00', style:'Raqs Sharqi',      level:'L3',           teacher:'Lenka',                     studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
 
       // ─── Tuesday
-      { day:'tue', time:'17:30–18:30', style:'Pilates for Dancers', level:'Open',     teacher:'Lenka Badriyah',            studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness', isNew:true },
+      { day:'tue', time:'17:30–18:30', style:'Pilates for Dancers', level:'Open',     teacher:'Lenka Badriyah',            studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness', isNew:true, dropIn:true },
       { day:'tue', time:'18:20–19:20', style:'Flamenco',         level:'L2',           teacher:'La Liz',                    studio:'AN1', studioName:'Ananta 1',    duration:60, category:'classical-technique' },
       { day:'tue', time:'18:30–19:30', style:'Bollyfolk',        level:'Open',         teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
       { day:'tue', time:'19:00–20:00', style:'Bachata',          level:'L1',           teacher:'Alex (Lenka)',              studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
@@ -1056,8 +1071,8 @@
       { day:'tue', time:'21:00–22:00', style:'Bachata',          level:'L3',           teacher:'Alex (Ioanna)',             studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
 
       // ─── Wednesday
-      { day:'wed', time:'10:00–11:00', style:'Dance & Fit',      level:'Open',         teacher:'Lenka Badriyah',            studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness', isNew:true },
-      { day:'wed', time:'11:00–12:00', style:'Pilates for Dancers', level:'Open',     teacher:'Lenka',                     studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness', isNew:true },
+      { day:'wed', time:'10:00–11:00', style:'Dance & Fit',      level:'Open',         teacher:'Lenka Badriyah',            studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness', isNew:true, dropIn:true },
+      { day:'wed', time:'11:00–12:00', style:'Pilates for Dancers', level:'Open',     teacher:'Lenka',                     studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness', isNew:true, dropIn:true },
       { day:'wed', time:'18:30–19:30', style:'Bollyfolk',        level:'Open',         teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
       { day:'wed', time:'18:30–19:40', style:'Tap Dance',        level:'L2',           teacher:'Teddy',                     studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
       { day:'wed', time:'18:45–19:45', style:'Lindy Hop',        level:'L1 Foundation', teacher:'Ann-Sofie',                studio:'AD1', studioName:'Art Deco 1',  duration:60, category:'partner-social' },
@@ -1382,9 +1397,12 @@
               slotEl.style.height = ((s.endMin - s.startMin) * PX_PER_MIN - 2) + 'px';
               slotEl.setAttribute('aria-label',
                 s.style + ' ' + s.level + ' in ' + s.studioName + ', ' + d.long + ' ' + s.time);
+              const dropInTag = s.dropIn
+                ? '<span class="slot__dropin-tag" aria-label="' + UI[lang].dropIn + '">' + UI[lang].dropIn + '</span>'
+                : '';
               slotEl.innerHTML =
                 '<p class="slot__time">' + s.time + '</p>' +
-                '<p class="slot__style' + (s.isNew ? ' slot__style--new' : '') + '">' + s.style + ' · ' + s.level + '</p>' +
+                '<p class="slot__style' + (s.isNew ? ' slot__style--new' : '') + '">' + s.style + ' · ' + s.level + dropInTag + '</p>' +
                 '<p class="slot__teacher">' + s.teacher + '</p>' +
                 '<span class="slot__studio-tag" aria-hidden="true">' + s.studioName + '</span>';
               col.appendChild(slotEl);
