@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl-BE">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2898,29 +2898,11 @@
               </div>
             </div>
 
-            <!-- Second DJ -->
+            <!-- Additional DJs (repeater — May 2026) -->
             <div style="border-top:1px solid #eee;padding-top:12px;">
-              <div id="ss-dj2-fields" style="display:none;">
-                <div class="wc-section-label" style="margin-bottom:8px;">Second DJ</div>
-                <div class="cwc-meta-section">
-                  <div class="cwc-meta-row">
-                    <div class="cwc-meta-key">Name</div>
-                    <input aria-label="Second DJ name" type="text" id="ss-dj2-name" class="cwc-meta-input" placeholder="DJ name">
-                  </div>
-                  <div class="cwc-meta-row">
-                    <div class="cwc-meta-key">Website / socials</div>
-                    <input aria-label="Optional" type="text" id="ss-dj2-socials" class="cwc-meta-input" placeholder="Optional">
-                  </div>
-                  <div class="cwc-meta-row">
-                    <div class="cwc-meta-key">Genres</div>
-                    <input aria-label="Social night dj2 genres" type="text" id="ss-dj2-genres" class="cwc-meta-input" placeholder="e.g. Salsa on2, Mambo">
-                  </div>
-                </div>
-                <button class="btn-step-back" style="margin-top:4px;"
-                  onclick="document.getElementById('ss-dj2-fields').style.display='none';document.getElementById('ss-add-dj2').style.display='';">✕ Remove second DJ</button>
-              </div>
-              <button id="ss-add-dj2" class="wc-btn-add-slot" style="margin-top:0;"
-                onclick="document.getElementById('ss-dj2-fields').style.display='';this.style.display='none';">+ Add second DJ</button>
+              <div id="ss-extra-djs"></div>
+              <button type="button" class="wc-btn-add-slot" style="margin-top:0;"
+                onclick="ssAddExtraDJ()">+ Add another DJ</button>
             </div>
           </div>
         </div>
@@ -2949,14 +2931,6 @@
         <div id="ss-pricing-rows"></div>
         <button class="wc-btn-add-slot" onclick="ssAddPricingRow()" style="margin-top:6px;">+ Add pricing tier</button>
 
-        <div style="margin-top:16px;padding:12px 14px;background:#F5ECFF;border:1.5px solid #E2CCFF;border-radius:8px;">
-          <div class="wc-section-label" style="margin-bottom:8px;">Early booking deadline <span style="font-weight:400;font-style:italic;text-transform:none;">(optional)</span></div>
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-            <input aria-label="Early bird deadline" type="date" id="ss-early-deadline" style="font-size:.84rem;padding:6px 8px;max-width:180px;">
-            <span style="font-size:.76rem;color:var(--text-light);">Advance prices apply until this date</span>
-          </div>
-        </div>
-
         <div class="err-box" id="err-ss-pricing" style="display:none;margin-top:10px;"></div>
         <button class="btn-continue" style="margin-top:16px;" onclick="ssSubmitPricing()">Continue →</button>
       </div>
@@ -2983,20 +2957,15 @@
       <!-- Event summary -->
       <div id="ss-event-summary" style="margin-bottom:18px;"></div>
 
-      <!-- Description -->
-      <div class="cwc-section-label" data-lbl="desc-we-use">Description we'll use</div>
-      <div id="ss-desc-loading" style="font-size:.82rem;color:var(--text-light);margin-bottom:12px;">
-        <span class="cwc-spinner"></span> Generating description…
+      <!-- Social-night description (teacher writes it) -->
+      <div class="cwc-section-label">Description</div>
+      <div style="font-size:.78rem;color:var(--text-light);margin-bottom:8px;line-height:1.5;">
+        Tell us 2–3 sentences about what this social night is about — the music vibe, who it's for.
+        This becomes the published description.
       </div>
-      <div id="ss-desc-block" style="display:none;">
-        <div class="cwc-desc-text" id="ss-desc-text"></div>
-        <div class="cwc-desc-actions">
-          <button class="cwc-btn-approve" onclick="ssApproveDesc()">Looks good ✓</button>
-          <button class="cwc-btn-edit"    onclick="ssEditDesc()">Edit</button>
-        </div>
-        <textarea aria-label="Edit description" id="ss-desc-edit" class="cwc-desc-textarea" style="display:none;" rows="4"></textarea>
-        <button id="ss-desc-save" class="cwc-btn-approve" style="display:none;margin-top:8px;" onclick="ssSaveDesc()">Save</button>
-      </div>
+      <textarea aria-label="Social night description" id="ss-desc-input" class="cwc-meta-input" rows="5"
+        placeholder="What's this social night about? What's the music? Who's it for?"
+        style="width:100%;margin-bottom:12px;"></textarea>
 
       <!-- Guest photos -->
       <div class="cwc-divider"></div>
@@ -7282,6 +7251,62 @@ function wsDuration(start, end) {
   return mins >= 60 ? Math.floor(mins/60) + 'h' + (mins%60 ? (mins%60)+'min' : '') : mins + 'min';
 }
 
+// ── Smart time-input helper (May 2026) ──────────────────────────────
+// Lets teachers type "1930" → auto-formats to "19:30" instead of the
+// cumbersome native tab-between-fields UX. Attached on document load
+// to every <input type="time">, including those rendered dynamically.
+function smartTimeFromDigits(digits) {
+  digits = String(digits).replace(/\D/g, '').slice(0, 4);
+  if (digits.length < 3) return '';
+  if (digits.length === 3) digits = '0' + digits;          // "930" → "0930"
+  const hh = parseInt(digits.slice(0, 2), 10);
+  const mm = parseInt(digits.slice(2, 4), 10);
+  if (hh > 23 || mm > 59) return '';
+  return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+}
+function wireSmartTimeInput(el) {
+  if (!el || el.dataset.smartTime === '1') return;
+  el.dataset.smartTime = '1';
+  // Add a sibling text input that mirrors the time input.
+  // When user types 4 digits, parse + set the underlying time value.
+  el.addEventListener('input', function() {
+    // Native input event fires per digit — too noisy. Use keydown instead.
+  });
+  el.addEventListener('keydown', function(e) {
+    if (e.key && /^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+      el.dataset.typedBuffer = ((el.dataset.typedBuffer || '') + e.key).slice(-4);
+      const parsed = smartTimeFromDigits(el.dataset.typedBuffer);
+      if (parsed) { el.value = parsed; }
+    } else if (e.key === 'Backspace' || e.key === 'Delete') {
+      e.preventDefault();
+      el.dataset.typedBuffer = '';
+      el.value = '';
+    } else if (e.key === ':' || e.key === 'Tab' || e.key === 'Enter') {
+      // Allow native behaviour for these
+      el.dataset.typedBuffer = '';
+    }
+  });
+  el.addEventListener('blur', function() {
+    el.dataset.typedBuffer = '';
+  });
+}
+function wireAllSmartTimeInputs(root) {
+  (root || document).querySelectorAll('input[type="time"]').forEach(wireSmartTimeInput);
+}
+document.addEventListener('DOMContentLoaded', function() { wireAllSmartTimeInputs(document); });
+// MutationObserver — re-wires any time inputs added dynamically
+// (e.g. by wsAddSession, ssAddProgrammeRow, ssAddPricingRow).
+if (typeof MutationObserver !== 'undefined') {
+  new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      m.addedNodes && m.addedNodes.forEach(function(n) {
+        if (n.nodeType === 1) wireAllSmartTimeInputs(n);
+      });
+    });
+  }).observe(document.body, { childList: true, subtree: true });
+}
+
 // Workshop description: teacher writes it directly (no more auto-gen).
 // Old wsGenerateDesc / wsApproveDesc / wsEditDesc / wsSaveDesc functions removed
 // May 2026 — auto-gen was never validated as useful for workshops.
@@ -8493,17 +8518,6 @@ function ssShowBasicsStep() {
   document.getElementById('ss-end').value       = '01:00'; // standard end time
   document.getElementById('ss-dresscode').value = '';
 
-  // Auto-set early-booking deadline = event date − 1 day
-  const dateEl = document.getElementById('ss-date');
-  dateEl.oninput = () => {
-    const dl = document.getElementById('ss-early-deadline');
-    if (dateEl.value && dl) {
-      const d = new Date(dateEl.value + 'T12:00');
-      d.setDate(d.getDate() - 1);
-      dl.value = d.toISOString().slice(0, 10);
-    }
-  };
-
   hideErr('err-ss-basics');
 }
 
@@ -8647,6 +8661,50 @@ function ssBackToBasics() {
   document.getElementById('ss-step-basics').style.display    = '';
   document.getElementById('ss-step-programme').style.display = 'none';
   document.getElementById('ss-step-pricing').style.display   = 'none';
+}
+
+// ── Additional DJs repeater (May 2026) ──────────────────────────────
+// Up to N extra DJs beyond the primary (music-type-based) one.
+// Each row: name, socials, genres + remove button. No fee — that's
+// reserved for the headline guest DJ.
+function ssAddExtraDJ() {
+  const container = document.getElementById('ss-extra-djs');
+  if (!container) return;
+  const idx = container.children.length + 1; // 1-indexed, shown as "Extra DJ #N"
+
+  const row = document.createElement('div');
+  row.className = 'ss-extra-dj-row';
+  row.style.cssText = 'border:1.5px solid #e8e0f5;border-radius:8px;padding:12px 14px;margin-bottom:10px;background:#fdfbff;';
+  row.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <span style="font-size:.78rem;font-weight:500;color:#7c4dcc;">Extra DJ <span class="ss-edj-idx">#${idx}</span></span>
+      <button type="button" class="wc-btn-remove" onclick="ssRemoveExtraDJ(this)" title="Remove">✕</button>
+    </div>
+    <div class="cwc-meta-section">
+      <div class="cwc-meta-row">
+        <div class="cwc-meta-key">Name</div>
+        <input type="text" class="ss-edj-name cwc-meta-input" placeholder="DJ name" aria-label="Extra DJ name">
+      </div>
+      <div class="cwc-meta-row">
+        <div class="cwc-meta-key">Website / socials</div>
+        <input type="text" class="ss-edj-socials cwc-meta-input" placeholder="Optional" aria-label="Extra DJ socials">
+      </div>
+      <div class="cwc-meta-row">
+        <div class="cwc-meta-key">Genres</div>
+        <input type="text" class="ss-edj-genres cwc-meta-input" placeholder="e.g. Salsa on2, Mambo" aria-label="Extra DJ genres">
+      </div>
+    </div>
+  `;
+  container.appendChild(row);
+}
+function ssRemoveExtraDJ(btn) {
+  const row = btn.closest('.ss-extra-dj-row');
+  if (!row) return;
+  row.remove();
+  // Re-number remaining rows
+  document.querySelectorAll('#ss-extra-djs .ss-extra-dj-row .ss-edj-idx').forEach(function(el, i) {
+    el.textContent = '#' + (i + 1);
+  });
 }
 
 function ssAddProgrammeRow() {
@@ -8853,13 +8911,27 @@ function ssConfirmProgramme() {
 
   ssCurrentData.genres = ssSelectedGenres.join(', ');
 
-  // Second DJ
-  const dj2Fields = document.getElementById('ss-dj2-fields');
-  if (dj2Fields && dj2Fields.style.display !== 'none') {
-    ssCurrentData.dj2Name    = document.getElementById('ss-dj2-name')?.value.trim()    || '';
-    ssCurrentData.dj2Socials = document.getElementById('ss-dj2-socials')?.value.trim() || '';
-    ssCurrentData.dj2Genres  = document.getElementById('ss-dj2-genres')?.value.trim()  || '';
-    if (ssCurrentData.dj2Name) ssRememberGuestDJ(ssCurrentData.dj2Name);
+  // Additional DJs (May 2026 repeater — replaces the old hardcoded "Second DJ" toggle)
+  const extraDjs = [];
+  document.querySelectorAll('#ss-extra-djs .ss-extra-dj-row').forEach(function(row) {
+    const name    = row.querySelector('.ss-edj-name')?.value.trim()    || '';
+    const socials = row.querySelector('.ss-edj-socials')?.value.trim() || '';
+    const genres  = row.querySelector('.ss-edj-genres')?.value.trim()  || '';
+    if (!name && !socials && !genres) return; // skip fully-empty rows
+    extraDjs.push({ name, socials, genres });
+    if (name) ssRememberGuestDJ(name);
+  });
+  ssCurrentData.extraDjs = extraDjs;
+  // Backward-compat: also expose the first extra DJ as dj2* so old downstream
+  // code (admin email templates, etc.) keeps working until we sweep through.
+  if (extraDjs.length > 0) {
+    ssCurrentData.dj2Name    = extraDjs[0].name;
+    ssCurrentData.dj2Socials = extraDjs[0].socials;
+    ssCurrentData.dj2Genres  = extraDjs[0].genres;
+  } else {
+    ssCurrentData.dj2Name    = '';
+    ssCurrentData.dj2Socials = '';
+    ssCurrentData.dj2Genres  = '';
   }
 
   ssShowPricingStep();
@@ -9027,7 +9099,7 @@ function ssSubmitPricing() {
   }
 
   ssCurrentData.pricing       = pricing;
-  ssCurrentData.earlyDeadline = document.getElementById('ss-early-deadline').value;
+  ssCurrentData.earlyDeadline = ''; // Field removed May 2026 — never used as actual early-bird
 
   ssShowConfirmation();
 }
@@ -9045,8 +9117,7 @@ function ssShowConfirmation() {
   ssDescApproved = false;
 
   document.getElementById('ss-confirm-title').textContent = ssCurrentData.title || '';
-  document.getElementById('ss-desc-loading').style.display = '';
-  document.getElementById('ss-desc-block').style.display   = 'none';
+  // Description: teacher writes it directly (no more auto-gen, removed May 2026)
 
   // Build event summary card
   const d = ssCurrentData;
@@ -9093,7 +9164,10 @@ function ssShowConfirmation() {
   summary += `<div style="padding-left:8px;">${esc(musicDetail)}`;
   if (d.genres) summary += ` · ${esc(d.genres)}`;
   summary += `</div>`;
-  if (d.dj2Name) summary += `<div style="padding-left:8px;">+ 2nd DJ: ${esc(d.dj2Name)}${d.dj2Genres ? ' · ' + esc(d.dj2Genres) : ''}</div>`;
+  (d.extraDjs || []).forEach(function(edj, i) {
+    if (!edj.name) return;
+    summary += `<div style="padding-left:8px;">+ DJ ${i + 2}: ${esc(edj.name)}${edj.genres ? ' · ' + esc(edj.genres) : ''}</div>`;
+  });
 
   // Pricing
   if (d.pricing && d.pricing.length) {
@@ -9103,116 +9177,16 @@ function ssShowConfirmation() {
       const door = p.door    ? `€${p.door} door`   : '';
       summary += `<div style="padding-left:8px;">${esc(p.label)}: ${[adv, door].filter(Boolean).join(' / ')}</div>`;
     });
-    if (d.earlyDeadline) {
-      const dlStr = fmtDate(d.earlyDeadline);
-      summary += `<div style="padding-left:8px;color:var(--text-light);font-size:.78rem;">Advance deadline: ${esc(dlStr)}</div>`;
-    }
+    // Early deadline removed May 2026 — was never actual early-bird
   }
 
   summary += `</div>`;
   document.getElementById('ss-event-summary').innerHTML = summary;
-
-  // Generate description
-  ssGenerateDesc();
 }
 
-function ssGenerateDesc() {
-  const d = ssCurrentData;
-
-  // Build a human-readable prompt payload
-  const progLines = (d.programme || []).map(r => {
-    let line = `- ${r.type}`;
-    if (r.start) line += ` ${r.start}`;
-    if (r.end)   line += `–${r.end}`;
-    if (r.topic) line += `: ${r.topic}`;
-    if (r.teacher) line += ` (by ${r.teacher})`;
-    if (r.levels && r.levels.length) line += ` [${r.levels.join(', ')}]`;
-    return line;
-  }).join('\n');
-
-  const pricingLines = (d.pricing || []).map(p => {
-    return `- ${p.label}: ${p.advance ? '€'+p.advance+' adv' : ''} ${p.door ? '€'+p.door+' door' : ''}`.trim();
-  }).join('\n');
-
-  const musicStr = d.musicType === 'guest-dj'   ? `Guest DJ: ${d.djName || 'TBA'}` :
-                   d.musicType === 'teacher-dj'  ? `Teacher DJ: ${d.teacherDJ || ''}` :
-                   'Playlist';
-
-  const descInput = [
-    `EVENT: ${d.title}`,
-    `DATE: ${d.date}`,
-    d.doors ? `DOORS: ${d.doors}` : '',
-    d.end   ? `END: ${d.end}` : '',
-    `STYLES: ${(d.styles || []).join(', ')}`,
-    d.dresscode ? `DRESS CODE: ${d.dresscode}` : '',
-    `PROGRAMME:\n${progLines}`,
-    `MUSIC: ${musicStr}`,
-    d.genres ? `GENRES: ${d.genres}` : '',
-    `PRICING:\n${pricingLines}`,
-    d.earlyDeadline ? `EARLY BOOKING DEADLINE: ${d.earlyDeadline}` : '',
-  ].filter(Boolean).join('\n');
-
-  const APPS_SCRIPT_URL = (typeof window !== 'undefined' && window.APPS_SCRIPT_URL) || '';
-
-  if (!APPS_SCRIPT_URL) {
-    // Fallback — build a simple description locally
-    const fallback = `Join us for a ${d.styles.join('/')} social night at Shoonya Dance Centre Ghent!\n\n`
-      + (progLines ? `Programme:\n${progLines}\n\n` : '')
-      + `Music: ${musicStr}${d.genres ? ' — ' + d.genres : ''}.\n\n`
-      + (pricingLines ? `Entry:\n${pricingLines}` : '');
-    document.getElementById('ss-desc-loading').style.display = 'none';
-    document.getElementById('ss-desc-text').textContent = fallback;
-    document.getElementById('ss-desc-block').style.display = '';
-    return;
-  }
-
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'generateClassDesc', description: descInput, type: 'social-event' }),
-  })
-    .then(r => r.json())
-    .then(data => {
-      const txt = data.description || data.result || descInput;
-      document.getElementById('ss-desc-loading').style.display = 'none';
-      document.getElementById('ss-desc-text').textContent = txt;
-      document.getElementById('ss-desc-block').style.display = '';
-    })
-    .catch(() => {
-      document.getElementById('ss-desc-loading').style.display = 'none';
-      document.getElementById('ss-desc-text').textContent = descInput;
-      document.getElementById('ss-desc-block').style.display = '';
-    });
-}
-
-function ssApproveDesc() {
-  ssDescApproved = true;
-  document.getElementById('ss-desc-edit').style.display   = 'none';
-  document.getElementById('ss-desc-save').style.display   = 'none';
-  document.querySelector('#ss-desc-block .cwc-btn-approve').textContent = '✓ Approved';
-  document.querySelector('#ss-desc-block .cwc-btn-approve').style.opacity = '0.6';
-}
-
-function ssEditDesc() {
-  const textEl = document.getElementById('ss-desc-text');
-  const editEl = document.getElementById('ss-desc-edit');
-  editEl.value = textEl.textContent;
-  textEl.style.display = 'none';
-  editEl.style.display = '';
-  document.getElementById('ss-desc-save').style.display = '';
-}
-
-function ssSaveDesc() {
-  const editEl = document.getElementById('ss-desc-edit');
-  const textEl = document.getElementById('ss-desc-text');
-  textEl.textContent = editEl.value;
-  textEl.style.display = '';
-  editEl.style.display = 'none';
-  document.getElementById('ss-desc-save').style.display = 'none';
-  ssDescApproved = false;
-  document.querySelector('#ss-desc-block .cwc-btn-approve').textContent = 'Looks good ✓';
-  document.querySelector('#ss-desc-block .cwc-btn-approve').style.opacity = '';
-}
+// Social-night description: teacher writes it directly (no more auto-gen).
+// Old ssGenerateDesc / ssApproveDesc / ssEditDesc / ssSaveDesc functions removed
+// May 2026 — auto-gen was never validated as useful for one-off events.
 
 // ── Photo resize helper ───────────────────────────────────────────────────
 // Resizes an image file to max maxPx on longest side, returns base64 JPEG string
@@ -9364,9 +9338,9 @@ async function ssSubmitToShoonya() {
   const d = ssCurrentData;
   const profile = getActingProfile() || {};
 
-  // Approved description text
-  const descEl = document.getElementById('ss-desc-text');
-  const approvedDesc = descEl ? descEl.textContent.trim() : '';
+  // Description: teacher-written, read from the textarea (May 2026)
+  const descInput = document.getElementById('ss-desc-input');
+  const approvedDesc = (descInput?.value || '').trim();
 
   const noteShoonya = (document.getElementById('ss-note-shoonya')?.value || '').trim();
 
@@ -9405,6 +9379,7 @@ async function ssSubmitToShoonya() {
     dj2Name:              d.dj2Name    || '',
     dj2Socials:           d.dj2Socials || '',
     dj2Genres:            d.dj2Genres  || '',
+    extraDjs:             d.extraDjs   || [],
     pricing:              d.pricing,
     earlyDeadline:        d.earlyDeadline,
     organiser_name:            profile.name  || '',

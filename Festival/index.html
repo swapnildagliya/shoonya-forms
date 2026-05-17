@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl-BE">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -975,6 +975,50 @@ function copyOutput() {
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = 'Copy to Clipboard'; btn.classList.remove('copied'); }, 2000);
   });
+}
+
+// ── Smart time-input helper (May 2026) ──────────────────────────────
+// Same helper as in smart-form. Type "1930" → "19:30".
+function smartTimeFromDigits(digits) {
+  digits = String(digits).replace(/\D/g, '').slice(0, 4);
+  if (digits.length < 3) return '';
+  if (digits.length === 3) digits = '0' + digits;
+  const hh = parseInt(digits.slice(0, 2), 10);
+  const mm = parseInt(digits.slice(2, 4), 10);
+  if (hh > 23 || mm > 59) return '';
+  return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+}
+function wireSmartTimeInput(el) {
+  if (!el || el.dataset.smartTime === '1') return;
+  el.dataset.smartTime = '1';
+  el.addEventListener('keydown', function(e) {
+    if (e.key && /^[0-9]$/.test(e.key)) {
+      e.preventDefault();
+      el.dataset.typedBuffer = ((el.dataset.typedBuffer || '') + e.key).slice(-4);
+      const parsed = smartTimeFromDigits(el.dataset.typedBuffer);
+      if (parsed) { el.value = parsed; }
+    } else if (e.key === 'Backspace' || e.key === 'Delete') {
+      e.preventDefault();
+      el.dataset.typedBuffer = '';
+      el.value = '';
+    } else if (e.key === ':' || e.key === 'Tab' || e.key === 'Enter') {
+      el.dataset.typedBuffer = '';
+    }
+  });
+  el.addEventListener('blur', function() { el.dataset.typedBuffer = ''; });
+}
+function wireAllSmartTimeInputs(root) {
+  (root || document).querySelectorAll('input[type="time"]').forEach(wireSmartTimeInput);
+}
+document.addEventListener('DOMContentLoaded', function() { wireAllSmartTimeInputs(document); });
+if (typeof MutationObserver !== 'undefined') {
+  new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      m.addedNodes && m.addedNodes.forEach(function(n) {
+        if (n.nodeType === 1) wireAllSmartTimeInputs(n);
+      });
+    });
+  }).observe(document.body, { childList: true, subtree: true });
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
