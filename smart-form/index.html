@@ -2323,6 +2323,13 @@
           <div id="ws-level-chips" class="wc-chips"></div>
         </div>
 
+        <!-- Prerequisites -->
+        <div style="margin-bottom:14px;">
+          <div class="wc-section-label">Prerequisites <span style="font-weight:400;font-style:italic;text-transform:none;">(optional)</span></div>
+          <input aria-label="Workshop prerequisites" type="text" id="ws-prereq-input"
+            placeholder="e.g. Must know basic salsa steps · At least 1 year of Bharatanatyam">
+        </div>
+
         <!-- Sessions builder -->
         <div style="margin-bottom:14px;">
           <div class="wc-section-label" id="ws-sessions-label">Date &amp; time</div>
@@ -2416,6 +2423,17 @@
           </div>
         </div>
 
+        <!-- Preferred studio -->
+        <div style="margin-bottom:14px;">
+          <div class="wc-section-label">Preferred studio <span style="font-weight:400;font-style:italic;text-transform:none;">(if you have one — Shoonya makes final call)</span></div>
+          <div class="wc-chips" id="ws-studio-chips">
+            <button class="wc-chip selected" data-studio="No preference" onclick="wsSetStudio('No preference',this)">No preference</button>
+            <button class="wc-chip"          data-studio="Studio Ananta" onclick="wsSetStudio('Studio Ananta',this)">Studio Ananta</button>
+            <button class="wc-chip"          data-studio="Studio Aakash" onclick="wsSetStudio('Studio Aakash',this)">Studio Aakash</button>
+            <button class="wc-chip"          data-studio="Studio Art Deco" onclick="wsSetStudio('Studio Art Deco',this)">Studio Art Deco</button>
+          </div>
+        </div>
+
         <!-- ── PRICING ── -->
         <hr style="border:none;border-top:1.5px solid #eee;margin:16px 0 14px;">
         <div class="wc-section-label" style="margin-bottom:12px;">Suggested pricing <span style="font-weight:400;font-style:italic;text-transform:none;font-size:.72rem;">(Shoonya will confirm before publishing)</span></div>
@@ -2493,6 +2511,33 @@
             💜 Shoonya members always get <em>10% off</em> — applied automatically at registration.
           </div>
 
+          <!-- Optional early-bird pricing -->
+          <div style="margin-top:14px;">
+            <button type="button" class="wc-btn-add-slot" id="ws-eb-toggle-btn"
+              onclick="wsToggleEarlyBird()">+ Add early-bird pricing</button>
+            <div id="ws-eb-fields" style="display:none;margin-top:10px;">
+              <div class="cwc-meta-row">
+                <div class="cwc-meta-key">Early-bird price (p.p.)</div>
+                <div class="ws-money-row">
+                  <span class="ws-currency">€</span>
+                  <input aria-label="Early bird price in euros" type="number" id="ws-eb-price" class="cwc-meta-input ws-price-input"
+                    min="0" step="0.5" placeholder="e.g. 20">
+                  <span class="ws-inline-hint">applies before cutoff date</span>
+                </div>
+              </div>
+              <div class="cwc-meta-row">
+                <div class="cwc-meta-key">Cutoff date</div>
+                <div class="ws-money-row">
+                  <input aria-label="Early bird cutoff date" type="date" id="ws-eb-cutoff" class="cwc-meta-input ws-price-input">
+                  <span class="ws-inline-hint">after this date, regular price applies</span>
+                </div>
+              </div>
+              <div style="text-align:right;margin-top:4px;">
+                <button type="button" class="wc-chip" onclick="wsToggleEarlyBird()" style="font-size:.72rem;">Remove early-bird</button>
+              </div>
+            </div>
+          </div>
+
         </div>
 
         <div class="err-box" id="err-ws-details" style="margin-top:14px;"></div>
@@ -2521,20 +2566,15 @@
       <!-- Sessions summary -->
       <div id="ws-sessions-summary" style="margin-bottom:18px;"></div>
 
-      <!-- Description -->
-      <div class="cwc-section-label">Description we'll use</div>
-      <div id="ws-desc-loading" style="font-size:.82rem;color:var(--text-light);margin-bottom:12px;">
-        <span class="cwc-spinner"></span> Generating description…
+      <!-- Workshop description (teacher writes it) -->
+      <div class="cwc-section-label">Workshop description</div>
+      <div style="font-size:.78rem;color:var(--text-light);margin-bottom:8px;line-height:1.5;">
+        Tell us 2–3 sentences about what students will learn, what makes this special, and who it's for.
+        This becomes the published description.
       </div>
-      <div id="ws-desc-block" style="display:none;">
-        <div class="cwc-desc-text" id="ws-desc-text"></div>
-        <div class="cwc-desc-actions">
-          <button class="cwc-btn-approve" onclick="wsApproveDesc()">Looks good ✓</button>
-          <button class="cwc-btn-edit"    onclick="wsEditDesc()">Edit</button>
-        </div>
-        <textarea aria-label="Edit description" id="ws-desc-edit" class="cwc-desc-textarea" style="display:none;" rows="4"></textarea>
-        <button id="ws-desc-save" class="cwc-btn-approve" style="display:none;margin-top:8px;" onclick="wsSaveDesc()">Save</button>
-      </div>
+      <textarea aria-label="Workshop description" id="ws-desc-input" class="cwc-meta-input" rows="5"
+        placeholder="What will students learn? What makes this special? Who is it for?"
+        style="width:100%;margin-bottom:12px;"></textarea>
 
       <!-- Workshop info -->
       <div class="cwc-divider"></div>
@@ -2623,9 +2663,9 @@
         </div>
 
         <div class="cwc-meta-row">
-          <div class="cwc-meta-key">What to bring</div>
-          <textarea aria-label="What students should bring" id="ws-bring-input" class="cwc-meta-input" rows="2"
-            placeholder="e.g. Comfortable clothes, dance shoes."></textarea>
+          <div class="cwc-meta-key">What to bring + dress code</div>
+          <textarea aria-label="What to bring and dress code" id="ws-bring-input" class="cwc-meta-input" rows="2"
+            placeholder="e.g. Heels recommended · Comfortable clothes · Water bottle · All white"></textarea>
         </div>
 
         <div class="cwc-meta-row">
@@ -6630,6 +6670,8 @@ let wsSelectedLangs      = ['EN'];
 let wsSelectedAge        = 'All ages';
 let wsIsGuest            = false;
 let wsSelectedCoTeachers = [];
+let wsSelectedStudio     = 'No preference';
+let wsEarlyBirdOpen      = false;
 let wsCurrentData        = null;
 
 const WS_FORMAT_HINTS = {
@@ -6655,6 +6697,18 @@ function wsShowFormatStep() {
   document.getElementById('ws-format-hint').style.display   = 'none';
   document.getElementById('ws-format-next-btn').style.display = 'none';
   wsSelectedFormat = '';
+  // Reset workshop-only state added May 2026
+  wsSelectedStudio = 'No preference';
+  wsEarlyBirdOpen  = false;
+  const prereqEl = document.getElementById('ws-prereq-input');     if (prereqEl) prereqEl.value = '';
+  const ebPriceEl = document.getElementById('ws-eb-price');         if (ebPriceEl) ebPriceEl.value = '';
+  const ebCutoffEl = document.getElementById('ws-eb-cutoff');       if (ebCutoffEl) ebCutoffEl.value = '';
+  const ebFields = document.getElementById('ws-eb-fields');         if (ebFields) ebFields.style.display = 'none';
+  const ebToggle = document.getElementById('ws-eb-toggle-btn');     if (ebToggle) ebToggle.style.display = '';
+  const descEl   = document.getElementById('ws-desc-input');        if (descEl) descEl.value = '';
+  document.querySelectorAll('#ws-studio-chips .wc-chip').forEach(function(b) {
+    b.classList.toggle('selected', b.dataset.studio === 'No preference');
+  });
 }
 
 function wsSelectFormat(fmt, btn) {
@@ -7012,6 +7066,26 @@ function wsToggleLang(btn) {
   else wsSelectedLangs.push(lang);
 }
 
+function wsSetStudio(val, btn) {
+  wsSelectedStudio = val;
+  document.querySelectorAll('#ws-studio-chips .wc-chip').forEach(function(b) {
+    b.classList.toggle('selected', b === btn);
+  });
+}
+
+function wsToggleEarlyBird() {
+  wsEarlyBirdOpen = !wsEarlyBirdOpen;
+  const fields  = document.getElementById('ws-eb-fields');
+  const toggle  = document.getElementById('ws-eb-toggle-btn');
+  fields.style.display = wsEarlyBirdOpen ? '' : 'none';
+  toggle.style.display = wsEarlyBirdOpen ? 'none' : '';
+  if (!wsEarlyBirdOpen) {
+    // Reset fields when collapsed so empty submissions don't carry stale values
+    document.getElementById('ws-eb-price').value  = '';
+    document.getElementById('ws-eb-cutoff').value = '';
+  }
+}
+
 function wsSetPartner(req) {
   wsPartnerReq = req;
   document.getElementById('ws-partner-no').classList.toggle('selected',  !req);
@@ -7107,10 +7181,13 @@ function wsSubmitDetails() {
   }
 
   const title       = document.getElementById('ws-title-input').value.trim();
+  const prereq      = (document.getElementById('ws-prereq-input')?.value || '').trim();
   const pricePP     = wsPricingMode === 'simple' ? (parseFloat(document.getElementById('ws-price-pp').value) || null) : null;
   const priceCouple = wsPricingMode === 'simple' ? (parseFloat(document.getElementById('ws-price-couple').value) || null) : null;
   const priceDay    = wsSingleDay   ? (parseFloat(document.getElementById('ws-price-day').value) || null) : null;
   const priceFullpass = parseFloat(document.getElementById('ws-price-fullpass')?.value) || null;
+  const ebPrice     = wsEarlyBirdOpen ? (parseFloat(document.getElementById('ws-eb-price')?.value) || null) : null;
+  const ebCutoff    = wsEarlyBirdOpen ? (document.getElementById('ws-eb-cutoff')?.value || '') : '';
   const guestName   = wsIsGuest ? (document.getElementById('ws-guest-name').value.trim() || '') : '';
   const guestWeb    = wsIsGuest ? (document.getElementById('ws-guest-website').value.trim() || '') : '';
 
@@ -7120,6 +7197,7 @@ function wsSubmitDetails() {
     format:       wsSelectedFormat,
     formatLabel:  WS_FORMAT_LABELS[wsSelectedFormat] || wsSelectedFormat,
     title:        title || wsSelectedStyle + ' ' + (WS_FORMAT_LABELS[wsSelectedFormat] || 'Workshop'),
+    prereq,
     sessions,
     langs:        [...wsSelectedLangs],
     partnerReq:   wsPartnerReq,
@@ -7132,6 +7210,9 @@ function wsSubmitDetails() {
     priceCouple,
     priceDay,
     priceFullpass,
+    ebPrice,
+    ebCutoff,
+    preferredStudio: wsSelectedStudio,
   };
 
   wsShowConfirmation();
@@ -7176,10 +7257,8 @@ function wsShowConfirmation() {
   summHtml += '</div>';
   document.getElementById('ws-sessions-summary').innerHTML = summHtml;
 
-  // Description
-  document.getElementById('ws-desc-loading').style.display = '';
-  document.getElementById('ws-desc-block').style.display   = 'none';
-  wsGenerateDesc();
+  // Description: textarea is empty by default; teacher fills it in.
+  // (Auto-generation removed May 2026 — was never validated as useful for workshops.)
 
   // Guest teacher section
   const showGuest = d.isGuest;
@@ -7203,64 +7282,9 @@ function wsDuration(start, end) {
   return mins >= 60 ? Math.floor(mins/60) + 'h' + (mins%60 ? (mins%60)+'min' : '') : mins + 'min';
 }
 
-async function wsGenerateDesc() {
-  const d = wsCurrentData;
-  const profile = getActingProfile();
-
-  const fallback = d.title + ' with ' + (profile ? profile.name : 'the teacher') +
-    '. A ' + d.formatLabel + ' in ' + d.style + ' for ' + d.levels.join('/') +
-    ' dancers. Register at Shoonya Dance Centre Ghent.';
-
-  if (!APPS_SCRIPT_URL) {
-    document.getElementById('ws-desc-loading').style.display = 'none';
-    document.getElementById('ws-desc-block').style.display   = '';
-    document.getElementById('ws-desc-text').textContent = fallback;
-    return;
-  }
-
-  try {
-    const resp = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'generateClassDesc',
-        teacher: profile ? profile.name : '',
-        style:   d.style,
-        levels:  d.levels.join(', '),
-        title:   d.title,
-        format:  d.formatLabel,
-        sessions: d.sessions.length,
-        type:    'workshop',
-      }),
-    });
-    const json = await resp.json();
-    document.getElementById('ws-desc-loading').style.display = 'none';
-    document.getElementById('ws-desc-block').style.display   = '';
-    document.getElementById('ws-desc-text').textContent = json.description || fallback;
-  } catch (e) {
-    document.getElementById('ws-desc-loading').style.display = 'none';
-    document.getElementById('ws-desc-block').style.display   = '';
-    document.getElementById('ws-desc-text').textContent = fallback;
-  }
-}
-
-function wsApproveDesc() {
-  document.getElementById('ws-desc-edit').style.display = 'none';
-  document.getElementById('ws-desc-save').style.display = 'none';
-  document.getElementById('ws-desc-block').style.background = '#f0fff4';
-}
-function wsEditDesc() {
-  const txt = document.getElementById('ws-desc-text').textContent;
-  document.getElementById('ws-desc-edit').value   = txt;
-  document.getElementById('ws-desc-edit').style.display = '';
-  document.getElementById('ws-desc-save').style.display = '';
-}
-function wsSaveDesc() {
-  document.getElementById('ws-desc-text').textContent = document.getElementById('ws-desc-edit').value;
-  document.getElementById('ws-desc-edit').style.display = 'none';
-  document.getElementById('ws-desc-save').style.display = 'none';
-  document.getElementById('ws-desc-block').style.background = '#f0fff4';
-}
+// Workshop description: teacher writes it directly (no more auto-gen).
+// Old wsGenerateDesc / wsApproveDesc / wsEditDesc / wsSaveDesc functions removed
+// May 2026 — auto-gen was never validated as useful for workshops.
 
 function wsSetAge(val) {
   wsSelectedAge = val;
@@ -9241,9 +9265,9 @@ async function wsSubmitToShoonya() {
   const capacity       = (document.getElementById('ws-capacity-input')?.value      || '');
   const minPart        = (document.getElementById('ws-min-participants')?.value    || '');
 
-  // Approved description text
-  const descEl = document.getElementById('ws-desc-text');
-  const approvedDesc = descEl ? descEl.textContent.trim() : '';
+  // Description: teacher-written, read from the textarea
+  const descInput = document.getElementById('ws-desc-input');
+  const approvedDesc = (descInput?.value || '').trim();
 
   // Guest teacher photo (resize before sending)
   let guestPhotoB64 = '';
@@ -9265,6 +9289,8 @@ async function wsSubmitToShoonya() {
     email:                profile.email || '',
     submitted_by_admin:   adminActingAs ? (loggedInProfile ? loggedInProfile.name : '') : '',
     approved_description: approvedDesc,
+    prerequisites:        d.prereq || '',
+    preferred_studio:     d.preferredStudio || 'No preference',
     guest_teacher:        d.isGuest ? (guestNameFinal || d.guestName) : '',
     guest_web:            d.isGuest ? (guestWebFinal || d.guestWeb)   : '',
     guest_bio:            guestBio,
@@ -9280,6 +9306,8 @@ async function wsSubmitToShoonya() {
     price_couple:         d.priceCouple,
     price_full:           d.priceFullpass,
     price_day:            d.priceDay,
+    early_bird_price:     d.ebPrice || '',
+    early_bird_cutoff:    d.ebCutoff || '',
     guest_photo_b64:      guestPhotoB64,
     guest_photo_name:     guestPhotoFile ? guestPhotoFile.name : '',
   };

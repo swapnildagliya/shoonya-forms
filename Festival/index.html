@@ -415,12 +415,15 @@ window.addEventListener('shoonya:login', () => setFestivalGate(true));
 // ── APPS SCRIPT BACKEND ─────────────────────────────────────────────────────
 
 
-function sendToSheet(submissionText, submittedBy, title, email) {
+function sendToSheet(payload) {
   if (!APPS_SCRIPT_URL) return;
+  // Apps Script CORS workaround: POST as text/plain so the browser doesn't
+  // send a preflight OPTIONS request that Apps Script can't answer. Matches
+  // how smart-form/index.html submits.
   fetch(APPS_SCRIPT_URL, {
     method: 'POST', mode: 'no-cors',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ eventType: 'festival', submittedBy, title, email, submissionText })
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
   }).then(() => {
     const msg = document.getElementById('sheetStatus');
     if (msg) { msg.style.display = 'block'; msg.textContent = '✅ Saved to Google Sheets & notification sent!'; }
@@ -879,7 +882,89 @@ function submitForm() {
   }
   document.getElementById('modal').classList.add('open');
 
-  sendToSheet(submissionText, displayName, val('festival-name'), val('email'));
+  // Build structured teachers/djs/pricing arrays (already collected above for
+  // the text blob — re-collect here so the backend gets typed fields, not
+  // just a console banner string).
+  const teachersArr = [];
+  document.querySelectorAll('#teachers-list .person-card').forEach(card => {
+    const first   = card.querySelector('.tc-first')?.value.trim()   || '';
+    const last    = card.querySelector('.tc-last')?.value.trim()    || '';
+    const display = card.querySelector('.tc-display')?.value.trim() || '';
+    const style   = card.querySelector('.tc-style')?.value.trim()   || '';
+    const bio     = card.querySelector('.tc-bio')?.value.trim()     || '';
+    const link    = card.querySelector('.tc-link')?.value.trim()    || '';
+    if (!first && !last && !display) return;
+    teachersArr.push({
+      legal_name: (first + ' ' + last).trim(),
+      display_name: display || (first + ' ' + last).trim(),
+      style, bio, link
+    });
+  });
+
+  const djsArr = [];
+  document.querySelectorAll('#djs-list .person-card').forEach(card => {
+    const name   = card.querySelector('.dj-name')?.value.trim()   || '';
+    const styles = card.querySelector('.dj-styles')?.value.trim() || '';
+    const bio    = card.querySelector('.dj-bio')?.value.trim()    || '';
+    if (!name) return;
+    djsArr.push({ name, styles, bio });
+  });
+
+  const pricingArr = [];
+  document.querySelectorAll('#price-tiers .price-tier').forEach(tier => {
+    const label   = tier.querySelector('.tier-label').value.trim();
+    const desc    = tier.querySelector('.tier-desc').value.trim();
+    const regular = tier.querySelector('.tier-regular').value.trim();
+    const early   = tier.querySelector('.tier-early').value.trim();
+    const member  = tier.querySelector('.tier-member').value.trim();
+    if (!label && !regular) return;
+    pricingArr.push({ label, description: desc, regular, early_bird: early, member });
+  });
+
+  const payload = {
+    action: 'generateOutputPackage',
+    type: 'festival',
+    // Identity
+    teacher_name: displayName,
+    organiser_name: displayName,
+    organiser_legal_name: (firstName + ' ' + lastName).trim(),
+    email: val('email'),
+    // Festival meta
+    title: val('festival-name'),
+    event_title: val('festival-name'),
+    tagline: val('tagline'),
+    start_date: val('date-start'),
+    end_date: val('date-end'),
+    date: val('date-start'),
+    dance_style: val('dance-styles'),
+    venue: val('venue'),
+    language: val('language'),
+    dress_code: val('dress-code'),
+    festival_days: festivalDays,
+    // Structured collections
+    programme: slots,
+    teachers: teachersArr,
+    djs: djsArr,
+    pricing: pricingArr,
+    early_bird_deadline: val('early-bird-deadline'),
+    free_entry_note: val('free-entry-note'),
+    group_min: val('group-min'),
+    group_price: val('group-price'),
+    group_perk: val('group-perk'),
+    uitpas_pct: uitpasPct,
+    // Long-form
+    description: val('description'),
+    approved_description: val('description'),
+    practical: val('practical'),
+    note_shoonya: val('notes'),
+    notes: val('notes'),
+    // Backup text blob — kept so Swapnil's raw email contains the readable
+    // submission and the generated content package still has full context.
+    submissionText,
+    structured: true,
+  };
+
+  sendToSheet(payload);
 }
 
 function copyOutput() {
