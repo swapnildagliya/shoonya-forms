@@ -719,6 +719,13 @@ function submitForm() {
   }
   if (val('date-start') > val('date-end')) { alert('End date must be after start date.'); return; }
 
+  // Sanity check (May 2026): warn on far-future dates
+  const dateWarn = dateFutureWarning(val('date-start'));
+  if (dateWarn && !confirm(dateWarn + '\n\nClick OK to proceed, Cancel to fix.')) {
+    document.getElementById('date-start').focus();
+    return;
+  }
+
   const progSlots = document.querySelectorAll('#programme-slots .slot-card');
   if (!progSlots.length) { alert('Please add at least one programme slot.'); return; }
 
@@ -975,6 +982,55 @@ function copyOutput() {
     btn.classList.add('copied');
     setTimeout(() => { btn.textContent = 'Copy to Clipboard'; btn.classList.remove('copied'); }, 2000);
   });
+}
+
+// ── Form quality helpers (May 2026) ──────────────────────────────────
+function smartTitleCase(s) {
+  if (!s || typeof s !== 'string') return s;
+  const trimmed = s.trim();
+  if (!trimmed) return s;
+  if (trimmed !== trimmed.toLowerCase()) return s;
+  return trimmed.split(/\s+/).map(function(word) {
+    if (!word) return '';
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+}
+function wireAutoTitleCase(el) {
+  if (!el || el.dataset.autoTitleCase === '1') return;
+  el.dataset.autoTitleCase = '1';
+  el.addEventListener('blur', function() {
+    const next = smartTitleCase(el.value);
+    if (next !== el.value) el.value = next;
+  });
+}
+function dateFutureWarning(isoDate) {
+  if (!isoDate) return '';
+  const d = new Date(isoDate + 'T12:00:00');
+  if (isNaN(d.getTime())) return '';
+  const months = (d - new Date()) / (1000 * 60 * 60 * 24 * 30.44);
+  if (months > 6) return 'This date is ' + Math.round(months) + ' months away. Just confirming it\'s right?';
+  return '';
+}
+function wireAllAutoTitleCase(root) {
+  const r = root || document;
+  // Festival form fields where auto-cap helps: title, dance styles, venue,
+  // teacher names, DJ names
+  ['festival-name', 'tagline', 'dance-styles', 'venue', 'language', 'dress-code'].forEach(function(id) {
+    const el = r.getElementById ? r.getElementById(id) : document.getElementById(id);
+    wireAutoTitleCase(el);
+  });
+  // Dynamic person cards (teachers + DJs)
+  r.querySelectorAll('.tc-first, .tc-last, .tc-display, .tc-style, .dj-name, .dj-styles, .slot-teacher, .slot-title').forEach(wireAutoTitleCase);
+}
+document.addEventListener('DOMContentLoaded', function() { wireAllAutoTitleCase(document); });
+if (typeof MutationObserver !== 'undefined') {
+  new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      m.addedNodes && m.addedNodes.forEach(function(n) {
+        if (n.nodeType === 1) wireAllAutoTitleCase(n);
+      });
+    });
+  }).observe(document.body, { childList: true, subtree: true });
 }
 
 // ── Smart time-input helper (May 2026) ──────────────────────────────

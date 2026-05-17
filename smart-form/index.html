@@ -7149,6 +7149,12 @@ function wsSubmitDetails() {
     return;
   }
 
+  // ── Sanity check (May 2026): warn on far-future dates
+  const dateWarn = dateFutureWarning(sessions[0].date);
+  if (dateWarn && !confirm(dateWarn + '\n\nClick OK to proceed, Cancel to fix.')) {
+    return;
+  }
+
   const title       = document.getElementById('ws-title-input').value.trim();
   const prereq      = (document.getElementById('ws-prereq-input')?.value || '').trim();
   const pricePP     = wsPricingMode === 'simple' ? (parseFloat(document.getElementById('ws-price-pp').value) || null) : null;
@@ -7251,6 +7257,100 @@ function wsDuration(start, end) {
   return mins >= 60 ? Math.floor(mins/60) + 'h' + (mins%60 ? (mins%60)+'min' : '') : mins + 'min';
 }
 
+// ── Form quality helpers (May 2026) ──────────────────────────────────
+// Shared small helpers to make the form smart: auto-capitalize, sanity
+// warnings, levels sorting. Wired into specific inputs further below.
+
+// Title-case a string: "bachata lady style" → "Bachata Lady Style".
+// Preserves intentional internal casing if the input has mixed case
+// (so "KikiZomba" and "O'Brien" don't get mangled). Only fires when
+// the entire input is all-lowercase.
+function smartTitleCase(s) {
+  if (!s || typeof s !== 'string') return s;
+  const trimmed = s.trim();
+  if (!trimmed) return s;
+  // Skip if already mixed-case (preserve intentional capitalization)
+  if (trimmed !== trimmed.toLowerCase()) return s;
+  // Words split on spaces. Hyphens kept inside words. Apostrophes too.
+  return trimmed.split(/\s+/).map(function(word) {
+    if (!word) return '';
+    return word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+}
+
+// Attach auto-capitalize on blur for an input element. Only changes the
+// value if it was all-lowercase, so teachers can override (re-edit to
+// keep their casing).
+function wireAutoTitleCase(el) {
+  if (!el || el.dataset.autoTitleCase === '1') return;
+  el.dataset.autoTitleCase = '1';
+  el.addEventListener('blur', function() {
+    const next = smartTitleCase(el.value);
+    if (next !== el.value) el.value = next;
+  });
+}
+
+// Canonical level order (Beginner first, advanced last). Used to sort
+// the levels array regardless of teacher click order.
+const CANONICAL_LEVEL_ORDER = [
+  'Absolute beginners welcome',
+  'Beginner',
+  'Beginners',
+  'Some experience needed',
+  'Intermediate',
+  'Intermediate & up',
+  'Advanced',
+  'Open Level',
+  'Open level',
+  'All levels',
+  'All levels welcome',
+];
+function sortLevelsCanonical(arr) {
+  if (!Array.isArray(arr)) return arr;
+  const order = function(lvl) {
+    const idx = CANONICAL_LEVEL_ORDER.indexOf(lvl);
+    return idx === -1 ? 999 : idx;
+  };
+  return arr.slice().sort(function(a, b) { return order(a) - order(b); });
+}
+
+// Title-case the format value when sent to the backend.
+// Internal value 'intensive' → display 'Intensive', etc.
+function normalizeFormatValue(v) {
+  if (!v || typeof v !== 'string') return v;
+  if (v === 'single') return 'Single session';
+  if (v === '2day')   return '2-day workshop';
+  if (v === 'series') return 'Mini-series';
+  // Otherwise capitalize first letter
+  return v.charAt(0).toUpperCase() + v.slice(1);
+}
+
+// Date sanity: returns a warning string if date is >6 months in future, else ''.
+function dateFutureWarning(isoDate) {
+  if (!isoDate) return '';
+  const d = new Date(isoDate + 'T12:00:00');
+  if (isNaN(d.getTime())) return '';
+  const months = (d - new Date()) / (1000 * 60 * 60 * 24 * 30.44);
+  if (months > 6) return 'This date is ' + Math.round(months) + ' months away. Just confirming it\'s right?';
+  return '';
+}
+
+// Time sanity: returns a warning if doors > end (event crossing midnight is fine,
+// but doors=22:00 + end=21:00 same day is suspicious).
+// Returns '' if both times look fine OR if either is missing.
+function doorsAfterEndWarning(doors, end) {
+  if (!doors || !end) return '';
+  // Allow crossing midnight: end < doors is OK if end is early morning (00:00-06:00)
+  const [dh, dm] = doors.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  if (isNaN(dh) || isNaN(eh)) return '';
+  const doorsMin = dh * 60 + dm;
+  const endMin   = eh * 60 + em;
+  if (endMin >= doorsMin) return '';      // Normal: end after doors
+  if (eh < 7) return '';                  // Crossing midnight (end before 7 AM)
+  return 'Doors open at ' + doors + ' but end time ' + end + ' is earlier the same day. Did you mean ' + end + ' the next morning?';
+}
+
 // ── Smart time-input helper (May 2026) ──────────────────────────────
 // Lets teachers type "1930" → auto-formats to "19:30" instead of the
 // cumbersome native tab-between-fields UX. Attached on document load
@@ -7295,6 +7395,48 @@ function wireAllSmartTimeInputs(root) {
   (root || document).querySelectorAll('input[type="time"]').forEach(wireSmartTimeInput);
 }
 document.addEventListener('DOMContentLoaded', function() { wireAllSmartTimeInputs(document); });
+
+// ── Wire auto-title-case on specific inputs (May 2026) ─────────────
+// Style custom-add, workshop/festival titles, genre custom-add,
+// and all teacher/DJ name fields. Triggered on blur — only changes
+// the value if it was entered all-lowercase.
+function wireAllAutoTitleCase(root) {
+  const r = root || document;
+  const targets = [
+    // Style entry
+    'ss-style-custom', 'ws-other-style-input',
+    // Title fields (workshop)
+    'ws-title-input',
+    // Social-night title
+    'ss-title',
+    // Genre custom-add
+    'ss-genre-custom',
+    // Teacher / DJ name fields (static)
+    'ws-guest-name', 'ws-guest-name-confirm',
+    'ws-coteacher-input',
+    'ss-dj-name', 'ss-dj2-name',
+    'ss-teacher-dj-input',
+  ];
+  targets.forEach(function(id) {
+    const el = r.getElementById ? r.getElementById(id) : document.getElementById(id);
+    wireAutoTitleCase(el);
+  });
+  // Dynamic rows: any input with class .ss-edj-name (added DJs),
+  // .tc-first / .tc-last / .tc-display (festival teacher cards — kept as
+  // a selector even though we'll wire those in Festival/index.html too).
+  r.querySelectorAll('.ss-edj-name, .ss-act-teacher, .ss-act-topic').forEach(wireAutoTitleCase);
+}
+document.addEventListener('DOMContentLoaded', function() { wireAllAutoTitleCase(document); });
+// Re-wire dynamically added inputs (programme rows, extra DJs)
+if (typeof MutationObserver !== 'undefined') {
+  new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      m.addedNodes && m.addedNodes.forEach(function(n) {
+        if (n.nodeType === 1) wireAllAutoTitleCase(n);
+      });
+    });
+  }).observe(document.body, { childList: true, subtree: true });
+}
 // MutationObserver — re-wires any time inputs added dynamically
 // (e.g. by wsAddSession, ssAddProgrammeRow, ssAddPricingRow).
 if (typeof MutationObserver !== 'undefined') {
@@ -8606,6 +8748,24 @@ function ssConfirmBasics() {
     markFieldError(endEl);
     return;
   }
+
+  // ── Sanity checks (May 2026): soft warnings, ask teacher to confirm.
+  // These don't block submission, just surface obvious mistakes.
+  const dateWarn = dateFutureWarning(date);
+  if (dateWarn) {
+    if (!confirm(dateWarn + '\n\nClick OK to proceed, Cancel to fix the date.')) {
+      markFieldError(dateEl);
+      return;
+    }
+  }
+  const timeWarn = doorsAfterEndWarning(doorsEl.value, endEl.value);
+  if (timeWarn) {
+    if (!confirm(timeWarn + '\n\nClick OK to proceed anyway, Cancel to fix.')) {
+      markFieldError(endEl);
+      return;
+    }
+  }
+
   ssCurrentData.styles    = [...ssSelectedStyles];
   ssCurrentData.title     = title;
   ssCurrentData.date      = date;
@@ -9256,9 +9416,10 @@ async function wsSubmitToShoonya() {
     title:                d.title,
     style:                d.style,
     styles:               [d.style],
-    levels:               d.levels,
+    levels:               sortLevelsCanonical(d.levels),  // canonical order (May 2026)
     sessions:             d.sessions,
-    format:               d.format,
+    format:               normalizeFormatValue(d.format),  // 'intensive' → 'Intensive' (May 2026)
+    format_internal:      d.format,                        // keep raw internal value too
     teacher_name:         profile.name || '',
     email:                profile.email || '',
     submitted_by_admin:   adminActingAs ? (loggedInProfile ? loggedInProfile.name : '') : '',
