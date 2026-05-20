@@ -554,7 +554,7 @@
           <input type="time" value="20:45" oninput="updateLevelSummary(this)">
           <button class="btn-remove" type="button">✕</button>
         </div>
-        <button class="btn-add">+ Add another slot for L2</button>
+        <button class="btn-add" onclick="alert('Add another slot for this level (e.g. same level on Wednesday too)')">+ Add another slot for L2</button>
 
         <!-- Multi-slot info (alternate timings is the only model) -->
         <div style="background: var(--purple-tint); border-left: 3px solid var(--purple); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.84rem; color: var(--mid); margin-top: 14px;">
@@ -890,7 +890,7 @@ function makeLevelCard(key) {
       <input type="time" oninput="updateLevelSummary(this)">
       <button class="btn-remove" type="button">✕</button>
     </div>
-    <button class="btn-add">+ Add another slot for ${name}</button>
+    <button class="btn-add" onclick="alert('Add another slot for this level (e.g. same level on Wednesday too)')">+ Add another slot for ${name}</button>
     ${descBlock}
   `;
   return card;
