@@ -382,6 +382,12 @@
     <a href="#" onclick="event.preventDefault();alert('Logout flow (mockup)')">Log out</a>
   </div>
 
+  <!-- DRAFT BANNER -->
+  <div id="ss-draft-banner" style="display:none; background:#FFF8E5; border:1px solid #F0DDA4; border-radius:8px; padding:12px 18px; margin-bottom:20px; font-size:0.88rem; color:#5C4400; display:none; justify-content:space-between; align-items:center; gap:12px;">
+    <span>📝 Draft restored. <span class="ss-draft-time" style="color:#78490A;"></span></span>
+    <button onclick="clearSsDraftAndReload()" style="background:none; border:1px solid #d4a017; border-radius:4px; padding:4px 12px; font-size:0.78rem; color:#5C4400; cursor:pointer; font-family:inherit;">Clear draft</button>
+  </div>
+
   <!-- SECTION 1: BASICS -->
   <div class="section">
     <span class="section-num">1</span>
@@ -455,6 +461,12 @@
     <div id="programme-rows"></div>
     <button class="btn-add" onclick="addProgrammeSlot()">+ Add workshop or performance slot</button>
 
+    <div id="guest-photo-wrap" style="display:none; margin-top: 16px;">
+      <label class="field-label">Guest teacher photo (optional)</label>
+      <input type="file" id="f-guest-teacher-photo" accept="image/*" style="font-size: 0.85rem; padding: 6px 0;">
+      <p class="field-hint">JPEG or PNG. Used for the event poster and website. Upload one photo for the main guest teacher.</p>
+    </div>
+
     <p class="field-hint" style="margin-top: 10px;">Leave empty if the event is dance floor only (no workshops).</p>
 
     <!-- DANCE NIGHT BLOCK — always present -->
@@ -504,6 +516,11 @@
           <label class="field-label" style="color: #c49cee;">DJ fee (€)</label>
           <input type="number" id="f-dj-fee" placeholder="e.g. 200" min="0" step="0.5" style="max-width: 140px; background:#1a1a2e; border-color:#5a3a7a; color:#e8d5ff;">
           <p class="field-hint" style="color: #9975cc;">Internal. Not shown publicly.</p>
+        </div>
+        <div class="field">
+          <label class="field-label" style="color: #c49cee;">DJ photo</label>
+          <input type="file" id="f-dj-photo" accept="image/*" style="font-size: 0.85rem; padding: 6px 0; color:#e8d5ff;">
+          <p class="field-hint" style="color: #9975cc;">JPEG or PNG. Used for the event poster and social promo.</p>
         </div>
       </div>
 
@@ -716,6 +733,8 @@ function addProgrammeSlot() {
     </div>
   `;
   wrap.appendChild(div);
+  // Show guest teacher photo field as soon as first programme slot is added
+  document.getElementById('guest-photo-wrap').style.display = '';
 }
 
 function setProgType(el, cardId, type) {
@@ -846,6 +865,97 @@ function submitForm() {
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 addPricingTier('Advance', '8');
 addPricingTier('Door', '12');
+
+// ─── AUTOSAVE ─────────────────────────────────────────────────────────────────
+const SS_DRAFT_KEY = 'shoonya_socialnight_draft_v1';
+let _ssDraftTimer = null;
+
+function ssCollectDraft() {
+  const styles = [...document.querySelectorAll('#style-chips .chip-multi.selected')].map(c => c.dataset.val);
+  const genres = [...document.querySelectorAll('#genre-chips .music-chip.selected')].map(c => c.dataset.val);
+  const musicType = document.querySelector('#music-type-chips .music-chip.selected')?.dataset.val || '';
+  const pricingRows = [...document.querySelectorAll('#pricing-rows .pricing-tier')].map(row => {
+    const inputs = row.querySelectorAll('input');
+    return { label: inputs[0]?.value || '', price: inputs[1]?.value || '' };
+  });
+  return {
+    v: 1, savedAt: new Date().toISOString(),
+    styles, genres, musicType,
+    title: document.getElementById('f-title')?.value || '',
+    date: document.getElementById('f-date')?.value || '',
+    doors: document.getElementById('f-doors')?.value || '',
+    end: document.getElementById('f-end')?.value || '',
+    dresscode: document.getElementById('f-dresscode')?.value || '',
+    djName: document.getElementById('f-dj-name')?.value || '',
+    djSocial: document.getElementById('f-dj-social')?.value || '',
+    djFee: document.getElementById('f-dj-fee')?.value || '',
+    teacherDJ: document.getElementById('f-teacher-dj')?.value || '',
+    description: document.getElementById('f-description')?.value || '',
+    notes: document.getElementById('f-notes')?.value || '',
+    pricingRows,
+  };
+}
+
+function ssScheduleSave() {
+  clearTimeout(_ssDraftTimer);
+  _ssDraftTimer = setTimeout(() => {
+    try {
+      const d = ssCollectDraft();
+      localStorage.setItem(SS_DRAFT_KEY, JSON.stringify(d));
+      showSsDraftBanner(d.savedAt);
+    } catch(e) {}
+  }, 800);
+}
+
+function showSsDraftBanner(iso) {
+  const b = document.getElementById('ss-draft-banner');
+  if (!b) return;
+  const t = new Date(iso);
+  b.querySelector('.ss-draft-time').textContent = 'Last saved: ' + t.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  b.style.display = 'flex';
+}
+
+function clearSsDraftAndReload() {
+  try { localStorage.removeItem(SS_DRAFT_KEY); } catch(e) {}
+  window.location.reload();
+}
+
+// Init: restore draft on load
+(function() {
+  try {
+    const raw = localStorage.getItem(SS_DRAFT_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (!d || d.v !== 1) return;
+    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    set('f-title', d.title); set('f-date', d.date);
+    set('f-doors', d.doors); set('f-end', d.end);
+    set('f-dresscode', d.dresscode);
+    set('f-dj-name', d.djName); set('f-dj-social', d.djSocial);
+    set('f-dj-fee', d.djFee); set('f-teacher-dj', d.teacherDJ);
+    set('f-description', d.description); set('f-notes', d.notes);
+    (d.styles || []).forEach(v => document.querySelector(`#style-chips .chip-multi[data-val="${v}"]`)?.click());
+    (d.genres || []).forEach(v => {
+      const el = document.querySelector(`#genre-chips .music-chip[data-val="${v}"]`);
+      if (el) toggleGenre(el);
+    });
+    if (d.musicType) {
+      const mt = document.querySelector(`#music-type-chips .music-chip[data-val="${d.musicType}"]`);
+      if (mt) setMusicType(mt);
+    }
+    if ((d.pricingRows || []).length > 0) {
+      document.getElementById('pricing-rows').innerHTML = '';
+      d.pricingRows.forEach(r => addPricingTier(r.label, r.price));
+    }
+    showSsDraftBanner(d.savedAt);
+  } catch(e) {}
+})();
+
+document.querySelector('.container').addEventListener('input', ssScheduleSave);
+document.querySelector('.container').addEventListener('change', ssScheduleSave);
+document.querySelector('.container').addEventListener('click', e => {
+  if (e.target.classList.contains('chip') || e.target.classList.contains('chip-multi') || e.target.classList.contains('music-chip')) ssScheduleSave();
+});
 </script>
 </body>
 </html>

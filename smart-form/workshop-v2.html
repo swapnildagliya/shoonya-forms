@@ -301,6 +301,12 @@
     </div>
   </div>
 
+  <!-- DRAFT BANNER -->
+  <div id="ws-draft-banner" style="display:none; background:#FFF8E5; border:1px solid #F0DDA4; border-radius:8px; padding:12px 18px; margin-bottom:20px; font-size:0.88rem; color:#5C4400; display:none; justify-content:space-between; align-items:center; gap:12px;">
+    <span>📝 Draft restored. <span class="ws-draft-time" style="color:#78490A;"></span></span>
+    <button onclick="clearWsDraftAndReload()" style="background:none; border:1px solid #d4a017; border-radius:4px; padding:4px 12px; font-size:0.78rem; color:#5C4400; cursor:pointer; font-family:inherit;">Clear draft</button>
+  </div>
+
   <!-- SECTION 1: BASICS -->
   <div class="section">
     <span class="section-num">1</span>
@@ -394,6 +400,16 @@
     <div class="field">
       <label class="field-label">Guest website / Instagram (optional)</label>
       <input type="text" id="f-guest-web" placeholder="https://instagram.com/...">
+    </div>
+    <div class="field" id="guest-bio-field" style="display:none;">
+      <label class="field-label">Guest teacher — short bio (optional)</label>
+      <textarea id="f-guest-bio" placeholder="2–3 sentences for the website. Credentials, style background, where they're from."></textarea>
+      <div class="annotation">Used on the event page and promo emails.</div>
+    </div>
+    <div class="field" id="guest-photo-field" style="display:none;">
+      <label class="field-label">Guest teacher photo</label>
+      <input type="file" id="f-guest-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
+      <p class="field-hint">JPEG or PNG. Will be resized to 800px on submit. Used for event posters and the website.</p>
     </div>
   </div>
 
@@ -564,8 +580,19 @@
       </div>
       <div class="field">
         <label class="field-label">Min participants</label>
-        <input type="number" id="f-min" placeholder="6" min="0">
+        <input type="number" id="f-min" placeholder="6" min="0" oninput="toggleMinConditional()">
       </div>
+    </div>
+
+    <div id="min-conditional-wrap" style="display:none; margin-top: 8px;">
+      <label class="field-label" style="font-size: 0.82rem; color: var(--mid);">If this minimum isn't reached…</label>
+      <div class="chips" id="min-cond-chips" style="margin-top: 4px;">
+        <div class="chip selected" data-val="false" onclick="selectMinCond(this)">Run regardless</div>
+        <div class="chip" data-val="true" onclick="selectMinCond(this)">Cancel + notify students</div>
+      </div>
+      <p id="min-cond-note" class="field-hint" style="display:none; color: #9C3D1C; background:#FBEEEA; border:1px solid #E5B5A5; border-radius:6px; padding:8px 12px; margin-top: 8px;">
+        ⚠️ Shoonya will message registered students and issue refunds if the minimum isn't met 1 week before the event.
+      </p>
     </div>
 
     <div class="field">
@@ -654,6 +681,13 @@ document.querySelector('#lang-chips .chip[data-val="EN"]')?.click();
 document.querySelector('#studio-chips .chip[data-val="No preference"]')?.click();
 document.querySelector('#partner-chips .chip[data-val="false"]')?.click();
 
+// Show/hide guest bio + photo when guest name is filled
+document.getElementById('f-guest-teacher').addEventListener('input', function() {
+  const hasGuest = this.value.trim().length > 0;
+  document.getElementById('guest-bio-field').style.display   = hasGuest ? '' : 'none';
+  document.getElementById('guest-photo-field').style.display = hasGuest ? '' : 'none';
+});
+
 function addCustomStyle() {
   const val = prompt('Add a custom style');
   if (!val) return;
@@ -695,7 +729,7 @@ function addSpecificDate(dateVal='') {
     updateSessionsPreview();
   });
 }
-addSpecificDate(); addSpecificDate();
+addSpecificDate(); // seed one empty date row
 
 // react to date input changes
 ['f-cont-start','f-cont-end','f-rec-start','f-rec-end','f-rec-dow','f-default-start','f-default-end'].forEach(id => {
@@ -780,7 +814,10 @@ function renderSessionTopics(sessions) {
   });
 }
 
-function ymd(d) { return d.toISOString().slice(0, 10); }
+function ymd(d) {
+  // Use local date components — toISOString() is UTC and shifts dates in UTC+2
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
 function fmtDateLabel(ymd) {
   const d = new Date(ymd + 'T00:00:00');
   const opts = { weekday: 'short', day: 'numeric', month: 'short' };
@@ -798,6 +835,16 @@ function updateMemberPrice() {
 }
 function toggleSingleSession(cb) { document.getElementById('single-session-prices').classList.toggle('hidden', !cb.checked); }
 function toggleCouplePrice(cb) { document.getElementById('couple-price-row').classList.toggle('hidden', !cb.checked); }
+
+function toggleMinConditional() {
+  const val = document.getElementById('f-min').value;
+  document.getElementById('min-conditional-wrap').style.display = val ? '' : 'none';
+}
+function selectMinCond(el) {
+  document.querySelectorAll('#min-cond-chips .chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('min-cond-note').style.display = (el.dataset.val === 'true') ? '' : 'none';
+}
 
 // preset default tab
 document.querySelector('.date-pattern-tab[data-mode="contiguous"]').click();
@@ -874,7 +921,8 @@ async function submitForm() {
     preferred_studio: state.studio,
     guest_teacher: getVal('f-guest-teacher'),
     guest_web: getVal('f-guest-web'),
-    guest_bio: '',
+    guest_bio: getVal('f-guest-bio'),
+    guest_photo_name: document.getElementById('f-guest-photo')?.files?.[0]?.name || '',
     co_teacher: getVal('f-co-teacher'),
     language: state.lang,
     what_to_bring: getVal('f-bring'),
@@ -882,6 +930,7 @@ async function submitForm() {
     partner_required: state.partner,
     capacity: getNum('f-max') || '',
     min_participants: getNum('f-min') || '',
+    min_cancel_if_under: (document.querySelector('#min-cond-chips .chip.selected')?.dataset.val === 'true') || false,
     price_full: getNum('f-price-full'),
     price_member: (function(){ const f = getNum('f-price-full'); return f ? Math.round(f * 0.90 * 100) / 100 : null; })(),  // auto: 10% off full
     price_per_person: getNum('f-price-per-person'),
@@ -919,6 +968,7 @@ async function submitForm() {
     okBox.style.display = '';
     okBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     btn.textContent = 'Submitted ✓';
+    try { localStorage.removeItem(WS_DRAFT_KEY); } catch(e) {}
   } catch (e) {
     errBox.textContent = '⚠ ' + (e.message || 'Submission failed. Try again or contact info@shoonyadance.com.');
     errBox.style.display = '';
@@ -926,6 +976,126 @@ async function submitForm() {
     btn.textContent = 'Submit workshop →';
   }
 }
+
+// ───────── AUTOSAVE ─────────
+const WS_DRAFT_KEY = 'shoonya_workshop_draft_v1';
+let _wsDraftTimer = null;
+
+function wsCollectDraft() {
+  const grab1 = id => document.getElementById(id)?.querySelector?.('.chip.selected')?.dataset?.val || '';
+  const grabN = id => [...(document.getElementById(id)?.querySelectorAll('.chip.selected') || [])].map(c => c.dataset.val);
+  const specificDates = [...document.querySelectorAll('#specific-dates-list input[type="date"]')].map(i => i.value).filter(Boolean);
+  return {
+    v: 1, savedAt: new Date().toISOString(),
+    format: grab1('format-chips'),
+    styles: grabN('style-chips'),
+    levels: grabN('level-chips'),
+    lang: grab1('lang-chips') || 'EN',
+    studio: grab1('studio-chips'),
+    partner: grab1('partner-chips'),
+    coTeacher: document.getElementById('f-co-teacher')?.value || '',
+    guestTeacher: document.getElementById('f-guest-teacher')?.value || '',
+    guestWeb: document.getElementById('f-guest-web')?.value || '',
+    guestBio: document.getElementById('f-guest-bio')?.value || '',
+    datePattern: state.datePattern,
+    contStart: document.getElementById('f-cont-start')?.value || '',
+    contEnd: document.getElementById('f-cont-end')?.value || '',
+    recDow: document.getElementById('f-rec-dow')?.value || '',
+    recStart: document.getElementById('f-rec-start')?.value || '',
+    recEnd: document.getElementById('f-rec-end')?.value || '',
+    specificDates,
+    defaultStart: document.getElementById('f-default-start')?.value || '',
+    priceFull: document.getElementById('f-price-full')?.value || '',
+    pricePerPerson: document.getElementById('f-price-per-person')?.value || '',
+    priceCouple: document.getElementById('f-price-couple')?.value || '',
+    pricingNotes: document.getElementById('f-pricing-notes')?.value || '',
+    description: document.getElementById('f-description')?.value || '',
+    prereq: document.getElementById('f-prereq')?.value || '',
+    whatToBring: document.getElementById('f-bring')?.value || '',
+    maxStudents: document.getElementById('f-max')?.value || '',
+    minPart: document.getElementById('f-min')?.value || '',
+    note: document.getElementById('f-note')?.value || '',
+  };
+}
+
+function wsScheduleSave() {
+  clearTimeout(_wsDraftTimer);
+  _wsDraftTimer = setTimeout(() => {
+    try {
+      const d = wsCollectDraft();
+      localStorage.setItem(WS_DRAFT_KEY, JSON.stringify(d));
+      showWsDraftBanner(d.savedAt);
+    } catch(e) {}
+  }, 800);
+}
+
+function showWsDraftBanner(iso) {
+  const b = document.getElementById('ws-draft-banner');
+  if (!b) return;
+  const t = new Date(iso);
+  b.querySelector('.ws-draft-time').textContent = 'Last saved: ' + t.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  b.style.display = 'flex';
+}
+
+function clearWsDraftAndReload() {
+  try { localStorage.removeItem(WS_DRAFT_KEY); } catch(e) {}
+  window.location.reload();
+}
+
+function wsRestoreDraft(d) {
+  if (!d || d.v !== 1) return;
+  // chips
+  const clickVal = (cid, val) => document.querySelector(`#${cid} .chip[data-val="${val}"]`)?.click();
+  if (d.format) clickVal('format-chips', d.format);
+  (d.styles || []).forEach(v => clickVal('style-chips', v));
+  (d.levels || []).forEach(v => clickVal('level-chips', v));
+  if (d.lang) clickVal('lang-chips', d.lang);
+  if (d.studio) clickVal('studio-chips', d.studio);
+  if (d.partner !== undefined) clickVal('partner-chips', String(d.partner));
+  // text
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  set('f-co-teacher', d.coTeacher); set('f-guest-teacher', d.guestTeacher);
+  set('f-guest-web', d.guestWeb); set('f-guest-bio', d.guestBio);
+  set('f-cont-start', d.contStart); set('f-cont-end', d.contEnd);
+  set('f-rec-dow', d.recDow); set('f-rec-start', d.recStart); set('f-rec-end', d.recEnd);
+  set('f-default-start', d.defaultStart);
+  set('f-price-full', d.priceFull); if (d.priceFull) updateMemberPrice();
+  set('f-price-per-person', d.pricePerPerson); set('f-price-couple', d.priceCouple);
+  set('f-pricing-notes', d.pricingNotes);
+  set('f-description', d.description); set('f-prereq', d.prereq);
+  set('f-bring', d.whatToBring); set('f-max', d.maxStudents); set('f-min', d.minPart);
+  set('f-note', d.note);
+  // guest fields toggle
+  if (d.guestTeacher) {
+    document.getElementById('guest-bio-field').style.display = '';
+    document.getElementById('guest-photo-field').style.display = '';
+  }
+  // specific dates
+  if (d.datePattern) {
+    document.querySelectorAll('.date-pattern-tab').forEach(t => {
+      if (t.dataset.mode === d.datePattern) t.click();
+    });
+  }
+  (d.specificDates || []).forEach(dateVal => {
+    addSpecificDate(dateVal);
+  });
+  showWsDraftBanner(d.savedAt);
+}
+
+// Init: restore draft on load
+(function() {
+  try {
+    const raw = localStorage.getItem(WS_DRAFT_KEY);
+    if (raw) wsRestoreDraft(JSON.parse(raw));
+  } catch(e) {}
+})();
+
+// Event delegation: save on any input/change
+document.querySelector('.container').addEventListener('input', wsScheduleSave);
+document.querySelector('.container').addEventListener('change', wsScheduleSave);
+document.querySelector('.container').addEventListener('click', e => {
+  if (e.target.classList.contains('chip') || e.target.classList.contains('date-pattern-tab')) wsScheduleSave();
+});
 </script>
 </body>
 </html>
