@@ -408,11 +408,9 @@
     <strong>Redesigned form (v2).</strong> Single page, smarter programme builder. Submits to the same Shoonya backend.
   </div>
 
-  <!-- AUTH BANNER -->
-  <div class="auth-banner">
-    <span>👤 Submitting as <strong>Swapnil Dagliya</strong> (swapnildagliya@gmail.com)</span>
-    <a href="#" onclick="event.preventDefault();alert('Logout flow (mockup)')">Log out</a>
-  </div>
+  <!-- TEACHER IDENTITY (hidden — filled by login-panel.js) -->
+  <input type="hidden" id="f-teacher-name">
+  <input type="hidden" id="f-teacher-email">
 
   <!-- DRAFT BANNER -->
   <div id="ss-draft-banner" style="display:none; background:#FFF8E5; border:1px solid #F0DDA4; border-radius:8px; padding:12px 18px; margin-bottom:20px; font-size:0.88rem; color:#5C4400; display:none; justify-content:space-between; align-items:center; gap:12px;">
@@ -631,6 +629,8 @@
 
 </div>
 
+<script src="../config.js"></script>
+<script src="../login-panel.js"></script>
 <script>
 // ─── STYLE CHIPS ─────────────────────────────────────────────────────────────
 function toggleStyle(el) {
@@ -816,6 +816,7 @@ function submitForm() {
   // Validate
   const errors = [];
   const styles = getSelectedStyles();
+  if (!document.getElementById('f-teacher-name').value.trim()) errors.push('Please log in before submitting.');
   if (styles.length === 0) errors.push('Select at least one dance style.');
   if (!document.getElementById('f-title').value.trim()) errors.push('Event title is required.');
   if (!document.getElementById('f-date').value) errors.push('Date is required.');
@@ -834,7 +835,8 @@ function submitForm() {
   // Collect data
   const payload = {
     type: 'social-event',
-    submittedBy: 'Swapnil Dagliya',
+    teacher_name: document.getElementById('f-teacher-name').value.trim(),
+    email: document.getElementById('f-teacher-email').value.trim(),
     styles: styles,
     title: document.getElementById('f-title').value.trim(),
     date: document.getElementById('f-date').value,
@@ -987,6 +989,15 @@ document.querySelector('.container').addEventListener('input', ssScheduleSave);
 document.querySelector('.container').addEventListener('change', ssScheduleSave);
 document.querySelector('.container').addEventListener('click', e => {
   if (e.target.classList.contains('chip') || e.target.classList.contains('chip-multi') || e.target.classList.contains('music-chip')) ssScheduleSave();
+});
+
+// Teacher login — store identity in hidden fields
+window.addEventListener('shoonya:login', function(e) {
+  const p = e.detail;
+  const nameEl = document.getElementById('f-teacher-name');
+  const emailEl = document.getElementById('f-teacher-email');
+  if (nameEl) nameEl.value = p.name || '';
+  if (emailEl) emailEl.value = p.email || '';
 });
 </script>
 </body>

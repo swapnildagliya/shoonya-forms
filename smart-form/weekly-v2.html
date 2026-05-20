@@ -405,11 +405,9 @@
     <strong>New simplified form (v2).</strong> Submits to the same Shoonya backend you've always used.
   </div>
 
-  <!-- AUTH BANNER (login required to access this form) -->
-  <div class="auth-banner">
-    <span>👤 Submitting as <strong>Swapnil Dagliya</strong> (swapnildagliya@gmail.com)</span>
-    <a href="#" onclick="event.preventDefault();alert('Logout flow (mockup)')">Log out</a>
-  </div>
+  <!-- TEACHER IDENTITY (hidden — filled by login-panel.js) -->
+  <input type="hidden" id="f-teacher-name">
+  <input type="hidden" id="f-teacher-email">
 
   <!-- PRE-FILL BANNER (shown when teacher has prior submissions for this style) -->
   <div style="background: var(--green-tint); border: 1px solid #BBE9CB; border-radius: 8px; padding: 14px 18px; margin-bottom: 28px; font-size: 0.9rem; color: #14532D; display: flex; justify-content: space-between; align-items: center;">
@@ -783,6 +781,7 @@
 </div>
 
 <script src="../config.js"></script>
+<script src="../login-panel.js"></script>
 <script>
 // Canonical style → allowed-levels map. Defaults are L1/L2/L3/Open.
 // Tap goes up to L6. Bhangra + ISC also offer Starter Series.
@@ -1129,8 +1128,8 @@ async function submitForm() {
   const payload = {
     action: 'submit',
     type: 'weekly-class',
-    teacher_name: 'Swapnil Dagliya',                   // TODO: read from auth
-    email: 'swapnildagliya@gmail.com',                 // TODO: read from auth
+    teacher_name: document.getElementById('f-teacher-name').value.trim(),
+    email: document.getElementById('f-teacher-email').value.trim(),
     dance_style: style,
     semester_name: semester.replace(/\s*\(current\)/, ''),
     levels: levels.map(l => ({
@@ -1422,6 +1421,15 @@ document.querySelector('.container').addEventListener('click',  scheduleSave, tr
     if (raw) restoreDraft(JSON.parse(raw));
   } catch(e) {}
 })();
+
+// Teacher login — store identity in hidden fields
+window.addEventListener('shoonya:login', function(e) {
+  const p = e.detail;
+  const nameEl = document.getElementById('f-teacher-name');
+  const emailEl = document.getElementById('f-teacher-email');
+  if (nameEl) nameEl.value = p.name || '';
+  if (emailEl) emailEl.value = p.email || '';
+});
 </script>
 </body>
 </html>

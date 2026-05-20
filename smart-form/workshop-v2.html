@@ -322,7 +322,7 @@
   </div>
 
   <!-- TEACHER IDENTITY -->
-  <div class="section">
+  <div class="section" id="ws-section-who">
     <span class="section-num">0</span>
     <h2 class="section-title">Who are you?</h2>
     <p class="section-hint">So we know who's submitting.</p>
@@ -670,6 +670,7 @@
 </div>
 
 <script src="../config.js"></script>
+<script src="../login-panel.js"></script>
 <script>
 // ───────── STATE ─────────
 const state = {
@@ -1132,6 +1133,18 @@ document.querySelector('.container').addEventListener('input', wsScheduleSave);
 document.querySelector('.container').addEventListener('change', wsScheduleSave);
 document.querySelector('.container').addEventListener('click', e => {
   if (e.target.classList.contains('chip') || e.target.classList.contains('date-pattern-tab')) wsScheduleSave();
+});
+
+// Teacher login — pre-fill identity fields and hide Section 0
+window.addEventListener('shoonya:login', function(e) {
+  const p = e.detail;
+  const nameEl = document.getElementById('f-teacher-name');
+  const emailEl = document.getElementById('f-teacher-email');
+  if (nameEl) { nameEl.value = p.name || ''; nameEl.readOnly = true; }
+  if (emailEl) { emailEl.value = p.email || ''; emailEl.readOnly = true; }
+  // Hide "Who are you?" section — login bar at top already shows the teacher
+  const sec0 = document.getElementById('ws-section-who');
+  if (sec0) sec0.style.display = 'none';
 });
 </script>
 </body>
