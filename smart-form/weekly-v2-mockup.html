@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weekly Class Submission — v2 Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=PT+Serif:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #B564F7;
+    --purple-dark: #7A3CAA;
+    --purple-tint: #F5ECFF;
+    --cream: #FAF8F3;
+    --ink: #1a1a1a;
+    --mid: #555;
+    --light: #888;
+    --border: #E2CCFF;
+    --salmon: #C04A1F;
+    --green: #16a34a;
+    --green-tint: #EAFAF0;
+    --amber: #d97706;
+    --amber-tint: #FEF3C7;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'PT Serif', Georgia, serif;
+    background: var(--cream);
+    color: var(--ink);
+    margin: 0;
+    padding: 40px 20px 80px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 820px; margin: 0 auto; }
+  h1 {
+    font-family: Marcellus, Georgia, serif;
+    font-size: 2.2rem;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .subtitle { font-size: 0.95rem; color: var(--mid); margin-bottom: 24px; }
+  .v2-banner {
+    background: #FFF8E5;
+    border: 1px solid #F0DDA4;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    color: #5C4400;
+    margin-bottom: 28px;
+  }
+  .auth-banner {
+    background: var(--green-tint);
+    border: 1px solid #BBE9CB;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 28px;
+    font-size: 0.9rem;
+    color: #14532D;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .auth-banner a { color: var(--purple-dark); text-decoration: underline; font-size: 0.82rem; }
+  .section {
+    background: white;
+    border: 1px solid #ECE0F5;
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .section-num {
+    display: inline-block;
+    width: 28px; height: 28px;
+    background: var(--purple);
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 28px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    font-family: Marcellus, Georgia, serif;
+    margin-right: 12px;
+    vertical-align: middle;
+  }
+  .section-title {
+    font-family: Marcellus, Georgia, serif;
+    font-size: 1.5rem;
+    margin: 0 0 4px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .section-hint { font-size: 0.85rem; color: var(--light); margin: 0 0 22px 40px; }
+  .field { margin-bottom: 20px; }
+  .field-label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .field-hint { font-size: 0.78rem; color: var(--light); margin-top: 4px; font-style: italic; }
+  input[type="text"], input[type="email"], input[type="number"], input[type="date"],
+  input[type="time"], textarea, select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #DDD;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background: white;
+  }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--purple); outline-offset: -1px; border-color: var(--purple); }
+  textarea { resize: vertical; min-height: 80px; }
+  textarea.large { min-height: 140px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 8px 16px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.15s;
+    font-family: inherit;
+    user-select: none;
+  }
+  .chip:hover { background: var(--purple-tint); }
+  .chip.selected { background: var(--purple); color: white; border-color: var(--purple); }
+  .chip-multi.selected::before { content: '✓ '; }
+  .toggle-section {
+    background: #F8F3FF;
+    border-left: 3px solid var(--purple);
+    padding: 18px 20px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+  }
+  .toggle-section.hidden { display: none; }
+  .level-card {
+    background: #FAF6FF;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .level-card-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px;
+    border-bottom: 1px dashed var(--border);
+    padding-bottom: 10px;
+  }
+  .level-card-title {
+    font-family: Marcellus, Georgia, serif;
+    font-size: 1.15rem;
+    color: var(--purple-dark);
+  }
+  .slot-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .slot-row .day-pick { font-size: 0.85rem; padding: 8px 12px; }
+  .btn-add {
+    background: transparent;
+    color: var(--purple-dark);
+    border: 1.5px dashed var(--border);
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: inherit;
+  }
+  .btn-add:hover { background: var(--purple-tint); }
+  .btn-remove {
+    background: transparent;
+    border: none;
+    color: var(--light);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 4px 8px;
+  }
+  .btn-remove:hover { color: #dc2626; }
+  .warning-row {
+    background: var(--amber-tint);
+    border-left: 3px solid var(--amber);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.82rem;
+    color: #78350F;
+    margin: 10px 0;
+  }
+  .warning-row strong { color: var(--ink); }
+  .price-derived-row {
+    display: grid;
+    grid-template-columns: 1fr 120px;
+    gap: 16px;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--green-tint);
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+  .price-derived-row label { font-size: 0.95rem; font-weight: 500; }
+  .price-derived-row .value {
+    color: #14532D; font-weight: 600;
+    text-align: right;
+    font-family: 'PT Serif', serif;
+    font-size: 1.05rem;
+  }
+  .submit-row { text-align: center; margin-top: 40px; }
+  .btn-primary {
+    background: var(--purple);
+    color: white;
+    border: none;
+    padding: 14px 40px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 0.02em;
+  }
+  .btn-primary:hover { background: var(--purple-dark); }
+  .annotation {
+    background: #FFF8E5;
+    border-left: 3px solid var(--salmon);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.82rem;
+    color: var(--mid);
+    margin-top: 6px;
+  }
+  .annotation strong { color: var(--ink); }
+  .badge-new {
+    display: inline-block;
+    background: var(--salmon);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .badge-derived {
+    display: inline-block;
+    background: var(--green);
+    color: white;
+    font-size: 0.62rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+  .checkbox-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; cursor: pointer; user-select: none;
+  }
+  .checkbox-row input { width: auto; cursor: pointer; }
+  details.collapsible {
+    background: #F8F3FF;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-top: 14px;
+  }
+  details.collapsible summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--purple-dark);
+    list-style: none;
+  }
+  details.collapsible summary::before { content: '▸ '; margin-right: 4px; }
+  details.collapsible[open] summary::before { content: '▾ '; }
+  details.collapsible[open] { padding-bottom: 18px; }
+  .holiday-list { margin-top: 14px; }
+  .holiday-row {
+    display: grid;
+    grid-template-columns: 140px 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 0.88rem;
+    color: var(--mid);
+    border-bottom: 1px dashed #E5E0EE;
+  }
+  .holiday-row:last-child { border-bottom: 0; }
+  .holiday-row .day { font-weight: 500; color: var(--ink); }
+  /* Per-level dates list */
+  .dates-summary {
+    background: var(--green-tint);
+    border: 1px solid #BBE9CB;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.92rem;
+  }
+  .dates-summary .count { font-weight: 700; color: #14532D; }
+  .dates-summary .price { color: var(--purple-dark); font-weight: 600; }
+  .date-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 10px 5px 12px;
+    font-size: 0.82rem;
+    margin: 4px 6px 4px 0;
+    transition: all 0.15s;
+  }
+  .date-pill .x-btn {
+    background: transparent;
+    border: none;
+    color: var(--light);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0 2px;
+    line-height: 1;
+  }
+  .date-pill .x-btn:hover { color: #dc2626; }
+  .date-pill.excluded {
+    background: #F3F4F6;
+    color: var(--light);
+    text-decoration: line-through;
+    border-color: #E5E7EB;
+  }
+  .date-pill.excluded .x-btn { color: var(--purple-dark); }
+  .date-pill.excluded .x-btn::before { content: '+ restore'; font-size: 0.72rem; font-weight: 600; }
+  .date-pill.excluded .x-btn-icon { display: none; }
+  .dates-list-wrap { margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Weekly Class Submission — v2 Mockup</h1>
+  <p class="subtitle">Phase A redesign — visual hierarchy + derived pricing + special-notes catch-all + auth integration.</p>
+
+  <div class="v2-banner">
+    <strong>This is a mockup.</strong> Click around to see the interactions. No data is submitted.
+  </div>
+
+  <!-- AUTH BANNER (login required to access this form) -->
+  <div class="auth-banner">
+    <span>👤 Submitting as <strong>Swapnil Dagliya</strong> (swapnildagliya@gmail.com)</span>
+    <a href="#" onclick="event.preventDefault();alert('Logout flow (mockup)')">Log out</a>
+  </div>
+
+  <!-- PRE-FILL BANNER (shown when teacher has prior submissions for this style) -->
+  <div style="background: var(--green-tint); border: 1px solid #BBE9CB; border-radius: 8px; padding: 14px 18px; margin-bottom: 28px; font-size: 0.9rem; color: #14532D; display: flex; justify-content: space-between; align-items: center;">
+    <span>✅ <strong>Pre-filled from your Spring 2026 submission</strong> for Bollywood — update anything that's changed.</span>
+    <a href="#" onclick="event.preventDefault();alert('Start fresh — clears all pre-filled data (mockup)')" style="color: var(--purple-dark); text-decoration: underline; font-size: 0.82rem;">Start fresh</a>
+  </div>
+
+  <!-- SECTION 1: BASICS -->
+  <div class="section">
+    <span class="section-num">1</span>
+    <h2 class="section-title">Class basics</h2>
+    <p class="section-hint">What are you teaching and when does the semester run?</p>
+
+    <div class="field">
+      <label class="field-label">Dance style</label>
+      <div class="chips" data-single>
+        <div class="chip selected" onclick="selectSingle(this)">Bollywood</div>
+        <div class="chip" onclick="selectSingle(this)">Bhangra</div>
+        <div class="chip" onclick="selectSingle(this)">Garba</div>
+        <div class="chip" onclick="selectSingle(this)">Indian Semi-Classical</div>
+        <div class="chip" onclick="selectSingle(this)">Bollyfolk</div>
+        <div class="chip" onclick="selectSingle(this)">ISC</div>
+        <div class="chip" onclick="selectSingle(this)" style="opacity:.7;font-style:italic;">Tap Dance <small>(demo only)</small></div>
+        <div class="chip" onclick="alert('Custom style input — for combos like Garba+Kalbeliya')">+ Other...</div>
+      </div>
+      <p class="field-hint">Only showing styles assigned to your teacher profile. Use "Other" for combos like Garba + Kalbeliya. Tap Dance shown here for demo — try selecting it to see L1–L6 appear in Section 3.</p>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label class="field-label">Semester</label>
+        <div class="chips" data-single>
+          <div class="chip selected" onclick="selectSingle(this)">Sep 2026 (current)</div>
+          <div class="chip" onclick="selectSingle(this)">Spring 2027</div>
+        </div>
+      </div>
+      <div class="field">
+        <label class="field-label">Teaching language</label>
+        <div class="chips" data-single>
+          <div class="chip selected" onclick="selectSingle(this)">EN</div>
+          <div class="chip" onclick="selectSingle(this)">NL</div>
+          <div class="chip" onclick="selectSingle(this)">FR</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: TEACHING TEAM -->
+  <div class="section">
+    <span class="section-num">2</span>
+    <h2 class="section-title">Teaching team</h2>
+    <p class="section-hint">Just you, or are you teaching with others?</p>
+
+    <div class="field">
+      <label class="field-label">Co-teacher(s) <span class="badge-new">multi-select</span></label>
+      <p class="field-hint" style="margin: 0 0 10px;">Previous semester co-teachers shown first (pre-selected).</p>
+      <div class="chips">
+        <!-- Previous semester (auto-selected) -->
+        <div class="chip chip-multi selected" onclick="toggleMulti(this)" title="Co-taught with you last semester">⭐ Aanchal Mehta</div>
+        <!-- All other Shoonya teachers -->
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Alex Vandenberghe</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Badriyah</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Ioanna</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Jordan</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Kitty</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">La Liz</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Lenka Badriyah</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Lennert</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Lut Vermeulen</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Sonja</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Teddy</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Wim</div>
+      </div>
+      <p class="field-hint" style="margin-top: 8px;">⭐ = co-taught last semester. Leave all unselected if teaching solo.</p>
+    </div>
+
+    <label class="checkbox-row">
+      <input type="checkbox" onchange="toggleDifferentTeachers(this)">
+      Different teachers on different days (e.g. Tap L1 on Mon with Jordan, on Wed with Teddy)
+    </label>
+
+    <div class="toggle-section hidden" id="per-slot-teacher-note">
+      <p style="margin: 0; font-size: 0.88rem; color: var(--mid);">
+        ✓ Per-slot teacher pickers will appear inside each level card below.
+      </p>
+    </div>
+  </div>
+
+  <!-- SECTION 3: LEVELS & SLOTS -->
+  <div class="section">
+    <span class="section-num">3</span>
+    <h2 class="section-title">Levels &amp; slots</h2>
+    <p class="section-hint">Pick the levels you're offering. Each gets its own schedule below.</p>
+
+    <div class="field">
+      <label class="field-label">Levels offered <span class="badge-new">multi-select</span></label>
+      <div class="chips" id="level-chips-wrap">
+        <div class="chip chip-multi selected" data-level-key="L1" onclick="toggleLevel(this, 'L1')">Level 1</div>
+        <div class="chip chip-multi selected" data-level-key="L2" onclick="toggleLevel(this, 'L2')">Level 2</div>
+        <div class="chip chip-multi" data-level-key="L3" onclick="toggleLevel(this, 'L3')">Level 3</div>
+        <div class="chip chip-multi" data-level-key="Open" onclick="toggleLevel(this, 'Open')">Open level</div>
+        <div class="chip" id="add-custom-level-chip" onclick="addCustomLevel()">+ Other level...</div>
+        <!-- L4–L6 added when Tap Dance is selected · Starter Series added for Bhangra/ISC -->
+      </div>
+      <p class="field-hint" id="starter-hint" style="display: none;">
+        ✨ Starter Series available for this style — a 4-week beginner-friendly version that feeds into Level 2.
+      </p>
+    </div>
+
+    <div class="annotation" style="margin-bottom: 16px;">
+      <strong>Dates UI not redesigned in Phase A.</strong> The existing per-day date grid (group by Monday/Wednesday/Thursday with click-to-skip per date) carries over unchanged from the current form. Live session count + prorated pricing already works there.
+    </div>
+
+    <!-- LEVEL CARDS -->
+    <div id="level-cards">
+      <!-- L1 CARD -->
+      <div class="level-card" data-level="L1">
+        <div class="level-card-header">
+          <span class="level-card-title">Level 1</span>
+          <span style="font-size: 0.8rem; color: var(--mid);" data-slot-summary>1 slot · 60 min</span>
+        </div>
+
+        <label class="field-label" style="margin-bottom: 10px;">Schedule</label>
+        <div class="slot-row">
+          <select class="day-pick">
+            <option>Monday</option>
+            <option selected>Tuesday</option>
+            <option>Wednesday</option>
+            <option>Thursday</option>
+            <option>Friday</option>
+            <option>Saturday</option>
+            <option>Sunday</option>
+          </select>
+          <input type="time" value="19:00" oninput="updateLevelSummary(this)">
+          <input type="time" value="20:00" oninput="updateLevelSummary(this)">
+          <button class="btn-remove" type="button">✕</button>
+        </div>
+        <button class="btn-add" onclick="alert('Add another slot for this level (e.g. same level on Wednesday too)')">+ Add another slot for L1</button>
+
+        <details class="collapsible" style="margin-top: 14px;" open>
+          <summary>Level 1 description <span style="font-size: 0.75rem; color: var(--green); font-weight: 600; margin-left: 8px;">✓ pre-filled</span></summary>
+          <p style="font-size: 0.82rem; color: var(--mid); margin: 8px 0 8px;">
+            Pre-filled from your Spring 2026 submission. Edit if anything's changed.
+          </p>
+          <textarea>Bollywood Level 1 builds your foundation in Indian dance vocabulary. We focus on basic rhythm, posture, hand-eye coordination, and signature Bollywood movements drawn from folk and semi-classical traditions. No prior experience required — just bring energy and a willingness to move.</textarea>
+        </details>
+      </div>
+
+      <!-- L2 CARD (with multi-slot info example) -->
+      <div class="level-card" data-level="L2">
+        <div class="level-card-header">
+          <span class="level-card-title">Level 2</span>
+          <span style="font-size: 0.8rem; color: var(--mid);" data-slot-summary>2 slots · 75 min</span>
+        </div>
+
+        <label class="field-label" style="margin-bottom: 10px;">Schedule</label>
+        <div class="slot-row">
+          <select class="day-pick">
+            <option>Monday</option>
+            <option>Tuesday</option>
+            <option selected>Wednesday</option>
+            <option>Thursday</option>
+            <option>Friday</option>
+            <option>Saturday</option>
+            <option>Sunday</option>
+          </select>
+          <input type="time" value="19:30" oninput="updateLevelSummary(this)">
+          <input type="time" value="20:45" oninput="updateLevelSummary(this)">
+          <button class="btn-remove" type="button">✕</button>
+        </div>
+        <div class="slot-row">
+          <select class="day-pick">
+            <option>Monday</option>
+            <option>Tuesday</option>
+            <option>Wednesday</option>
+            <option selected>Thursday</option>
+            <option>Friday</option>
+            <option>Saturday</option>
+            <option>Sunday</option>
+          </select>
+          <input type="time" value="19:30" oninput="updateLevelSummary(this)">
+          <input type="time" value="20:45" oninput="updateLevelSummary(this)">
+          <button class="btn-remove" type="button">✕</button>
+        </div>
+        <button class="btn-add">+ Add another slot for L2</button>
+
+        <!-- Multi-slot info (alternate timings is the only model) -->
+        <div style="background: var(--purple-tint); border-left: 3px solid var(--purple); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.84rem; color: var(--mid); margin-top: 14px;">
+          <strong style="color: var(--ink);">2 slots = alternate timings.</strong> Students sign up once and attend either Wednesday or Thursday — 16 sessions total, not 32. Pricing reflects this automatically.
+        </div>
+
+        <details class="collapsible" style="margin-top: 14px;" open>
+          <summary>Level 2 description <span style="font-size: 0.75rem; color: var(--green); font-weight: 600; margin-left: 8px;">✓ pre-filled</span></summary>
+          <p style="font-size: 0.82rem; color: var(--mid); margin: 8px 0 8px;">
+            Pre-filled from your Spring 2026 submission. Edit if anything's changed.
+          </p>
+          <textarea>Bollywood Level 2 takes your dancing further with longer choreography sequences, classical-folk fusion combinations, and deeper musicality work. Some prior dance experience expected — either Level 1 with us or equivalent.</textarea>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: PRICING (DERIVED) -->
+  <div class="section">
+    <span class="section-num">4</span>
+    <h2 class="section-title">Pricing <span class="badge-derived">auto</span></h2>
+    <p class="section-hint">All prices derived from the semester config + duration tier. You don't enter these.</p>
+
+    <div class="price-derived-row">
+      <label>
+        Full price <small style="color: var(--mid);">— L1 (60 min × 16 sessions)</small>
+      </label>
+      <div class="value">€ 198</div>
+    </div>
+
+    <div class="price-derived-row">
+      <label>
+        Full price <small style="color: var(--mid);">— L2 (75 min × 16 sessions)</small>
+      </label>
+      <div class="value">€ 231</div>
+    </div>
+
+    <div class="price-derived-row" style="background: #F5ECFF;">
+      <label>
+        Student / 2+ price <small style="color: var(--mid);">— member discount, applies when registering for 2+ courses</small>
+      </label>
+      <div class="value" style="color: var(--purple-dark);">auto</div>
+    </div>
+
+    <div class="price-derived-row" style="background: #E0F2FE;">
+      <label>
+        UiTPAS price <small style="color: var(--mid);">— 20% of full</small>
+      </label>
+      <div class="value" style="color: #075985;">auto</div>
+    </div>
+
+    <label class="checkbox-row" style="margin-top: 16px;">
+      <input type="checkbox" onchange="toggleDropIn(this)">
+      This class allows drop-ins (only for D&F / Pilates)
+    </label>
+
+    <div class="toggle-section hidden" id="drop-in-fields">
+      <div class="field">
+        <label class="field-label">Drop-in price (€)</label>
+        <input type="number" placeholder="18" min="0" step="0.5">
+        <p class="field-hint">Single-class price for occasional attendees.</p>
+      </div>
+    </div>
+
+    <div class="annotation" style="margin-top: 18px;">
+      Pricing is set by Shoonya based on class duration and session count. Updates automatically when you skip dates in the schedule above.
+    </div>
+  </div>
+
+  <!-- SECTION 5: DETAILS -->
+  <div class="section">
+    <span class="section-num">5</span>
+    <h2 class="section-title">Details</h2>
+    <p class="section-hint">Marketing copy + practical info.</p>
+
+    <div class="field">
+      <label class="field-label">General class description (fallback)</label>
+      <textarea class="large" placeholder="A welcoming class for all levels of Cuban Salsa. Each level has its own focus..."></textarea>
+      <p class="field-hint">Used when a level doesn't have its own description above. Optional if every level above has its own.</p>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Prerequisites</label>
+      <textarea placeholder="L1: open to all. L2: at least one season at L1 or equivalent."></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label">What to bring / dress code</label>
+      <textarea placeholder="Comfortable dance shoes (or socks for hardwood). Water bottle."></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Max students per slot</label>
+      <input type="number" placeholder="20" min="0" style="max-width: 160px;">
+    </div>
+
+    <div class="field">
+      <label class="field-label">Min age</label>
+      <div class="chips" data-single>
+        <div class="chip" onclick="selectSingle(this)">All ages</div>
+        <div class="chip" onclick="selectSingle(this)">9+</div>
+        <div class="chip selected" onclick="selectSingle(this)">12+</div>
+        <div class="chip" onclick="selectSingle(this)">14+</div>
+        <div class="chip" onclick="selectSingle(this)">16+</div>
+        <div class="chip" onclick="selectSingle(this)">18+</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Studio preference</label>
+      <div class="chips" data-single>
+        <div class="chip selected" onclick="selectSingle(this)">No preference</div>
+        <div class="chip" onclick="selectSingle(this)">Studio Ananta</div>
+        <div class="chip" onclick="selectSingle(this)">Studio Aakash</div>
+        <div class="chip" onclick="selectSingle(this)">Studio Art Deco</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Partner registration compulsory?</label>
+      <div class="chips" data-single>
+        <div class="chip selected" onclick="selectSingle(this)">No</div>
+        <div class="chip" onclick="selectSingle(this)">Yes — compulsory</div>
+      </div>
+    </div>
+
+    <!-- Website note — only shown for styles configured to display one (Tap Dance, Ballet Pointes, Burlesque, etc.). -->
+    <div class="field" id="website-note-field" style="display: none;">
+      <label class="field-label">Website note <span class="badge-new">style-specific</span></label>
+      <p class="field-hint" style="margin: 0 0 8px;">Extra info shown on the Squarespace class page — appears only for styles configured to display this (e.g. Tap Dance "Free shoe lending available", Ballet "Pointe shoes required for Level 3").</p>
+      <textarea id="website-note-input" placeholder="e.g. Free shoe lending available for new students."></textarea>
+    </div>
+  </div>
+
+  <!-- SECTION 6: OPENDEURDAG -->
+  <div class="section">
+    <span class="section-num">6</span>
+    <h2 class="section-title">Open House (Opendeurdag) <span class="badge-new">simplified</span></h2>
+    <p class="section-hint">Which Open House dates can you teach a trial of this class?</p>
+
+    <div class="field">
+      <label class="field-label">Available dates <span class="badge-new">multi-select</span></label>
+      <div class="chips">
+        <div class="chip chip-multi selected" onclick="toggleMulti(this)">Sat 13 Sep — morning</div>
+        <div class="chip chip-multi selected" onclick="toggleMulti(this)">Sat 13 Sep — afternoon</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Sat 13 Sep — evening</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Sun 14 Sep — morning</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Sun 14 Sep — afternoon</div>
+        <div class="chip chip-multi selected" onclick="toggleMulti(this)">Sun 14 Sep — evening</div>
+      </div>
+      <p class="field-hint">Pick all time-slots you can teach a free trial during Open House weekend.</p>
+    </div>
+  </div>
+
+  <!-- SECTION 7: SPECIAL NOTES -->
+  <div class="section">
+    <span class="section-num">7</span>
+    <h2 class="section-title">Special notes <span class="badge-new">catch-all</span></h2>
+    <p class="section-hint">Anything else Shoonya should know — equipment needs, scheduling concerns, prop requests, anything that doesn't fit a field above.</p>
+
+    <div class="field">
+      <textarea class="large" placeholder="Examples: 'Need mirror on the long wall', 'Aakash works better for floor work', 'L3 students bring their own pointes', 'May ask for projector for music theory session in week 4'..."></textarea>
+      <div class="annotation">
+        <strong>Admin reads this when reviewing.</strong> Catches edge cases the structured fields can't express.
+      </div>
+    </div>
+  </div>
+
+  <div class="submit-row">
+    <button class="btn-primary" onclick="alert('This is a mockup — no real submit.')">Review &amp; submit →</button>
+  </div>
+
+  <p style="text-align: center; margin-top: 32px; font-size: 0.78rem; color: var(--light);">
+    Mockup · Shoonya Dance Centre · Stapelplein 41, 9000 Gent
+  </p>
+
+</div>
+
+<script>
+// Canonical style → allowed-levels map. Defaults are L1/L2/L3/Open.
+// Tap goes up to L6. Bhangra + ISC also offer Starter Series.
+// See truth/decisions.md "Canonical levels" section.
+const DEFAULT_LEVELS = ['L1', 'L2', 'L3', 'Open'];
+const STYLE_LEVELS = {
+  'Tap Dance': ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'Open'],
+  'Bhangra':   ['L1', 'L2', 'L3', 'Open', 'Starter'],
+  'ISC':       ['L1', 'L2', 'L3', 'Open', 'Starter'],
+};
+const LEVEL_LABELS = {
+  'L1': 'Level 1', 'L2': 'Level 2', 'L3': 'Level 3',
+  'L4': 'Level 4', 'L5': 'Level 5', 'L6': 'Level 6',
+  'Open': 'Open level', 'Starter': 'Starter Series',
+};
+
+// Mockup: per-style per-level descriptions. In production these come from
+// (1) teacher's prior submission for that style+level, falling back to
+// (2) WS_STYLE_DATA[style].descriptionsByLevel canonical descriptions.
+const SAMPLE_LEVEL_DESCRIPTIONS = {
+  'Bollywood': {
+    'L1':      { source: 'your Spring 2026 submission', text: "Bollywood Level 1 builds your foundation in Indian dance vocabulary. We focus on basic rhythm, posture, hand-eye coordination, and signature Bollywood movements drawn from folk and semi-classical traditions. No prior experience required — just bring energy and a willingness to move." },
+    'L2':      { source: 'your Spring 2026 submission', text: "Bollywood Level 2 takes your dancing further with longer choreography sequences, classical-folk fusion combinations, and deeper musicality work. Some prior dance experience expected — either Level 1 with us or equivalent." },
+    'L3':      { source: 'canonical style description', text: "Bollywood Level 3 is performance-ready training. Full-length choreographies, advanced footwork, expression work (abhinaya), and ensemble-quality formations. Suitable for dancers who've completed Level 2 or have strong Indian dance / contemporary background." },
+    'Open':    { source: 'canonical style description', text: "An open-level Bollywood class welcoming all backgrounds. Each week explores a different aspect — folk, classical fusion, film choreography, or pure cardio dance." },
+    'Starter': { source: 'canonical style description', text: "A 4-week Bollywood Starter Series for absolute beginners. Builds enough vocabulary to comfortably join the Level 1 class in the following semester." },
+  },
+  'Bhangra': {
+    'L2':      { source: 'canonical style description', text: "Bhangra Level 2 — high-energy Punjabi folk dance. Build on the foundation with longer combinations, advanced footwork, and signature shoulder + arm work that make Bhangra unmistakable." },
+    'Starter': { source: 'canonical style description', text: "A 4-week Bhangra Starter Series for absolute beginners. Builds rhythm + foundation to comfortably join Level 2 in the next semester." },
+  },
+  // Bhangra currently runs Starter + L2 only (no L1). Same for ISC.
+  // Other styles + levels: empty (no fallback)
+};
+
+// Styles that have a Squarespace "website note" configured.
+// Source: WS_STYLE_DATA[style].websiteNote in production.
+const STYLES_WITH_WEBSITE_NOTE = ['Tap Dance', 'Ballet', 'Ballet Pointes', 'Burlesque', 'Argentine Tango'];
+
+function selectSingle(el) {
+  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  // If this is a style chip in Section 1, update conditional fields
+  const isStyleChip = el.closest('#level-chips-wrap') === null
+    && el.parentElement.querySelector('.chip[onclick*="alert"]'); // style row has the "+ Other" alert chip
+  if (el.parentElement.dataset.single !== undefined && isStyleChip) {
+    const selectedStyle = el.textContent.replace(/\(.*\)/, '').trim();
+    updateStarterChipVisibility(selectedStyle);
+    updateWebsiteNoteVisibility(selectedStyle);
+  }
+}
+
+function updateWebsiteNoteVisibility(selectedStyle) {
+  const field = document.getElementById('website-note-field');
+  if (!field) return;
+  field.style.display = STYLES_WITH_WEBSITE_NOTE.includes(selectedStyle) ? '' : 'none';
+}
+
+function updateStarterChipVisibility(selectedStyle) {
+  const wrap = document.getElementById('level-chips-wrap');
+  const hint = document.getElementById('starter-hint');
+  const addBtn = document.getElementById('add-custom-level-chip');
+  const allowed = STYLE_LEVELS[selectedStyle] || DEFAULT_LEVELS;
+
+  // Remove built-in chips and cards for levels not allowed by this style.
+  // Custom levels (data-custom="true") are preserved — teacher entered them on purpose.
+  Array.from(wrap.querySelectorAll('.chip[data-level-key]')).forEach(chip => {
+    if (chip.dataset.custom === 'true') return;
+    if (!allowed.includes(chip.dataset.levelKey)) {
+      const card = document.querySelector(`.level-card[data-level="${chip.dataset.levelKey}"]`);
+      if (card) card.remove();
+      chip.remove();
+    }
+  });
+
+  // Add chips for levels allowed by this style but not currently shown.
+  // Insert before the "+ Other level" button so it stays last.
+  allowed.forEach(lvKey => {
+    if (wrap.querySelector(`.chip[data-level-key="${lvKey}"]`)) return;
+    const chip = document.createElement('div');
+    chip.className = 'chip chip-multi';
+    chip.dataset.levelKey = lvKey;
+    chip.textContent = LEVEL_LABELS[lvKey] || lvKey;
+    chip.onclick = function() { toggleLevel(chip, lvKey); };
+    wrap.insertBefore(chip, addBtn);
+  });
+
+  // Show Starter hint only when the style supports it
+  if (hint) hint.style.display = allowed.includes('Starter') ? '' : 'none';
+}
+function toggleMulti(el) {
+  el.classList.toggle('selected');
+}
+// Canonical Shoonya levels — duration is set per-class (teacher decides), NOT per-level.
+const LEVEL_NAMES = {
+  'L1':      'Level 1',
+  'L2':      'Level 2',
+  'L3':      'Level 3',
+  'Open':    'Open level',
+  'Starter': 'Starter Series',
+};
+
+function getCurrentStyle() {
+  // Find the currently-selected style chip (first single-select chips row on the page)
+  const styleRow = document.querySelector('.section .chips[data-single] .chip.selected');
+  return styleRow ? styleRow.textContent.replace(/\(.*\)/, '').trim() : '';
+}
+
+function makeLevelCard(key) {
+  const name = LEVEL_NAMES[key] || LEVEL_LABELS[key] || key;
+  const style = getCurrentStyle();
+  const desc = (SAMPLE_LEVEL_DESCRIPTIONS[style] || {})[key];
+  // Description block — varies by whether we have a pre-fill
+  let descBlock;
+  if (desc) {
+    descBlock = `
+      <details class="collapsible" style="margin-top: 14px;" open>
+        <summary>${name} description <span style="font-size: 0.75rem; color: var(--green); font-weight: 600; margin-left: 8px;">✓ pre-filled</span></summary>
+        <p style="font-size: 0.82rem; color: var(--mid); margin: 8px 0 8px;">
+          Pre-filled from ${desc.source}. Edit if anything's changed.
+        </p>
+        <textarea>${desc.text}</textarea>
+      </details>
+    `;
+  } else {
+    descBlock = `
+      <details class="collapsible" style="margin-top: 14px;">
+        <summary>${name} description <span style="font-size: 0.72rem; color: var(--light); margin-left: 8px;">— no prior data for this style + level</span></summary>
+        <p style="font-size: 0.82rem; color: var(--mid); margin: 8px 0 8px;">
+          Write a description for the Squarespace class page. If left blank, the generic style description is used.
+        </p>
+        <textarea placeholder="e.g. ${name} focus — technique, choreography, partner work..."></textarea>
+      </details>
+    `;
+  }
+  const card = document.createElement('div');
+  card.className = 'level-card';
+  card.dataset.level = key;
+  card.innerHTML = `
+    <div class="level-card-header">
+      <span class="level-card-title">${name}</span>
+      <span style="font-size: 0.8rem; color: var(--mid);" data-slot-summary>1 slot · — min</span>
+    </div>
+    <label class="field-label" style="margin-bottom: 10px;">Schedule</label>
+    <div class="slot-row">
+      <select class="day-pick">
+        <option>Monday</option><option>Tuesday</option><option selected>Wednesday</option>
+        <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+      </select>
+      <input type="time" oninput="updateLevelSummary(this)">
+      <input type="time" oninput="updateLevelSummary(this)">
+      <button class="btn-remove" type="button">✕</button>
+    </div>
+    <button class="btn-add">+ Add another slot for ${name}</button>
+    ${descBlock}
+  `;
+  return card;
+}
+
+function minutesBetween(t1, t2) {
+  if (!t1 || !t2) return null;
+  const [h1, m1] = t1.split(':').map(Number);
+  const [h2, m2] = t2.split(':').map(Number);
+  return (h2 * 60 + m2) - (h1 * 60 + m1);
+}
+
+function updateLevelSummary(input) {
+  const card = input.closest('.level-card');
+  if (!card) return;
+  const slots = card.querySelectorAll('.slot-row');
+  const summary = card.querySelector('[data-slot-summary]');
+  const durations = [];
+  slots.forEach(row => {
+    const times = row.querySelectorAll('input[type="time"]');
+    if (times.length === 2) {
+      const m = minutesBetween(times[0].value, times[1].value);
+      if (m && m > 0) durations.push(m);
+    }
+  });
+  const slotCount = slots.length;
+  const durLabel = durations.length === 0 ? '—' :
+    durations.every(d => d === durations[0]) ? durations[0] :
+    Math.min(...durations) + '–' + Math.max(...durations);
+  summary.textContent = `${slotCount} slot${slotCount === 1 ? '' : 's'} · ${durLabel} min`;
+}
+
+function toggleLevel(el, levelKey) {
+  toggleMulti(el);
+  const isSelected = el.classList.contains('selected');
+  const container = document.getElementById('level-cards');
+  const existing = container.querySelector(`.level-card[data-level="${levelKey}"]`);
+  if (isSelected && !existing) {
+    container.appendChild(makeLevelCard(levelKey));
+  } else if (!isSelected && existing) {
+    existing.remove();
+  }
+}
+
+function addCustomLevel() {
+  const name = prompt('Custom level name (e.g. "Performance Group", "Auditions only", "Level 7"):');
+  if (!name) return;
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  // Use the typed name as both the key and the label (kept simple for mockup)
+  const wrap = document.getElementById('level-chips-wrap');
+  const addBtn = document.getElementById('add-custom-level-chip');
+  // Avoid duplicates
+  if (wrap.querySelector(`.chip[data-level-key="${CSS.escape(trimmed)}"]`)) return;
+  // Register the label so the card uses the right title
+  LEVEL_LABELS[trimmed] = trimmed;
+  const chip = document.createElement('div');
+  chip.className = 'chip chip-multi selected';
+  chip.dataset.levelKey = trimmed;
+  chip.dataset.custom = 'true';
+  chip.textContent = trimmed;
+  chip.onclick = function() { toggleLevel(chip, trimmed); };
+  wrap.insertBefore(chip, addBtn);
+  // Auto-open its card (since chip starts selected)
+  document.getElementById('level-cards').appendChild(makeLevelCard(trimmed));
+}
+function toggleDifferentTeachers(cb) {
+  document.getElementById('per-slot-teacher-note').classList.toggle('hidden', !cb.checked);
+}
+function toggleDropIn(cb) {
+  document.getElementById('drop-in-fields').classList.toggle('hidden', !cb.checked);
+}
+function togglePill(btn) {
+  const pill = btn.closest('.date-pill');
+  pill.classList.toggle('excluded');
+  // Find the parent level card and recompute count + price for that card
+  const card = pill.closest('.level-card');
+  if (!card) return;
+  const summary = card.querySelector('.dates-summary');
+  if (!summary) return;
+  const basePrice = parseInt(summary.dataset.basePrice, 10);
+  const baseCount = parseInt(summary.dataset.baseCount, 10);
+  const total = card.querySelectorAll('.date-pill').length;
+  const skipped = card.querySelectorAll('.date-pill.excluded').length;
+  const active = total - skipped;
+  const newPrice = Math.round(basePrice * active / baseCount);
+  summary.querySelector('.count').textContent = active + ' session' + (active === 1 ? '' : 's');
+  summary.querySelector('.price-value').textContent = newPrice;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workshop Submission · Shoonya Dance Centre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=PT+Serif:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #B564F7;
+    --purple-dark: #7A3CAA;
+    --purple-tint: #F5ECFF;
+    --cream: #FAF8F3;
+    --ink: #1a1a1a;
+    --mid: #555;
+    --light: #888;
+    --border: #E2CCFF;
+    --salmon: #C04A1F;
+    --green: #16a34a;
+    --red: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'PT Serif', Georgia, serif;
+    background: var(--cream);
+    color: var(--ink);
+    margin: 0;
+    padding: 40px 20px 80px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 760px; margin: 0 auto; }
+  h1 {
+    font-family: Marcellus, Georgia, serif;
+    font-size: 2.2rem;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .subtitle { font-size: 0.95rem; color: var(--mid); margin-bottom: 24px; }
+  .v2-banner {
+    background: #FFF8E5;
+    border: 1px solid #F0DDA4;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    color: #5C4400;
+    margin-bottom: 28px;
+  }
+  .section {
+    background: white;
+    border: 1px solid #ECE0F5;
+    border-radius: 12px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .section-num {
+    display: inline-block;
+    width: 28px; height: 28px;
+    background: var(--purple);
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 28px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    font-family: Marcellus, Georgia, serif;
+    margin-right: 12px;
+    vertical-align: middle;
+  }
+  .section-title {
+    font-family: Marcellus, Georgia, serif;
+    font-size: 1.5rem;
+    margin: 0 0 4px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  .section-hint { font-size: 0.85rem; color: var(--light); margin: 0 0 22px 40px; }
+  .field { margin-bottom: 20px; }
+  .field-label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+  .field-hint { font-size: 0.78rem; color: var(--light); margin-top: 4px; font-style: italic; }
+  input[type="text"], input[type="email"], input[type="number"], input[type="date"],
+  input[type="time"], textarea, select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #DDD;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background: white;
+  }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--purple); outline-offset: -1px; border-color: var(--purple); }
+  textarea { resize: vertical; min-height: 80px; }
+  textarea.large { min-height: 140px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 8px 16px;
+    background: white;
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.15s;
+    font-family: inherit;
+    user-select: none;
+  }
+  .chip:hover { background: var(--purple-tint); }
+  .chip.selected { background: var(--purple); color: white; border-color: var(--purple); }
+  .chip-multi.selected::before { content: '✓ '; }
+  .price-row {
+    display: grid;
+    grid-template-columns: 1fr 120px;
+    gap: 16px;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--purple-tint);
+    border-radius: 6px;
+    margin-bottom: 8px;
+  }
+  .price-row label { font-size: 0.95rem; font-weight: 500; }
+  .price-row .input-wrap { display: flex; align-items: center; gap: 6px; }
+  .price-row input { padding: 8px 10px; }
+  .toggle-section {
+    background: #F8F3FF;
+    border-left: 3px solid var(--purple);
+    padding: 18px 20px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+  }
+  .toggle-section.hidden { display: none; }
+  .date-pattern-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    background: #F2EAFD;
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 18px;
+  }
+  .date-pattern-tab {
+    padding: 10px;
+    text-align: center;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--mid);
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .date-pattern-tab.active {
+    background: white;
+    color: var(--ink);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+  .date-pattern-content { display: none; }
+  .date-pattern-content.active { display: block; }
+  .specific-dates-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+  .specific-date-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
+  .btn-add {
+    background: transparent;
+    color: var(--purple-dark);
+    border: 1.5px dashed var(--border);
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-family: inherit;
+  }
+  .btn-add:hover { background: var(--purple-tint); }
+  .btn-remove {
+    background: transparent;
+    border: none;
+    color: var(--light);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 4px 8px;
+  }
+  .btn-remove:hover { color: var(--red); }
+  .sessions-preview {
+    background: #FAF6FF;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--mid);
+  }
+  .sessions-preview strong { color: var(--ink); }
+  .submit-row { text-align: center; margin-top: 40px; }
+  .btn-primary {
+    background: var(--purple);
+    color: white;
+    border: none;
+    padding: 14px 40px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    letter-spacing: 0.02em;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--purple-dark); }
+  .btn-primary:disabled { background: var(--light); cursor: not-allowed; }
+  .annotation {
+    background: #FFF8E5;
+    border-left: 3px solid var(--salmon);
+    padding: 10px 14px;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.82rem;
+    color: var(--mid);
+    margin-top: 6px;
+  }
+  .annotation strong { color: var(--ink); }
+  .badge-new {
+    display: inline-block;
+    background: var(--salmon);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    cursor: pointer;
+    user-select: none;
+  }
+  .checkbox-row input { width: auto; cursor: pointer; }
+  .error-msg {
+    background: #FEE2E2;
+    border-left: 3px solid var(--red);
+    padding: 12px 16px;
+    border-radius: 0 6px 6px 0;
+    color: #7F1D1D;
+    margin-top: 16px;
+    font-size: 0.9rem;
+  }
+  .success-msg {
+    background: #DCFCE7;
+    border-left: 3px solid var(--green);
+    padding: 16px;
+    border-radius: 0 6px 6px 0;
+    color: #14532D;
+    margin-top: 16px;
+    font-size: 0.95rem;
+  }
+  .session-row-detail {
+    display: grid;
+    grid-template-columns: 130px 1fr 1fr 1fr;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .session-row-detail .date-label { color: var(--mid); font-size: 0.86rem; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>Workshop Submission</h1>
+  <p class="subtitle">Tell us about your workshop, intensive, bootcamp, or miniseries.</p>
+
+  <div class="v2-banner">
+    <strong>This is a redesigned form (v2).</strong> Simpler, multi-style, smarter dates. Submitting it sends to the same Shoonya backend you've always used.
+  </div>
+
+  <!-- TEACHER IDENTITY -->
+  <div class="section">
+    <span class="section-num">0</span>
+    <h2 class="section-title">Who are you?</h2>
+    <p class="section-hint">So we know who's submitting.</p>
+    <div class="row">
+      <div class="field">
+        <label class="field-label">Your name</label>
+        <input type="text" id="f-teacher-name" placeholder="Swapnil Dagliya">
+      </div>
+      <div class="field">
+        <label class="field-label">Your email</label>
+        <input type="email" id="f-teacher-email" placeholder="you@example.com">
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 1: BASICS -->
+  <div class="section">
+    <span class="section-num">1</span>
+    <h2 class="section-title">Basics</h2>
+    <p class="section-hint">What's the workshop called and what does it cover?</p>
+
+    <div class="field">
+      <label class="field-label">Title</label>
+      <input type="text" id="f-title" placeholder="e.g. Indian Dance Summer Intensive 2026">
+    </div>
+
+    <div class="field">
+      <label class="field-label">Format</label>
+      <div class="chips" id="format-chips">
+        <div class="chip" data-val="single">Single session</div>
+        <div class="chip" data-val="2day">2-day workshop</div>
+        <div class="chip" data-val="intensive">Intensive</div>
+        <div class="chip" data-val="bootcamp">Bootcamp</div>
+        <div class="chip" data-val="series">Mini-series</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Style(s) <span class="badge-new">multi-select</span></label>
+      <div class="chips" id="style-chips">
+        <div class="chip chip-multi" data-val="Bollywood">Bollywood</div>
+        <div class="chip chip-multi" data-val="Bhangra">Bhangra</div>
+        <div class="chip chip-multi" data-val="Garba">Garba</div>
+        <div class="chip chip-multi" data-val="Indian Semi-Classical">Indian Semi-Classical</div>
+        <div class="chip chip-multi" data-val="Indian Folk">Indian Folk</div>
+        <div class="chip chip-multi" data-val="Bachata">Bachata</div>
+        <div class="chip chip-multi" data-val="Bachata Solo Style">Bachata Solo Style</div>
+        <div class="chip chip-multi" data-val="Salsa">Salsa</div>
+        <div class="chip chip-multi" data-val="Cuban Salsa">Cuban Salsa</div>
+        <div class="chip chip-multi" data-val="Kizomba">Kizomba</div>
+        <div class="chip chip-multi" data-val="Semba">Semba</div>
+        <div class="chip chip-multi" data-val="Argentine Tango">Argentine Tango</div>
+        <div class="chip chip-multi" data-val="Flamenco">Flamenco</div>
+        <div class="chip chip-multi" data-val="Rumba Flamenca">Rumba Flamenca</div>
+        <div class="chip chip-multi" data-val="High Heels">High Heels</div>
+        <div class="chip chip-multi" data-val="Ballet">Ballet</div>
+        <div class="chip chip-multi" data-val="Lindy Hop">Lindy Hop</div>
+        <div class="chip chip-multi" data-val="Solo Jazz">Solo Jazz</div>
+        <div class="chip chip-multi" data-val="Tap Dance">Tap Dance</div>
+        <div class="chip chip-multi" data-val="Burlesque">Burlesque</div>
+        <div class="chip chip-multi" data-val="Raqs Sharqi">Raqs Sharqi</div>
+        <div class="chip chip-multi" data-val="Oriental Flow">Oriental Flow</div>
+        <div class="chip chip-multi" data-val="Cissy Ball">Cissy Ball</div>
+        <div class="chip" onclick="addCustomStyle()">+ Other...</div>
+      </div>
+      <p class="field-hint">Pick all styles your workshop covers. Useful for intensives that span multiple styles.</p>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Level(s) <span class="badge-new">multi-select</span></label>
+      <div class="chips" id="level-chips">
+        <div class="chip chip-multi" data-val="Beginner">Beginner</div>
+        <div class="chip chip-multi" data-val="Intermediate">Intermediate</div>
+        <div class="chip chip-multi" data-val="Advanced">Advanced</div>
+        <div class="chip chip-multi" data-val="Open level">Open level</div>
+        <div class="chip chip-multi" data-val="Mixed">Mixed (different levels per day)</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Teaching language</label>
+      <div class="chips" id="lang-chips">
+        <div class="chip" data-val="EN">EN</div>
+        <div class="chip" data-val="NL">NL</div>
+        <div class="chip" data-val="FR">FR</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: TEACHERS -->
+  <div class="section">
+    <span class="section-num">2</span>
+    <h2 class="section-title">Teachers</h2>
+    <p class="section-hint">Who's teaching? Add co-teachers and guests if needed.</p>
+
+    <div class="row">
+      <div class="field">
+        <label class="field-label">Co-teacher (optional)</label>
+        <input type="text" id="f-co-teacher" placeholder="e.g. Aanchal Mehta">
+      </div>
+      <div class="field">
+        <label class="field-label">Guest teacher (optional)</label>
+        <input type="text" id="f-guest-teacher" placeholder="external guest from outside Shoonya">
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Guest website / Instagram (optional)</label>
+      <input type="text" id="f-guest-web" placeholder="https://instagram.com/...">
+    </div>
+  </div>
+
+  <!-- SECTION 3: SCHEDULE -->
+  <div class="section">
+    <span class="section-num">3</span>
+    <h2 class="section-title">Schedule <span class="badge-new">smart picker</span></h2>
+    <p class="section-hint">Pick the pattern that matches your workshop.</p>
+
+    <div class="date-pattern-tabs">
+      <div class="date-pattern-tab active" data-mode="contiguous">📅 Contiguous days</div>
+      <div class="date-pattern-tab" data-mode="recurring">🔁 Recurring weekly</div>
+      <div class="date-pattern-tab" data-mode="specific">🗓️ Specific dates</div>
+    </div>
+
+    <div class="date-pattern-content active" id="pattern-contiguous">
+      <p class="field-hint" style="margin: 0 0 10px;">For 2-day weekends, intensives on consecutive days.</p>
+      <div class="row">
+        <div class="field">
+          <label class="field-label">First day</label>
+          <input type="date" id="f-cont-start">
+        </div>
+        <div class="field">
+          <label class="field-label">Last day</label>
+          <input type="date" id="f-cont-end">
+        </div>
+      </div>
+    </div>
+
+    <div class="date-pattern-content" id="pattern-recurring">
+      <p class="field-hint" style="margin: 0 0 10px;">For miniseries like "every Wednesday from Feb to April".</p>
+      <div class="row3">
+        <div class="field">
+          <label class="field-label">Day of week</label>
+          <select id="f-rec-dow">
+            <option value="1">Monday</option>
+            <option value="2">Tuesday</option>
+            <option value="3" selected>Wednesday</option>
+            <option value="4">Thursday</option>
+            <option value="5">Friday</option>
+            <option value="6">Saturday</option>
+            <option value="0">Sunday</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="field-label">Start date</label>
+          <input type="date" id="f-rec-start">
+        </div>
+        <div class="field">
+          <label class="field-label">End date</label>
+          <input type="date" id="f-rec-end">
+        </div>
+      </div>
+    </div>
+
+    <div class="date-pattern-content" id="pattern-specific">
+      <p class="field-hint" style="margin: 0 0 10px;">For non-contiguous date lists (e.g. 6 Fridays not in a row).</p>
+      <div class="specific-dates-list" id="specific-dates-list"></div>
+      <button class="btn-add" onclick="addSpecificDate()">+ Add date</button>
+    </div>
+
+    <div id="sessions-preview" class="sessions-preview" style="display:none;"></div>
+
+    <!-- Time -->
+    <div class="field" style="margin-top: 24px;">
+      <label class="field-label">Time (applies to all sessions by default)</label>
+      <div class="row">
+        <input type="time" id="f-default-start" value="19:00">
+        <input type="time" id="f-default-end" value="20:30">
+      </div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="f-times-differ" onchange="toggleSessionTimes(this)">
+        Times differ across sessions (e.g. Saturday has different timing)
+      </label>
+    </div>
+
+    <div class="toggle-section hidden" id="per-session-times">
+      <strong style="font-size: 0.9rem;">Per-session times</strong>
+      <p class="field-hint" style="margin: 4px 0 12px;">Leave blank to use the default times above.</p>
+      <div id="per-session-times-list"></div>
+    </div>
+
+    <!-- Topics per session -->
+    <div class="field" style="margin-top: 24px;">
+      <label class="field-label">Session topics (optional)</label>
+      <p class="field-hint" style="margin: 0 0 10px;">Helpful for intensives where each day covers something distinct.</p>
+      <div id="session-topics-list"></div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: PRICING -->
+  <div class="section">
+    <span class="section-num">4</span>
+    <h2 class="section-title">Pricing <span class="badge-new">redesigned</span></h2>
+    <p class="section-hint">Just the basics. Use "special pricing notes" below for anything that doesn't fit.</p>
+
+    <div class="price-row">
+      <label>Full price <small style="color: var(--mid);">— complete workshop, non-member</small></label>
+      <div class="input-wrap">€ <input type="number" id="f-price-full" placeholder="150" min="0" step="0.5" oninput="updateMemberPrice()"></div>
+    </div>
+
+    <div class="price-row" style="background: #EAFAF0; opacity: 0.9;">
+      <label>
+        Shoonya member price
+        <small style="color: var(--mid);">— 10% off, auto-calculated</small>
+      </label>
+      <div class="input-wrap" style="color: #14532D; font-weight: 600;">
+        € <span id="f-price-member-display" style="font-size: 1.05rem;">—</span>
+      </div>
+    </div>
+
+    <label class="checkbox-row">
+      <input type="checkbox" id="f-single-session" onchange="toggleSingleSession(this)">
+      Allow single-session attendance (drop-in or per-session purchase)
+    </label>
+
+    <div class="toggle-section hidden" id="single-session-prices">
+      <div class="price-row">
+        <label>Per session — single person</label>
+        <div class="input-wrap">€ <input type="number" id="f-price-per-person" placeholder="40" min="0" step="0.5"></div>
+      </div>
+      <label class="checkbox-row" style="margin-top: 4px;">
+        <input type="checkbox" id="f-couple-price" onchange="toggleCouplePrice(this)">
+        Add per-couple price (partner dances)
+      </label>
+      <div class="toggle-section hidden" id="couple-price-row">
+        <div class="price-row">
+          <label>Per session — per couple</label>
+          <div class="input-wrap">€ <input type="number" id="f-price-couple" placeholder="70" min="0" step="0.5"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top: 24px;">
+      <label class="field-label">Special pricing notes (optional)</label>
+      <textarea class="large" id="f-pricing-notes" placeholder="Anything that doesn't fit standard fields. Examples: 'Terah Taali session €35 (2hr), Kalbeliya session €30 (2hr), Saturday day pass €60', or 'Group of 4+ pays €260 each'."></textarea>
+      <div class="annotation">
+        <strong>Admin uses this when configuring exact pricing.</strong> Don't worry about mapping it into rigid fields — write it like a human.
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 5: DETAILS -->
+  <div class="section">
+    <span class="section-num">5</span>
+    <h2 class="section-title">Details</h2>
+    <p class="section-hint">The marketing copy + practical info.</p>
+
+    <div class="field">
+      <label class="field-label">Description (for website + emails)</label>
+      <textarea class="large" id="f-description" placeholder="A 4-day deep dive into Indian dance forms..."></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Prerequisites</label>
+      <textarea id="f-prereq" placeholder="Open to all. Stamina for 3-hour sessions expected."></textarea>
+    </div>
+
+    <div class="field">
+      <label class="field-label">What to bring / dress code</label>
+      <textarea id="f-bring" placeholder="Comfortable dance clothes, water, towel..."></textarea>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label class="field-label">Max students</label>
+        <input type="number" id="f-max" placeholder="18" min="0">
+      </div>
+      <div class="field">
+        <label class="field-label">Min participants</label>
+        <input type="number" id="f-min" placeholder="6" min="0">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Preferred studio</label>
+      <div class="chips" id="studio-chips">
+        <div class="chip" data-val="No preference">No preference</div>
+        <div class="chip" data-val="Studio Ananta">Studio Ananta</div>
+        <div class="chip" data-val="Studio Aakash">Studio Aakash</div>
+        <div class="chip" data-val="Studio Art Deco">Studio Art Deco</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Partner registration compulsory?</label>
+      <div class="chips" id="partner-chips">
+        <div class="chip" data-val="false">No</div>
+        <div class="chip" data-val="true">Yes — compulsory</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Note for Shoonya (internal)</label>
+      <textarea id="f-note" placeholder="Special setup, travel notes, equipment requests..."></textarea>
+    </div>
+  </div>
+
+  <div id="submit-error" class="error-msg" style="display:none;"></div>
+  <div id="submit-success" class="success-msg" style="display:none;"></div>
+
+  <div class="submit-row">
+    <button class="btn-primary" id="submit-btn" onclick="submitForm()">Submit workshop →</button>
+  </div>
+
+  <p style="text-align: center; margin-top: 32px; font-size: 0.78rem; color: var(--light);">
+    Shoonya Dance Centre · Stapelplein 41, 9000 Gent
+  </p>
+
+</div>
+
+<script src="../config.js"></script>
+<script>
+// ───────── STATE ─────────
+const state = {
+  format: '',
+  styles: [],
+  levels: [],
+  lang: 'EN',
+  studio: 'No preference',
+  partner: false,
+  datePattern: 'contiguous',
+  specificDates: [],
+  sessions: [], // generated session list
+};
+
+// ───────── CHIP HANDLERS ─────────
+function bindChips(containerId, key, multi=false) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.querySelectorAll('.chip[data-val]').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const val = chip.dataset.val;
+      if (multi) {
+        const arr = state[key];
+        const idx = arr.indexOf(val);
+        if (idx >= 0) { arr.splice(idx, 1); chip.classList.remove('selected'); }
+        else { arr.push(val); chip.classList.add('selected'); }
+      } else {
+        container.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        state[key] = (val === 'true') ? true : (val === 'false') ? false : val;
+        if (key === 'format') updateSessionsPreview();
+      }
+    });
+  });
+}
+
+bindChips('format-chips', 'format', false);
+bindChips('style-chips', 'styles', true);
+bindChips('level-chips', 'levels', true);
+bindChips('lang-chips', 'lang', false);
+bindChips('studio-chips', 'studio', false);
+bindChips('partner-chips', 'partner', false);
+
+// preset defaults
+document.querySelector('#lang-chips .chip[data-val="EN"]')?.click();
+document.querySelector('#studio-chips .chip[data-val="No preference"]')?.click();
+document.querySelector('#partner-chips .chip[data-val="false"]')?.click();
+
+function addCustomStyle() {
+  const val = prompt('Add a custom style');
+  if (!val) return;
+  const chips = document.getElementById('style-chips');
+  const div = document.createElement('div');
+  div.className = 'chip chip-multi selected';
+  div.textContent = val;
+  div.dataset.val = val;
+  state.styles.push(val);
+  div.addEventListener('click', () => {
+    const idx = state.styles.indexOf(val);
+    if (idx >= 0) { state.styles.splice(idx, 1); div.classList.remove('selected'); }
+    else { state.styles.push(val); div.classList.add('selected'); }
+  });
+  chips.insertBefore(div, chips.lastElementChild);
+}
+
+// ───────── DATE PATTERN ─────────
+document.querySelectorAll('.date-pattern-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    state.datePattern = tab.dataset.mode;
+    document.querySelectorAll('.date-pattern-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.date-pattern-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('pattern-' + tab.dataset.mode).classList.add('active');
+    updateSessionsPreview();
+  });
+});
+
+function addSpecificDate(dateVal='') {
+  const list = document.getElementById('specific-dates-list');
+  const row = document.createElement('div');
+  row.className = 'specific-date-row';
+  row.innerHTML = `<input type="date" value="${dateVal}"><button class="btn-remove" type="button">✕</button>`;
+  list.appendChild(row);
+  row.querySelector('input').addEventListener('change', updateSessionsPreview);
+  row.querySelector('.btn-remove').addEventListener('click', () => {
+    row.remove();
+    updateSessionsPreview();
+  });
+}
+addSpecificDate(); addSpecificDate();
+
+// react to date input changes
+['f-cont-start','f-cont-end','f-rec-start','f-rec-end','f-rec-dow','f-default-start','f-default-end'].forEach(id => {
+  document.getElementById(id)?.addEventListener('change', updateSessionsPreview);
+});
+
+function generateSessions() {
+  const mode = state.datePattern;
+  const sessions = [];
+  const defStart = document.getElementById('f-default-start').value || '19:00';
+  const defEnd = document.getElementById('f-default-end').value || '20:30';
+
+  if (mode === 'contiguous') {
+    const s = document.getElementById('f-cont-start').value;
+    const e = document.getElementById('f-cont-end').value || s;
+    if (!s) return [];
+    const startD = new Date(s + 'T00:00:00');
+    const endD = new Date(e + 'T00:00:00');
+    for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
+      sessions.push({ date: ymd(d), start: defStart, end: defEnd, topic: '' });
+    }
+  } else if (mode === 'recurring') {
+    const dow = parseInt(document.getElementById('f-rec-dow').value);
+    const s = document.getElementById('f-rec-start').value;
+    const e = document.getElementById('f-rec-end').value;
+    if (!s || !e) return [];
+    const startD = new Date(s + 'T00:00:00');
+    const endD = new Date(e + 'T00:00:00');
+    // advance startD to first matching weekday
+    while (startD.getDay() !== dow) startD.setDate(startD.getDate() + 1);
+    for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 7)) {
+      sessions.push({ date: ymd(d), start: defStart, end: defEnd, topic: '' });
+    }
+  } else if (mode === 'specific') {
+    document.querySelectorAll('#specific-dates-list input[type=date]').forEach(inp => {
+      if (inp.value) sessions.push({ date: inp.value, start: defStart, end: defEnd, topic: '' });
+    });
+    sessions.sort((a, b) => a.date.localeCompare(b.date));
+  }
+  return sessions;
+}
+
+function updateSessionsPreview() {
+  const sessions = generateSessions();
+  state.sessions = sessions;
+  const preview = document.getElementById('sessions-preview');
+  if (sessions.length === 0) { preview.style.display = 'none'; return; }
+  preview.style.display = '';
+  const labels = sessions.map(s => fmtDateLabel(s.date));
+  preview.innerHTML = `<strong>${sessions.length} session${sessions.length === 1 ? '' : 's'} generated:</strong> ${labels.join(' · ')}`;
+  renderPerSessionTimes(sessions);
+  renderSessionTopics(sessions);
+}
+
+function renderPerSessionTimes(sessions) {
+  const list = document.getElementById('per-session-times-list');
+  list.innerHTML = '';
+  sessions.forEach((s, i) => {
+    const row = document.createElement('div');
+    row.className = 'session-row-detail';
+    row.innerHTML = `
+      <span class="date-label">${fmtDateLabel(s.date)}</span>
+      <input type="time" data-idx="${i}" data-field="start" placeholder="${s.start}">
+      <input type="time" data-idx="${i}" data-field="end" placeholder="${s.end}">
+      <span></span>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function renderSessionTopics(sessions) {
+  const list = document.getElementById('session-topics-list');
+  list.innerHTML = '';
+  sessions.forEach((s, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display: grid; grid-template-columns: 140px 1fr; gap: 10px; align-items: center; margin-bottom: 6px;';
+    row.innerHTML = `
+      <span style="color: var(--mid); font-size: 0.86rem;">${fmtDateLabel(s.date)}</span>
+      <input type="text" data-idx="${i}" data-field="topic" placeholder="e.g. Bhangra & Jhoomar: The Punjabi Toolkit" style="font-size: 0.88rem;">
+    `;
+    list.appendChild(row);
+  });
+}
+
+function ymd(d) { return d.toISOString().slice(0, 10); }
+function fmtDateLabel(ymd) {
+  const d = new Date(ymd + 'T00:00:00');
+  const opts = { weekday: 'short', day: 'numeric', month: 'short' };
+  return d.toLocaleDateString('en-GB', opts);
+}
+
+// ───────── TOGGLES ─────────
+function toggleSessionTimes(cb) { document.getElementById('per-session-times').classList.toggle('hidden', !cb.checked); }
+function updateMemberPrice() {
+  const full = parseFloat(document.getElementById('f-price-full').value);
+  const display = document.getElementById('f-price-member-display');
+  if (isNaN(full) || full <= 0) { display.textContent = '—'; return; }
+  const member = Math.round(full * 0.90 * 100) / 100;  // 10% off, rounded to 2 decimals
+  display.textContent = member.toFixed(2).replace(/\.00$/, '');
+}
+function toggleSingleSession(cb) { document.getElementById('single-session-prices').classList.toggle('hidden', !cb.checked); }
+function toggleCouplePrice(cb) { document.getElementById('couple-price-row').classList.toggle('hidden', !cb.checked); }
+
+// preset default tab
+document.querySelector('.date-pattern-tab[data-mode="contiguous"]').click();
+
+// ───────── VALIDATION + SUBMIT ─────────
+function getVal(id) { return (document.getElementById(id)?.value || '').trim(); }
+function getNum(id) { const v = getVal(id); return v ? parseFloat(v) : null; }
+
+function collectSessions() {
+  const sessions = generateSessions();
+  // Apply per-session time overrides
+  document.querySelectorAll('#per-session-times-list input[type=time]').forEach(inp => {
+    const idx = parseInt(inp.dataset.idx);
+    if (sessions[idx] && inp.value) sessions[idx][inp.dataset.field] = inp.value;
+  });
+  // Apply topics
+  document.querySelectorAll('#session-topics-list input').forEach(inp => {
+    const idx = parseInt(inp.dataset.idx);
+    if (sessions[idx]) sessions[idx].topic = inp.value.trim();
+  });
+  return sessions;
+}
+
+function validate() {
+  const errs = [];
+  if (!getVal('f-teacher-name')) errs.push('Your name');
+  if (!getVal('f-teacher-email')) errs.push('Your email');
+  if (!getVal('f-title')) errs.push('Workshop title');
+  if (!state.format) errs.push('Format');
+  if (state.styles.length === 0) errs.push('At least one style');
+  if (state.levels.length === 0) errs.push('At least one level');
+  const sessions = collectSessions();
+  if (sessions.length === 0) errs.push('At least one session date');
+  if (getNum('f-price-full') === null && !getVal('f-pricing-notes')) errs.push('Full price (or special pricing notes)');
+  return errs;
+}
+
+async function submitForm() {
+  const errBox = document.getElementById('submit-error');
+  const okBox = document.getElementById('submit-success');
+  errBox.style.display = 'none';
+  okBox.style.display = 'none';
+
+  const errors = validate();
+  if (errors.length > 0) {
+    errBox.innerHTML = '<strong>Please fill in:</strong> ' + errors.join(', ');
+    errBox.style.display = '';
+    errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  const sessions = collectSessions();
+  const isSeries = state.format === 'series';
+
+  const payload = {
+    action: 'generateOutputPackage',
+    type: isSeries ? 'series' : 'workshop',
+    title: getVal('f-title'),
+    style: state.styles[0] || '',           // primary style (backend compatibility)
+    styles: state.styles,                   // full array (multi-style)
+    levels: state.levels,
+    sessions: sessions.map(s => ({
+      date: s.date,
+      start: s.start,
+      end: s.end,
+      topic: s.topic || '',
+    })),
+    format: state.format.charAt(0).toUpperCase() + state.format.slice(1),
+    format_internal: state.format,
+    teacher_name: getVal('f-teacher-name'),
+    email: getVal('f-teacher-email'),
+    approved_description: getVal('f-description'),
+    prerequisites: getVal('f-prereq'),
+    preferred_studio: state.studio,
+    guest_teacher: getVal('f-guest-teacher'),
+    guest_web: getVal('f-guest-web'),
+    guest_bio: '',
+    co_teacher: getVal('f-co-teacher'),
+    language: state.lang,
+    what_to_bring: getVal('f-bring'),
+    note_shoonya: getVal('f-note'),
+    partner_required: state.partner,
+    capacity: getNum('f-max') || '',
+    min_participants: getNum('f-min') || '',
+    price_full: getNum('f-price-full'),
+    price_member: (function(){ const f = getNum('f-price-full'); return f ? Math.round(f * 0.90 * 100) / 100 : null; })(),  // auto: 10% off full
+    price_per_person: getNum('f-price-per-person'),
+    price_couple: getNum('f-price-couple'),
+    pricing_notes: getVal('f-pricing-notes'),     // NEW field
+    submitted_via: 'workshop-v2-form',
+  };
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  const url = (typeof APPS_SCRIPT_URL !== 'undefined') ? APPS_SCRIPT_URL : '';
+  if (!url) {
+    errBox.textContent = '⚠ APPS_SCRIPT_URL not configured. Make sure config.js is loaded.';
+    errBox.style.display = '';
+    btn.disabled = false;
+    btn.textContent = 'Submit workshop →';
+    return;
+  }
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json().catch(() => ({ ok: false }));
+    if (json.ok === false) throw new Error(json.error || 'Submission failed');
+    okBox.innerHTML = `
+      <strong>✓ Submitted successfully.</strong><br>
+      Your workshop has been recorded. Shoonya will review and follow up.<br>
+      <small style="color: var(--mid);">Format: ${state.format} · Styles: ${state.styles.join(', ')} · Sessions: ${sessions.length}</small>
+    `;
+    okBox.style.display = '';
+    okBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    btn.textContent = 'Submitted ✓';
+  } catch (e) {
+    errBox.textContent = '⚠ ' + (e.message || 'Submission failed. Try again or contact info@shoonyadance.com.');
+    errBox.style.display = '';
+    btn.disabled = false;
+    btn.textContent = 'Submit workshop →';
+  }
+}
+</script>
+</body>
+</html>
