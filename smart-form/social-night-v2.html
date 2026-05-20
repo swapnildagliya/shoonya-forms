@@ -359,10 +359,42 @@
   .divider { border: none; border-top: 2px solid #ECE0F5; margin: 24px 0; }
 
   @media (max-width: 600px) {
-    .section { padding: 20px 18px; }
-    .row, .row3 { grid-template-columns: 1fr; }
-    .pricing-tier { grid-template-columns: 1fr auto auto; }
+    body { padding: 12px; }
+    h1 { font-size: 1.7rem; }
+    .section { padding: 18px 16px; margin-bottom: 16px; }
+    .section-num { width: 28px; height: 28px; font-size: 0.85rem; margin-right: 10px; }
+
+    /* Stack grids */
+    .row, .row3 { grid-template-columns: 1fr; gap: 12px; }
+
+    /* Pricing tier: label full-width, price + delete on same row */
+    .pricing-tier { grid-template-columns: 1fr; gap: 8px; }
+    .pricing-tier > div { display: flex; gap: 6px; align-items: center; }
+
+    /* Programme card */
+    .prog-card { padding: 14px; }
+    .prog-card-header { flex-wrap: wrap; gap: 8px; }
+
+    /* Dance night block */
     .dance-night-block { padding: 16px; }
+    .music-type-chips { flex-wrap: wrap; }
+    .music-chip { font-size: 0.85rem; padding: 8px 12px; }
+
+    /* Quick time buttons */
+    .quick-times { flex-wrap: wrap; }
+
+    /* Style chips */
+    .chip, .chip-multi { padding: 9px 14px; font-size: 0.88rem; }
+
+    /* Prevent iOS font zoom */
+    input, textarea, select { font-size: 16px !important; }
+
+    /* Submit */
+    .btn-primary { width: 100%; padding: 16px; font-size: 1rem; }
+
+    /* Auth + draft banners */
+    .auth-banner { flex-direction: column; gap: 6px; font-size: 0.82rem; }
+    #ss-draft-banner { flex-direction: column; gap: 8px; }
   }
 </style>
 </head>
