@@ -377,6 +377,12 @@
     <a href="#" onclick="event.preventDefault();alert('Start fresh — clears all pre-filled data (mockup)')" style="color: var(--purple-dark); text-decoration: underline; font-size: 0.82rem;">Start fresh</a>
   </div>
 
+  <!-- DRAFT RESTORED BANNER (hidden until a saved draft is found) -->
+  <div id="draft-banner" style="display:none; background:#FFF8E5; border:1px solid #F0DDA4; border-radius:8px; padding:12px 18px; margin-bottom:20px; font-size:0.88rem; color:#5C4400; display:none; justify-content:space-between; align-items:center; gap:12px;">
+    <span>📝 Draft restored. <span class="draft-time" style="color:#78490A;"></span></span>
+    <button onclick="clearDraftAndReload()" style="background:none; border:1px solid #d4a017; border-radius:4px; padding:4px 12px; font-size:0.78rem; color:#5C4400; cursor:pointer; font-family:inherit;">Clear draft</button>
+  </div>
+
   <!-- SECTION 1: BASICS -->
   <div class="section">
     <span class="section-num">1</span>
@@ -385,7 +391,7 @@
 
     <div class="field">
       <label class="field-label">Dance style</label>
-      <div class="chips" data-single>
+      <div class="chips" data-single id="style-chips">
         <div class="chip selected" onclick="selectSingle(this)">Bollywood</div>
         <div class="chip" onclick="selectSingle(this)">Bhangra</div>
         <div class="chip" onclick="selectSingle(this)">Garba</div>
@@ -401,14 +407,14 @@
     <div class="row">
       <div class="field">
         <label class="field-label">Semester</label>
-        <div class="chips" data-single>
+        <div class="chips" data-single id="semester-chips">
           <div class="chip selected" onclick="selectSingle(this)">Sep 2026 (current)</div>
           <div class="chip" onclick="selectSingle(this)">Spring 2027</div>
         </div>
       </div>
       <div class="field">
         <label class="field-label">Teaching language</label>
-        <div class="chips" data-single>
+        <div class="chips" data-single id="lang-chips">
           <div class="chip selected" onclick="selectSingle(this)">EN</div>
           <div class="chip" onclick="selectSingle(this)">NL</div>
           <div class="chip" onclick="selectSingle(this)">FR</div>
@@ -426,7 +432,7 @@
     <div class="field">
       <label class="field-label">Co-teacher(s) <span class="badge-new">multi-select</span></label>
       <p class="field-hint" style="margin: 0 0 10px;">Previous semester co-teachers shown first (pre-selected).</p>
-      <div class="chips">
+      <div class="chips" id="coteacher-chips">
         <!-- Previous semester (auto-selected) -->
         <div class="chip chip-multi selected" onclick="toggleMulti(this)" title="Co-taught with you last semester">⭐ Aanchal Mehta</div>
         <!-- All other Shoonya teachers -->
@@ -447,7 +453,7 @@
     </div>
 
     <label class="checkbox-row">
-      <input type="checkbox" onchange="toggleDifferentTeachers(this)">
+      <input type="checkbox" id="diff-teach-cb" onchange="toggleDifferentTeachers(this)">
       Different teachers on different days (e.g. Tap L1 on Mon with Jordan, on Wed with Teddy)
     </label>
 
@@ -607,14 +613,14 @@
     </div>
 
     <label class="checkbox-row" style="margin-top: 16px;">
-      <input type="checkbox" onchange="toggleDropIn(this)">
+      <input type="checkbox" id="dropin-cb" onchange="toggleDropIn(this)">
       This class allows drop-ins (only for D&F / Pilates)
     </label>
 
     <div class="toggle-section hidden" id="drop-in-fields">
       <div class="field">
         <label class="field-label">Drop-in price (€)</label>
-        <input type="number" placeholder="18" min="0" step="0.5">
+        <input type="number" id="f-dropin-price" placeholder="18" min="0" step="0.5">
         <p class="field-hint">Single-class price for occasional attendees.</p>
       </div>
     </div>
@@ -632,28 +638,28 @@
 
     <div class="field">
       <label class="field-label">General class description (fallback)</label>
-      <textarea class="large" placeholder="A welcoming class for all levels of Cuban Salsa. Each level has its own focus..."></textarea>
+      <textarea class="large" id="f-description" placeholder="A welcoming class for all levels of Cuban Salsa. Each level has its own focus..."></textarea>
       <p class="field-hint">Used when a level doesn't have its own description above. Optional if every level above has its own.</p>
     </div>
 
     <div class="field">
       <label class="field-label">Prerequisites</label>
-      <textarea placeholder="L1: open to all. L2: at least one season at L1 or equivalent."></textarea>
+      <textarea id="f-prereq" placeholder="L1: open to all. L2: at least one season at L1 or equivalent."></textarea>
     </div>
 
     <div class="field">
       <label class="field-label">What to bring / dress code</label>
-      <textarea placeholder="Comfortable dance shoes (or socks for hardwood). Water bottle."></textarea>
+      <textarea id="f-bring" placeholder="Comfortable dance shoes (or socks for hardwood). Water bottle."></textarea>
     </div>
 
     <div class="field">
       <label class="field-label">Max students per slot</label>
-      <input type="number" placeholder="20" min="0" style="max-width: 160px;">
+      <input type="number" id="f-max-students" placeholder="20" min="0" style="max-width: 160px;">
     </div>
 
     <div class="field">
       <label class="field-label">Min age</label>
-      <div class="chips" data-single>
+      <div class="chips" data-single id="min-age-chips">
         <div class="chip" onclick="selectSingle(this)">All ages</div>
         <div class="chip" onclick="selectSingle(this)">9+</div>
         <div class="chip selected" onclick="selectSingle(this)">12+</div>
@@ -665,7 +671,7 @@
 
     <div class="field">
       <label class="field-label">Studio preference</label>
-      <div class="chips" data-single>
+      <div class="chips" data-single id="studio-pref-chips">
         <div class="chip selected" onclick="selectSingle(this)">No preference</div>
         <div class="chip" onclick="selectSingle(this)">Studio Ananta</div>
         <div class="chip" onclick="selectSingle(this)">Studio Aakash</div>
@@ -675,7 +681,7 @@
 
     <div class="field">
       <label class="field-label">Partner registration compulsory?</label>
-      <div class="chips" data-single>
+      <div class="chips" data-single id="partner-chips">
         <div class="chip selected" onclick="selectSingle(this)">No</div>
         <div class="chip" onclick="selectSingle(this)">Yes — compulsory</div>
       </div>
@@ -697,7 +703,7 @@
 
     <div class="field">
       <label class="field-label">Available dates <span class="badge-new">multi-select</span></label>
-      <div class="chips">
+      <div class="chips" id="open-house-chips">
         <div class="chip chip-multi selected" onclick="toggleMulti(this)">Sat 13 Sep — morning</div>
         <div class="chip chip-multi selected" onclick="toggleMulti(this)">Sat 13 Sep — afternoon</div>
         <div class="chip chip-multi" onclick="toggleMulti(this)">Sat 13 Sep — evening</div>
@@ -716,7 +722,7 @@
     <p class="section-hint">Anything else Shoonya should know — equipment needs, scheduling concerns, prop requests, anything that doesn't fit a field above.</p>
 
     <div class="field">
-      <textarea class="large" placeholder="Examples: 'Need mirror on the long wall', 'Aakash works better for floor work', 'L3 students bring their own pointes', 'May ask for projector for music theory session in week 4'..."></textarea>
+      <textarea class="large" id="f-special-notes" placeholder="Examples: 'Need mirror on the long wall', 'Aakash works better for floor work', 'L3 students bring their own pointes', 'May ask for projector for music theory session in week 4'..."></textarea>
       <div class="annotation">
         <strong>Admin reads this when reviewing.</strong> Catches edge cases the structured fields can't express.
       </div>
@@ -1149,6 +1155,233 @@ async function submitForm() {
     btn.textContent = 'Submit weekly class →';
   }
 }
+</script>
+<script>
+// ─── DRAFT AUTOSAVE ──────────────────────────────────────────────────────────
+// Saves form state to localStorage every 800ms after last input.
+// Restores on page load. Cleared on successful submit.
+const DRAFT_KEY = 'shoonya_weekly_draft_v1';
+let _draftTimer = null;
+
+function collectDraft() {
+  const grab1 = id => document.getElementById(id)?.querySelector('.chip.selected')?.textContent.trim() || '';
+  const grabN = id => [...(document.getElementById(id)?.querySelectorAll('.chip.selected') || [])].map(c => c.textContent.trim());
+
+  const levels = [];
+  document.querySelectorAll('#level-cards .level-card').forEach(card => {
+    const key = card.dataset.level;
+    const isCustom = !!document.querySelector(`#level-chips-wrap .chip[data-level-key="${CSS.escape(key)}"][data-custom="true"]`);
+    const slots = [...card.querySelectorAll('.slot-row')].map(row => ({
+      day: row.querySelector('.day-pick')?.value || '',
+      start: row.querySelectorAll('input[type="time"]')[0]?.value || '',
+      end:   row.querySelectorAll('input[type="time"]')[1]?.value || '',
+    }));
+    const description = card.querySelector('textarea')?.value.trim() || '';
+    levels.push({ key, isCustom, slots, description });
+  });
+
+  return {
+    v: 1,
+    savedAt: new Date().toISOString(),
+    style:            grab1('style-chips'),
+    semester:         grab1('semester-chips'),
+    lang:             grab1('lang-chips'),
+    coTeachers:       grabN('coteacher-chips').map(t => t.replace(/^⭐\s*/, '').trim()),
+    differentTeachers: document.getElementById('diff-teach-cb')?.checked || false,
+    levels,
+    dropIn:           document.getElementById('dropin-cb')?.checked || false,
+    dropInPrice:      document.getElementById('f-dropin-price')?.value || '',
+    description:      document.getElementById('f-description')?.value.trim() || '',
+    prereq:           document.getElementById('f-prereq')?.value.trim() || '',
+    whatToBring:      document.getElementById('f-bring')?.value.trim() || '',
+    maxStudents:      document.getElementById('f-max-students')?.value || '',
+    websiteNote:      document.getElementById('website-note-input')?.value.trim() || '',
+    minAge:           grab1('min-age-chips'),
+    studio:           grab1('studio-pref-chips'),
+    partner:          grab1('partner-chips'),
+    openHouse:        grabN('open-house-chips'),
+    specialNotes:     document.getElementById('f-special-notes')?.value.trim() || '',
+  };
+}
+
+function scheduleSave() {
+  clearTimeout(_draftTimer);
+  _draftTimer = setTimeout(() => {
+    try {
+      const draft = collectDraft();
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+      showDraftBanner(draft.savedAt, false);
+    } catch(e) { /* localStorage blocked (private mode etc) — fail silently */ }
+  }, 800);
+}
+
+function showDraftBanner(savedAt, restored) {
+  const banner = document.getElementById('draft-banner');
+  if (!banner) return;
+  banner.style.display = 'flex';
+  const d = new Date(savedAt);
+  const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const label = restored ? `Draft from ${d.toLocaleDateString([], {day:'numeric',month:'short'})} at ${time} restored.`
+                         : `Draft saved at ${time}.`;
+  banner.querySelector('.draft-time').textContent = label;
+}
+
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+}
+
+function clearDraftAndReload() {
+  clearDraft();
+  location.reload();
+}
+
+// ─── RESTORE ─────────────────────────────────────────────────────────────────
+function restoreChip1(id, val) {
+  if (!val) return;
+  const chip = [...(document.getElementById(id)?.querySelectorAll('.chip') || [])]
+    .find(c => c.textContent.trim() === val);
+  if (chip && !chip.classList.contains('selected')) {
+    document.getElementById(id).querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+    chip.classList.add('selected');
+  }
+}
+
+function restoreChipN(id, vals) {
+  if (!vals || !vals.length) return;
+  const container = document.getElementById(id);
+  if (!container) return;
+  container.querySelectorAll('.chip').forEach(c => {
+    const key = c.textContent.replace(/^⭐\s*/, '').trim();
+    if (vals.includes(key)) c.classList.add('selected');
+    else c.classList.remove('selected');
+  });
+}
+
+function restoreDraft(draft) {
+  if (!draft || draft.v !== 1) return;
+  try {
+    // Basics
+    restoreChip1('style-chips', draft.style);
+    restoreChip1('semester-chips', draft.semester);
+    restoreChip1('lang-chips', draft.lang);
+
+    // Co-teachers
+    restoreChipN('coteacher-chips', draft.coTeachers);
+
+    // Different teachers
+    const diffCb = document.getElementById('diff-teach-cb');
+    if (diffCb && diffCb.checked !== draft.differentTeachers) {
+      diffCb.checked = draft.differentTeachers;
+      toggleDifferentTeachers(diffCb);
+    }
+
+    // Levels — sync chip selection, then fill cards
+    if (draft.levels && draft.levels.length) {
+      const savedKeys = draft.levels.map(l => l.key);
+      // Deselect chips not in saved, select ones that are
+      document.querySelectorAll('#level-chips-wrap .chip[data-level-key]').forEach(chip => {
+        const key = chip.dataset.levelKey;
+        const want = savedKeys.includes(key);
+        const have = chip.classList.contains('selected');
+        if (have && !want) chip.click();
+        else if (!have && want) chip.click();
+      });
+
+      // Fill each level card
+      draft.levels.forEach(lvData => {
+        const card = document.querySelector(`.level-card[data-level="${CSS.escape(lvData.key)}"]`);
+        if (!card || !lvData.slots || !lvData.slots.length) return;
+
+        // Remove all slot rows except the first, then repopulate
+        const rows = [...card.querySelectorAll('.slot-row')];
+        rows.slice(1).forEach(r => r.remove());
+
+        lvData.slots.forEach((slotData, idx) => {
+          let row;
+          if (idx === 0) {
+            row = card.querySelector('.slot-row');
+          } else {
+            row = card.querySelector('.slot-row').cloneNode(true);
+            row.querySelector('.btn-remove')?.addEventListener('click', () => { row.remove(); scheduleSave(); });
+            card.querySelector('.btn-add').before(row);
+          }
+          if (!row) return;
+          const dayPick = row.querySelector('.day-pick');
+          if (dayPick) dayPick.value = slotData.day;
+          const times = row.querySelectorAll('input[type="time"]');
+          if (times[0]) times[0].value = slotData.start;
+          if (times[1]) times[1].value = slotData.end;
+        });
+
+        // Description
+        if (lvData.description) {
+          const ta = card.querySelector('textarea');
+          if (ta) ta.value = lvData.description;
+        }
+
+        // Update slot summary badge
+        const firstTime = card.querySelector('input[type="time"]');
+        if (firstTime) updateLevelSummary(firstTime);
+      });
+    }
+
+    // Drop-in
+    const dropCb = document.getElementById('dropin-cb');
+    if (dropCb && dropCb.checked !== draft.dropIn) {
+      dropCb.checked = draft.dropIn;
+      toggleDropIn(dropCb);
+    }
+    if (draft.dropInPrice) {
+      const dp = document.getElementById('f-dropin-price');
+      if (dp) dp.value = draft.dropInPrice;
+    }
+
+    // Details
+    if (draft.description)  { const el = document.getElementById('f-description');  if (el) el.value = draft.description; }
+    if (draft.prereq)       { const el = document.getElementById('f-prereq');       if (el) el.value = draft.prereq; }
+    if (draft.whatToBring)  { const el = document.getElementById('f-bring');        if (el) el.value = draft.whatToBring; }
+    if (draft.maxStudents)  { const el = document.getElementById('f-max-students'); if (el) el.value = draft.maxStudents; }
+    if (draft.websiteNote)  { const el = document.getElementById('website-note-input'); if (el) el.value = draft.websiteNote; }
+
+    restoreChip1('min-age-chips', draft.minAge);
+    restoreChip1('studio-pref-chips', draft.studio);
+    restoreChip1('partner-chips', draft.partner);
+    restoreChipN('open-house-chips', draft.openHouse);
+
+    if (draft.specialNotes) { const el = document.getElementById('f-special-notes'); if (el) el.value = draft.specialNotes; }
+
+    showDraftBanner(draft.savedAt, true);
+  } catch(e) {
+    console.warn('Draft restore failed:', e);
+  }
+}
+
+// ─── EVENT LISTENERS ─────────────────────────────────────────────────────────
+// Capture all input/change/click on the form container
+document.querySelector('.container').addEventListener('input',  scheduleSave, true);
+document.querySelector('.container').addEventListener('change', scheduleSave, true);
+document.querySelector('.container').addEventListener('click',  scheduleSave, true);
+
+// ─── CLEAR ON SUBMIT ─────────────────────────────────────────────────────────
+// Patch submitForm to clear draft on success
+(function() {
+  const _orig = window.submitForm;
+  window.submitForm = async function() {
+    await _orig.apply(this, arguments);
+    // Clear only if submission succeeded (success banner is visible)
+    if (document.getElementById('submit-success')?.style.display !== 'none') {
+      clearDraft();
+    }
+  };
+})();
+
+// ─── INIT: restore on load ────────────────────────────────────────────────────
+(function() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (raw) restoreDraft(JSON.parse(raw));
+  } catch(e) {}
+})();
 </script>
 </body>
 </html>
