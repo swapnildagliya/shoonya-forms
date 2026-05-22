@@ -1892,19 +1892,19 @@
       <h3 class="card-title" id="lbl-choose-type">What are you submitting?</h3>
       <div class="type-grid">
 
-        <div class="type-card type-card-primary" onclick="selectType('weekly-class', this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectType('weekly-class',this);}">
+        <div class="type-card type-card-primary" onclick="window.location.href='weekly-v2.html'" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='weekly-v2.html';}">
           <span class="type-card-icon" aria-hidden="true">📅</span>
           <div class="type-card-title" data-lbl="type-weekly-title">Weekly Class</div>
           <div class="type-card-desc" data-lbl="type-weekly-desc">A recurring class every week throughout the semester — same day, same time.</div>
         </div>
 
-        <div class="type-card" onclick="selectType('workshop', this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectType('workshop',this);}">
+        <div class="type-card" onclick="window.location.href='workshop-v2.html'" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='workshop-v2.html';}">
           <span class="type-card-icon" aria-hidden="true">🎓</span>
           <div class="type-card-title" data-lbl="type-workshop-title">Workshop</div>
           <div class="type-card-desc" data-lbl="type-workshop-desc">A guest teacher or intensive — one session, a weekend, or a short series.</div>
         </div>
 
-        <div class="type-card" onclick="selectType('social-event', this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectType('social-event',this);}">
+        <div class="type-card" onclick="window.location.href='social-night-v2.html'" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='social-night-v2.html';}">
           <span class="type-card-icon" aria-hidden="true">🎉</span>
           <div class="type-card-title" data-lbl="type-social-title">Social Night</div>
           <div class="type-card-desc" data-lbl="type-social-desc">A one-off dance evening, practice night, milonga, or party with optional workshops.</div>
@@ -7533,9 +7533,14 @@ function wsRenderCoTeacherChips() {
 }
 
 function wsNext(dest) {
-  if (dest === 'workshop') { showScreen('workshop'); wsShowFormatStep(); }
-  else if (dest === 'weekly') { selectType('weekly-class', document.querySelector('.type-card')); }
-  else if (dest === 'social') { showScreen('social'); ssShowBasicsStep(); }
+  // 2026-05-22: redirect "submit another?" handlers to v2 forms. Previously
+  // bounced users back into the old inline workshop/weekly/social form sections
+  // of this file. Those are no longer the live teacher path — all three event
+  // types are served by *-v2.html now (see card routing at lines ~1895-1907).
+  // Keeps old inline form code dormant in this file but truly unreachable.
+  if (dest === 'workshop') { window.location.href = 'workshop-v2.html'; }
+  else if (dest === 'weekly') { window.location.href = 'weekly-v2.html'; }
+  else if (dest === 'social') { window.location.href = 'social-night-v2.html'; }
   else showScreen('success');
 }
 
@@ -9590,11 +9595,9 @@ async function ssSubmitToShoonya() {
 }
 
 function ssNext(dest) {
-  if (dest === 'workshop') { showScreen('workshop'); wsShowFormatStep(); }
-  else if (dest === 'weekly') {
-    const firstCard = document.querySelector('.type-card');
-    if (firstCard) selectType('weekly-class', firstCard);
-  }
+  // 2026-05-22: see wsNext above — same v2-redirect treatment.
+  if (dest === 'workshop') { window.location.href = 'workshop-v2.html'; }
+  else if (dest === 'weekly') { window.location.href = 'weekly-v2.html'; }
   else showScreen('success');
 }
 

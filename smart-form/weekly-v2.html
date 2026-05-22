@@ -1072,8 +1072,12 @@ function collectOpendeurChips() {
 
 function validate() {
   const errs = [];
-  const style = getSelectedSingle('style-chips-wrap') ||
-    document.querySelector('.section:nth-of-type(1) .chips[data-single] .chip.selected')?.textContent.replace(/\(.*\)/, '').trim();
+  // Fixed 2026-05-22 — was looking up 'style-chips-wrap' (non-existent), so
+  // primary lookup always returned '' and the nth-of-type fallback pointed at
+  // the wrong section. Result: submit always blocked on "Dance style" even
+  // when a chip was visibly selected. The actual container id is 'style-chips'.
+  const style = getSelectedSingle('style-chips') ||
+    document.querySelector('#style-chips .chip.selected')?.textContent.replace(/\(.*\)/, '').trim();
   if (!style) errs.push('Dance style');
   const levels = collectLevels();
   if (levels.length === 0) errs.push('At least one level with a valid time slot');

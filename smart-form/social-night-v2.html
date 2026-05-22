@@ -659,6 +659,12 @@ function getSelectedStyles() {
 }
 
 // ─── TITLE SUGGESTION ────────────────────────────────────────────────────────
+// Tracks the last suggested title the user actively applied. If the title input
+// still matches that exact string, style changes silently update it — so users
+// who unchecked "Kizomba" don't end up with a stale "Shoonya goes Kizomba" title.
+// Once the user manually edits the title, we never clobber their text.
+let _lastAppliedTitleSuggestion = '';
+
 function updateTitleSuggestion() {
   const styles = getSelectedStyles();
   const sugg = document.getElementById('title-suggestion');
@@ -668,11 +674,18 @@ function updateTitleSuggestion() {
   const suggested = 'Shoonya goes ' + joined;
   btn.textContent = suggested;
   sugg.style.display = 'block';
+  const titleEl = document.getElementById('f-title');
+  if (titleEl && _lastAppliedTitleSuggestion && titleEl.value === _lastAppliedTitleSuggestion) {
+    titleEl.value = suggested;
+    _lastAppliedTitleSuggestion = suggested;
+    sugg.style.display = 'none';
+  }
 }
 
 function applyTitleSuggestion() {
   const btn = document.getElementById('title-suggest-btn');
   document.getElementById('f-title').value = btn.textContent;
+  _lastAppliedTitleSuggestion = btn.textContent;
   document.getElementById('title-suggestion').style.display = 'none';
 }
 
@@ -807,7 +820,11 @@ function addPricingTier(label, price) {
 }
 
 // ─── SUBMIT ──────────────────────────────────────────────────────────────────
-function submitForm() {
+// 2026-05-22: added `async` so the `await fetch(...)` below parses correctly.
+// Codex flagged this as a P0 parse error — without async, the ENTIRE inline
+// script in this file fails to parse, breaking style chips, programme builder,
+// autosave, restore, title suggestion, and submit. Single keyword fix.
+async function submitForm() {
   const errEl = document.getElementById('error-row');
   const succEl = document.getElementById('success-row');
   errEl.style.display = 'none';
@@ -832,29 +849,33 @@ function submitForm() {
     return;
   }
 
-  // Collect data
+  // Collect data — uses canonical Social Night shape (type:'social-night',
+  // top-level doors/end/dnStart/dnEnd/musicType/djName/genres/pricing) so it
+  // matches what backend buildSquarespaceBlock, buildEventSummaryText,
+  // buildCanvaBrief, syncSocialNightToMasterSchedule, and saveToSheet read.
+  // Standardised 2026-05-22 (was: type:'social-event' with nested danceNight
+  // + doorsOpen/eventEnd/pricingTiers — keys the backend mostly ignored).
   const payload = {
-    type: 'social-event',
+    action: 'generateOutputPackage',
+    type: 'social-night',
     teacher_name: document.getElementById('f-teacher-name').value.trim(),
     email: document.getElementById('f-teacher-email').value.trim(),
     styles: styles,
     title: document.getElementById('f-title').value.trim(),
     date: document.getElementById('f-date').value,
-    doorsOpen: document.getElementById('f-doors').value,
-    eventEnd: document.getElementById('f-end').value,
+    doors: document.getElementById('f-doors').value,
+    end: document.getElementById('f-end').value,
     dresscode: document.getElementById('f-dresscode').value.trim() || null,
-    danceNight: {
-      floorOpens: document.getElementById('f-dn-start').value,
-      floorCloses: document.getElementById('f-dn-end').value,
-      musicType: musicSelected.dataset.val,
-      djName: document.getElementById('f-dj-name').value.trim() || null,
-      djSocials: document.getElementById('f-dj-social').value.trim() || null,
-      djFee: document.getElementById('f-dj-fee').value || null,
-      teacherDJ: document.getElementById('f-teacher-dj').value.trim() || null,
-      genres: [...document.querySelectorAll('#genre-chips .music-chip.selected')].map(c => c.dataset.val || c.textContent.trim()),
-    },
+    dnStart: document.getElementById('f-dn-start').value,
+    dnEnd: document.getElementById('f-dn-end').value,
+    musicType: musicSelected.dataset.val,
+    djName: document.getElementById('f-dj-name').value.trim() || null,
+    djSocials: document.getElementById('f-dj-social').value.trim() || null,
+    djFee: document.getElementById('f-dj-fee').value || null,
+    teacherDJ: document.getElementById('f-teacher-dj').value.trim() || null,
+    genres: [...document.querySelectorAll('#genre-chips .music-chip.selected')].map(c => c.dataset.val || c.textContent.trim()),
     programme: [],
-    pricingTiers: [],
+    pricing: [],
     description: document.getElementById('f-description').value.trim() || null,
     notes: document.getElementById('f-notes').value.trim() || null,
   };
@@ -874,18 +895,32 @@ function submitForm() {
 
   document.querySelectorAll('#pricing-rows .pricing-tier').forEach(row => {
     const inputs = row.querySelectorAll('input');
-    payload.pricingTiers.push({ label: inputs[0].value.trim(), price: inputs[1].value });
+    payload.pricing.push({ label: inputs[0].value.trim(), price: inputs[1].value });
   });
 
   console.log('Social night payload:', JSON.stringify(payload, null, 2));
 
-  // Mock submission
   const btn = document.querySelector('.btn-primary');
   btn.disabled = true;
   btn.textContent = 'Submitting…';
-  setTimeout(() => {
+
+  const url = (typeof APPS_SCRIPT_URL !== 'undefined') ? APPS_SCRIPT_URL : '';
+  if (!url) {
+    errEl.textContent = '⚠ APPS_SCRIPT_URL not configured. Make sure config.js is loaded.';
+    errEl.style.display = 'block';
     btn.disabled = false;
     btn.textContent = 'Submit social night →';
+    return;
+  }
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json().catch(() => ({ ok: false }));
+    if (json.ok === false) throw new Error(json.error || 'Submission failed');
     succEl.innerHTML = `
       <strong>✅ Social night submitted!</strong><br>
       <em>${payload.title}</em> — ${payload.date}<br>
@@ -893,7 +928,14 @@ function submitForm() {
     `;
     succEl.style.display = 'block';
     succEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, 900);
+    btn.textContent = 'Submitted ✓';
+    try { localStorage.removeItem(SS_DRAFT_KEY); } catch(e) {}
+  } catch (e) {
+    errEl.innerHTML = '⚠ ' + (e.message || 'Submission failed. Try again or contact info@shoonyadance.com.');
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Submit social night →';
+  }
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
@@ -912,6 +954,18 @@ function ssCollectDraft() {
     const inputs = row.querySelectorAll('input');
     return { label: inputs[0]?.value || '', price: inputs[1]?.value || '' };
   });
+  const programme = [...document.querySelectorAll('#programme-rows .prog-card')].map(card => {
+    const typeEl = card.querySelector('.chip.selected');
+    return {
+      type: typeEl ? typeEl.dataset.type : 'workshop',
+      start: card.querySelector('[data-slot="start"]')?.value || '',
+      duration: card.querySelector('[data-slot="duration"]')?.value || '',
+      level: card.querySelector('[data-slot="level"]')?.value || '',
+      style: card.querySelector('[data-slot="style"]')?.value || '',
+      teacher: card.querySelector('[data-slot="teacher"]')?.value || '',
+      topic: card.querySelector('[data-slot="topic"]')?.value || '',
+    };
+  });
   return {
     v: 1, savedAt: new Date().toISOString(),
     styles, genres, musicType,
@@ -927,6 +981,7 @@ function ssCollectDraft() {
     description: document.getElementById('f-description')?.value || '',
     notes: document.getElementById('f-notes')?.value || '',
     pricingRows,
+    programme,
   };
 }
 
@@ -981,6 +1036,23 @@ function clearSsDraftAndReload() {
       document.getElementById('pricing-rows').innerHTML = '';
       d.pricingRows.forEach(r => addPricingTier(r.label, r.price));
     }
+    (d.programme || []).forEach(p => {
+      addProgrammeSlot();
+      const card = document.getElementById('programme-rows').lastElementChild;
+      if (!card) return;
+      const setVal = (slot, val) => {
+        const el = card.querySelector(`[data-slot="${slot}"]`);
+        if (el && val !== undefined && val !== null) el.value = val;
+      };
+      setVal('start', p.start);
+      setVal('duration', p.duration);
+      setVal('level', p.level);
+      setVal('style', p.style);
+      setVal('teacher', p.teacher);
+      setVal('topic', p.topic);
+      const typeChip = card.querySelector(`.chip[data-type="${p.type || 'workshop'}"]`);
+      if (typeChip) setProgType(typeChip, card.id, p.type || 'workshop');
+    });
     showSsDraftBanner(d.savedAt);
   } catch(e) {}
 })();
