@@ -475,9 +475,9 @@
       <div class="annotation">Used on the event page and promo emails.</div>
     </div>
     <div class="field" id="guest-photo-field" style="display:none;">
-      <label class="field-label">Guest teacher photo <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label">Guest teacher photo <span class="req-mark">*</span></label>
       <input type="file" id="f-guest-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
-      <p class="field-hint">JPEG or PNG. Will be resized to 800px on submit. Used for event posters and the website.</p>
+      <p class="field-hint">JPEG or PNG. Required so the auto-design generator can produce posters for this workshop. Saved to Drive as "<em>guest teacher name</em>.jpg".</p>
     </div>
   </div>
 
@@ -827,7 +827,8 @@ const WS_FLATPICKR_OPTS = {
   altInput: true,
   altFormat: 'd/m/Y',
   allowInput: true,
-  locale: { firstDayOfWeek: 1 }   // Monday-first week per Belgian convention
+  locale: { firstDayOfWeek: 1 },  // Monday-first week per Belgian convention
+  minDate: 'today',               // 2026-05-24: prevent picking past dates
 };
 function wsInitFlatpickr(el) {
   if (typeof flatpickr === 'function' && el && !el._flatpickr) flatpickr(el, WS_FLATPICKR_OPTS);
@@ -1118,6 +1119,11 @@ function validate() {
   const sessions = collectSessions();
   if (sessions.length === 0) errs.push('At least one session date');
   if (getNum('f-price-full') === null && !getVal('f-pricing-notes')) errs.push('Full price (or special pricing notes)');
+  // 2026-05-24: if a guest teacher name is filled, the photo is required so
+  // auto-design can produce posters. Skipped when there's no guest teacher.
+  if (getVal('f-guest-teacher') && !document.getElementById('f-guest-photo')?.files?.[0]) {
+    errs.push('Guest teacher photo (required for auto-design)');
+  }
   return errs;
 }
 

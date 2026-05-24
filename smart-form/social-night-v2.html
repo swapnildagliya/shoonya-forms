@@ -493,7 +493,7 @@
 
     <div class="field">
       <label class="field-label">Event title <span class="req-mark">*</span></label>
-      <input type="text" id="f-title" placeholder="e.g. Shoonya goes Salsa &amp; Bachata">
+      <input type="text" id="f-title" placeholder="e.g. Salsa &amp; Bachata — Social Night">
       <div class="title-suggestion" id="title-suggestion">
         Suggested: <button onclick="applyTitleSuggestion()" id="title-suggest-btn"></button>
       </div>
@@ -780,8 +780,11 @@ function getSelectedStyles() {
 // ─── TITLE SUGGESTION ────────────────────────────────────────────────────────
 // Tracks the last suggested title the user actively applied. If the title input
 // still matches that exact string, style changes silently update it — so users
-// who unchecked "Kizomba" don't end up with a stale "Shoonya goes Kizomba" title.
+// who unchecked "Kizomba" don't end up with a stale title.
 // Once the user manually edits the title, we never clobber their text.
+// 2026-05-24: title pattern updated from "Shoonya goes X & Y" to
+// "X & Y — Social Night" per Swapnil's rebrand decision. Social-night design
+// shows the style name(s) as the title; "Social Night" is the category.
 let _lastAppliedTitleSuggestion = '';
 
 function updateTitleSuggestion() {
@@ -790,7 +793,7 @@ function updateTitleSuggestion() {
   const btn = document.getElementById('title-suggest-btn');
   if (styles.length === 0) { sugg.style.display = 'none'; return; }
   const joined = styles.join(' & ');
-  const suggested = 'Shoonya goes ' + joined;
+  const suggested = joined + ' — Social Night';   // em dash
   btn.textContent = suggested;
   sugg.style.display = 'block';
   const titleEl = document.getElementById('f-title');
@@ -894,14 +897,21 @@ function addProgrammeSlot() {
         <input type="text" data-slot="teacher" placeholder="Name(s)">
       </div>
     </div>
+    <!-- 2026-05-24: per-slot teacher photo (REQUIRED) so the auto-design generator can pick up each teacher's photo by name. Saved to Drive as "<teacher names>.jpg" with collision suffix. -->
+    <div class="field">
+      <label class="field-label">Teacher photo <span class="req-mark">*</span></label>
+      <input type="file" data-slot="teacher-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
+      <p class="field-hint" style="margin: 4px 0 0; font-size: 0.78rem;">Saved to Drive as "<em>teacher name</em>.jpg" — type the teacher name above first.</p>
+    </div>
     <div class="field">
       <label class="field-label">Topic / description <span style="font-weight:400; font-style:italic; text-transform:none; letter-spacing:0;">(optional)</span></label>
       <input type="text" data-slot="topic" placeholder="e.g. Body movement fundamentals, Advanced footwork…">
     </div>
   `;
   wrap.appendChild(div);
-  // Show guest teacher photo field as soon as first programme slot is added
-  document.getElementById('guest-photo-wrap').style.display = '';
+  // 2026-05-24: the legacy single guest-teacher-photo wrap stays hidden — per-slot
+  // teacher photos above replace it. Keeping the wrap in the DOM (display:none) so
+  // older drafts and any back-compat paths don't break.
 }
 
 function setProgType(el, cardId, type) {
@@ -1030,6 +1040,31 @@ function _collectValidationErrors() {
     const priceInput = row.querySelectorAll('input')[1];
     const raw = priceInput?.value.trim() || '';
     if (raw && isNaN(parseFloat(raw))) errors.push('Pricing tier ' + (i + 1) + ' price is not a number.');
+  });
+  // 2026-05-24: per-slot teacher photo is REQUIRED for auto-design generation.
+  // Each programme slot with a teacher name must have a photo attached.
+  document.querySelectorAll('#programme-rows .prog-card').forEach((card, i) => {
+    const teacherName = card.querySelector('[data-slot="teacher"]')?.value?.trim() || '';
+    const photoInput = card.querySelector('[data-slot="teacher-photo"]');
+    if (teacherName && !photoInput?.files?.[0]) {
+      errors.push('Photo for "' + teacherName + '" (slot ' + (i + 1) + ') is required.');
+    }
+  });
+  // 2026-05-24: DJ photo required when Guest DJ is selected (auto-design needs it).
+  if (musicSel && musicSel.dataset.val === 'guest-dj') {
+    const djName = document.getElementById('f-dj-name').value.trim();
+    const djPhoto = document.getElementById('f-dj-photo')?.files?.[0];
+    if (djName && !djPhoto) {
+      errors.push('Photo for "' + djName + '" (DJ) is required.');
+    }
+  }
+  // 2026-05-24: each extra DJ row with a name must also have a photo.
+  document.querySelectorAll('#extra-djs .extra-dj-row').forEach((row, i) => {
+    const name = row.querySelector('[data-extra-dj="name"]')?.value?.trim() || '';
+    const photo = row.querySelector('[data-extra-dj="photo"]')?.files?.[0];
+    if (name && !photo) {
+      errors.push('Photo for extra DJ "' + name + '" is required.');
+    }
   });
   return errors;
 }
@@ -1173,9 +1208,27 @@ async function submitForm() {
     });
   }
 
-  // Guest teacher photo — label from the first programme slot's teacher field.
-  // (The form reveals this input after the first programme slot is added; that
-  //  slot's teacher name is the natural label for the photo.)
+  // 2026-05-24: per-programme-slot teacher photos (each slot has its own input now).
+  // Replaces the single legacy guest-teacher-photo. Backend saves each as
+  // "<teacher names>.jpg" so the auto-design generator can find each slot's
+  // teachers by name.
+  for (const card of document.querySelectorAll('#programme-rows .prog-card')) {
+    const teacherName = card.querySelector('[data-slot="teacher"]')?.value?.trim() || '';
+    const photoEl = card.querySelector('[data-slot="teacher-photo"]');
+    const b64 = await _fileToB64(photoEl);
+    if (b64) {
+      payload.photos.push({
+        role: 'programme_teacher',
+        label: teacherName || 'Programme teacher',
+        b64,
+        filename: photoEl?.files?.[0]?.name || '',
+      });
+    }
+  }
+
+  // Legacy single guest-teacher photo — still collected for back-compat with any
+  // existing draft that filled it before per-slot photos shipped. Will land as
+  // role='guest_teacher'. New submissions should use the per-slot path above.
   const gtB64 = await _fileToB64(document.getElementById('f-guest-teacher-photo'));
   if (gtB64) {
     const firstSlotTeacher = document.querySelector('#programme-rows .prog-card [data-slot="teacher"]')?.value?.trim() || '';
@@ -1276,7 +1329,8 @@ if (typeof flatpickr === 'function') {
     altInput: true,
     altFormat: 'd/m/Y',
     allowInput: true,
-    locale: { firstDayOfWeek: 1 }
+    locale: { firstDayOfWeek: 1 },
+    minDate: 'today'   // 2026-05-24: prevent picking past dates
   });
 }
 
