@@ -487,14 +487,15 @@
     <h2 class="section-title">Schedule <span class="req-mark">*</span> <span class="badge-new">smart picker</span></h2>
     <p class="section-hint">Pick the pattern that matches your workshop.</p>
 
+    <!-- 2026-05-24: tab order changed to Specific dates → Recurring weekly → Back-to-back days. Most workshops are single-day so Specific dates leads. "Contiguous days" renamed to "Back-to-back days" (clearer for Belgian teachers). data-mode values kept stable so JS + content IDs don't need touching. -->
     <div class="date-pattern-tabs">
-      <div class="date-pattern-tab active" data-mode="contiguous">📅 Contiguous days</div>
+      <div class="date-pattern-tab active" data-mode="specific">🗓️ Specific dates</div>
       <div class="date-pattern-tab" data-mode="recurring">🔁 Recurring weekly</div>
-      <div class="date-pattern-tab" data-mode="specific">🗓️ Specific dates</div>
+      <div class="date-pattern-tab" data-mode="contiguous">📅 Back-to-back days</div>
     </div>
 
-    <div class="date-pattern-content active" id="pattern-contiguous">
-      <p class="field-hint" style="margin: 0 0 10px;">For 2-day weekends, intensives on consecutive days.</p>
+    <div class="date-pattern-content" id="pattern-contiguous">
+      <p class="field-hint" style="margin: 0 0 10px;">For 2-day weekends or intensives running on consecutive days (e.g. Sat + Sun).</p>
       <div class="row">
         <div class="field">
           <label class="field-label">First day</label>
@@ -535,8 +536,8 @@
       </div>
     </div>
 
-    <div class="date-pattern-content" id="pattern-specific">
-      <p class="field-hint" style="margin: 0 0 10px;">For non-contiguous date lists (e.g. 6 Fridays not in a row).</p>
+    <div class="date-pattern-content active" id="pattern-specific">
+      <p class="field-hint" style="margin: 0 0 10px;">For one-off workshops or a list of dates that aren't in a row (e.g. one Sunday workshop, or 4 Fridays spaced out).</p>
       <div class="specific-dates-list" id="specific-dates-list"></div>
       <button class="btn-add" onclick="addSpecificDate()">+ Add date</button>
     </div>
@@ -737,7 +738,7 @@ const state = {
   lang: 'EN',
   studio: 'No preference',
   partner: false,
-  datePattern: 'contiguous',
+  datePattern: 'specific',   // 2026-05-24: default to Specific dates — most workshops are single-day
   specificDates: [],
   sessions: [], // generated session list
 };
@@ -1040,7 +1041,7 @@ function selectMinCond(el) {
 }
 
 // preset default tab
-document.querySelector('.date-pattern-tab[data-mode="contiguous"]').click();
+document.querySelector('.date-pattern-tab[data-mode="specific"]').click();   // 2026-05-24: default tab now Specific dates
 
 // ───────── VALIDATION + SUBMIT ─────────
 function getVal(id) { return (document.getElementById(id)?.value || '').trim(); }
@@ -1176,10 +1177,13 @@ function _reviewSection(title, rows) {
 
 function _buildReviewSummaryHtml() {
   const sessions = collectSessions();
-  const fmtSessions = sessions.length
-    ? sessions.map(s => fmtDateLabel(s.date) + ' · ' + s.start + '–' + s.end + (s.dropIn === false ? ' (no drop-in)' : '') + (s.topic ? ' — ' + s.topic : '')).join('\n')
-    : '';
+  // 2026-05-24: only annotate "(no drop-in)" in the review summary when the
+  // drop-in toggle is ON. When the toggle is OFF, every session is trivially
+  // not-drop-in, so the annotation adds nothing but visual noise.
   const dropinEnabled = document.getElementById('f-single-session')?.checked;
+  const fmtSessions = sessions.length
+    ? sessions.map(s => fmtDateLabel(s.date) + ' · ' + s.start + '–' + s.end + (dropinEnabled && s.dropIn === false ? ' (no drop-in)' : '') + (s.topic ? ' — ' + s.topic : '')).join('\n')
+    : '';
   return [
     _reviewSection('Who', [
       _reviewRow('Submitting as', getVal('f-teacher-name'), null),
