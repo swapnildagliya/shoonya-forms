@@ -889,23 +889,24 @@ function addProgrammeSlot() {
     </div>
     <div class="row">
       <div class="field">
-        <label class="field-label">Style</label>
+        <label class="field-label prog-style-label">Style <small style="font-weight:400; color:var(--mid);">(pick type above)</small></label>
         <input type="text" data-slot="style" placeholder="e.g. Bachata, Kizomba…">
       </div>
       <div class="field">
-        <label class="field-label">Teacher</label>
+        <label class="field-label prog-teacher-label">Teacher / performer <small style="font-weight:400; color:var(--mid);">(pick type above)</small></label>
         <input type="text" data-slot="teacher" placeholder="Name(s)">
       </div>
     </div>
-    <!-- 2026-05-24: per-slot teacher photo (REQUIRED) so the auto-design generator can pick up each teacher's photo by name. Saved to Drive as "<teacher names>.jpg" with collision suffix. -->
+    <!-- 2026-05-24: per-slot teacher photo so the auto-design generator can pick up each teacher's photo by name. Saved to Drive as "<teacher names>.jpg" with collision suffix. Required when type is workshop/performance AND a teacher name is filled. -->
     <div class="field">
-      <label class="field-label">Teacher photo <span class="req-mark">*</span></label>
+      <label class="field-label">Teacher / performer photo <span class="req-mark">*</span></label>
       <input type="file" data-slot="teacher-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
-      <p class="field-hint" style="margin: 4px 0 0; font-size: 0.78rem;">Saved to Drive as "<em>teacher name</em>.jpg" — type the teacher name above first.</p>
+      <p class="field-hint" style="margin: 4px 0 0; font-size: 0.78rem;">Saved to Drive as "<em>name</em>.jpg" — type the name above first.</p>
     </div>
     <div class="field">
-      <label class="field-label">Topic / description <span style="font-weight:400; font-style:italic; text-transform:none; letter-spacing:0;">(optional)</span></label>
+      <label class="field-label prog-topic-label">Topic / description <small style="font-weight:400; font-style:italic; color:var(--mid);">(pick type above)</small></label>
       <input type="text" data-slot="topic" placeholder="e.g. Body movement fundamentals, Advanced footwork…">
+      <p class="field-hint prog-type-hint" style="margin: 4px 0 0; font-size: 0.78rem;"></p>
     </div>
   `;
   wrap.appendChild(div);
@@ -914,10 +915,42 @@ function addProgrammeSlot() {
   // older drafts and any back-compat paths don't break.
 }
 
+// 2026-05-24: setProgType now (a) updates the slot title with the selected
+// type so the click registers visually, and (b) toggles per-type guidance:
+//   Workshop: style + teacher + photo required (validated on submit)
+//   Performance: style + teacher + photo required (act/performer = teacher field)
+//   Other: topic/description required (style/teacher may not apply)
+// The fields themselves stay in the DOM for all types — validation drives
+// what's actually required so the UI stays consistent across types.
 function setProgType(el, cardId, type) {
   const card = document.getElementById(cardId);
-  card.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+  // Only chips in the header (not bottom chips like in pricing) — scope to .prog-card-header
+  card.querySelectorAll('.prog-card-header .chip').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
+  // Update the slot title with the chosen type
+  const titleEl = card.querySelector('.prog-card-title');
+  if (titleEl) {
+    const num = (titleEl.textContent.match(/Slot\s+(\d+)/) || [])[1] || '';
+    const typeLabel = type === 'workshop' ? 'Workshop' : type === 'performance' ? 'Performance' : 'Other';
+    titleEl.textContent = num ? ('Slot ' + num + ' · ' + typeLabel) : titleEl.textContent;
+  }
+  // Update per-type hint on the topic field + show/hide style/teacher labels
+  const topicHint = card.querySelector('.prog-type-hint');
+  const styleLabel = card.querySelector('.prog-style-label');
+  const teacherLabel = card.querySelector('.prog-teacher-label');
+  const topicLabel = card.querySelector('.prog-topic-label');
+  if (type === 'other') {
+    if (topicHint) topicHint.textContent = 'Required for "Other" — explain what this slot is.';
+    if (topicLabel) topicLabel.innerHTML = 'What is this? <span class="req-mark">*</span>';
+    if (styleLabel) styleLabel.innerHTML = 'Style <small style="font-weight:400; color:var(--mid);">(optional)</small>';
+    if (teacherLabel) teacherLabel.innerHTML = 'Teacher / performer <small style="font-weight:400; color:var(--mid);">(optional)</small>';
+  } else {
+    if (topicHint) topicHint.textContent = '';
+    const personLabel = type === 'performance' ? 'Performer' : 'Teacher';
+    if (topicLabel) topicLabel.innerHTML = 'Topic / description <small style="font-weight:400; font-style:italic; color:var(--mid);">(optional)</small>';
+    if (styleLabel) styleLabel.innerHTML = 'Style <span class="req-mark">*</span>';
+    if (teacherLabel) teacherLabel.innerHTML = personLabel + ' <span class="req-mark">*</span>';
+  }
 }
 
 // ─── EXTRA DJS ───────────────────────────────────────────────────────────────
@@ -1041,13 +1074,32 @@ function _collectValidationErrors() {
     const raw = priceInput?.value.trim() || '';
     if (raw && isNaN(parseFloat(raw))) errors.push('Pricing tier ' + (i + 1) + ' price is not a number.');
   });
-  // 2026-05-24: per-slot teacher photo is REQUIRED for auto-design generation.
-  // Each programme slot with a teacher name must have a photo attached.
+  // 2026-05-24: full per-slot programme validation. Requirements depend on slot type.
+  //   Workshop / Performance: style + teacher/performer name + photo
+  //   Other: topic/description (style + teacher optional)
+  //   All types: a type chip must be picked
   document.querySelectorAll('#programme-rows .prog-card').forEach((card, i) => {
-    const teacherName = card.querySelector('[data-slot="teacher"]')?.value?.trim() || '';
-    const photoInput = card.querySelector('[data-slot="teacher-photo"]');
-    if (teacherName && !photoInput?.files?.[0]) {
-      errors.push('Photo for "' + teacherName + '" (slot ' + (i + 1) + ') is required.');
+    const slotNum = i + 1;
+    const typeEl = card.querySelector('.prog-card-header .chip.selected');
+    if (!typeEl) {
+      errors.push('Slot ' + slotNum + ': pick a type (Workshop / Performance / Other).');
+      return;   // skip further checks for this slot — they depend on type
+    }
+    const type = typeEl.dataset.type;
+    const styleVal   = card.querySelector('[data-slot="style"]')?.value?.trim()   || '';
+    const teacherVal = card.querySelector('[data-slot="teacher"]')?.value?.trim() || '';
+    const topicVal   = card.querySelector('[data-slot="topic"]')?.value?.trim()   || '';
+    const photoFile  = card.querySelector('[data-slot="teacher-photo"]')?.files?.[0];
+
+    if (type === 'workshop' || type === 'performance') {
+      const role = type === 'performance' ? 'performer' : 'teacher';
+      if (!styleVal)   errors.push('Slot ' + slotNum + ' (' + type + '): style is required.');
+      if (!teacherVal) errors.push('Slot ' + slotNum + ' (' + type + '): ' + role + ' name is required.');
+      if (teacherVal && !photoFile) errors.push('Slot ' + slotNum + ': photo for "' + teacherVal + '" is required (auto-design).');
+    } else if (type === 'other') {
+      if (!topicVal) errors.push('Slot ' + slotNum + ' (other): description is required — explain what this slot is.');
+      // Style + teacher optional for "other"; photo required only if a teacher name is filled
+      if (teacherVal && !photoFile) errors.push('Slot ' + slotNum + ': photo for "' + teacherVal + '" is required (auto-design).');
     }
   });
   // 2026-05-24: DJ photo required when Guest DJ is selected (auto-design needs it).
