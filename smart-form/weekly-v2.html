@@ -427,17 +427,18 @@
 
     <div class="field">
       <label class="field-label">Dance style</label>
+      <!-- 2026-05-24 audit P0-3 + P0-4: dropped default-selected Bollywood (was lying about teacher), dropped "(demo only)" label on Tap Dance, removed the "Only showing styles assigned to your teacher profile" hint text (was a lie — chips are hardcoded, no profile fetch). Real per-teacher filter is part of item #17. -->
       <div class="chips" data-single id="style-chips">
-        <div class="chip selected" onclick="selectSingle(this)">Bollywood</div>
+        <div class="chip" onclick="selectSingle(this)">Bollywood</div>
         <div class="chip" onclick="selectSingle(this)">Bhangra</div>
         <div class="chip" onclick="selectSingle(this)">Garba</div>
         <div class="chip" onclick="selectSingle(this)">Indian Semi-Classical</div>
         <div class="chip" onclick="selectSingle(this)">Bollyfolk</div>
         <div class="chip" onclick="selectSingle(this)">ISC</div>
-        <div class="chip" onclick="selectSingle(this)" style="opacity:.7;font-style:italic;">Tap Dance <small>(demo only)</small></div>
+        <div class="chip" onclick="selectSingle(this)">Tap Dance</div>
         <div class="chip" onclick="alert('Custom style input — for combos like Garba+Kalbeliya')">+ Other...</div>
       </div>
-      <p class="field-hint">Only showing styles assigned to your teacher profile. Use "Other" for combos like Garba + Kalbeliya. Tap Dance shown here for demo — try selecting it to see L1–L6 appear in Section 3.</p>
+      <p class="field-hint">Use "Other" for combos like Garba + Kalbeliya.</p>
     </div>
 
     <div class="row">
@@ -495,8 +496,9 @@
     <div class="field">
       <label class="field-label">Levels offered <span class="badge-new">multi-select</span></label>
       <div class="chips" id="level-chips-wrap">
-        <div class="chip chip-multi selected" data-level-key="L1" onclick="toggleLevel(this, 'L1')">Level 1</div>
-        <div class="chip chip-multi selected" data-level-key="L2" onclick="toggleLevel(this, 'L2')">Level 2</div>
+        <!-- 2026-05-24 audit P0-3: dropped default-selected L1+L2 (varies per teacher/style). Teacher actively picks levels. -->
+        <div class="chip chip-multi" data-level-key="L1" onclick="toggleLevel(this, 'L1')">Level 1</div>
+        <div class="chip chip-multi" data-level-key="L2" onclick="toggleLevel(this, 'L2')">Level 2</div>
         <div class="chip chip-multi" data-level-key="L3" onclick="toggleLevel(this, 'L3')">Level 3</div>
         <div class="chip chip-multi" data-level-key="Open" onclick="toggleLevel(this, 'Open')">Open level</div>
         <div class="chip" id="add-custom-level-chip" onclick="addCustomLevel()">+ Other level...</div>
@@ -780,7 +782,7 @@ const LEVEL_LABELS = {
   'Open': 'Open level', 'Starter': 'Starter Series',
 };
 
-// Mockup: per-style per-level descriptions. In production these come from
+// TODO (item #17): per-style per-level descriptions. Once wired, these come from
 // (1) teacher's prior submission for that style+level, falling back to
 // (2) WS_STYLE_DATA[style].descriptionsByLevel canonical descriptions.
 const SAMPLE_LEVEL_DESCRIPTIONS = {
@@ -967,7 +969,7 @@ function addCustomLevel() {
   if (!name) return;
   const trimmed = name.trim();
   if (!trimmed) return;
-  // Use the typed name as both the key and the label (kept simple for mockup)
+  // Use the typed name as both the key and the label (good enough for custom levels)
   const wrap = document.getElementById('level-chips-wrap');
   const addBtn = document.getElementById('add-custom-level-chip');
   // Avoid duplicates
@@ -1044,8 +1046,9 @@ function collectLevels() {
 }
 
 function collectOpendeurChips() {
-  // Each chip text looks like "Sat 13 Sep — morning"; in production we'd parse.
-  // For mockup the strings are placeholders only — we send them as raw strings.
+  // Each chip text looks like "Sat 13 Sep — morning". TODO (item #17): parse
+  // these into ISO dates for backend. Today we strip them out — see the
+  // P0-2 fix to `opendeur_availability` in the submit payload.
   const container = document.querySelector('.section:nth-of-type(6) .chips');
   if (!container) return [];
   return Array.from(container.querySelectorAll('.chip.selected'))
@@ -1080,7 +1083,7 @@ async function submitForm() {
     return;
   }
 
-  // Collect language (single chip in mockup, but server expects comma-joined string)
+  // Collect language (single chip; server accepts a string)
   const lang = getSelectedSingle('lang-row') ||
     Array.from(document.querySelectorAll('.section:nth-of-type(1) .chips[data-single]')).pop()
       ?.querySelector('.chip.selected')?.textContent.trim() || 'EN';
@@ -1135,11 +1138,13 @@ async function submitForm() {
     what_to_bring: whatToBring,
     prereq,
     website_note: websiteNote,
-    opendeur_availability: collectOpendeurChips().reduce((acc, label, i) => {
-      // Placeholder — real form would translate chip labels to ISO dates
-      acc['placeholder_' + i] = { available: true, time: 'any', label };
-      return acc;
-    }, {}),
+    // 2026-05-24 audit P0-2: was sending literal `placeholder_0`, `placeholder_1` ...
+    // keys for open-house availability. Real shape expected by backend is keyed
+    // by ISO date (e.g. {'2026-09-13':{available:true,time:'morning'}}), and the
+    // chip-label→ISO translation was never wired ("real form would translate
+    // chip labels to ISO dates" — never built). Emit `{}` until the chip mapping
+    // ships (item #17), so backend doesn't store garbage in the teacher profile.
+    opendeur_availability: {},
     pricing_notes: specialNotes,
     structured: true,
     submitted_via: 'weekly-v2-form',

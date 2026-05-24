@@ -135,6 +135,9 @@
   .chip:hover { background: var(--purple-tint); }
   .chip.selected { background: var(--purple); color: white; border-color: var(--purple); }
   .chip-multi.selected::before { content: '✓ '; }
+  /* 2026-05-24 audit P1-2: hide chips not in teacher's dance_styles by default. #style-chips.show-all reveals them after the "+ Show all styles" expand chip is clicked. */
+  #style-chips .chip-style-hidden { display: none; }
+  #style-chips.show-all .chip-style-hidden { display: inline-flex; }
   .toggle-section {
     background: #F8F3FF;
     border-left: 3px solid var(--purple);
@@ -407,9 +410,7 @@
   <h1>Social Night Submission</h1>
   <p class="subtitle">Submit a social night, milonga, practice night, or themed party evening.</p>
 
-  <div class="v2-banner">
-    <strong>Redesigned form (v2).</strong> Single page, smarter programme builder. Submits to the same Shoonya backend.
-  </div>
+  <!-- 2026-05-24 audit: third v2 beta-tester banner stripped (the earlier sweep missed this variant — "Redesigned form (v2). Single page, smarter programme builder"). Now consistent with workshop-v2 + weekly-v2. -->
 
   <!-- TEACHER IDENTITY (hidden — filled by login-panel.js) -->
   <input type="hidden" id="f-teacher-name">
@@ -1078,12 +1079,57 @@ document.querySelector('.container').addEventListener('click', e => {
 });
 
 // Teacher login — store identity in hidden fields
+// 2026-05-24 audit P1-2: parse teacher's dance_styles into a normalised array.
+// Backend buildPublicProfile (code.gs:2901) returns the raw teacher row, so
+// dance_styles can be a CSV string ("Bachata, Kizomba") OR a JSON-array string
+// ('["Bachata","Kizomba"]') — handle both. Empty → [] meaning "show all" so a
+// new teacher isn't locked out.
+function ssParseTeacherStyles(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return [];
+  if (s.charAt(0) === '[') { try { return JSON.parse(s).map(x => String(x).trim()).filter(Boolean); } catch (e) {} }
+  return s.split(',').map(x => x.trim()).filter(Boolean);
+}
+
+// 2026-05-24 audit P1-2: filter style chips to teacher's registered styles +
+// an "+ Show all styles" expand chip. Hidden chips get .chip-style-hidden so
+// CSS can hide them by default and reveal when #style-chips has .show-all.
+function ssApplyStyleFilter(profile) {
+  const styles = ssParseTeacherStyles(profile && profile.dance_styles);
+  if (!styles.length) return;   // no profile styles → show all (don't lock out)
+  const lower = styles.map(s => s.toLowerCase());
+  const wrap = document.getElementById('style-chips');
+  if (!wrap) return;
+  let hiddenCount = 0;
+  wrap.querySelectorAll('.chip.chip-multi').forEach(chip => {
+    const val = (chip.dataset.val || '').toLowerCase();
+    if (!lower.includes(val)) {
+      chip.classList.add('chip-style-hidden');
+      hiddenCount++;
+    }
+  });
+  if (hiddenCount > 0 && !document.getElementById('ss-show-all-styles')) {
+    const showAll = document.createElement('div');
+    showAll.className = 'chip';
+    showAll.id = 'ss-show-all-styles';
+    showAll.textContent = '+ Show all styles';
+    showAll.style.cursor = 'pointer';
+    showAll.onclick = () => {
+      wrap.classList.add('show-all');
+      showAll.remove();
+    };
+    const otherBtn = wrap.querySelector('.chip:not(.chip-multi)');   // the "+ Other..." button
+    if (otherBtn) wrap.insertBefore(showAll, otherBtn); else wrap.appendChild(showAll);
+  }
+}
+
 window.addEventListener('shoonya:login', function(e) {
   const p = e.detail;
   const nameEl = document.getElementById('f-teacher-name');
   const emailEl = document.getElementById('f-teacher-email');
   if (nameEl) nameEl.value = p.name || '';
   if (emailEl) emailEl.value = p.email || '';
+  ssApplyStyleFilter(p);   // 2026-05-24 audit P1-2
 });
 </script>
 </body>

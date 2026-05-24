@@ -122,6 +122,9 @@
   .chip:hover { background: var(--purple-tint); }
   .chip.selected { background: var(--purple); color: white; border-color: var(--purple); }
   .chip-multi.selected::before { content: '✓ '; }
+  /* 2026-05-24 audit P1-2: hide chips not in teacher's dance_styles by default; #style-chips.show-all reveals them. */
+  #style-chips .chip-style-hidden { display: none; }
+  #style-chips.show-all .chip-style-hidden { display: inline-flex; }
   .price-row {
     display: grid;
     grid-template-columns: 1fr 120px;
@@ -483,9 +486,11 @@
         <div class="field">
           <label class="field-label">Day of week</label>
           <select id="f-rec-dow">
+            <!-- 2026-05-24 audit P1-3: changed default from "Wednesday" to a forced-pick placeholder. Was a dev convenience that shipped. -->
+            <option value="" selected disabled>— pick day —</option>
             <option value="1">Monday</option>
             <option value="2">Tuesday</option>
-            <option value="3" selected>Wednesday</option>
+            <option value="3">Wednesday</option>
             <option value="4">Thursday</option>
             <option value="5">Friday</option>
             <option value="6">Saturday</option>
@@ -1155,6 +1160,42 @@ document.querySelector('.container').addEventListener('click', e => {
   if (e.target.classList.contains('chip') || e.target.classList.contains('date-pattern-tab')) wsScheduleSave();
 });
 
+// 2026-05-24 audit P1-2: parse teacher's dance_styles (CSV or JSON-array string,
+// see backend/code.gs:958 parseProfileDanceStyles). Empty → [] means "show all"
+// so a new teacher isn't locked out.
+function wsParseTeacherStyles(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return [];
+  if (s.charAt(0) === '[') { try { return JSON.parse(s).map(x => String(x).trim()).filter(Boolean); } catch (e) {} }
+  return s.split(',').map(x => x.trim()).filter(Boolean);
+}
+
+// 2026-05-24 audit P1-2: filter style chips to teacher's registered styles +
+// an "+ Show all styles" expand chip (workshops legitimately can cover any
+// style as a guest masterclass, hence the show-all fallback).
+function wsApplyStyleFilter(profile) {
+  const styles = wsParseTeacherStyles(profile && profile.dance_styles);
+  if (!styles.length) return;
+  const lower = styles.map(s => s.toLowerCase());
+  const wrap = document.getElementById('style-chips');
+  if (!wrap) return;
+  let hiddenCount = 0;
+  wrap.querySelectorAll('.chip.chip-multi').forEach(chip => {
+    const val = (chip.dataset.val || '').toLowerCase();
+    if (!lower.includes(val)) { chip.classList.add('chip-style-hidden'); hiddenCount++; }
+  });
+  if (hiddenCount > 0 && !document.getElementById('ws-show-all-styles')) {
+    const showAll = document.createElement('div');
+    showAll.className = 'chip';
+    showAll.id = 'ws-show-all-styles';
+    showAll.textContent = '+ Show all styles';
+    showAll.style.cursor = 'pointer';
+    showAll.onclick = () => { wrap.classList.add('show-all'); showAll.remove(); };
+    const otherBtn = wrap.querySelector('.chip:not(.chip-multi)');   // the "+ Other..." button
+    if (otherBtn) wrap.insertBefore(showAll, otherBtn); else wrap.appendChild(showAll);
+  }
+}
+
 // Teacher login — pre-fill identity fields and hide Section 0
 window.addEventListener('shoonya:login', function(e) {
   const p = e.detail;
@@ -1165,6 +1206,7 @@ window.addEventListener('shoonya:login', function(e) {
   // Hide "Who are you?" section — login bar at top already shows the teacher
   const sec0 = document.getElementById('ws-section-who');
   if (sec0) sec0.style.display = 'none';
+  wsApplyStyleFilter(p);   // 2026-05-24 audit P1-2
 });
 </script>
 </body>
