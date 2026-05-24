@@ -919,10 +919,20 @@ function addExtraDJ() {
   row.className = 'extra-dj-row';
   // 2026-05-24 audit L6 + L12: dn-input class replaces inline dark styling.
   // L11: aria-label on the remove button.
+  // 2026-05-24 photo wire-up: each extra DJ row now includes its own photo input
+  // so auto-design tools can pick up per-DJ photos by name. Backend renames the
+  // saved file to "<dj name>.jpg" + disambiguates collisions.
   row.innerHTML = `
-    <input type="text" class="dn-input" placeholder="DJ name or alias">
-    <input type="text" class="dn-input" placeholder="Instagram / website (optional)">
-    <button class="btn-remove-dark" type="button" aria-label="Remove extra DJ" onclick="this.closest('.extra-dj-row').remove()">✕</button>
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <input type="text" class="dn-input" data-extra-dj="name" placeholder="DJ name or alias" style="flex: 1; min-width: 180px;">
+      <input type="text" class="dn-input" data-extra-dj="social" placeholder="Instagram / website (optional)" style="flex: 1; min-width: 180px;">
+      <button class="btn-remove-dark" type="button" aria-label="Remove extra DJ" onclick="this.closest('.extra-dj-row').remove()">✕</button>
+    </div>
+    <div style="margin-top: 8px;">
+      <label class="field-label" style="font-size: 0.78rem; color: #c49cee; margin-bottom: 4px; display: block;">Photo (optional)</label>
+      <input type="file" data-extra-dj="photo" accept="image/*" class="dn-input" style="font-size: 0.85rem; padding: 6px 8px;">
+      <p class="field-hint" style="margin: 4px 0 0; font-size: 0.78rem; color: #B7A1D6;">Saved to Drive as "<em>DJ name</em>.jpg" — type the DJ's name above first.</p>
+    </div>
   `;
   wrap.appendChild(row);
 }
@@ -1143,16 +1153,61 @@ async function submitForm() {
     pricing: [],
     description: document.getElementById('f-description').value.trim() || null,
     notes: document.getElementById('f-notes').value.trim() || null,
-    // 2026-05-24 (audit surprise): wire the 2 photo inputs to the payload.
-    // Backend (output-generator.gs:271-278) reads `guest_teacher_photo_b64` +
-    // `dj_photo_b64` for Drive upload. Form had the file inputs but never sent
-    // anything; every "photo upload" silently failed.
-    guest_teacher_photo_name: document.getElementById('f-guest-teacher-photo')?.files?.[0]?.name || '',
-    guest_teacher_photo_b64:  await _fileToB64(document.getElementById('f-guest-teacher-photo')),
-    dj_photo_name:            document.getElementById('f-dj-photo')?.files?.[0]?.name || '',
-    dj_photo_b64:             await _fileToB64(document.getElementById('f-dj-photo')),
     submitted_via: 'social-night-v2-form',   // 2026-05-24 audit S8
   };
+
+  // 2026-05-24 photo wire-up: structured `photos[]` array. Backend renames each
+  // saved file to "<label>.jpg" (with collision suffix "DJ Kimo 2.jpg" if needed)
+  // and returns BOTH the Drive viewer URL and a direct CDN URL (`directUrl`)
+  // that auto-design tools (Canva, etc.) can fetch as an actual image.
+  payload.photos = [];
+
+  // Main DJ photo — label from `f-dj-name`
+  const djB64 = await _fileToB64(document.getElementById('f-dj-photo'));
+  if (djB64) {
+    payload.photos.push({
+      role: 'dj',
+      label: document.getElementById('f-dj-name').value.trim() || 'DJ',
+      b64: djB64,
+      filename: document.getElementById('f-dj-photo')?.files?.[0]?.name || '',
+    });
+  }
+
+  // Guest teacher photo — label from the first programme slot's teacher field.
+  // (The form reveals this input after the first programme slot is added; that
+  //  slot's teacher name is the natural label for the photo.)
+  const gtB64 = await _fileToB64(document.getElementById('f-guest-teacher-photo'));
+  if (gtB64) {
+    const firstSlotTeacher = document.querySelector('#programme-rows .prog-card [data-slot="teacher"]')?.value?.trim() || '';
+    payload.photos.push({
+      role: 'guest_teacher',
+      label: firstSlotTeacher || 'Guest teacher',
+      b64: gtB64,
+      filename: document.getElementById('f-guest-teacher-photo')?.files?.[0]?.name || '',
+    });
+  }
+
+  // Each extra DJ row — name + optional photo (per-row inputs added 2026-05-24)
+  for (const row of document.querySelectorAll('#extra-djs .extra-dj-row')) {
+    const nameEl = row.querySelector('[data-extra-dj="name"]');
+    const photoEl = row.querySelector('[data-extra-dj="photo"]');
+    const b64 = await _fileToB64(photoEl);
+    if (b64) {
+      payload.photos.push({
+        role: 'dj',
+        label: (nameEl?.value || '').trim() || 'Additional DJ',
+        b64,
+        filename: photoEl?.files?.[0]?.name || '',
+      });
+    }
+  }
+
+  // Legacy flat fields — kept for back-compat with any backend code path that
+  // still reads them directly. Remove once `payload.photos[]` is fully verified.
+  payload.dj_photo_name            = document.getElementById('f-dj-photo')?.files?.[0]?.name || '';
+  payload.dj_photo_b64             = djB64;
+  payload.guest_teacher_photo_name = document.getElementById('f-guest-teacher-photo')?.files?.[0]?.name || '';
+  payload.guest_teacher_photo_b64  = gtB64;
 
   // 2026-05-24 audit S9: shared collector — see ssCollectProgramme().
   payload.programme = ssCollectProgramme({ nullTopic: true });

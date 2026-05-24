@@ -1269,8 +1269,11 @@ async function submitForm() {
     guest_teacher: getVal('f-guest-teacher'),
     guest_web: getVal('f-guest-web'),
     guest_bio: getVal('f-guest-bio'),
+    // 2026-05-24 photo wire-up: legacy flat field kept; structured `photos[]`
+    // is built below. Backend renames saved file to "<guest teacher name>.jpg".
     guest_photo_name: document.getElementById('f-guest-photo')?.files?.[0]?.name || '',
-    guest_photo_b64:  await _fileToB64(document.getElementById('f-guest-photo')),   // 2026-05-24 (audit surprise): backend reads `guest_photo_b64` for Drive upload but form was only sending the name. Now sends base64 too.
+    guest_photo_b64:  await _fileToB64(document.getElementById('f-guest-photo')),
+    guest_photo_label: getVal('f-guest-teacher'),   // backend uses this for renaming when the flat-field path is taken
     co_teacher: getVal('f-co-teacher'),
     language: state.lang,
     what_to_bring: getVal('f-bring'),
@@ -1286,6 +1289,20 @@ async function submitForm() {
     pricing_notes: getVal('f-pricing-notes'),     // NEW field
     submitted_via: 'workshop-v2-form',
   };
+
+  // 2026-05-24 photo wire-up: also send structured `photos[]` so backend can
+  // rename + return direct CDN URL. Workshop only has one photo slot (guest
+  // teacher), so the array has 0 or 1 entries. Legacy flat fields above are
+  // kept for back-compat.
+  payload.photos = [];
+  if (payload.guest_photo_b64) {
+    payload.photos.push({
+      role: 'guest_teacher',
+      label: getVal('f-guest-teacher') || 'Guest teacher',
+      b64: payload.guest_photo_b64,
+      filename: payload.guest_photo_name || '',
+    });
+  }
 
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
