@@ -409,10 +409,10 @@
   <input type="hidden" id="f-teacher-name">
   <input type="hidden" id="f-teacher-email">
 
-  <!-- PRE-FILL BANNER (shown when teacher has prior submissions for this style) -->
-  <div style="background: var(--green-tint); border: 1px solid #BBE9CB; border-radius: 8px; padding: 14px 18px; margin-bottom: 28px; font-size: 0.9rem; color: #14532D; display: flex; justify-content: space-between; align-items: center;">
-    <span>✅ <strong>Pre-filled from your Spring 2026 submission</strong> for Bollywood — update anything that's changed.</span>
-    <a href="#" onclick="event.preventDefault();alert('Start fresh — clears all pre-filled data (mockup)')" style="color: var(--purple-dark); text-decoration: underline; font-size: 0.82rem;">Start fresh</a>
+  <!-- PRE-FILL BANNER — 2026-05-24: hidden until the pre-fill logic is actually wired. Previously hardcoded "Bollywood / Spring 2026" text was shown to every teacher. Will be re-enabled with real per-teacher per-style copy as part of TASKS #17. -->
+  <div style="display: none; background: var(--green-tint); border: 1px solid #BBE9CB; border-radius: 8px; padding: 14px 18px; margin-bottom: 28px; font-size: 0.9rem; color: #14532D; justify-content: space-between; align-items: center;">
+    <span>✅ <strong>Pre-filled from your previous submission</strong> — update anything that's changed.</span>
+    <a href="#" onclick="event.preventDefault();alert('Start fresh — clears all pre-filled data')" style="color: var(--purple-dark); text-decoration: underline; font-size: 0.82rem;">Start fresh</a>
   </div>
 
   <!-- DRAFT RESTORED BANNER (hidden until a saved draft is found) -->
@@ -468,26 +468,12 @@
     <p class="section-hint">Just you, or are you teaching with others?</p>
 
     <div class="field">
-      <label class="field-label">Co-teacher(s) <span class="badge-new">multi-select</span></label>
-      <p class="field-hint" style="margin: 0 0 10px;">Previous semester co-teachers shown first (pre-selected).</p>
-      <div class="chips" id="coteacher-chips">
-        <!-- Previous semester (auto-selected) -->
-        <div class="chip chip-multi selected" onclick="toggleMulti(this)" title="Co-taught with you last semester">⭐ Aanchal Mehta</div>
-        <!-- All other Shoonya teachers -->
-        <div class="chip chip-multi" onclick="toggleMulti(this)">Alex Vandenberghe</div>
-        <div class="chip chip-multi" onclick="toggleMulti(this)">Badriyah</div>
-        <div class="chip chip-multi" onclick="toggleMulti(this)">Ioanna</div>
-        <div class="chip chip-multi" onclick="toggleMulti(this)">Jordan</div>
-        <div class="chip chip-multi" onclick="toggleMulti(this)">Kitty</div>
-        <div class="chip chip-multi" onclick="toggleMulti(this)">La Liz</div>
-        <div class="chip chip-multi" onclick="toggleMulti(this)">Lenka Badriyah</div>
-        <div class="chip chip-multi" onclick="toggleMulti(this)">Lennert</div>
-        <div class="chip chip-multi" onclick="toggleMulti(this)">Lut Vermeulen</div>
-        <div class="chip chip-multi" onclick="toggleMulti(this)">Sonja</div>
-        <div class="chip chip-multi" onclick="toggleMulti(this)">Teddy</div>
-        <div class="chip chip-multi" onclick="toggleMulti(this)">Wim</div>
+      <label class="field-label">Co-teacher(s)</label>
+      <p class="field-hint" style="margin: 0 0 10px;">If you're teaching with someone, type their name(s) below — separate multiple names with a comma. Leave blank if teaching solo.</p>
+      <!-- 2026-05-24: hardcoded teacher chip list removed. Previously rendered a fake "Aanchal Mehta" (pre-selected), wrong "Alex Vandenberghe", duplicate "Badriyah" etc. — never wired to the Teachers sheet. Free-text fallback in use until TASKS #17 wires real fetch + pre-select. The submit, autosave-collect, and autosave-restore code below was updated to read from `#coteacher-freetext` instead of the old chip-multi DOM. -->
+      <div id="coteacher-chips">
+        <input type="text" id="coteacher-freetext" placeholder="e.g. Sonja, Wim" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.95rem;">
       </div>
-      <p class="field-hint" style="margin-top: 8px;">⭐ = co-taught last semester. Leave all unselected if teaching solo.</p>
     </div>
 
     <label class="checkbox-row">
@@ -523,9 +509,7 @@
       </p>
     </div>
 
-    <div class="annotation" style="margin-bottom: 16px;">
-      <strong>Dates UI not redesigned in Phase A.</strong> The existing per-day date grid (group by Monday/Wednesday/Thursday with click-to-skip per date) carries over unchanged from the current form. Live session count + prorated pricing already works there.
-    </div>
+    <!-- 2026-05-24: removed Phase-A dev annotation that was visible to teachers and mentioned "prorated pricing" (violates the no-prorate site-wide rule). The actual date grid below works as-is. -->
 
     <!-- LEVEL CARDS -->
     <div id="level-cards">
@@ -1109,9 +1093,10 @@ async function submitForm() {
   const partner = Array.from(document.querySelectorAll('.section:nth-of-type(5) .chips[data-single]'))[2]
     ?.querySelector('.chip.selected')?.textContent.trim() || 'No';
 
-  // Co-teachers: multi-select chips in Section 2
-  const coContainer = document.querySelector('.section:nth-of-type(2) .chips');
-  const coTeachers = coContainer ? getSelectedMultiByContainer(coContainer) : [];
+  // Co-teachers: free-text input in Section 2 (was multi-select chips; chip list was
+  // hardcoded mockup data — 2026-05-24 swap, see comment at #coteacher-chips).
+  const coTeachers = (document.getElementById('coteacher-freetext')?.value || '')
+    .split(',').map(s => s.trim()).filter(Boolean);
 
   // Section 5 textareas
   const textareas = document.querySelectorAll('.section:nth-of-type(5) textarea');
@@ -1229,7 +1214,7 @@ function collectDraft() {
     style:            grab1('style-chips'),
     semester:         grab1('semester-chips'),
     lang:             grab1('lang-chips'),
-    coTeachers:       grabN('coteacher-chips').map(t => t.replace(/^⭐\s*/, '').trim()),
+    coTeachers:       (document.getElementById('coteacher-freetext')?.value || '').split(',').map(s => s.trim()).filter(Boolean),  // 2026-05-24: read from free-text input, was grabN('coteacher-chips')
     differentTeachers: document.getElementById('diff-teach-cb')?.checked || false,
     levels,
     dropIn:           document.getElementById('dropin-cb')?.checked || false,
@@ -1308,8 +1293,9 @@ function restoreDraft(draft) {
     restoreChip1('semester-chips', draft.semester);
     restoreChip1('lang-chips', draft.lang);
 
-    // Co-teachers
-    restoreChipN('coteacher-chips', draft.coTeachers);
+    // Co-teachers (free-text since 2026-05-24; was restoreChipN)
+    const ftEl = document.getElementById('coteacher-freetext');
+    if (ftEl && Array.isArray(draft.coTeachers)) ftEl.value = draft.coTeachers.join(', ');
 
     // Different teachers
     const diffCb = document.getElementById('diff-teach-cb');

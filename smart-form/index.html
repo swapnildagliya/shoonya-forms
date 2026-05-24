@@ -1892,7 +1892,8 @@
       <h3 class="card-title" id="lbl-choose-type">What are you submitting?</h3>
       <div class="type-grid">
 
-        <div class="type-card type-card-primary" onclick="window.location.href='weekly-v2.html'" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='weekly-v2.html';}">
+        <!-- 2026-05-24: rolled back to old inline. weekly-v2.html still has hardcoded mockup teacher list + Phase-A annotations + placeholder level descriptions. Re-route to weekly-v2 once it's wired to real Teachers sheet + real descriptions. See TASKS.md. -->
+        <div class="type-card type-card-primary" onclick="selectType('weekly-class', this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectType('weekly-class',this);}">
           <span class="type-card-icon" aria-hidden="true">📅</span>
           <div class="type-card-title" data-lbl="type-weekly-title">Weekly Class</div>
           <div class="type-card-desc" data-lbl="type-weekly-desc">A recurring class every week throughout the semester — same day, same time.</div>
