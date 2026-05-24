@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=PT+Serif:wght@400;700&display=swap" rel="stylesheet">
+<!-- 2026-05-24: flatpickr for forced d/m/Y date display (native <input type="date"> follows OS locale and shows MM/DD/YYYY on US-locale browsers — Belgian teachers expect DD/MM/YYYY). flatpickr keeps the underlying <input> value as ISO Y-m-d so the backend payload is unchanged. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
 <style>
   :root {
     --purple: #B564F7;
@@ -753,13 +756,29 @@ document.querySelectorAll('.date-pattern-tab').forEach(tab => {
   });
 });
 
+// 2026-05-24: flatpickr config shared across all date inputs in this form.
+// `dateFormat` controls the value stored on the original <input> (ISO, what
+// backend reads). `altInput: true` + `altFormat` controls what users see.
+const WS_FLATPICKR_OPTS = {
+  dateFormat: 'Y-m-d',
+  altInput: true,
+  altFormat: 'd/m/Y',
+  allowInput: true,
+  locale: { firstDayOfWeek: 1 }   // Monday-first week per Belgian convention
+};
+function wsInitFlatpickr(el) {
+  if (typeof flatpickr === 'function' && el && !el._flatpickr) flatpickr(el, WS_FLATPICKR_OPTS);
+}
+
 function addSpecificDate(dateVal='') {
   const list = document.getElementById('specific-dates-list');
   const row = document.createElement('div');
   row.className = 'specific-date-row';
   row.innerHTML = `<input type="date" value="${dateVal}"><button class="btn-remove" type="button">✕</button>`;
   list.appendChild(row);
-  row.querySelector('input').addEventListener('change', updateSessionsPreview);
+  const dateInput = row.querySelector('input');
+  wsInitFlatpickr(dateInput);   // 2026-05-24: init flatpickr on the dynamically-added input
+  dateInput.addEventListener('change', updateSessionsPreview);
   row.querySelector('.btn-remove').addEventListener('click', () => {
     row.remove();
     updateSessionsPreview();
@@ -767,9 +786,12 @@ function addSpecificDate(dateVal='') {
 }
 addSpecificDate(); // seed one empty date row
 
-// react to date input changes
+// react to date input changes + init flatpickr on the static date inputs
 ['f-cont-start','f-cont-end','f-rec-start','f-rec-end','f-rec-dow','f-default-start','f-default-end'].forEach(id => {
-  document.getElementById(id)?.addEventListener('change', updateSessionsPreview);
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el.type === 'date') wsInitFlatpickr(el);   // 2026-05-24
+  el.addEventListener('change', updateSessionsPreview);
 });
 
 function generateSessions() {

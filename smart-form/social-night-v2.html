@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=PT+Serif:wght@400;700&display=swap" rel="stylesheet">
+<!-- 2026-05-24: flatpickr for d/m/Y date display (native input follows OS locale). Underlying <input> value stays ISO Y-m-d so backend is unaffected. -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13"></script>
 <style>
   :root {
     --purple: #B564F7;
@@ -941,6 +944,17 @@ async function submitForm() {
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 addPricingTier('Advance', '8');
 addPricingTier('Door', '12');
+
+// 2026-05-24: init flatpickr on the event-date input. Display d/m/Y, store ISO.
+if (typeof flatpickr === 'function') {
+  flatpickr('#f-date', {
+    dateFormat: 'Y-m-d',
+    altInput: true,
+    altFormat: 'd/m/Y',
+    allowInput: true,
+    locale: { firstDayOfWeek: 1 }
+  });
+}
 
 // ─── AUTOSAVE ─────────────────────────────────────────────────────────────────
 const SS_DRAFT_KEY = 'shoonya_socialnight_draft_v1';
