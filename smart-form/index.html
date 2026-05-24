@@ -7534,13 +7534,16 @@ function wsRenderCoTeacherChips() {
 }
 
 function wsNext(dest) {
-  // 2026-05-22: redirect "submit another?" handlers to v2 forms. Previously
-  // bounced users back into the old inline workshop/weekly/social form sections
-  // of this file. Those are no longer the live teacher path — all three event
-  // types are served by *-v2.html now (see card routing at lines ~1895-1907).
-  // Keeps old inline form code dormant in this file but truly unreachable.
+  // 2026-05-24: kept consistent with the landing-page card routing decisions.
+  //   workshop  → workshop-v2.html       (card also routes here)
+  //   social    → social-night-v2.html   (card also routes here)
+  //   weekly    → OLD inline form via selectType, mirroring the Weekly card
+  //               rollback. Weekly-v2 is unready (TASKS #17 — real teacher
+  //               fetch + level descriptions still mockup-flavored). When #17
+  //               ships, change this branch BACK to weekly-v2.html in the
+  //               same commit that re-routes the card.
   if (dest === 'workshop') { window.location.href = 'workshop-v2.html'; }
-  else if (dest === 'weekly') { window.location.href = 'weekly-v2.html'; }
+  else if (dest === 'weekly') { selectType('weekly-class', document.querySelector('.type-card')); }
   else if (dest === 'social') { window.location.href = 'social-night-v2.html'; }
   else showScreen('success');
 }
@@ -9596,9 +9599,10 @@ async function ssSubmitToShoonya() {
 }
 
 function ssNext(dest) {
-  // 2026-05-22: see wsNext above — same v2-redirect treatment.
+  // 2026-05-24: see wsNext above — same routing parity. Weekly → old inline
+  // until TASKS #17 wires v2 to real data; workshop → v2.
   if (dest === 'workshop') { window.location.href = 'workshop-v2.html'; }
-  else if (dest === 'weekly') { window.location.href = 'weekly-v2.html'; }
+  else if (dest === 'weekly') { selectType('weekly-class', document.querySelector('.type-card')); }
   else showScreen('success');
 }
 
