@@ -45,15 +45,7 @@
     letter-spacing: -0.01em;
   }
   .subtitle { font-size: 0.95rem; color: var(--mid); margin-bottom: 24px; }
-  .v2-banner {
-    background: #FFF8E5;
-    border: 1px solid #F0DDA4;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 0.85rem;
-    color: #5C4400;
-    margin-bottom: 28px;
-  }
+  /* 2026-05-24 audit L13: removed dead .v2-banner CSS — banner element was stripped earlier today. */
   .auth-banner {
     background: var(--green-tint);
     border: 1px solid #BBE9CB;
@@ -205,49 +197,66 @@
     color: var(--purple-dark);
   }
 
-  /* Dance night always-present block */
+  /* Dance night always-present block.
+     2026-05-24 audit L6: switched from dark navy #1a1a2e to a lighter
+     purple-tinted "stage" block. Per LOCAL_KB / D-014, Swapnil rejected
+     dark purple as a foundation; the cream/purple form system reads as
+     editorial. Keeps the visual distinction (this is the dance-floor
+     section) without contradicting the rest of the form. */
   .dance-night-block {
-    background: #1a1a2e;
+    background: #F5ECFF;
+    border: 1px solid #E0CFF5;
     border-radius: 10px;
     padding: 22px 24px;
     margin-top: 20px;
-    color: #e8d5ff;
+    color: #2D1B4E;
   }
   .dance-night-block .dn-label {
     font-family: Marcellus, Georgia, serif;
     font-size: 1.15rem;
-    color: #d4aaff;
+    color: var(--purple-dark, #6A2FB8);
     margin-bottom: 4px;
     display: flex; align-items: center; gap: 8px;
   }
   .dance-night-block .dn-sub {
     font-size: 0.78rem;
-    color: #9975cc;
+    color: #6A4FA5;
     margin-bottom: 18px;
     font-style: italic;
   }
-  .dance-night-block label.field-label { color: #c49cee; }
+  .dance-night-block label.field-label { color: var(--purple-dark, #6A2FB8); }
   .dance-night-block input[type="time"],
   .dance-night-block input[type="text"] {
-    background: #2a1a3e;
-    border-color: #5a3a7a;
-    color: #e8d5ff;
+    background: white;
+    border-color: #D5BEF0;
+    color: var(--ink);
   }
   .dance-night-block input:focus { outline-color: var(--purple); border-color: var(--purple); }
+  /* 2026-05-24 audit L12: shared .dn-input style for inputs inside the dance
+     night block (was inline-styled six times across HTML + JS templates). */
+  .dn-input { background: white; border: 1px solid #D5BEF0; color: var(--ink); border-radius: 6px; padding: 8px 10px; font-family: inherit; }
+  .dn-input:focus { outline-color: var(--purple); border-color: var(--purple); }
+  .dn-label-purple { color: var(--purple-dark, #6A2FB8); }
+  .dn-hint-purple { color: #6A4FA5; }
+  .dn-quickbtn { border-color: #D5BEF0; color: var(--purple-dark, #6A2FB8); background: white; }
+  .dn-quickbtn:hover { background: #FAF3FF; }
+  .dn-section { background: #ECDFFE; border-color: #C8A4F2; }
+  .dn-divider { border-top: 1px solid #E0CFF5; padding-top: 14px; margin-top: 4px; }
+  .dn-other-chip { background: white; border-color: #D5BEF0; color: var(--purple-dark, #6A2FB8); }
   .music-type-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
   .music-chip {
     padding: 8px 16px;
-    background: #2a1a3e;
-    border: 1.5px solid #5a3a7a;
+    background: white;
+    border: 1.5px solid #D5BEF0;
     border-radius: 999px;
     cursor: pointer;
     font-size: 0.88rem;
-    color: #c49cee;
+    color: var(--purple-dark, #6A2FB8);
     transition: all 0.15s;
     font-family: inherit;
     user-select: none;
   }
-  .music-chip:hover { background: #3a2050; }
+  .music-chip:hover { background: #FAF3FF; }
   .music-chip.selected { background: var(--purple); color: white; border-color: var(--purple); }
 
   /* Pricing tiers */
@@ -274,7 +283,8 @@
   }
   .quick-btn:hover { background: var(--purple-tint); color: var(--purple-dark); }
 
-  /* Extra DJ row */
+  /* Extra DJ row — 2026-05-24 audit L6: switched to purple-tinted light theme
+     to match the new .dance-night-block. */
   .extra-dj-row {
     display: grid;
     grid-template-columns: 1fr 1fr auto;
@@ -282,11 +292,11 @@
     align-items: center;
     margin-bottom: 8px;
     padding: 10px 12px;
-    background: #2a1a3e;
+    background: white;
     border-radius: 6px;
-    border: 1px solid #5a3a7a;
+    border: 1px solid #E0CFF5;
   }
-  .extra-dj-row input { background: #1a1a2e; border-color: #5a3a7a; color: #e8d5ff; }
+  .extra-dj-row input { background: white; border-color: #D5BEF0; color: var(--ink); }
 
   .btn-add {
     background: transparent;
@@ -309,16 +319,17 @@
     line-height: 1;
   }
   .btn-remove:hover { color: var(--red); }
+  /* 2026-05-24 audit L6: lighter palette to match the new dance-night-block. */
   .btn-remove-dark {
     background: transparent;
     border: none;
-    color: #9975cc;
+    color: #8A6FBD;
     cursor: pointer;
     font-size: 1.1rem;
     padding: 4px 8px;
     line-height: 1;
   }
-  .btn-remove-dark:hover { color: #d4aaff; }
+  .btn-remove-dark:hover { color: var(--purple-dark, #6A2FB8); }
 
   .submit-row { text-align: center; margin-top: 40px; }
   .btn-primary {
@@ -394,7 +405,8 @@
   @media (max-width: 600px) {
     body { padding: 12px; }
     h1 { font-size: 1.7rem; }
-    .section { padding: 18px 16px; margin-bottom: 16px; }
+    /* 2026-05-24 audit L10: tighter section padding on phones. */
+    .section { padding: 14px 12px; margin-bottom: 14px; }
     .section-num { width: 28px; height: 28px; font-size: 0.85rem; margin-right: 10px; }
 
     /* Stack grids */
@@ -446,7 +458,7 @@
   <input type="hidden" id="f-teacher-email">
 
   <!-- DRAFT BANNER -->
-  <div id="ss-draft-banner" style="display:none; background:#FFF8E5; border:1px solid #F0DDA4; border-radius:8px; padding:12px 18px; margin-bottom:20px; font-size:0.88rem; color:#5C4400; display:none; justify-content:space-between; align-items:center; gap:12px;">
+  <div id="ss-draft-banner" style="display:none; background:#FFF8E5; border:1px solid #F0DDA4; border-radius:8px; padding:12px 18px; margin-bottom:20px; font-size:0.88rem; color:#5C4400; justify-content:space-between; align-items:center; gap:12px;">
     <span>📝 Draft restored. <span class="ss-draft-time" style="color:#78490A;"></span></span>
     <button onclick="clearSsDraftAndReload()" style="background:none; border:1px solid #d4a017; border-radius:4px; padding:4px 12px; font-size:0.78rem; color:#5C4400; cursor:pointer; font-family:inherit;">Clear draft</button>
   </div>
@@ -497,10 +509,11 @@
         <label class="field-label">Doors open <span class="req-mark">*</span></label>
         <input type="time" id="f-doors" value="20:00">
         <div class="quick-times">
-          <button class="quick-btn" onclick="document.getElementById('f-doors').value='19:00'">19:00</button>
-          <button class="quick-btn" onclick="document.getElementById('f-doors').value='19:30'">19:30</button>
-          <button class="quick-btn" onclick="document.getElementById('f-doors').value='20:00'">20:00</button>
-          <button class="quick-btn" onclick="document.getElementById('f-doors').value='20:30'">20:30</button>
+          <!-- 2026-05-24 audit L9: use ssSetTime so flatpickr's alt-input refreshes too. -->
+          <button class="quick-btn" type="button" onclick="ssSetTime('f-doors','19:00')">19:00</button>
+          <button class="quick-btn" type="button" onclick="ssSetTime('f-doors','19:30')">19:30</button>
+          <button class="quick-btn" type="button" onclick="ssSetTime('f-doors','20:00')">20:00</button>
+          <button class="quick-btn" type="button" onclick="ssSetTime('f-doors','20:30')">20:30</button>
         </div>
       </div>
       <div class="field">
@@ -543,9 +556,12 @@
           <label class="field-label">Floor opens <span class="req-mark">*</span></label>
           <input type="time" id="f-dn-start" value="22:00">
           <div class="quick-times">
-            <button class="quick-btn" style="border-color:#5a3a7a; color:#c49cee;" onclick="document.getElementById('f-dn-start').value='21:00'">21:00</button>
-            <button class="quick-btn" style="border-color:#5a3a7a; color:#c49cee;" onclick="document.getElementById('f-dn-start').value='21:30'">21:30</button>
-            <button class="quick-btn" style="border-color:#5a3a7a; color:#c49cee;" onclick="document.getElementById('f-dn-start').value='22:00'">22:00</button>
+            <!-- 2026-05-24 audit L9: setDate via _flatpickr if present so the
+                 alt-input display also refreshes; otherwise plain .value. L6:
+                 dn-quickbtn class replaces inline dark styling. -->
+            <button class="quick-btn dn-quickbtn" type="button" onclick="ssSetTime('f-dn-start','21:00')">21:00</button>
+            <button class="quick-btn dn-quickbtn" type="button" onclick="ssSetTime('f-dn-start','21:30')">21:30</button>
+            <button class="quick-btn dn-quickbtn" type="button" onclick="ssSetTime('f-dn-start','22:00')">22:00</button>
           </div>
         </div>
         <div class="field">
@@ -564,34 +580,37 @@
       </div>
 
       <!-- Guest DJ fields -->
-      <div class="toggle-section hidden" id="music-guest-dj" style="background: #2a1a3e; border-color: #9b59b6;">
+      <!-- 2026-05-24 audit L6 + L12: switched the dark inline styles to the
+           shared dn-input / dn-label-purple / dn-hint-purple / dn-section
+           classes (defined in <style>). Matches the lighter dance-night-block. -->
+      <div class="toggle-section hidden dn-section" id="music-guest-dj">
         <div class="row">
           <div class="field">
-            <label class="field-label" style="color: #c49cee;">DJ name</label>
-            <input type="text" id="f-dj-name" placeholder="DJ name or alias" style="background:#1a1a2e; border-color:#5a3a7a; color:#e8d5ff;">
+            <label class="field-label dn-label-purple">DJ name</label>
+            <input type="text" id="f-dj-name" placeholder="DJ name or alias" class="dn-input">
           </div>
           <div class="field">
-            <label class="field-label" style="color: #c49cee;">DJ website / Instagram</label>
-            <input type="text" id="f-dj-social" placeholder="Optional" style="background:#1a1a2e; border-color:#5a3a7a; color:#e8d5ff;">
+            <label class="field-label dn-label-purple">DJ website / Instagram</label>
+            <input type="text" id="f-dj-social" placeholder="Optional" class="dn-input">
           </div>
         </div>
         <div class="field">
-          <label class="field-label" style="color: #c49cee;">DJ fee (€)</label>
-          <input type="number" id="f-dj-fee" placeholder="e.g. 200" min="0" step="0.5" style="max-width: 140px; background:#1a1a2e; border-color:#5a3a7a; color:#e8d5ff;">
-          <p class="field-hint" style="color: #9975cc;">Internal. Not shown publicly.</p>
+          <label class="field-label dn-label-purple">DJ fee (€)</label>
+          <input type="number" id="f-dj-fee" placeholder="e.g. 200" min="0" step="0.5" class="dn-input" style="max-width: 140px;">
+          <p class="field-hint dn-hint-purple">Internal. Not shown publicly.</p>
         </div>
         <div class="field">
-          <label class="field-label" style="color: #c49cee;">DJ photo</label>
-          <input type="file" id="f-dj-photo" accept="image/*" style="font-size: 0.85rem; padding: 6px 0; color:#e8d5ff;">
-          <p class="field-hint" style="color: #9975cc;">JPEG or PNG. Used for the event poster and social promo.</p>
+          <label class="field-label dn-label-purple">DJ photo</label>
+          <input type="file" id="f-dj-photo" accept="image/*" style="font-size: 0.85rem; padding: 6px 0;">
+          <p class="field-hint dn-hint-purple">JPEG or PNG. Used for the event poster and social promo.</p>
         </div>
       </div>
 
       <!-- Teacher as DJ -->
-      <div class="toggle-section hidden" id="music-teacher-dj" style="background: #2a1a3e; border-color: #9b59b6;">
+      <div class="toggle-section hidden dn-section" id="music-teacher-dj">
         <div class="field">
-          <label class="field-label" style="color: #c49cee;">Which teacher?</label>
-          <input type="text" id="f-teacher-dj" placeholder="Type teacher name…" style="background:#1a1a2e; border-color:#5a3a7a; color:#e8d5ff;">
+          <label class="field-label dn-label-purple">Which teacher?</label>
+          <input type="text" id="f-teacher-dj" placeholder="Type teacher name…" class="dn-input">
         </div>
       </div>
 
@@ -606,15 +625,15 @@
           <div class="music-chip" data-val="Bollywood" onclick="toggleGenre(this)">Bollywood</div>
           <div class="music-chip" data-val="Lindy Hop" onclick="toggleGenre(this)">Lindy Hop</div>
           <div class="music-chip" data-val="Flamenco" onclick="toggleGenre(this)">Flamenco</div>
-          <div class="chip" onclick="addCustomGenre()" style="background:#2a1a3e; border-color:#5a3a7a; color:#c49cee;">+ Other...</div>
+          <div class="chip dn-other-chip" onclick="addCustomGenre()">+ Other...</div>
         </div>
-        <p class="field-hint" style="color: #9975cc;">Used for the schedule page and social media promo.</p>
+        <p class="field-hint dn-hint-purple">Used for the schedule page and social media promo.</p>
       </div>
 
       <!-- Additional DJs -->
-      <div style="border-top: 1px solid #3a2050; padding-top: 14px; margin-top: 4px;">
+      <div class="dn-divider">
         <div id="extra-djs"></div>
-        <button class="btn-add" onclick="addExtraDJ()" style="border-color: #5a3a7a; color: #c49cee;">+ Add another DJ</button>
+        <button class="btn-add" onclick="addExtraDJ()" style="border-color: #D5BEF0; color: var(--purple-dark, #6A2FB8);">+ Add another DJ</button>
       </div>
     </div>
     <!-- end dance night block -->
@@ -679,6 +698,41 @@
 <script src="../config.js"></script>
 <script src="../login-panel.js"></script>
 <script>
+// 2026-05-24 audit L9: set a time-input value AND refresh flatpickr's alt-input
+// if one is attached. The quick-pick buttons used to set .value directly,
+// which left flatpickr's altInput showing the previous time.
+function ssSetTime(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el._flatpickr && typeof el._flatpickr.setDate === 'function') {
+    el._flatpickr.setDate(val, true);   // true = trigger change so listeners fire
+  } else {
+    el.value = val;
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+}
+
+// 2026-05-24 audit S9: single source-of-truth programme collector. submitForm
+// and ssCollectDraft both walk #programme-rows; if we update one and forget
+// the other they drift. Passing nullTopic:true coerces blank topics to null
+// (submit shape); nullTopic:false stores '' (draft shape).
+function ssCollectProgramme(opts) {
+  const nullTopic = opts && opts.nullTopic;
+  return [...document.querySelectorAll('#programme-rows .prog-card')].map(card => {
+    const typeEl = card.querySelector('.chip.selected');
+    const topicRaw = (card.querySelector('[data-slot="topic"]')?.value || '').trim();
+    return {
+      type: typeEl ? typeEl.dataset.type : 'workshop',
+      start: card.querySelector('[data-slot="start"]')?.value || '',
+      duration: card.querySelector('[data-slot="duration"]')?.value || '',
+      level: card.querySelector('[data-slot="level"]')?.value || '',
+      style: (card.querySelector('[data-slot="style"]')?.value || '').trim(),
+      teacher: (card.querySelector('[data-slot="teacher"]')?.value || '').trim(),
+      topic: nullTopic ? (topicRaw || null) : topicRaw,
+    };
+  });
+}
+
 // ─── STYLE CHIPS ─────────────────────────────────────────────────────────────
 function toggleStyle(el) {
   el.classList.toggle('selected');
@@ -686,7 +740,11 @@ function toggleStyle(el) {
 }
 
 function addCustomStyle() {
-  const name = prompt('Enter dance style name:');
+  // 2026-05-24 audit V11: sanitize prompt input (strip <>"'` to prevent HTML
+  // injection through downstream renders; cap at 60 chars).
+  const raw = prompt('Enter dance style name:');
+  if (!raw) return;
+  const name = String(raw).replace(/[<>"'`]/g, '').trim().slice(0, 60);
   if (!name) return;
   const wrap = document.getElementById('style-chips');
   const addBtn = wrap.querySelector('.chip:last-child');
@@ -764,7 +822,10 @@ function setMusicType(el) {
 function toggleGenre(el) { el.classList.toggle('selected'); }
 
 function addCustomGenre() {
-  const name = prompt('Enter genre / style name:');
+  // 2026-05-24 audit V11: same sanitize as addCustomStyle.
+  const raw = prompt('Enter genre / style name:');
+  if (!raw) return;
+  const name = String(raw).replace(/[<>"'`]/g, '').trim().slice(0, 60);
   if (!name) return;
   const wrap = document.getElementById('genre-chips');
   const addBtn = wrap.querySelector('.chip:last-child');
@@ -856,10 +917,12 @@ function addExtraDJ() {
   const wrap = document.getElementById('extra-djs');
   const row = document.createElement('div');
   row.className = 'extra-dj-row';
+  // 2026-05-24 audit L6 + L12: dn-input class replaces inline dark styling.
+  // L11: aria-label on the remove button.
   row.innerHTML = `
-    <input type="text" placeholder="DJ name or alias" style="background:#1a1a2e; border-color:#5a3a7a; color:#e8d5ff;">
-    <input type="text" placeholder="Instagram / website (optional)" style="background:#1a1a2e; border-color:#5a3a7a; color:#e8d5ff;">
-    <button class="btn-remove-dark" onclick="this.closest('.extra-dj-row').remove()">✕</button>
+    <input type="text" class="dn-input" placeholder="DJ name or alias">
+    <input type="text" class="dn-input" placeholder="Instagram / website (optional)">
+    <button class="btn-remove-dark" type="button" aria-label="Remove extra DJ" onclick="this.closest('.extra-dj-row').remove()">✕</button>
   `;
   wrap.appendChild(row);
 }
@@ -931,17 +994,33 @@ function _reviewSection(title, rows) {
   return `<div class="review-section"><div class="review-section-title">${_esc(title)}</div>${visible}</div>`;
 }
 
+// 2026-05-24 audit V1: minimal email-shape regex.
+const _ssEmailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // Mirrors submitForm's inline validation logic (kept in sync intentionally).
 function _collectValidationErrors() {
   const errors = [];
   const styles = getSelectedStyles();
+  const email = document.getElementById('f-teacher-email')?.value.trim() || '';
   if (!document.getElementById('f-teacher-name').value.trim()) errors.push('Please log in before submitting.');
+  if (email && !_ssEmailRe.test(email)) errors.push('Email looks like a typo — please log out and back in.');   // V1
   if (styles.length === 0) errors.push('Select at least one dance style.');
   if (!document.getElementById('f-title').value.trim()) errors.push('Event title is required.');
   if (!document.getElementById('f-date').value) errors.push('Date is required.');
   if (!document.getElementById('f-doors').value) errors.push('Doors open time is required.');
   if (!document.getElementById('f-dn-start').value) errors.push('Dance floor start time is required.');
-  if (!document.querySelector('#music-type-chips .music-chip.selected')) errors.push('Select who is handling the music.');
+  const musicSel = document.querySelector('#music-type-chips .music-chip.selected');
+  if (!musicSel) errors.push('Select who is handling the music.');
+  // 2026-05-24 audit V9: require DJ name when "guest-dj" is selected.
+  else if (musicSel.dataset.val === 'guest-dj' && !document.getElementById('f-dj-name').value.trim()) {
+    errors.push('Guest DJ name is required (you selected "Guest DJ").');
+  }
+  // 2026-05-24 audit V8: pricing tier values must be numeric if provided.
+  document.querySelectorAll('#pricing-rows .pricing-tier').forEach((row, i) => {
+    const priceInput = row.querySelectorAll('input')[1];
+    const raw = priceInput?.value.trim() || '';
+    if (raw && isNaN(parseFloat(raw))) errors.push('Pricing tier ' + (i + 1) + ' price is not a number.');
+  });
   return errors;
 }
 
@@ -1051,7 +1130,13 @@ async function submitForm() {
     musicType: musicSelected.dataset.val,
     djName: document.getElementById('f-dj-name').value.trim() || null,
     djSocials: document.getElementById('f-dj-social').value.trim() || null,
-    djFee: document.getElementById('f-dj-fee').value || null,
+    // 2026-05-24 audit V10: parseFloat the DJ fee so backend doesn't receive a
+    // raw string ("75" / "" / "€75"). null when blank or non-numeric.
+    djFee: (function() {
+      const raw = (document.getElementById('f-dj-fee')?.value || '').trim();
+      const n = raw ? parseFloat(raw) : NaN;
+      return isFinite(n) && n >= 0 ? n : null;
+    })(),
     teacherDJ: document.getElementById('f-teacher-dj').value.trim() || null,
     genres: [...document.querySelectorAll('#genre-chips .music-chip.selected')].map(c => c.dataset.val || c.textContent.trim()),
     programme: [],
@@ -1066,24 +1151,18 @@ async function submitForm() {
     guest_teacher_photo_b64:  await _fileToB64(document.getElementById('f-guest-teacher-photo')),
     dj_photo_name:            document.getElementById('f-dj-photo')?.files?.[0]?.name || '',
     dj_photo_b64:             await _fileToB64(document.getElementById('f-dj-photo')),
+    submitted_via: 'social-night-v2-form',   // 2026-05-24 audit S8
   };
 
-  document.querySelectorAll('#programme-rows .prog-card').forEach(card => {
-    const typeEl = card.querySelector('.chip.selected');
-    payload.programme.push({
-      type: typeEl ? typeEl.dataset.type : 'workshop',
-      start: card.querySelector('[data-slot="start"]').value,
-      duration: card.querySelector('[data-slot="duration"]').value,
-      level: card.querySelector('[data-slot="level"]').value,
-      style: card.querySelector('[data-slot="style"]').value.trim(),
-      teacher: card.querySelector('[data-slot="teacher"]').value.trim(),
-      topic: card.querySelector('[data-slot="topic"]').value.trim() || null,
-    });
-  });
+  // 2026-05-24 audit S9: shared collector — see ssCollectProgramme().
+  payload.programme = ssCollectProgramme({ nullTopic: true });
 
   document.querySelectorAll('#pricing-rows .pricing-tier').forEach(row => {
     const inputs = row.querySelectorAll('input');
-    payload.pricing.push({ label: inputs[0].value.trim(), price: inputs[1].value });
+    // 2026-05-24 audit V8: parse to number so backend doesn't receive "" / "€8" / stray spaces.
+    const priceRaw = inputs[1]?.value.trim() || '';
+    const priceNum = priceRaw ? parseFloat(priceRaw) : null;
+    payload.pricing.push({ label: inputs[0].value.trim(), price: isFinite(priceNum) ? priceNum : null });
   });
 
   // 2026-05-24 (audit P1): removed `console.log('Social night payload:', …)` — was dumping the full payload (incl. teacher email, DJ fee, internal notes) into the user's browser console on every submit.
@@ -1107,8 +1186,11 @@ async function submitForm() {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
     });
-    const json = await res.json().catch(() => ({ ok: false }));
-    if (json.ok === false) throw new Error(json.error || 'Submission failed');
+    // 2026-05-24 audit S2: surface real error reason instead of generic.
+    let json;
+    try { json = await res.json(); }
+    catch (_) { throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + '). Your draft is saved.'); }
+    if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ').'));
     succEl.innerHTML = `
       <strong>✅ Social night submitted!</strong><br>
       <em>${payload.title}</em> — ${payload.date}<br>
@@ -1119,10 +1201,12 @@ async function submitForm() {
     btn.textContent = 'Submitted ✓';
     try { localStorage.removeItem(SS_DRAFT_KEY); } catch(e) {}
   } catch (e) {
-    errEl.innerHTML = '⚠ ' + (e.message || 'Submission failed. Try again or contact info@shoonyadance.com.');
+    // 2026-05-24 audit S2 + S3: surface real error + 1.5s throttle to prevent double-clicks.
+    errEl.innerHTML = '⚠ ' + (e.message || 'Submission failed. Try again or email info@shoonyadance.com.') +
+      '<br><small style="color:var(--mid);">Your draft is saved — try again or come back later.</small>';
     errEl.style.display = 'block';
-    btn.disabled = false;
-    btn.textContent = 'Submit social night →';
+    btn.textContent = 'Wait a moment…';
+    setTimeout(() => { btn.disabled = false; btn.textContent = 'Submit social night →'; }, 1500);
   }
 }
 
@@ -1153,18 +1237,8 @@ function ssCollectDraft() {
     const inputs = row.querySelectorAll('input');
     return { label: inputs[0]?.value || '', price: inputs[1]?.value || '' };
   });
-  const programme = [...document.querySelectorAll('#programme-rows .prog-card')].map(card => {
-    const typeEl = card.querySelector('.chip.selected');
-    return {
-      type: typeEl ? typeEl.dataset.type : 'workshop',
-      start: card.querySelector('[data-slot="start"]')?.value || '',
-      duration: card.querySelector('[data-slot="duration"]')?.value || '',
-      level: card.querySelector('[data-slot="level"]')?.value || '',
-      style: card.querySelector('[data-slot="style"]')?.value || '',
-      teacher: card.querySelector('[data-slot="teacher"]')?.value || '',
-      topic: card.querySelector('[data-slot="topic"]')?.value || '',
-    };
-  });
+  // 2026-05-24 audit S9: shared collector — see ssCollectProgramme().
+  const programme = ssCollectProgramme({ nullTopic: false });
   return {
     v: 1, savedAt: new Date().toISOString(),
     styles, genres, musicType,

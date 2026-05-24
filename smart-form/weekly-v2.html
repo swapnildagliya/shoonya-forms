@@ -41,15 +41,7 @@
     letter-spacing: -0.01em;
   }
   .subtitle { font-size: 0.95rem; color: var(--mid); margin-bottom: 24px; }
-  .v2-banner {
-    background: #FFF8E5;
-    border: 1px solid #F0DDA4;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 0.85rem;
-    color: #5C4400;
-    margin-bottom: 28px;
-  }
+  /* 2026-05-24 audit L13: removed dead .v2-banner CSS — banner element was stripped earlier today. */
   .auth-banner {
     background: var(--green-tint);
     border: 1px solid #BBE9CB;
@@ -186,8 +178,12 @@
     color: var(--purple-dark);
   }
   .slot-row {
+    /* 2026-05-24 audit L4: tighter time columns (was 1fr 1fr 1fr — long day
+       labels like "Wednesday" stretched the select, pinching the two time
+       inputs on small viewports). minmax keeps the day-select readable AND
+       reserves fixed-width room for the two HH:MM inputs. */
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr auto;
+    grid-template-columns: minmax(120px, 1fr) 90px 90px auto;
     gap: 10px;
     align-items: center;
     margin-bottom: 8px;
@@ -385,7 +381,8 @@
   @media (max-width: 600px) {
     body { padding: 12px; }
     h1 { font-size: 1.7rem; }
-    .section { padding: 18px 16px; margin-bottom: 16px; }
+    /* 2026-05-24 audit L10: tighter section padding on phones. */
+    .section { padding: 14px 12px; margin-bottom: 14px; }
     .section-num { width: 28px; height: 28px; font-size: 0.85rem; margin-right: 10px; }
 
     /* Stack grids */
@@ -443,7 +440,7 @@
   </div>
 
   <!-- DRAFT RESTORED BANNER (hidden until a saved draft is found) -->
-  <div id="draft-banner" style="display:none; background:#FFF8E5; border:1px solid #F0DDA4; border-radius:8px; padding:12px 18px; margin-bottom:20px; font-size:0.88rem; color:#5C4400; display:none; justify-content:space-between; align-items:center; gap:12px;">
+  <div id="draft-banner" style="display:none; background:#FFF8E5; border:1px solid #F0DDA4; border-radius:8px; padding:12px 18px; margin-bottom:20px; font-size:0.88rem; color:#5C4400; justify-content:space-between; align-items:center; gap:12px;">
     <span>📝 Draft restored. <span class="draft-time" style="color:#78490A;"></span></span>
     <button onclick="clearDraftAndReload()" style="background:none; border:1px solid #d4a017; border-radius:4px; padding:4px 12px; font-size:0.78rem; color:#5C4400; cursor:pointer; font-family:inherit;">Clear draft</button>
   </div>
@@ -562,9 +559,9 @@
           </select>
           <input type="time" value="19:00" oninput="updateLevelSummary(this)">
           <input type="time" value="20:00" oninput="updateLevelSummary(this)">
-          <button class="btn-remove" type="button">✕</button>
+          <button class="btn-remove" type="button" aria-label="Remove slot" onclick="removeSlotRow(this)">✕</button>
         </div>
-        <button class="btn-add" onclick="alert('Add another slot for this level (e.g. same level on Wednesday too)')">+ Add another slot for L1</button>
+        <button class="btn-add" onclick="addSlotRow(this)">+ Add another slot for L1</button>
 
         <details class="collapsible" style="margin-top: 14px;" open>
           <summary>Level 1 description <span style="font-size: 0.75rem; color: var(--green); font-weight: 600; margin-left: 8px;">✓ pre-filled</span></summary>
@@ -595,7 +592,7 @@
           </select>
           <input type="time" value="19:30" oninput="updateLevelSummary(this)">
           <input type="time" value="20:45" oninput="updateLevelSummary(this)">
-          <button class="btn-remove" type="button">✕</button>
+          <button class="btn-remove" type="button" aria-label="Remove slot" onclick="removeSlotRow(this)">✕</button>
         </div>
         <div class="slot-row">
           <select class="day-pick">
@@ -609,9 +606,9 @@
           </select>
           <input type="time" value="19:30" oninput="updateLevelSummary(this)">
           <input type="time" value="20:45" oninput="updateLevelSummary(this)">
-          <button class="btn-remove" type="button">✕</button>
+          <button class="btn-remove" type="button" aria-label="Remove slot" onclick="removeSlotRow(this)">✕</button>
         </div>
-        <button class="btn-add" onclick="alert('Add another slot for this level (e.g. same level on Wednesday too)')">+ Add another slot for L2</button>
+        <button class="btn-add" onclick="addSlotRow(this)">+ Add another slot for L2</button>
 
         <!-- Multi-slot info (alternate timings is the only model) -->
         <div style="background: var(--purple-tint); border-left: 3px solid var(--purple); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.84rem; color: var(--mid); margin-top: 14px;">
@@ -966,12 +963,55 @@ function makeLevelCard(key) {
       </select>
       <input type="time" oninput="updateLevelSummary(this)">
       <input type="time" oninput="updateLevelSummary(this)">
-      <button class="btn-remove" type="button">✕</button>
+      <button class="btn-remove" type="button" aria-label="Remove slot" onclick="removeSlotRow(this)">✕</button>
     </div>
-    <button class="btn-add" onclick="alert('Add another slot for this level (e.g. same level on Wednesday too)')">+ Add another slot for ${name}</button>
+    <button class="btn-add" onclick="addSlotRow(this)">+ Add another slot for ${name}</button>
     ${descBlock}
   `;
   return card;
+}
+
+// 2026-05-24 audit V12: real "Add another slot" — clone the level card's first
+// slot row (parallel to the autosave restore path). Replaces the alert()
+// placeholder on every +Add button in the form. Buttons are wired via the
+// `onclick="addSlotRow(this)"` call below.
+function addSlotRow(btn) {
+  const card = btn.closest('.level-card');
+  if (!card) return;
+  const firstSlot = card.querySelector('.slot-row');
+  if (!firstSlot) return;
+  const clone = firstSlot.cloneNode(true);
+  // Reset values on the clone so the teacher fills them in fresh.
+  const select = clone.querySelector('.day-pick');
+  if (select) select.selectedIndex = 0;
+  clone.querySelectorAll('input[type="time"]').forEach(t => { t.value = ''; });
+  // The cloned button already has the static onclick="removeSlotRow(this)" wired
+  // (inherited from the source row's markup). No extra listener needed.
+  // Insert before the +Add button itself.
+  btn.before(clone);
+  updateLevelSummary(card.querySelector('input[type="time"]'));
+  if (typeof scheduleSave === 'function') scheduleSave();
+}
+
+// 2026-05-24 audit V12 + L11: remove a slot row, but keep at least one row
+// in the level card (otherwise the teacher loses the level's day-pick).
+function removeSlotRow(btn) {
+  const row = btn.closest('.slot-row');
+  if (!row) return;
+  const card = row.closest('.level-card');
+  if (!card) return;
+  const allRows = card.querySelectorAll('.slot-row');
+  if (allRows.length <= 1) {
+    // Clear values on the only row instead of removing it (deselecting the
+    // level chip is the way to remove the level entirely).
+    const sel = row.querySelector('.day-pick');
+    if (sel) sel.selectedIndex = 0;
+    row.querySelectorAll('input[type="time"]').forEach(t => { t.value = ''; });
+  } else {
+    row.remove();
+  }
+  updateLevelSummary(card.querySelector('input[type="time"]'));
+  if (typeof scheduleSave === 'function') scheduleSave();
 }
 
 function minutesBetween(t1, t2) {
@@ -1072,8 +1112,13 @@ function getSelectedMultiByContainer(container) {
     .map(c => c.textContent.replace(/^⭐\s*/, '').replace(/\(.*\)/, '').trim());
 }
 
+// 2026-05-24 audit V7: also surfaces "partial slots" — rows that have some
+// fields filled but not all three (day + start + end). Previously these were
+// silently dropped, so a teacher who typed a time but forgot to pick a day
+// would see their slot vanish on submit with no feedback.
 function collectLevels() {
   const levels = [];
+  const partialSlots = [];   // {level, missing: ['day'|'start'|'end']}
   document.querySelectorAll('.level-card').forEach(card => {
     const levelKey = card.dataset.level;
     const titleEl = card.querySelector('.level-card-title');
@@ -1084,25 +1129,33 @@ function collectLevels() {
       const times = row.querySelectorAll('input[type="time"]');
       const start = times[0]?.value || '';
       const end = times[1]?.value || '';
-      if (day && start && end) slots.push({ day, start, end });
+      if (day && start && end) {
+        slots.push({ day, start, end });
+      } else if (day || start || end) {
+        const missing = [];
+        if (!day) missing.push('day');
+        if (!start) missing.push('start time');
+        if (!end) missing.push('end time');
+        partialSlots.push({ level: levelName, missing });
+      }
     });
     const desc = card.querySelector('textarea')?.value.trim() || '';
     if (slots.length > 0) {
       levels.push({ level: levelName, display_label: '', slots, description: desc });
     }
   });
+  collectLevels._partialSlots = partialSlots;   // 2026-05-24 audit V7: validate() reads this
   return levels;
 }
 
-function collectOpendeurChips() {
-  // Each chip text looks like "Sat 13 Sep — morning". TODO (item #17): parse
-  // these into ISO dates for backend. Today we strip them out — see the
-  // P0-2 fix to `opendeur_availability` in the submit payload.
-  const container = document.querySelector('.section:nth-of-type(6) .chips');
-  if (!container) return [];
-  return Array.from(container.querySelectorAll('.chip.selected'))
-    .map(c => c.textContent.trim());
-}
+// 2026-05-24 audit V13: collectOpendeurChips() was dead code — returned chip
+// text but the result was never used (payload sends `opendeur_availability: {}`
+// per P0-2 until item #17 wires the chip→ISO date translation). Function
+// deleted. When the chip→ISO mapping ships as part of item #17, add a fresh
+// implementation that returns the canonical {ISO_DATE: {available, time}} shape.
+
+// 2026-05-24 audit V1: minimal email-shape regex.
+const _wcEmailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function validate() {
   const errs = [];
@@ -1113,8 +1166,20 @@ function validate() {
   const style = getSelectedSingle('style-chips') ||
     document.querySelector('#style-chips .chip.selected')?.textContent.replace(/\(.*\)/, '').trim();
   if (!style) errs.push('Dance style');
+  // 2026-05-24 audit V6: also require teacher identity + at least one slot.
+  // Backend rejection is harder to read than inline.
+  const teacherName = document.getElementById('f-teacher-name')?.value.trim() || '';
+  const teacherEmail = document.getElementById('f-teacher-email')?.value.trim() || '';
+  if (!teacherName) errs.push('Please log in before submitting');
+  if (teacherEmail && !_wcEmailRe.test(teacherEmail)) errs.push('Your email (looks like a typo)');   // V1
   const levels = collectLevels();
   if (levels.length === 0) errs.push('At least one level with a valid time slot');
+  // 2026-05-24 audit V7: surface partial slots so a half-filled row isn't dropped silently.
+  const partial = collectLevels._partialSlots || [];
+  if (partial.length > 0) {
+    const summary = partial.map(p => p.level + ' (missing ' + p.missing.join(' + ') + ')').join('; ');
+    errs.push('Incomplete slot rows: ' + summary);
+  }
   return { errs, style, levels };
 }
 
@@ -1302,8 +1367,11 @@ async function submitForm() {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
     });
-    const json = await res.json().catch(() => ({ ok: false }));
-    if (json.ok === false) throw new Error(json.error || 'Submission failed');
+    // 2026-05-24 audit S2: surface real error reason instead of generic.
+    let json;
+    try { json = await res.json(); }
+    catch (_) { throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + '). Your draft is saved.'); }
+    if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ').'));
     okBox.innerHTML = `
       <strong>✓ Submitted successfully.</strong><br>
       ${levels.length} level${levels.length === 1 ? '' : 's'} captured. Shoonya will review and follow up.<br>
@@ -1312,11 +1380,16 @@ async function submitForm() {
     okBox.style.display = '';
     okBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     btn.textContent = 'Submitted ✓';
+    // 2026-05-24 audit S11: clear draft inline on success. Was previously done
+    // via a monkey-patched wrapper at module bottom that easily breaks on edit.
+    try { if (typeof clearDraft === 'function') clearDraft(); } catch(_) {}
   } catch (e) {
-    errBox.textContent = '⚠ ' + (e.message || 'Submission failed. Try again or contact info@shoonyadance.com.');
+    // 2026-05-24 audit S2 + S3: surface real error + 1.5s throttle.
+    errBox.innerHTML = '⚠ ' + (e.message || 'Submission failed. Try again or email info@shoonyadance.com.') +
+      '<br><small style="color:var(--mid);">Your draft is saved — try again or come back later.</small>';
     errBox.style.display = '';
-    btn.disabled = false;
-    btn.textContent = 'Submit weekly class →';
+    btn.textContent = 'Wait a moment…';
+    setTimeout(() => { btn.disabled = false; btn.textContent = 'Submit weekly class →'; }, 1500);
   }
 }
 </script>
@@ -1466,8 +1539,9 @@ function restoreDraft(draft) {
           if (idx === 0) {
             row = card.querySelector('.slot-row');
           } else {
+            // Clone the source row — the inline onclick="removeSlotRow(this)"
+            // is preserved by cloneNode so newly-added rows are removable.
             row = card.querySelector('.slot-row').cloneNode(true);
-            row.querySelector('.btn-remove')?.addEventListener('click', () => { row.remove(); scheduleSave(); });
             card.querySelector('.btn-add').before(row);
           }
           if (!row) return;
@@ -1527,18 +1601,10 @@ document.querySelector('.container').addEventListener('input',  scheduleSave, tr
 document.querySelector('.container').addEventListener('change', scheduleSave, true);
 document.querySelector('.container').addEventListener('click',  scheduleSave, true);
 
-// ─── CLEAR ON SUBMIT ─────────────────────────────────────────────────────────
-// Patch submitForm to clear draft on success
-(function() {
-  const _orig = window.submitForm;
-  window.submitForm = async function() {
-    await _orig.apply(this, arguments);
-    // Clear only if submission succeeded (success banner is visible)
-    if (document.getElementById('submit-success')?.style.display !== 'none') {
-      clearDraft();
-    }
-  };
-})();
+// 2026-05-24 audit S11: removed monkey-patched submitForm wrapper. The
+// draft-clear is now inline in submitForm's success branch (see the `try {
+// clearDraft() }` block above). Future edits to submitForm no longer need to
+// remember the wrap.
 
 // ─── INIT: restore on load ────────────────────────────────────────────────────
 (function() {

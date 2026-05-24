@@ -42,15 +42,7 @@
     letter-spacing: -0.01em;
   }
   .subtitle { font-size: 0.95rem; color: var(--mid); margin-bottom: 24px; }
-  .v2-banner {
-    background: #FFF8E5;
-    border: 1px solid #F0DDA4;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 0.85rem;
-    color: #5C4400;
-    margin-bottom: 28px;
-  }
+  /* 2026-05-24 audit L13: removed dead .v2-banner CSS — banner element was stripped earlier today. */
   .section {
     background: white;
     border: 1px solid #ECE0F5;
@@ -298,8 +290,11 @@
     font-size: 0.95rem;
   }
   .session-row-detail {
+    /* 2026-05-24 audit L7: dropped the trailing 1fr — the 4th grid cell was
+       rendering an empty <span> (placeholder for a future "topic" column that
+       was never wired). Date label + 2 time inputs = 3 columns. */
     display: grid;
-    grid-template-columns: 130px 1fr 1fr 1fr;
+    grid-template-columns: 130px 1fr 1fr;
     gap: 10px;
     align-items: center;
     margin-bottom: 8px;
@@ -311,7 +306,9 @@
     body { padding: 12px; }
     .container { padding: 0; }
     h1 { font-size: 1.7rem; }
-    .section { padding: 18px 16px; margin-bottom: 16px; }
+    /* 2026-05-24 audit L10: tighter section padding on phones (was 18px/16px,
+       cramped feel on ≤375px viewports). */
+    .section { padding: 14px 12px; margin-bottom: 14px; }
     .section-num { width: 28px; height: 28px; font-size: 0.85rem; margin-right: 10px; }
 
     /* Stack 2-col and 3-col grids */
@@ -329,8 +326,9 @@
     /* Specific dates list */
     .specific-date-row { grid-template-columns: 1fr auto; }
 
-    /* Price row: label on top, input below */
-    .price-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+    /* 2026-05-24 audit L5: .price-row is display:grid (not flex). The previous
+       flex-direction rule was a no-op. Stack as a single column on mobile. */
+    .price-row { grid-template-columns: 1fr; gap: 6px; padding: 12px 14px; }
 
     /* Chips: slightly smaller tap targets still comfortable */
     .chip { padding: 9px 14px; font-size: 0.88rem; }
@@ -372,7 +370,7 @@
   </div>
 
   <!-- DRAFT BANNER -->
-  <div id="ws-draft-banner" style="display:none; background:#FFF8E5; border:1px solid #F0DDA4; border-radius:8px; padding:12px 18px; margin-bottom:20px; font-size:0.88rem; color:#5C4400; display:none; justify-content:space-between; align-items:center; gap:12px;">
+  <div id="ws-draft-banner" style="display:none; background:#FFF8E5; border:1px solid #F0DDA4; border-radius:8px; padding:12px 18px; margin-bottom:20px; font-size:0.88rem; color:#5C4400; justify-content:space-between; align-items:center; gap:12px;">
     <span>📝 Draft restored. <span class="ws-draft-time" style="color:#78490A;"></span></span>
     <button onclick="clearWsDraftAndReload()" style="background:none; border:1px solid #d4a017; border-radius:4px; padding:4px 12px; font-size:0.78rem; color:#5C4400; cursor:pointer; font-family:inherit;">Clear draft</button>
   </div>
@@ -786,7 +784,13 @@ document.getElementById('f-guest-teacher').addEventListener('input', function() 
 });
 
 function addCustomStyle() {
-  const val = prompt('Add a custom style');
+  // 2026-05-24 audit V11: kept prompt() per +Other... convention but sanitize the
+  // value before using it (strips <>"'` so a teacher pasting HTML can't break
+  // the chip / leak into innerHTML elsewhere). textContent already escapes
+  // injection in render, but downstream payload sees the sanitized string too.
+  const raw = prompt('Add a custom style');
+  if (!raw) return;
+  const val = String(raw).replace(/[<>"'`]/g, '').trim().slice(0, 60);
   if (!val) return;
   const chips = document.getElementById('style-chips');
   const div = document.createElement('div');
@@ -852,30 +856,51 @@ addSpecificDate(); // seed one empty date row
   el.addEventListener('change', updateSessionsPreview);
 });
 
+// 2026-05-24 audit V4 + V5: track why generateSessions returned [] (so the UI
+// can show "Pick a start date" hints instead of an empty preview) AND whether
+// recurring mode silently advanced startD to the first matching weekday (so
+// the UI can warn "First Wednesday after [orig] is [new]").
+const _sessionsHint = { reason: '', dateShift: null };
 function generateSessions() {
   const mode = state.datePattern;
   const sessions = [];
   const defStart = document.getElementById('f-default-start').value || '19:00';
   const defEnd = document.getElementById('f-default-end').value || '20:30';
+  _sessionsHint.reason = '';
+  _sessionsHint.dateShift = null;
 
   if (mode === 'contiguous') {
     const s = document.getElementById('f-cont-start').value;
     const e = document.getElementById('f-cont-end').value || s;
-    if (!s) return [];
+    if (!s) { _sessionsHint.reason = 'Pick a first day to see generated sessions.'; return []; }
     const startD = new Date(s + 'T00:00:00');
     const endD = new Date(e + 'T00:00:00');
     for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
       sessions.push({ date: ymd(d), start: defStart, end: defEnd, topic: '' });
     }
   } else if (mode === 'recurring') {
-    const dow = parseInt(document.getElementById('f-rec-dow').value);
+    const dowRaw = document.getElementById('f-rec-dow').value;
+    const dow = parseInt(dowRaw);
     const s = document.getElementById('f-rec-start').value;
     const e = document.getElementById('f-rec-end').value;
-    if (!s || !e) return [];
+    const missing = [];
+    if (isNaN(dow)) missing.push('day-of-week');
+    if (!s) missing.push('start date');
+    if (!e) missing.push('end date');
+    if (missing.length) {
+      _sessionsHint.reason = 'Pick a ' + missing.join(' + ') + ' to see generated sessions.';
+      return [];
+    }
     const startD = new Date(s + 'T00:00:00');
     const endD = new Date(e + 'T00:00:00');
     // advance startD to first matching weekday
+    const origDate = new Date(startD);
     while (startD.getDay() !== dow) startD.setDate(startD.getDate() + 1);
+    // 2026-05-24 audit V5: if we advanced, surface it so the teacher knows we
+    // skipped past their typed date.
+    if (startD.getTime() !== origDate.getTime()) {
+      _sessionsHint.dateShift = { orig: ymd(origDate), shifted: ymd(startD) };
+    }
     for (let d = new Date(startD); d <= endD; d.setDate(d.getDate() + 7)) {
       sessions.push({ date: ymd(d), start: defStart, end: defEnd, topic: '' });
     }
@@ -883,6 +908,7 @@ function generateSessions() {
     document.querySelectorAll('#specific-dates-list input[type=date]').forEach(inp => {
       if (inp.value) sessions.push({ date: inp.value, start: defStart, end: defEnd, topic: '' });
     });
+    if (sessions.length === 0) _sessionsHint.reason = 'Add one or more specific dates above.';
     sessions.sort((a, b) => a.date.localeCompare(b.date));
   }
   return sessions;
@@ -893,13 +919,27 @@ function updateSessionsPreview() {
   state.sessions = sessions;
   const preview = document.getElementById('sessions-preview');
   if (sessions.length === 0) {
-    preview.style.display = 'none';
+    // 2026-05-24 audit V4: surface why preview is empty instead of just hiding.
+    // _sessionsHint.reason is set inside generateSessions().
+    if (_sessionsHint.reason) {
+      preview.style.display = '';
+      preview.innerHTML = '<em style="color: var(--mid); font-weight: 400;">' + _sessionsHint.reason + '</em>';
+    } else {
+      preview.style.display = 'none';
+    }
     renderDropinSessions([]);   // 2026-05-24: clear drop-in list if sessions emptied
     return;
   }
   preview.style.display = '';
   const labels = sessions.map(s => fmtDateLabel(s.date));
-  preview.innerHTML = `<strong>${sessions.length} session${sessions.length === 1 ? '' : 's'} generated:</strong> ${labels.join(' · ')}`;
+  // 2026-05-24 audit V5: surface silent date-shift in recurring mode.
+  let shiftNote = '';
+  if (_sessionsHint.dateShift) {
+    const orig = fmtDateLabel(_sessionsHint.dateShift.orig);
+    const shifted = fmtDateLabel(_sessionsHint.dateShift.shifted);
+    shiftNote = '<div style="margin-top: 6px; font-size: 0.82rem; color: #78350F; background: var(--amber-tint, #FEF3C7); padding: 6px 10px; border-radius: 4px;">Note: your start date <strong>' + orig + '</strong> wasn\'t the selected day-of-week — first session shifted to <strong>' + shifted + '</strong>.</div>';
+  }
+  preview.innerHTML = `<strong>${sessions.length} session${sessions.length === 1 ? '' : 's'} generated:</strong> ${labels.join(' · ')}` + shiftNote;
   renderPerSessionTimes(sessions);
   renderSessionTopics(sessions);
   renderDropinSessions(sessions);   // 2026-05-24: keep per-session drop-in checkboxes in sync
@@ -942,7 +982,6 @@ function renderPerSessionTimes(sessions) {
       <span class="date-label">${fmtDateLabel(s.date)}</span>
       <input type="time" data-idx="${i}" data-field="start" placeholder="${s.start}">
       <input type="time" data-idx="${i}" data-field="end" placeholder="${s.end}">
-      <span></span>
     `;
     list.appendChild(row);
   });
@@ -1005,7 +1044,18 @@ document.querySelector('.date-pattern-tab[data-mode="contiguous"]').click();
 
 // ───────── VALIDATION + SUBMIT ─────────
 function getVal(id) { return (document.getElementById(id)?.value || '').trim(); }
-function getNum(id) { const v = getVal(id); return v ? parseFloat(v) : null; }
+// 2026-05-24 audit V2 + V3: parse safely. Returns null if blank, null if not a
+// finite number (was returning NaN silently — passed truthy guards and
+// corrupted payloads). Negative numbers clamped to null since every numeric
+// field in this form (price, min, max) should be >= 0.
+function getNum(id) {
+  const v = getVal(id);
+  if (!v) return null;
+  const n = parseFloat(v);
+  if (!isFinite(n)) return null;
+  if (n < 0) return null;
+  return n;
+}
 
 // 2026-05-24 (audit surprise): read a file input as base64. Returns null if no
 // file selected. Backend (output-generator.gs:271-278) needs the `*_b64` field
@@ -1050,10 +1100,16 @@ function collectSessions() {
   return sessions;
 }
 
+// 2026-05-24 audit V1: minimal email-shape regex. Catches typos like "asdf" or
+// missing "@" before submit hits the backend. Not RFC-strict on purpose —
+// just a teacher-friendly sanity check.
+const _emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 function validate() {
   const errs = [];
   if (!getVal('f-teacher-name')) errs.push('Your name');
   if (!getVal('f-teacher-email')) errs.push('Your email');
+  else if (!_emailRe.test(getVal('f-teacher-email'))) errs.push('Your email (looks like a typo)');
   if (!getVal('f-title')) errs.push('Workshop title');
   if (!state.format) errs.push('Format');
   if (state.styles.length === 0) errs.push('At least one style');
@@ -1246,8 +1302,12 @@ async function submitForm() {
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
     });
-    const json = await res.json().catch(() => ({ ok: false }));
-    if (json.ok === false) throw new Error(json.error || 'Submission failed');
+    // 2026-05-24 audit S2: surface real error reason instead of generic "Submission failed".
+    // If JSON parse fails (e.g. HTML 500 page), include status + statusText so it's debuggable.
+    let json;
+    try { json = await res.json(); }
+    catch (_) { throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + '). Your draft is saved.'); }
+    if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ').'));
     okBox.innerHTML = `
       <strong>✓ Submitted successfully.</strong><br>
       Your workshop has been recorded. Shoonya will review and follow up.<br>
@@ -1258,10 +1318,12 @@ async function submitForm() {
     btn.textContent = 'Submitted ✓';
     try { localStorage.removeItem(WS_DRAFT_KEY); } catch(e) {}
   } catch (e) {
-    errBox.textContent = '⚠ ' + (e.message || 'Submission failed. Try again or contact info@shoonyadance.com.');
+    // 2026-05-24 audit S2 + S3: surface real error + throttle re-submit for 1.5s to prevent double-clicks.
+    errBox.innerHTML = '⚠ ' + (e.message || 'Submission failed. Try again or email info@shoonyadance.com.') +
+      '<br><small style="color:var(--mid);">Your draft is saved — try again or come back later.</small>';
     errBox.style.display = '';
-    btn.disabled = false;
-    btn.textContent = 'Submit workshop →';
+    btn.textContent = 'Wait a moment…';
+    setTimeout(() => { btn.disabled = false; btn.textContent = 'Submit workshop →'; }, 1500);
   }
 }
 
@@ -1273,6 +1335,14 @@ function wsCollectDraft() {
   const grab1 = id => document.getElementById(id)?.querySelector?.('.chip.selected')?.dataset?.val || '';
   const grabN = id => [...(document.getElementById(id)?.querySelectorAll('.chip.selected') || [])].map(c => c.dataset.val);
   const specificDates = [...document.querySelectorAll('#specific-dates-list input[type="date"]')].map(i => i.value).filter(Boolean);
+  // 2026-05-24 audit S10: persist per-session time overrides, the times-differ
+  // toggle, the couple-price toggle, the min-cancel chip, and the single-session
+  // (drop-in) toggle. Restore was silently losing these.
+  const perSessionTimes = [...document.querySelectorAll('#per-session-times-list input[type="time"]')].map(inp => ({
+    idx: parseInt(inp.dataset.idx, 10),
+    field: inp.dataset.field,
+    value: inp.value || '',
+  })).filter(o => isFinite(o.idx) && o.value);
   return {
     v: 1, savedAt: new Date().toISOString(),
     format: grab1('format-chips'),
@@ -1293,6 +1363,12 @@ function wsCollectDraft() {
     recEnd: document.getElementById('f-rec-end')?.value || '',
     specificDates,
     defaultStart: document.getElementById('f-default-start')?.value || '',
+    defaultEnd: document.getElementById('f-default-end')?.value || '',
+    timesDiffer: document.getElementById('f-times-differ')?.checked || false,
+    perSessionTimes,
+    singleSession: document.getElementById('f-single-session')?.checked || false,
+    couplePrice: document.getElementById('f-couple-price')?.checked || false,
+    minCancelIfUnder: (document.querySelector('#min-cond-chips .chip.selected')?.dataset.val === 'true') || false,
     priceFull: document.getElementById('f-price-full')?.value || '',
     pricePerPerson: document.getElementById('f-price-per-person')?.value || '',
     priceCouple: document.getElementById('f-price-couple')?.value || '',
@@ -1347,6 +1423,7 @@ function wsRestoreDraft(d) {
   set('f-cont-start', d.contStart); set('f-cont-end', d.contEnd);
   set('f-rec-dow', d.recDow); set('f-rec-start', d.recStart); set('f-rec-end', d.recEnd);
   set('f-default-start', d.defaultStart);
+  set('f-default-end', d.defaultEnd);   // 2026-05-24 audit S10
   set('f-price-full', d.priceFull); if (d.priceFull) updateMemberPrice();
   set('f-price-per-person', d.pricePerPerson); set('f-price-couple', d.priceCouple);
   set('f-pricing-notes', d.pricingNotes);
@@ -1367,6 +1444,30 @@ function wsRestoreDraft(d) {
   (d.specificDates || []).forEach(dateVal => {
     addSpecificDate(dateVal);
   });
+  // 2026-05-24 audit S10: restore the toggles + min-cancel chip + per-session
+  // time overrides. Restore must happen after specific dates + sessions preview
+  // so the time-input list is already rendered.
+  const singleCb = document.getElementById('f-single-session');
+  if (singleCb && d.singleSession) { singleCb.checked = true; toggleSingleSession(singleCb); }
+  const coupleCb = document.getElementById('f-couple-price');
+  if (coupleCb && d.couplePrice) { coupleCb.checked = true; toggleCouplePrice(coupleCb); }
+  const timesDifferCb = document.getElementById('f-times-differ');
+  if (timesDifferCb && d.timesDiffer) { timesDifferCb.checked = true; toggleSessionTimes(timesDifferCb); }
+  if (d.minPart) { toggleMinConditional(); }
+  if (d.minCancelIfUnder === true) {
+    const chip = document.querySelector('#min-cond-chips .chip[data-val="true"]');
+    if (chip) selectMinCond(chip);
+  }
+  // Apply per-session time overrides (after generateSessions has rendered the
+  // per-session inputs via toggleSessionTimes / specific-date population).
+  if (Array.isArray(d.perSessionTimes) && d.perSessionTimes.length) {
+    setTimeout(() => {
+      d.perSessionTimes.forEach(o => {
+        const inp = document.querySelector('#per-session-times-list input[data-idx="' + o.idx + '"][data-field="' + o.field + '"]');
+        if (inp) inp.value = o.value;
+      });
+    }, 0);
+  }
   showWsDraftBanner(d.savedAt);
 }
 
