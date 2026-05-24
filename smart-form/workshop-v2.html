@@ -594,7 +594,7 @@
 
     <label class="checkbox-row">
       <input type="checkbox" id="f-single-session" onchange="toggleSingleSession(this)">
-      Allow single-session attendance (drop-in or per-session purchase)
+      Allow drop-in (sell single-session tickets per day)
     </label>
 
     <div class="toggle-section hidden" id="single-session-prices">
@@ -605,7 +605,7 @@
 
       <!-- 2026-05-24 audit: per-session drop-in toggles. For multi-day workshops where drop-in only applies to some days (e.g. Saturday but not Sunday of a weekend intensive). All sessions are drop-in-enabled by default; teacher unchecks any that aren't. List populated by renderDropinSessions(), kept in sync with the Schedule section's generated sessions. -->
       <div class="field" id="dropin-sessions-wrap" style="margin-top: 12px; padding: 10px 14px; border-left: 3px solid var(--purple); background: rgba(181,100,247,0.04); border-radius: 0 4px 4px 0;">
-        <label class="field-label" style="font-size: 0.78rem; margin-bottom: 6px;">Drop-in available for which sessions?</label>
+        <label class="field-label" style="font-size: 0.78rem; margin-bottom: 6px;">Which sessions are drop-in eligible?</label>
         <p class="field-hint" style="margin: 0 0 8px;">Uncheck any sessions where drop-in is NOT allowed (e.g. a 2-day intensive where Sunday builds on Saturday).</p>
         <div id="dropin-sessions-list" style="display: flex; flex-direction: column; gap: 6px;">
           <p style="font-size: 0.85rem; color: var(--mid); font-style: italic; margin: 0;">Pick your workshop dates in Section 3 first — they'll appear here.</p>
@@ -1337,7 +1337,7 @@ async function submitForm() {
     if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ').'));
     okBox.innerHTML = `
       <strong>✓ Submitted successfully.</strong><br>
-      Your workshop has been recorded. Shoonya will review and follow up.<br>
+      Submitted ✓ — Shoonya will review within 48 hours and follow up by email.<br>
       <small style="color: var(--mid);">Format: ${state.format} · Styles: ${state.styles.join(', ')} · Sessions: ${sessions.length}</small>
     `;
     okBox.style.display = '';

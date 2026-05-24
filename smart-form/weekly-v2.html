@@ -449,7 +449,7 @@
   <div class="section">
     <span class="section-num">1</span>
     <h2 class="section-title">Class basics</h2>
-    <p class="section-hint">What are you teaching and when does the semester run?</p>
+    <p class="section-hint">What are you teaching this semester?</p>
 
     <div class="field">
       <label class="field-label">Dance style <span class="req-mark">*</span></label>
@@ -668,7 +668,7 @@
 
     <label class="checkbox-row" style="margin-top: 16px;">
       <input type="checkbox" id="dropin-cb" onchange="toggleDropIn(this)">
-      This class allows drop-ins (only for D&F / Pilates)
+      Drop-in allowed (Dance & Fit / Pilates only — leave unchecked otherwise)
     </label>
 
     <div class="toggle-section hidden" id="drop-in-fields">
@@ -1374,7 +1374,8 @@ async function submitForm() {
     if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ').'));
     okBox.innerHTML = `
       <strong>✓ Submitted successfully.</strong><br>
-      ${levels.length} level${levels.length === 1 ? '' : 's'} captured. Shoonya will review and follow up.<br>
+      Submitted ✓ — Shoonya will review within 48 hours and follow up by email.<br>
+      ${levels.length} level${levels.length === 1 ? '' : 's'} captured.<br>
       <small style="color: var(--mid);">Style: ${style} · Levels: ${levels.map(l=>l.level).join(', ')}</small>
     `;
     okBox.style.display = '';
