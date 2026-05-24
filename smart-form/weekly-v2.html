@@ -132,6 +132,33 @@
   .chip:hover { background: var(--purple-tint); }
   .chip.selected { background: var(--purple); color: white; border-color: var(--purple); }
   .chip-multi.selected::before { content: '✓ '; }
+  /* 2026-05-24: required-field markers + top-of-form legend. */
+  .req-mark { color: #d32f2f; font-weight: 700; margin-left: 2px; }
+  .form-legend { font-size: 0.82rem; color: var(--mid); margin: 0 0 18px; padding: 8px 12px; background: #fff8f7; border-left: 3px solid #d32f2f; border-radius: 0 4px 4px 0; }
+  .form-legend .req-mark { font-size: 0.95rem; }
+  /* 2026-05-24 (#21): review-before-submit modal. */
+  .review-overlay { display: none; position: fixed; inset: 0; background: rgba(20,20,30,0.6); z-index: 1000; padding: 24px; overflow-y: auto; }
+  .review-overlay.open { display: block; }
+  .review-modal { max-width: 720px; margin: 24px auto; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 28px 32px; color: var(--ink, #1a1a1a); }
+  .review-modal h2 { font-family: Marcellus, serif; font-size: 1.6rem; margin: 0 0 6px; }
+  .review-modal .review-sub { color: var(--mid); margin: 0 0 24px; font-size: 0.95rem; }
+  .review-section { margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid #eee; }
+  .review-section:last-of-type { border-bottom: none; }
+  .review-section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--purple-dark); margin: 0 0 10px; }
+  .review-row { display: grid; grid-template-columns: 160px 1fr auto; gap: 12px; align-items: start; padding: 6px 0; font-size: 0.92rem; }
+  .review-row + .review-row { border-top: 1px dashed #f0f0f0; }
+  .review-label { color: var(--mid); font-weight: 600; }
+  .review-value { word-break: break-word; white-space: pre-wrap; }
+  .review-value.empty { color: #aaa; font-style: italic; }
+  .review-edit-btn { background: none; border: 1px solid var(--border); color: var(--purple-dark); font-size: 0.78rem; padding: 4px 10px; border-radius: 14px; cursor: pointer; font-family: inherit; }
+  .review-edit-btn:hover { background: var(--purple-tint); }
+  .review-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 18px; border-top: 1px solid #eee; }
+  .review-btn-cancel { background: #fff; border: 1px solid var(--border); color: var(--mid); padding: 10px 22px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.95rem; }
+  .review-btn-cancel:hover { background: #f5f5f5; }
+  .review-btn-submit { background: var(--purple); border: none; color: #fff; padding: 10px 26px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 1rem; font-weight: 600; }
+  .review-btn-submit:hover { background: var(--purple-dark); }
+  .field-flash { animation: flash 1.2s; }
+  @keyframes flash { 0%, 100% { background: transparent; } 30% { background: var(--purple-tint); } }
   .toggle-section {
     background: #F8F3FF;
     border-left: 3px solid var(--purple);
@@ -403,6 +430,8 @@
 
   <!-- 2026-05-24: v2 beta-tester banner removed. Production form, teachers shouldn't see the version messaging. -->
 
+  <p class="form-legend">Fields marked <span class="req-mark">*</span> are required.</p>
+
   <!-- TEACHER IDENTITY (hidden — filled by login-panel.js) -->
   <input type="hidden" id="f-teacher-name">
   <input type="hidden" id="f-teacher-email">
@@ -426,7 +455,7 @@
     <p class="section-hint">What are you teaching and when does the semester run?</p>
 
     <div class="field">
-      <label class="field-label">Dance style</label>
+      <label class="field-label">Dance style <span class="req-mark">*</span></label>
       <!-- 2026-05-24 audit P0-3 + P0-4: dropped default-selected Bollywood (was lying about teacher), dropped "(demo only)" label on Tap Dance, removed the "Only showing styles assigned to your teacher profile" hint text (was a lie — chips are hardcoded, no profile fetch). Real per-teacher filter is part of item #17. -->
       <div class="chips" data-single id="style-chips">
         <div class="chip" onclick="selectSingle(this)">Bollywood</div>
@@ -467,7 +496,7 @@
     <p class="section-hint">Just you, or are you teaching with others?</p>
 
     <div class="field">
-      <label class="field-label">Co-teacher(s)</label>
+      <label class="field-label">Co-teacher(s) <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <p class="field-hint" style="margin: 0 0 10px;">If you're teaching with someone, type their name(s) below — separate multiple names with a comma. Leave blank if teaching solo.</p>
       <!-- 2026-05-24: hardcoded teacher chip list removed. Previously rendered a fake "Aanchal Mehta" (pre-selected), wrong "Alex Vandenberghe", duplicate "Badriyah" etc. — never wired to the Teachers sheet. Free-text fallback in use until TASKS #17 wires real fetch + pre-select. The submit, autosave-collect, and autosave-restore code below was updated to read from `#coteacher-freetext` instead of the old chip-multi DOM. -->
       <div id="coteacher-chips">
@@ -494,7 +523,7 @@
     <p class="section-hint">Pick the levels you're offering. Each gets its own schedule below.</p>
 
     <div class="field">
-      <label class="field-label">Levels offered <span class="badge-new">multi-select</span></label>
+      <label class="field-label">Levels offered <span class="req-mark">*</span> <span class="badge-new">multi-select</span></label>
       <div class="chips" id="level-chips-wrap">
         <!-- 2026-05-24 audit P0-3: dropped default-selected L1+L2 (varies per teacher/style). Teacher actively picks levels. -->
         <div class="chip chip-multi" data-level-key="L1" onclick="toggleLevel(this, 'L1')">Level 1</div>
@@ -600,8 +629,14 @@
     </div>
   </div>
 
-  <!-- SECTION 4: PRICING (DERIVED) -->
-  <div class="section">
+  <!-- SECTION 4: PRICING (DERIVED) — 2026-05-24 (audit surprise #2):
+       HIDDEN until item #17 wires real per-style + per-duration derivation.
+       Was showing hardcoded €198 / €231 for L1 / L2 regardless of style.
+       Misleading once Weekly card is re-routed to v2 — and impossible to
+       silently keep around because teachers would assume the displayed
+       numbers are their actual prices. Admin confirms semester pricing
+       separately for now (no functional loss; section was display-only). -->
+  <div class="section" style="display: none;" data-hidden-until="item-17">
     <span class="section-num">4</span>
     <h2 class="section-title">Pricing <span class="badge-derived">auto</span></h2>
     <p class="section-hint">All prices derived from the semester config + duration tier. You don't enter these.</p>
@@ -755,7 +790,21 @@
   <div id="submit-success" class="success-msg" style="display:none;"></div>
 
   <div class="submit-row">
-    <button class="btn-primary" id="submit-btn" onclick="submitForm()">Submit weekly class →</button>
+    <!-- 2026-05-24 (#21): button opens review modal; modal's Submit calls submitForm() -->
+    <button class="btn-primary" id="submit-btn" onclick="openReviewModal()">Review &amp; submit →</button>
+
+    <!-- 2026-05-24 (#21): review-before-submit modal. -->
+    <div class="review-overlay" id="review-overlay" onclick="if(event.target===this)closeReviewModal()">
+      <div class="review-modal" role="dialog" aria-modal="true" aria-labelledby="review-title">
+        <h2 id="review-title">Review your weekly class submission</h2>
+        <p class="review-sub">Click <strong>Edit</strong> on any row to jump back to the field and change it. Then come back here to submit for real.</p>
+        <div id="review-body"></div>
+        <div class="review-actions">
+          <button type="button" class="review-btn-cancel" onclick="closeReviewModal()">Back to form</button>
+          <button type="button" class="review-btn-submit" onclick="confirmSubmit()">Submit weekly class</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <p style="text-align: center; margin-top: 32px; font-size: 0.78rem; color: var(--light);">
@@ -1067,6 +1116,90 @@ function validate() {
   const levels = collectLevels();
   if (levels.length === 0) errs.push('At least one level with a valid time slot');
   return { errs, style, levels };
+}
+
+// ─── REVIEW BEFORE SUBMIT ───────────────────────────────────────────────────
+// 2026-05-24 (#21): review modal with inline-edit jumps. Note weekly-v2's
+// validate() returns {errs, style, levels} (not a plain array like workshop-v2).
+function openReviewModal() {
+  const { errs, style, levels } = validate();
+  const errBox = document.getElementById('submit-error');
+  if (errs.length > 0) {
+    errBox.innerHTML = '<strong>Please fill in:</strong> ' + errs.join(', ');
+    errBox.style.display = '';
+    errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  errBox.style.display = 'none';
+  document.getElementById('review-body').innerHTML = _buildReviewSummaryHtml({ style, levels });
+  document.getElementById('review-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReviewModal() {
+  document.getElementById('review-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function confirmSubmit() {
+  closeReviewModal();
+  submitForm();
+}
+
+function _reviewJumpTo(selector) {
+  closeReviewModal();
+  const el = document.querySelector(selector);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.remove('field-flash'); void el.offsetWidth; el.classList.add('field-flash');
+  const focusable = el.querySelector('input, textarea, select') || (['INPUT','TEXTAREA','SELECT'].includes(el.tagName) ? el : null);
+  if (focusable) setTimeout(() => focusable.focus(), 600);
+}
+
+function _esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _reviewRow(label, value, jumpSelector) {
+  const empty = value === '' || value == null;
+  const display = empty ? '<span class="review-value empty">(not set)</span>' : `<span class="review-value">${_esc(value)}</span>`;
+  const btn = jumpSelector ? `<button type="button" class="review-edit-btn" onclick="_reviewJumpTo('${jumpSelector.replace(/'/g, "\\'")}')">Edit</button>` : '';
+  return `<div class="review-row"><span class="review-label">${_esc(label)}</span>${display}${btn}</div>`;
+}
+function _reviewSection(title, rows) {
+  const visible = rows.filter(Boolean).join('');
+  if (!visible) return '';
+  return `<div class="review-section"><div class="review-section-title">${_esc(title)}</div>${visible}</div>`;
+}
+
+function _buildReviewSummaryHtml(ctx) {
+  const style = ctx.style || '';
+  const levels = ctx.levels || [];
+  const semester = document.querySelector('#semester-chips .chip.selected')?.textContent.trim() || '';
+  const lang = document.querySelector('#lang-chips .chip.selected')?.textContent.trim() || '';
+  const coTeachers = (document.getElementById('coteacher-freetext')?.value || '').trim();
+  const levelLines = levels.map(l => {
+    const slots = (l.slots || []).map(s => s.day + ' ' + s.start + '–' + s.end).join(', ');
+    return l.level + (l.description ? ' — ' + l.description.slice(0, 80) + (l.description.length > 80 ? '…' : '') : '') + (slots ? '\n  ' + slots : '');
+  }).join('\n\n');
+
+  return [
+    _reviewSection('Who', [
+      _reviewRow('Submitting as', document.getElementById('f-teacher-name')?.value || '', null),
+      _reviewRow('Email', document.getElementById('f-teacher-email')?.value || '', null),
+    ]),
+    _reviewSection('Basics', [
+      _reviewRow('Dance style', style, '#style-chips'),
+      _reviewRow('Semester', semester, '#semester-chips'),
+      _reviewRow('Teaching language', lang, '#lang-chips'),
+      coTeachers ? _reviewRow('Co-teacher(s)', coTeachers, '#coteacher-freetext') : '',
+    ]),
+    _reviewSection('Levels & schedule', [
+      _reviewRow('Levels', levelLines || '(none)', '#level-cards'),
+    ]),
+    _reviewSection('Notes', [
+      document.querySelector('.section:nth-of-type(5) textarea')?.value
+        ? _reviewRow('Description', document.querySelector('.section:nth-of-type(5) textarea').value, '.section:nth-of-type(5)')
+        : '',
+    ]),
+  ].filter(Boolean).join('');
 }
 
 async function submitForm() {

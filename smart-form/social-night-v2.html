@@ -138,6 +138,33 @@
   /* 2026-05-24 audit P1-2: hide chips not in teacher's dance_styles by default. #style-chips.show-all reveals them after the "+ Show all styles" expand chip is clicked. */
   #style-chips .chip-style-hidden { display: none; }
   #style-chips.show-all .chip-style-hidden { display: inline-flex; }
+  /* 2026-05-24: required-field markers + top-of-form legend. */
+  .req-mark { color: #d32f2f; font-weight: 700; margin-left: 2px; }
+  .form-legend { font-size: 0.82rem; color: var(--mid); margin: 0 0 18px; padding: 8px 12px; background: #fff8f7; border-left: 3px solid #d32f2f; border-radius: 0 4px 4px 0; }
+  .form-legend .req-mark { font-size: 0.95rem; }
+  /* 2026-05-24 (#21): review-before-submit modal. */
+  .review-overlay { display: none; position: fixed; inset: 0; background: rgba(20,20,30,0.6); z-index: 1000; padding: 24px; overflow-y: auto; }
+  .review-overlay.open { display: block; }
+  .review-modal { max-width: 720px; margin: 24px auto; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 28px 32px; color: var(--ink); }
+  .review-modal h2 { font-family: Marcellus, serif; font-size: 1.6rem; margin: 0 0 6px; }
+  .review-modal .review-sub { color: var(--mid); margin: 0 0 24px; font-size: 0.95rem; }
+  .review-section { margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid #eee; }
+  .review-section:last-of-type { border-bottom: none; }
+  .review-section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--purple-dark); margin: 0 0 10px; }
+  .review-row { display: grid; grid-template-columns: 160px 1fr auto; gap: 12px; align-items: start; padding: 6px 0; font-size: 0.92rem; }
+  .review-row + .review-row { border-top: 1px dashed #f0f0f0; }
+  .review-label { color: var(--mid); font-weight: 600; }
+  .review-value { word-break: break-word; }
+  .review-value.empty { color: #aaa; font-style: italic; }
+  .review-edit-btn { background: none; border: 1px solid var(--border); color: var(--purple-dark); font-size: 0.78rem; padding: 4px 10px; border-radius: 14px; cursor: pointer; font-family: inherit; }
+  .review-edit-btn:hover { background: var(--purple-tint); }
+  .review-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 18px; border-top: 1px solid #eee; }
+  .review-btn-cancel { background: #fff; border: 1px solid var(--border); color: var(--mid); padding: 10px 22px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.95rem; }
+  .review-btn-cancel:hover { background: #f5f5f5; }
+  .review-btn-submit { background: var(--purple); border: none; color: #fff; padding: 10px 26px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 1rem; font-weight: 600; }
+  .review-btn-submit:hover { background: var(--purple-dark); }
+  .field-flash { animation: flash 1.2s; }
+  @keyframes flash { 0%, 100% { background: transparent; } 30% { background: var(--purple-tint); } }
   .toggle-section {
     background: #F8F3FF;
     border-left: 3px solid var(--purple);
@@ -412,6 +439,8 @@
 
   <!-- 2026-05-24 audit: third v2 beta-tester banner stripped (the earlier sweep missed this variant — "Redesigned form (v2). Single page, smarter programme builder"). Now consistent with workshop-v2 + weekly-v2. -->
 
+  <p class="form-legend">Fields marked <span class="req-mark">*</span> are required.</p>
+
   <!-- TEACHER IDENTITY (hidden — filled by login-panel.js) -->
   <input type="hidden" id="f-teacher-name">
   <input type="hidden" id="f-teacher-email">
@@ -429,7 +458,7 @@
     <p class="section-hint">What's the event, and when is it?</p>
 
     <div class="field">
-      <label class="field-label">Dance style(s) <span class="badge-new">multi-select</span></label>
+      <label class="field-label">Dance style(s) <span class="req-mark">*</span> <span class="badge-new">multi-select</span></label>
       <div class="chips" id="style-chips">
         <div class="chip chip-multi" data-val="Bachata" onclick="toggleStyle(this)">Bachata</div>
         <div class="chip chip-multi" data-val="Salsa" onclick="toggleStyle(this)">Salsa</div>
@@ -451,7 +480,7 @@
     </div>
 
     <div class="field">
-      <label class="field-label">Event title</label>
+      <label class="field-label">Event title <span class="req-mark">*</span></label>
       <input type="text" id="f-title" placeholder="e.g. Shoonya goes Salsa &amp; Bachata">
       <div class="title-suggestion" id="title-suggestion">
         Suggested: <button onclick="applyTitleSuggestion()" id="title-suggest-btn"></button>
@@ -461,11 +490,11 @@
 
     <div class="row3">
       <div class="field">
-        <label class="field-label">Date</label>
+        <label class="field-label">Date <span class="req-mark">*</span></label>
         <input type="date" id="f-date">
       </div>
       <div class="field">
-        <label class="field-label">Doors open</label>
+        <label class="field-label">Doors open <span class="req-mark">*</span></label>
         <input type="time" id="f-doors" value="20:00">
         <div class="quick-times">
           <button class="quick-btn" onclick="document.getElementById('f-doors').value='19:00'">19:00</button>
@@ -511,7 +540,7 @@
 
       <div class="row" style="margin-bottom: 18px;">
         <div class="field">
-          <label class="field-label">Floor opens</label>
+          <label class="field-label">Floor opens <span class="req-mark">*</span></label>
           <input type="time" id="f-dn-start" value="22:00">
           <div class="quick-times">
             <button class="quick-btn" style="border-color:#5a3a7a; color:#c49cee;" onclick="document.getElementById('f-dn-start').value='21:00'">21:00</button>
@@ -526,7 +555,7 @@
       </div>
 
       <div class="field">
-        <label class="field-label">Music handled by</label>
+        <label class="field-label">Music handled by <span class="req-mark">*</span></label>
         <div class="music-type-chips" id="music-type-chips">
           <div class="music-chip" data-val="guest-dj" onclick="setMusicType(this)">Guest DJ</div>
           <div class="music-chip" data-val="teacher-dj" onclick="setMusicType(this)">One of our teachers</div>
@@ -628,7 +657,21 @@
   <div id="error-row" class="error-msg" style="display:none;"></div>
   <div id="success-row" class="success-msg" style="display:none;"></div>
   <div class="submit-row">
-    <button class="btn-primary" onclick="submitForm()">Submit social night →</button>
+    <!-- 2026-05-24 (#21): button opens review modal; modal's Submit calls submitForm() -->
+    <button class="btn-primary" onclick="openReviewModal()">Review &amp; submit →</button>
+
+    <!-- 2026-05-24 (#21): review-before-submit modal. -->
+    <div class="review-overlay" id="review-overlay" onclick="if(event.target===this)closeReviewModal()">
+      <div class="review-modal" role="dialog" aria-modal="true" aria-labelledby="review-title">
+        <h2 id="review-title">Review your social night submission</h2>
+        <p class="review-sub">Click <strong>Edit</strong> on any row to jump back to the field and change it. Then come back here to submit for real.</p>
+        <div id="review-body"></div>
+        <div class="review-actions">
+          <button type="button" class="review-btn-cancel" onclick="closeReviewModal()">Back to form</button>
+          <button type="button" class="review-btn-submit" onclick="confirmSubmit()">Submit social night</button>
+        </div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -655,6 +698,20 @@ function addCustomStyle() {
   chip.addEventListener('click', () => { chip.classList.toggle('selected'); updateTitleSuggestion(); });
   wrap.insertBefore(chip, addBtn);
   updateTitleSuggestion();
+}
+
+// 2026-05-24 (audit surprise): read a file input as base64. Returns null if no
+// file selected. Backend (output-generator.gs:271-278) needs the `*_b64` field
+// to actually upload to Drive — without this every "photo upload" silently failed.
+async function _fileToB64(input) {
+  const file = input?.files?.[0];
+  if (!file) return null;
+  return await new Promise(resolve => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result || '').split(',')[1] || null);   // strip "data:image/...;base64," prefix
+    r.onerror = () => resolve(null);
+    r.readAsDataURL(file);
+  });
 }
 
 function getSelectedStyles() {
@@ -823,6 +880,125 @@ function addPricingTier(label, price) {
   wrap.appendChild(row);
 }
 
+// ─── REVIEW BEFORE SUBMIT ───────────────────────────────────────────────────
+// 2026-05-24 (#21): review modal with inline-edit jumps. Same pattern as workshop-v2.
+function openReviewModal() {
+  // Run the same validation as submitForm. If any errors, show them inline and abort.
+  const errors = _collectValidationErrors();
+  const errBox = document.getElementById('error-row');
+  if (errors.length > 0) {
+    errBox.innerHTML = errors.map(e => '• ' + e).join('<br>');
+    errBox.style.display = 'block';
+    errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  errBox.style.display = 'none';
+  document.getElementById('review-body').innerHTML = _buildReviewSummaryHtml();
+  document.getElementById('review-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReviewModal() {
+  document.getElementById('review-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function confirmSubmit() {
+  closeReviewModal();
+  submitForm();
+}
+
+function _reviewJumpTo(selector) {
+  closeReviewModal();
+  const el = document.querySelector(selector);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.remove('field-flash'); void el.offsetWidth; el.classList.add('field-flash');
+  const focusable = el.querySelector('input, textarea, select') || (['INPUT','TEXTAREA','SELECT'].includes(el.tagName) ? el : null);
+  if (focusable) setTimeout(() => focusable.focus(), 600);
+}
+
+function _esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _reviewRow(label, value, jumpSelector) {
+  const empty = value === '' || value == null;
+  const display = empty ? '<span class="review-value empty">(not set)</span>' : `<span class="review-value">${_esc(value)}</span>`;
+  const btn = jumpSelector ? `<button type="button" class="review-edit-btn" onclick="_reviewJumpTo('${jumpSelector.replace(/'/g, "\\'")}')">Edit</button>` : '';
+  return `<div class="review-row"><span class="review-label">${_esc(label)}</span>${display}${btn}</div>`;
+}
+function _reviewSection(title, rows) {
+  const visible = rows.filter(Boolean).join('');
+  if (!visible) return '';
+  return `<div class="review-section"><div class="review-section-title">${_esc(title)}</div>${visible}</div>`;
+}
+
+// Mirrors submitForm's inline validation logic (kept in sync intentionally).
+function _collectValidationErrors() {
+  const errors = [];
+  const styles = getSelectedStyles();
+  if (!document.getElementById('f-teacher-name').value.trim()) errors.push('Please log in before submitting.');
+  if (styles.length === 0) errors.push('Select at least one dance style.');
+  if (!document.getElementById('f-title').value.trim()) errors.push('Event title is required.');
+  if (!document.getElementById('f-date').value) errors.push('Date is required.');
+  if (!document.getElementById('f-doors').value) errors.push('Doors open time is required.');
+  if (!document.getElementById('f-dn-start').value) errors.push('Dance floor start time is required.');
+  if (!document.querySelector('#music-type-chips .music-chip.selected')) errors.push('Select who is handling the music.');
+  return errors;
+}
+
+function _buildReviewSummaryHtml() {
+  const styles = getSelectedStyles();
+  const musicSelected = document.querySelector('#music-type-chips .music-chip.selected');
+  const genres = [...document.querySelectorAll('#genre-chips .music-chip.selected')].map(c => c.dataset.val || c.textContent.trim());
+  const programmeRows = [...document.querySelectorAll('#programme-rows .prog-card')].map((card, i) => {
+    const typeEl = card.querySelector('.chip.selected');
+    return [
+      typeEl ? typeEl.dataset.type : '',
+      card.querySelector('[data-slot="start"]')?.value || '',
+      card.querySelector('[data-slot="duration"]')?.value || '',
+      card.querySelector('[data-slot="style"]')?.value || '',
+      card.querySelector('[data-slot="teacher"]')?.value || '',
+    ].filter(Boolean).join(' · ');
+  });
+  const pricingRows = [...document.querySelectorAll('#pricing-rows .pricing-tier')].map(row => {
+    const inputs = row.querySelectorAll('input');
+    return (inputs[0]?.value || '') + ': €' + (inputs[1]?.value || '0');
+  });
+
+  return [
+    _reviewSection('Who', [
+      _reviewRow('Submitting as', document.getElementById('f-teacher-name').value, null),
+      _reviewRow('Email', document.getElementById('f-teacher-email').value, null),
+    ]),
+    _reviewSection('Basics', [
+      _reviewRow('Style(s)', styles.join(', '), '#style-chips'),
+      _reviewRow('Title', document.getElementById('f-title').value, '#f-title'),
+      _reviewRow('Date', document.getElementById('f-date').value, '#f-date'),
+      _reviewRow('Doors open', document.getElementById('f-doors').value, '#f-doors'),
+      _reviewRow('Event ends', document.getElementById('f-end').value || '(not set)', '#f-end'),
+      _reviewRow('Dress code', document.getElementById('f-dresscode').value || '', '#f-dresscode'),
+    ]),
+    _reviewSection('Dance floor', [
+      _reviewRow('Floor opens', document.getElementById('f-dn-start').value, '#f-dn-start'),
+      _reviewRow('Floor closes', document.getElementById('f-dn-end').value || '', '#f-dn-end'),
+      _reviewRow('Music handled by', musicSelected ? musicSelected.dataset.val : '', '#music-type-chips'),
+      document.getElementById('f-dj-name').value ? _reviewRow('DJ', document.getElementById('f-dj-name').value, '#f-dj-name') : '',
+      document.getElementById('f-dj-social').value ? _reviewRow('DJ socials', document.getElementById('f-dj-social').value, '#f-dj-social') : '',
+      document.getElementById('f-teacher-dj').value ? _reviewRow('Teacher-DJ', document.getElementById('f-teacher-dj').value, '#f-teacher-dj') : '',
+      genres.length ? _reviewRow('Genres', genres.join(', '), '#genre-chips') : '',
+    ]),
+    _reviewSection('Programme', [
+      programmeRows.length ? _reviewRow('Slots', programmeRows.join('\n'), '#programme-rows') : _reviewRow('Slots', '', '#programme-rows'),
+    ]),
+    _reviewSection('Pricing', [
+      pricingRows.length ? _reviewRow('Tiers', pricingRows.join('\n'), '#pricing-rows') : '',
+    ]),
+    _reviewSection('Notes', [
+      document.getElementById('f-description').value ? _reviewRow('Description', document.getElementById('f-description').value, '#f-description') : '',
+      document.getElementById('f-notes').value ? _reviewRow('Internal notes', document.getElementById('f-notes').value, '#f-notes') : '',
+    ]),
+  ].filter(Boolean).join('');
+}
+
 // ─── SUBMIT ──────────────────────────────────────────────────────────────────
 // 2026-05-22: added `async` so the `await fetch(...)` below parses correctly.
 // Codex flagged this as a P0 parse error — without async, the ENTIRE inline
@@ -882,6 +1058,14 @@ async function submitForm() {
     pricing: [],
     description: document.getElementById('f-description').value.trim() || null,
     notes: document.getElementById('f-notes').value.trim() || null,
+    // 2026-05-24 (audit surprise): wire the 2 photo inputs to the payload.
+    // Backend (output-generator.gs:271-278) reads `guest_teacher_photo_b64` +
+    // `dj_photo_b64` for Drive upload. Form had the file inputs but never sent
+    // anything; every "photo upload" silently failed.
+    guest_teacher_photo_name: document.getElementById('f-guest-teacher-photo')?.files?.[0]?.name || '',
+    guest_teacher_photo_b64:  await _fileToB64(document.getElementById('f-guest-teacher-photo')),
+    dj_photo_name:            document.getElementById('f-dj-photo')?.files?.[0]?.name || '',
+    dj_photo_b64:             await _fileToB64(document.getElementById('f-dj-photo')),
   };
 
   document.querySelectorAll('#programme-rows .prog-card').forEach(card => {
@@ -902,7 +1086,7 @@ async function submitForm() {
     payload.pricing.push({ label: inputs[0].value.trim(), price: inputs[1].value });
   });
 
-  console.log('Social night payload:', JSON.stringify(payload, null, 2));
+  // 2026-05-24 (audit P1): removed `console.log('Social night payload:', …)` — was dumping the full payload (incl. teacher email, DJ fee, internal notes) into the user's browser console on every submit.
 
   const btn = document.querySelector('.btn-primary');
   btn.disabled = true;

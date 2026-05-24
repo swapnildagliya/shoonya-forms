@@ -125,6 +125,33 @@
   /* 2026-05-24 audit P1-2: hide chips not in teacher's dance_styles by default; #style-chips.show-all reveals them. */
   #style-chips .chip-style-hidden { display: none; }
   #style-chips.show-all .chip-style-hidden { display: inline-flex; }
+  /* 2026-05-24: required-field markers + top-of-form legend. */
+  .req-mark { color: #d32f2f; font-weight: 700; margin-left: 2px; }
+  .form-legend { font-size: 0.82rem; color: var(--mid); margin: 0 0 18px; padding: 8px 12px; background: #fff8f7; border-left: 3px solid #d32f2f; border-radius: 0 4px 4px 0; }
+  .form-legend .req-mark { font-size: 0.95rem; }
+  /* 2026-05-24 (#21): review-before-submit modal. */
+  .review-overlay { display: none; position: fixed; inset: 0; background: rgba(20,20,30,0.6); z-index: 1000; padding: 24px; overflow-y: auto; }
+  .review-overlay.open { display: block; }
+  .review-modal { max-width: 720px; margin: 24px auto; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); padding: 28px 32px; }
+  .review-modal h2 { font-family: Marcellus, serif; font-size: 1.6rem; margin: 0 0 6px; color: var(--ink); }
+  .review-modal .review-sub { color: var(--mid); margin: 0 0 24px; font-size: 0.95rem; }
+  .review-section { margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid #eee; }
+  .review-section:last-of-type { border-bottom: none; }
+  .review-section-title { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--purple-dark); margin: 0 0 10px; }
+  .review-row { display: grid; grid-template-columns: 160px 1fr auto; gap: 12px; align-items: start; padding: 6px 0; font-size: 0.92rem; }
+  .review-row + .review-row { border-top: 1px dashed #f0f0f0; }
+  .review-label { color: var(--mid); font-weight: 600; }
+  .review-value { color: var(--ink); word-break: break-word; }
+  .review-value.empty { color: #aaa; font-style: italic; }
+  .review-edit-btn { background: none; border: 1px solid var(--border); color: var(--purple-dark); font-size: 0.78rem; padding: 4px 10px; border-radius: 14px; cursor: pointer; font-family: inherit; }
+  .review-edit-btn:hover { background: var(--purple-tint); }
+  .review-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 18px; border-top: 1px solid #eee; }
+  .review-btn-cancel { background: #fff; border: 1px solid var(--border); color: var(--mid); padding: 10px 22px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.95rem; }
+  .review-btn-cancel:hover { background: #f5f5f5; }
+  .review-btn-submit { background: var(--purple); border: none; color: #fff; padding: 10px 26px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 1rem; font-weight: 600; }
+  .review-btn-submit:hover { background: var(--purple-dark); }
+  .field-flash { animation: flash 1.2s; }
+  @keyframes flash { 0%, 100% { background: transparent; } 30% { background: var(--purple-tint); } }
   .price-row {
     display: grid;
     grid-template-columns: 1fr 120px;
@@ -325,6 +352,8 @@
 
   <!-- 2026-05-24: v2 beta-tester banner removed. Production form, teachers shouldn't see the version messaging. -->
 
+  <p class="form-legend">Fields marked <span class="req-mark">*</span> are required.</p>
+
   <!-- TEACHER IDENTITY -->
   <div class="section" id="ws-section-who">
     <span class="section-num">0</span>
@@ -355,12 +384,12 @@
     <p class="section-hint">What's the workshop called and what does it cover?</p>
 
     <div class="field">
-      <label class="field-label">Title</label>
+      <label class="field-label">Title <span class="req-mark">*</span></label>
       <input type="text" id="f-title" placeholder="e.g. Indian Dance Summer Intensive 2026">
     </div>
 
     <div class="field">
-      <label class="field-label">Format</label>
+      <label class="field-label">Format <span class="req-mark">*</span></label>
       <div class="chips" id="format-chips">
         <div class="chip" data-val="single">Single session</div>
         <div class="chip" data-val="2day">2-day workshop</div>
@@ -371,7 +400,7 @@
     </div>
 
     <div class="field">
-      <label class="field-label">Style(s) <span class="badge-new">multi-select</span></label>
+      <label class="field-label">Style(s) <span class="req-mark">*</span> <span class="badge-new">multi-select</span></label>
       <div class="chips" id="style-chips">
         <div class="chip chip-multi" data-val="Bollywood">Bollywood</div>
         <div class="chip chip-multi" data-val="Bhangra">Bhangra</div>
@@ -402,7 +431,7 @@
     </div>
 
     <div class="field">
-      <label class="field-label">Level(s) <span class="badge-new">multi-select</span></label>
+      <label class="field-label">Level(s) <span class="req-mark">*</span> <span class="badge-new">multi-select</span></label>
       <div class="chips" id="level-chips">
         <div class="chip chip-multi" data-val="Beginner">Beginner</div>
         <div class="chip chip-multi" data-val="Intermediate">Intermediate</div>
@@ -448,7 +477,7 @@
       <div class="annotation">Used on the event page and promo emails.</div>
     </div>
     <div class="field" id="guest-photo-field" style="display:none;">
-      <label class="field-label">Guest teacher photo</label>
+      <label class="field-label">Guest teacher photo <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <input type="file" id="f-guest-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
       <p class="field-hint">JPEG or PNG. Will be resized to 800px on submit. Used for event posters and the website.</p>
     </div>
@@ -457,7 +486,7 @@
   <!-- SECTION 3: SCHEDULE -->
   <div class="section">
     <span class="section-num">3</span>
-    <h2 class="section-title">Schedule <span class="badge-new">smart picker</span></h2>
+    <h2 class="section-title">Schedule <span class="req-mark">*</span> <span class="badge-new">smart picker</span></h2>
     <p class="section-hint">Pick the pattern that matches your workshop.</p>
 
     <div class="date-pattern-tabs">
@@ -550,7 +579,7 @@
     <p class="section-hint">Just the basics. Use "special pricing notes" below for anything that doesn't fit.</p>
 
     <div class="price-row">
-      <label>Full price <small style="color: var(--mid);">— complete workshop, non-member</small></label>
+      <label>Full price <span class="req-mark">*</span> <small style="color: var(--mid);">— complete workshop, non-member. <em>Required unless you fill "Special pricing notes" below.</em></small></label>
       <div class="input-wrap">€ <input type="number" id="f-price-full" placeholder="150" min="0" step="0.5" oninput="updateMemberPrice()"></div>
     </div>
 
@@ -574,6 +603,16 @@
         <label>Per session — single person</label>
         <div class="input-wrap">€ <input type="number" id="f-price-per-person" placeholder="40" min="0" step="0.5"></div>
       </div>
+
+      <!-- 2026-05-24 audit: per-session drop-in toggles. For multi-day workshops where drop-in only applies to some days (e.g. Saturday but not Sunday of a weekend intensive). All sessions are drop-in-enabled by default; teacher unchecks any that aren't. List populated by renderDropinSessions(), kept in sync with the Schedule section's generated sessions. -->
+      <div class="field" id="dropin-sessions-wrap" style="margin-top: 12px; padding: 10px 14px; border-left: 3px solid var(--purple); background: rgba(181,100,247,0.04); border-radius: 0 4px 4px 0;">
+        <label class="field-label" style="font-size: 0.78rem; margin-bottom: 6px;">Drop-in available for which sessions?</label>
+        <p class="field-hint" style="margin: 0 0 8px;">Uncheck any sessions where drop-in is NOT allowed (e.g. a 2-day intensive where Sunday builds on Saturday).</p>
+        <div id="dropin-sessions-list" style="display: flex; flex-direction: column; gap: 6px;">
+          <p style="font-size: 0.85rem; color: var(--mid); font-style: italic; margin: 0;">Pick your workshop dates in Section 3 first — they'll appear here.</p>
+        </div>
+      </div>
+
       <label class="checkbox-row" style="margin-top: 4px;">
         <input type="checkbox" id="f-couple-price" onchange="toggleCouplePrice(this)">
         Add per-couple price (partner dances)
@@ -602,27 +641,27 @@
     <p class="section-hint">The marketing copy + practical info.</p>
 
     <div class="field">
-      <label class="field-label">Description (for website + emails)</label>
+      <label class="field-label">Description (for website + emails) <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <textarea class="large" id="f-description" placeholder="A 4-day deep dive into Indian dance forms..."></textarea>
     </div>
 
     <div class="field">
-      <label class="field-label">Prerequisites</label>
+      <label class="field-label">Prerequisites <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <textarea id="f-prereq" placeholder="Open to all. Stamina for 3-hour sessions expected."></textarea>
     </div>
 
     <div class="field">
-      <label class="field-label">What to bring / dress code</label>
+      <label class="field-label">What to bring / dress code <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <textarea id="f-bring" placeholder="Comfortable dance clothes, water, towel..."></textarea>
     </div>
 
     <div class="row">
       <div class="field">
-        <label class="field-label">Max students</label>
+        <label class="field-label">Max students <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
         <input type="number" id="f-max" placeholder="18" min="0">
       </div>
       <div class="field">
-        <label class="field-label">Min participants</label>
+        <label class="field-label">Min participants <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
         <input type="number" id="f-min" placeholder="6" min="0" oninput="toggleMinConditional()">
       </div>
     </div>
@@ -666,7 +705,21 @@
   <div id="submit-success" class="success-msg" style="display:none;"></div>
 
   <div class="submit-row">
-    <button class="btn-primary" id="submit-btn" onclick="submitForm()">Submit workshop →</button>
+    <!-- 2026-05-24 (#21): button now opens review modal instead of submitting directly. Modal's "Submit for real" calls submitForm(). -->
+    <button class="btn-primary" id="submit-btn" onclick="openReviewModal()">Review &amp; submit →</button>
+  </div>
+
+  <!-- 2026-05-24 (#21): review-before-submit modal. Populated by openReviewModal(). -->
+  <div class="review-overlay" id="review-overlay" onclick="if(event.target===this)closeReviewModal()">
+    <div class="review-modal" role="dialog" aria-modal="true" aria-labelledby="review-title">
+      <h2 id="review-title">Review your workshop submission</h2>
+      <p class="review-sub">Click <strong>Edit</strong> on any row to jump back to the field and change it. Then come back here to submit for real.</p>
+      <div id="review-body"></div>
+      <div class="review-actions">
+        <button type="button" class="review-btn-cancel" onclick="closeReviewModal()">Back to form</button>
+        <button type="button" class="review-btn-submit" id="review-submit-btn" onclick="confirmSubmit()">Submit workshop</button>
+      </div>
+    </div>
   </div>
 
   <p style="text-align: center; margin-top: 32px; font-size: 0.78rem; color: var(--light);">
@@ -839,12 +892,44 @@ function updateSessionsPreview() {
   const sessions = generateSessions();
   state.sessions = sessions;
   const preview = document.getElementById('sessions-preview');
-  if (sessions.length === 0) { preview.style.display = 'none'; return; }
+  if (sessions.length === 0) {
+    preview.style.display = 'none';
+    renderDropinSessions([]);   // 2026-05-24: clear drop-in list if sessions emptied
+    return;
+  }
   preview.style.display = '';
   const labels = sessions.map(s => fmtDateLabel(s.date));
   preview.innerHTML = `<strong>${sessions.length} session${sessions.length === 1 ? '' : 's'} generated:</strong> ${labels.join(' · ')}`;
   renderPerSessionTimes(sessions);
   renderSessionTopics(sessions);
+  renderDropinSessions(sessions);   // 2026-05-24: keep per-session drop-in checkboxes in sync
+}
+
+// 2026-05-24 audit: per-session drop-in checkboxes. All sessions on by default;
+// teacher unchecks any session that doesn't allow drop-in (e.g. Sunday of a
+// 2-day intensive where Sunday requires Saturday's material). Preserves prior
+// checkbox state across re-renders so a teacher editing dates doesn't lose
+// their selections for unchanged session dates.
+function renderDropinSessions(sessions) {
+  const list = document.getElementById('dropin-sessions-list');
+  if (!list) return;
+  // Capture prior checked-state keyed by session date so re-renders preserve it
+  const prior = {};
+  list.querySelectorAll('input[type="checkbox"][data-session-date]').forEach(cb => {
+    prior[cb.dataset.sessionDate] = cb.checked;
+  });
+  if (!sessions.length) {
+    list.innerHTML = '<p style="font-size: 0.85rem; color: var(--mid); font-style: italic; margin: 0;">Pick your workshop dates in Section 3 first — they\'ll appear here.</p>';
+    return;
+  }
+  list.innerHTML = '';
+  sessions.forEach((s, i) => {
+    const checked = (s.date in prior) ? prior[s.date] : true;   // default ON for new sessions
+    const label = document.createElement('label');
+    label.style.cssText = 'display: flex; align-items: center; gap: 8px; font-size: 0.9rem; cursor: pointer;';
+    label.innerHTML = `<input type="checkbox" data-session-idx="${i}" data-session-date="${s.date}"${checked ? ' checked' : ''}> Drop-in allowed for <strong>${fmtDateLabel(s.date)}</strong>`;
+    list.appendChild(label);
+  });
 }
 
 function renderPerSessionTimes(sessions) {
@@ -896,7 +981,13 @@ function updateMemberPrice() {
   const member = Math.round(full * 0.90 * 100) / 100;  // 10% off, rounded to 2 decimals
   display.textContent = member.toFixed(2).replace(/\.00$/, '');
 }
-function toggleSingleSession(cb) { document.getElementById('single-session-prices').classList.toggle('hidden', !cb.checked); }
+function toggleSingleSession(cb) {
+  document.getElementById('single-session-prices').classList.toggle('hidden', !cb.checked);
+  // 2026-05-24: populate the per-session drop-in list when the toggle is enabled
+  // so teachers see their already-generated sessions immediately (rather than
+  // having to re-edit dates to trigger updateSessionsPreview).
+  if (cb.checked) renderDropinSessions(state.sessions || []);
+}
 function toggleCouplePrice(cb) { document.getElementById('couple-price-row').classList.toggle('hidden', !cb.checked); }
 
 function toggleMinConditional() {
@@ -916,6 +1007,20 @@ document.querySelector('.date-pattern-tab[data-mode="contiguous"]').click();
 function getVal(id) { return (document.getElementById(id)?.value || '').trim(); }
 function getNum(id) { const v = getVal(id); return v ? parseFloat(v) : null; }
 
+// 2026-05-24 (audit surprise): read a file input as base64. Returns null if no
+// file selected. Backend (output-generator.gs:271-278) needs the `*_b64` field
+// to actually upload to Drive — without this every "photo upload" silently failed.
+async function _fileToB64(input) {
+  const file = input?.files?.[0];
+  if (!file) return null;
+  return await new Promise(resolve => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result || '').split(',')[1] || null);   // strip "data:image/...;base64," prefix
+    r.onerror = () => resolve(null);
+    r.readAsDataURL(file);
+  });
+}
+
 function collectSessions() {
   const sessions = generateSessions();
   // Apply per-session time overrides
@@ -928,6 +1033,20 @@ function collectSessions() {
     const idx = parseInt(inp.dataset.idx);
     if (sessions[idx]) sessions[idx].topic = inp.value.trim();
   });
+  // 2026-05-24: attach per-session drop-in flag. False everywhere if the
+  // single-session attendance toggle is off; otherwise read each checkbox.
+  // Backend can use this to set per-row drop-in eligibility on Master Schedule
+  // and to render correct copy in output emails.
+  const dropinEnabled = document.getElementById('f-single-session')?.checked || false;
+  if (!dropinEnabled) {
+    sessions.forEach(s => { s.dropIn = false; });
+  } else {
+    const checkedDates = new Set();
+    document.querySelectorAll('#dropin-sessions-list input[type="checkbox"]').forEach(cb => {
+      if (cb.checked && cb.dataset.sessionDate) checkedDates.add(cb.dataset.sessionDate);
+    });
+    sessions.forEach(s => { s.dropIn = checkedDates.has(s.date); });
+  }
   return sessions;
 }
 
@@ -943,6 +1062,110 @@ function validate() {
   if (sessions.length === 0) errs.push('At least one session date');
   if (getNum('f-price-full') === null && !getVal('f-pricing-notes')) errs.push('Full price (or special pricing notes)');
   return errs;
+}
+
+// 2026-05-24 (#21): review-before-submit. Builds a structured summary, lets the
+// teacher jump back to any field to edit, then commits via confirmSubmit().
+function openReviewModal() {
+  const errs = validate();
+  const errBox = document.getElementById('submit-error');
+  if (errs.length > 0) {
+    errBox.innerHTML = '<strong>Please fix:</strong> ' + errs.join(', ');
+    errBox.style.display = '';
+    errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  errBox.style.display = 'none';
+  document.getElementById('review-body').innerHTML = _buildReviewSummaryHtml();
+  document.getElementById('review-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeReviewModal() {
+  document.getElementById('review-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function confirmSubmit() {
+  closeReviewModal();
+  submitForm();
+}
+
+// Jump back to a field in the form. Closes the modal, scrolls to the element,
+// flashes its background briefly, and focuses an input inside if any.
+function _reviewJumpTo(selector) {
+  closeReviewModal();
+  const el = document.querySelector(selector);
+  if (!el) return;
+  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  el.classList.remove('field-flash'); void el.offsetWidth; el.classList.add('field-flash');
+  const focusable = el.querySelector('input, textarea, select') || (['INPUT','TEXTAREA','SELECT'].includes(el.tagName) ? el : null);
+  if (focusable) setTimeout(() => focusable.focus(), 600);
+}
+
+function _esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function _reviewRow(label, value, jumpSelector) {
+  const empty = value === '' || value == null;
+  const display = empty ? '<span class="review-value empty">(not set)</span>' : `<span class="review-value">${_esc(value)}</span>`;
+  const btn = jumpSelector ? `<button type="button" class="review-edit-btn" onclick="_reviewJumpTo('${jumpSelector.replace(/'/g, "\\'")}')">Edit</button>` : '';
+  return `<div class="review-row"><span class="review-label">${_esc(label)}</span>${display}${btn}</div>`;
+}
+
+function _reviewSection(title, rows) {
+  const visible = rows.filter(Boolean).join('');
+  if (!visible) return '';
+  return `<div class="review-section"><div class="review-section-title">${_esc(title)}</div>${visible}</div>`;
+}
+
+function _buildReviewSummaryHtml() {
+  const sessions = collectSessions();
+  const fmtSessions = sessions.length
+    ? sessions.map(s => fmtDateLabel(s.date) + ' · ' + s.start + '–' + s.end + (s.dropIn === false ? ' (no drop-in)' : '') + (s.topic ? ' — ' + s.topic : '')).join('\n')
+    : '';
+  const dropinEnabled = document.getElementById('f-single-session')?.checked;
+  return [
+    _reviewSection('Who', [
+      _reviewRow('Submitting as', getVal('f-teacher-name'), null),
+      _reviewRow('Email', getVal('f-teacher-email'), null),
+    ]),
+    _reviewSection('Basics', [
+      _reviewRow('Title', getVal('f-title'), '#f-title'),
+      _reviewRow('Format', state.format || '', '#format-chips'),
+      _reviewRow('Style(s)', (state.styles || []).join(', '), '#style-chips'),
+      _reviewRow('Level(s)', (state.levels || []).join(', '), '#level-chips'),
+      _reviewRow('Language', state.lang || 'EN', '#lang-chips'),
+    ]),
+    _reviewSection('Teachers', [
+      getVal('f-co-teacher') ? _reviewRow('Co-teacher', getVal('f-co-teacher'), '#f-co-teacher') : '',
+      getVal('f-guest-teacher') ? _reviewRow('Guest teacher', getVal('f-guest-teacher'), '#f-guest-teacher') : '',
+      getVal('f-guest-web') ? _reviewRow('Guest web/IG', getVal('f-guest-web'), '#f-guest-web') : '',
+      getVal('f-guest-bio') ? _reviewRow('Guest bio', getVal('f-guest-bio'), '#f-guest-bio') : '',
+    ]),
+    _reviewSection('Schedule', [
+      _reviewRow('Date pattern', state.datePattern || '', '#pattern-' + state.datePattern),
+      _reviewRow('Sessions', fmtSessions, '#sessions-preview'),
+    ]),
+    _reviewSection('Pricing', [
+      _reviewRow('Full price', getVal('f-price-full') ? '€' + getVal('f-price-full') : '', '#f-price-full'),
+      getVal('f-price-full') ? _reviewRow('Member price', '€' + (Math.round(parseFloat(getVal('f-price-full')) * 0.9 * 100) / 100) + ' (auto)', null) : '',
+      dropinEnabled ? _reviewRow('Per-session price', getVal('f-price-per-person') ? '€' + getVal('f-price-per-person') : '', '#f-price-per-person') : '',
+      dropinEnabled && document.getElementById('f-couple-price')?.checked ? _reviewRow('Couple price', getVal('f-price-couple') ? '€' + getVal('f-price-couple') : '', '#f-price-couple') : '',
+      getVal('f-pricing-notes') ? _reviewRow('Pricing notes', getVal('f-pricing-notes'), '#f-pricing-notes') : '',
+    ]),
+    _reviewSection('Logistics', [
+      state.studio ? _reviewRow('Preferred studio', state.studio, '#studio-chips') : '',
+      state.partner ? _reviewRow('Partner required?', state.partner, '#partner-chips') : '',
+      getNum('f-max') ? _reviewRow('Max students', getNum('f-max'), '#f-max') : '',
+      getNum('f-min') ? _reviewRow('Min participants', getNum('f-min'), '#f-min') : '',
+    ]),
+    _reviewSection('Content', [
+      getVal('f-description') ? _reviewRow('Description', getVal('f-description'), '#f-description') : '',
+      getVal('f-prereq') ? _reviewRow('Prerequisites', getVal('f-prereq'), '#f-prereq') : '',
+      getVal('f-bring') ? _reviewRow('What to bring', getVal('f-bring'), '#f-bring') : '',
+      getVal('f-note') ? _reviewRow('Note to Shoonya', getVal('f-note'), '#f-note') : '',
+    ]),
+  ].filter(Boolean).join('');
 }
 
 async function submitForm() {
@@ -974,6 +1197,7 @@ async function submitForm() {
       start: s.start,
       end: s.end,
       topic: s.topic || '',
+      dropIn: !!s.dropIn,   // 2026-05-24: per-session drop-in eligibility flag (see collectSessions)
     })),
     format: state.format.charAt(0).toUpperCase() + state.format.slice(1),
     format_internal: state.format,
@@ -986,6 +1210,7 @@ async function submitForm() {
     guest_web: getVal('f-guest-web'),
     guest_bio: getVal('f-guest-bio'),
     guest_photo_name: document.getElementById('f-guest-photo')?.files?.[0]?.name || '',
+    guest_photo_b64:  await _fileToB64(document.getElementById('f-guest-photo')),   // 2026-05-24 (audit surprise): backend reads `guest_photo_b64` for Drive upload but form was only sending the name. Now sends base64 too.
     co_teacher: getVal('f-co-teacher'),
     language: state.lang,
     what_to_bring: getVal('f-bring'),
