@@ -455,16 +455,42 @@
       <label class="field-label">Dance style <span class="req-mark">*</span></label>
       <!-- 2026-05-24 audit P0-3 + P0-4: dropped default-selected Bollywood (was lying about teacher), dropped "(demo only)" label on Tap Dance, removed the "Only showing styles assigned to your teacher profile" hint text (was a lie — chips are hardcoded, no profile fetch). Real per-teacher filter is part of item #17. -->
       <div class="chips" data-single id="style-chips">
-        <div class="chip" onclick="selectSingle(this)">Bollywood</div>
-        <div class="chip" onclick="selectSingle(this)">Bhangra</div>
-        <div class="chip" onclick="selectSingle(this)">Garba</div>
-        <div class="chip" onclick="selectSingle(this)">Indian Semi-Classical</div>
-        <div class="chip" onclick="selectSingle(this)">Bollyfolk</div>
-        <div class="chip" onclick="selectSingle(this)">ISC</div>
+        <!-- Partner & Social -->
+        <div class="chip" onclick="selectSingle(this)">Cuban Salsa</div>
+        <div class="chip" onclick="selectSingle(this)">Bachata</div>
+        <div class="chip" onclick="selectSingle(this)">Bachata Solo Style</div>
+        <div class="chip" onclick="selectSingle(this)">Rueda de Casino</div>
+        <div class="chip" onclick="selectSingle(this)">Kizomba</div>
+        <div class="chip" onclick="selectSingle(this)">Lindy Hop</div>
+        <div class="chip" onclick="selectSingle(this)">Argentine Tango</div>
+        <div class="chip" onclick="selectSingle(this)">Cissy Ball</div>
+        <!-- Classical & Technique -->
+        <div class="chip" onclick="selectSingle(this)">Solo Jazz</div>
         <div class="chip" onclick="selectSingle(this)">Tap Dance</div>
-        <div class="chip" onclick="alert('Custom style input — for combos like Garba+Kalbeliya')">+ Other...</div>
+        <div class="chip" onclick="selectSingle(this)">Flamenco</div>
+        <div class="chip" onclick="selectSingle(this)">Ballet</div>
+        <div class="chip" onclick="selectSingle(this)">Ballet Pointes</div>
+        <div class="chip" onclick="selectSingle(this)">High Heels</div>
+        <div class="chip" onclick="selectSingle(this)">Indian Semi-Classical</div>
+        <div class="chip" onclick="selectSingle(this)">Oriental Flow</div>
+        <!-- Culture & Wellness -->
+        <div class="chip" onclick="selectSingle(this)">Burlesque</div>
+        <div class="chip" onclick="selectSingle(this)">Bollywood</div>
+        <div class="chip" onclick="selectSingle(this)">Bollyfolk</div>
+        <div class="chip" onclick="selectSingle(this)">Bhangra</div>
+        <div class="chip" onclick="selectSingle(this)">Raqs Sharqi</div>
+        <div class="chip" onclick="selectSingle(this)">African Congolese Dance</div>
+        <div class="chip" onclick="selectSingle(this)">Garba</div>
+        <div class="chip" onclick="selectSingle(this)">Dance &amp; Fit</div>
+        <div class="chip" onclick="selectSingle(this)">Pilates for Dancers</div>
+        <div class="chip" onclick="selectSingle(this)">Yoga</div>
+        <div class="chip" id="other-style-chip" onclick="addCustomStyle()">+ Other...</div>
       </div>
-      <p class="field-hint">Use "Other" for combos like Garba + Kalbeliya.</p>
+      <div id="custom-style-display" style="display:none; margin-top:8px;">
+        <span class="chip selected" id="custom-style-chip" style="background:var(--purple-tint); border-color:var(--purple);"></span>
+        <button type="button" onclick="clearCustomStyle()" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:0.82rem; margin-left:4px;">✕ clear</button>
+      </div>
+      <p class="field-hint">All Shoonya styles listed. Use "+ Other" for combos like Garba + Kalbeliya.</p>
     </div>
 
     <div class="row">
@@ -537,92 +563,9 @@
 
     <!-- 2026-05-24: removed Phase-A dev annotation that was visible to teachers and mentioned "prorated pricing" (violates the no-prorate site-wide rule). The actual date grid below works as-is. -->
 
-    <!-- LEVEL CARDS -->
+    <!-- LEVEL CARDS — generated dynamically by toggleLevel() → makeLevelCard() -->
     <div id="level-cards">
-      <!-- L1 CARD -->
-      <div class="level-card" data-level="L1">
-        <div class="level-card-header">
-          <span class="level-card-title">Level 1</span>
-          <span style="font-size: 0.8rem; color: var(--mid);" data-slot-summary>1 slot · 60 min</span>
-        </div>
-
-        <label class="field-label" style="margin-bottom: 10px;">Schedule</label>
-        <div class="slot-row">
-          <select class="day-pick">
-            <option>Monday</option>
-            <option selected>Tuesday</option>
-            <option>Wednesday</option>
-            <option>Thursday</option>
-            <option>Friday</option>
-            <option>Saturday</option>
-            <option>Sunday</option>
-          </select>
-          <input type="time" value="19:00" oninput="updateLevelSummary(this)">
-          <input type="time" value="20:00" oninput="updateLevelSummary(this)">
-          <button class="btn-remove" type="button" aria-label="Remove slot" onclick="removeSlotRow(this)">✕</button>
-        </div>
-        <button class="btn-add" onclick="addSlotRow(this)">+ Add another slot for L1</button>
-
-        <details class="collapsible" style="margin-top: 14px;" open>
-          <summary>Level 1 description <span style="font-size: 0.75rem; color: var(--green); font-weight: 600; margin-left: 8px;">✓ pre-filled</span></summary>
-          <p style="font-size: 0.82rem; color: var(--mid); margin: 8px 0 8px;">
-            Pre-filled from your Spring 2026 submission. Edit if anything's changed.
-          </p>
-          <textarea>Bollywood Level 1 builds your foundation in Indian dance vocabulary. We focus on basic rhythm, posture, hand-eye coordination, and signature Bollywood movements drawn from folk and semi-classical traditions. No prior experience required — just bring energy and a willingness to move.</textarea>
-        </details>
-      </div>
-
-      <!-- L2 CARD (with multi-slot info example) -->
-      <div class="level-card" data-level="L2">
-        <div class="level-card-header">
-          <span class="level-card-title">Level 2</span>
-          <span style="font-size: 0.8rem; color: var(--mid);" data-slot-summary>2 slots · 75 min</span>
-        </div>
-
-        <label class="field-label" style="margin-bottom: 10px;">Schedule</label>
-        <div class="slot-row">
-          <select class="day-pick">
-            <option>Monday</option>
-            <option>Tuesday</option>
-            <option selected>Wednesday</option>
-            <option>Thursday</option>
-            <option>Friday</option>
-            <option>Saturday</option>
-            <option>Sunday</option>
-          </select>
-          <input type="time" value="19:30" oninput="updateLevelSummary(this)">
-          <input type="time" value="20:45" oninput="updateLevelSummary(this)">
-          <button class="btn-remove" type="button" aria-label="Remove slot" onclick="removeSlotRow(this)">✕</button>
-        </div>
-        <div class="slot-row">
-          <select class="day-pick">
-            <option>Monday</option>
-            <option>Tuesday</option>
-            <option>Wednesday</option>
-            <option selected>Thursday</option>
-            <option>Friday</option>
-            <option>Saturday</option>
-            <option>Sunday</option>
-          </select>
-          <input type="time" value="19:30" oninput="updateLevelSummary(this)">
-          <input type="time" value="20:45" oninput="updateLevelSummary(this)">
-          <button class="btn-remove" type="button" aria-label="Remove slot" onclick="removeSlotRow(this)">✕</button>
-        </div>
-        <button class="btn-add" onclick="addSlotRow(this)">+ Add another slot for L2</button>
-
-        <!-- Multi-slot info (alternate timings is the only model) -->
-        <div style="background: var(--purple-tint); border-left: 3px solid var(--purple); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.84rem; color: var(--mid); margin-top: 14px;">
-          <strong style="color: var(--ink);">2 slots = alternate timings.</strong> Students sign up once and attend either Wednesday or Thursday — 16 sessions total, not 32. Pricing reflects this automatically.
-        </div>
-
-        <details class="collapsible" style="margin-top: 14px;" open>
-          <summary>Level 2 description <span style="font-size: 0.75rem; color: var(--green); font-weight: 600; margin-left: 8px;">✓ pre-filled</span></summary>
-          <p style="font-size: 0.82rem; color: var(--mid); margin: 8px 0 8px;">
-            Pre-filled from your Spring 2026 submission. Edit if anything's changed.
-          </p>
-          <textarea>Bollywood Level 2 takes your dancing further with longer choreography sequences, classical-folk fusion combinations, and deeper musicality work. Some prior dance experience expected — either Level 1 with us or equivalent.</textarea>
-        </details>
-      </div>
+      <!-- Empty on page load. Cards appear when teacher selects level chips above. -->
     </div>
   </div>
 
@@ -818,9 +761,29 @@
 // See truth/decisions.md "Canonical levels" section.
 const DEFAULT_LEVELS = ['L1', 'L2', 'L3', 'Open'];
 const STYLE_LEVELS = {
-  'Tap Dance': ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'Open'],
-  'Bhangra':   ['L1', 'L2', 'L3', 'Open', 'Starter'],
-  'ISC':       ['L1', 'L2', 'L3', 'Open', 'Starter'],
+  // Styles with special level configs (all others get DEFAULT_LEVELS)
+  'Tap Dance':              ['L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'Open'],
+  'Bhangra':                ['L1', 'L2', 'L3', 'Open', 'Starter'],
+  'ISC':                    ['L1', 'L2', 'L3', 'Open', 'Starter'],
+  'Indian Semi-Classical':  ['L1', 'L2', 'L3', 'Open', 'Starter'],
+  'Ballet':                 ['L1', 'L2', 'L3'],
+  'Ballet Pointes':         ['Open'],
+  'Lindy Hop':              ['L1', 'L2'],
+  'Bollyfolk':              ['L2', 'Open'],
+  'Raqs Sharqi':            ['L1', 'L2', 'L3'],
+  'Argentine Tango':        ['L1', 'L2', 'Open'],
+  'Bachata Solo Style':     ['Open'],
+  // Single-level / open-level styles
+  'Dance & Fit':            ['Open'],
+  'Pilates for Dancers':    ['Open'],
+  'Yoga':                   ['Open'],
+  'Cissy Ball':             ['Open'],
+  'High Heels':             ['Open'],
+  'Solo Jazz':              ['Open'],
+  'Burlesque':              ['Open'],
+  'African Congolese Dance': ['Open'],
+  'Oriental Flow':          ['Open'],
+  'Garba':                  ['Open'],
 };
 const LEVEL_LABELS = {
   'L1': 'Level 1', 'L2': 'Level 2', 'L3': 'Level 3',
@@ -833,18 +796,18 @@ const LEVEL_LABELS = {
 // (2) WS_STYLE_DATA[style].descriptionsByLevel canonical descriptions.
 const SAMPLE_LEVEL_DESCRIPTIONS = {
   'Bollywood': {
-    'L1':      { source: 'your Spring 2026 submission', text: "Bollywood Level 1 builds your foundation in Indian dance vocabulary. We focus on basic rhythm, posture, hand-eye coordination, and signature Bollywood movements drawn from folk and semi-classical traditions. No prior experience required — just bring energy and a willingness to move." },
-    'L2':      { source: 'your Spring 2026 submission', text: "Bollywood Level 2 takes your dancing further with longer choreography sequences, classical-folk fusion combinations, and deeper musicality work. Some prior dance experience expected — either Level 1 with us or equivalent." },
-    'L3':      { source: 'canonical style description', text: "Bollywood Level 3 is performance-ready training. Full-length choreographies, advanced footwork, expression work (abhinaya), and ensemble-quality formations. Suitable for dancers who've completed Level 2 or have strong Indian dance / contemporary background." },
-    'Open':    { source: 'canonical style description', text: "An open-level Bollywood class welcoming all backgrounds. Each week explores a different aspect — folk, classical fusion, film choreography, or pure cardio dance." },
-    'Starter': { source: 'canonical style description', text: "A 4-week Bollywood Starter Series for absolute beginners. Builds enough vocabulary to comfortably join the Level 1 class in the following semester." },
+    'L1':      { source: 'Shoonya style template', text: "Bollywood Level 1 builds your foundation in Indian dance vocabulary. We focus on basic rhythm, posture, hand-eye coordination, and signature Bollywood movements drawn from folk and semi-classical traditions. No prior experience required — just bring energy and a willingness to move." },
+    'L2':      { source: 'Shoonya style template', text: "Bollywood Level 2 takes your dancing further with longer choreography sequences, classical-folk fusion combinations, and deeper musicality work. Some prior dance experience expected — either Level 1 with us or equivalent." },
+    'L3':      { source: 'Shoonya style template', text: "Bollywood Level 3 is performance-ready training. Full-length choreographies, advanced footwork, expression work (abhinaya), and ensemble-quality formations. Suitable for dancers who've completed Level 2 or have strong Indian dance / contemporary background." },
+    'Open':    { source: 'Shoonya style template', text: "An open-level Bollywood class welcoming all backgrounds. Each week explores a different aspect — folk, classical fusion, film choreography, or pure cardio dance." },
+    'Starter': { source: 'Shoonya style template', text: "A 4-week Bollywood Starter Series for absolute beginners. Builds enough vocabulary to comfortably join the Level 1 class in the following semester." },
   },
   'Bhangra': {
-    'L2':      { source: 'canonical style description', text: "Bhangra Level 2 — high-energy Punjabi folk dance. Build on the foundation with longer combinations, advanced footwork, and signature shoulder + arm work that make Bhangra unmistakable." },
-    'Starter': { source: 'canonical style description', text: "A 4-week Bhangra Starter Series for absolute beginners. Builds rhythm + foundation to comfortably join Level 2 in the next semester." },
+    'L2':      { source: 'Shoonya style template', text: "Bhangra Level 2 — high-energy Punjabi folk dance. Build on the foundation with longer combinations, advanced footwork, and signature shoulder + arm work that make Bhangra unmistakable." },
+    'Starter': { source: 'Shoonya style template', text: "A 4-week Bhangra Starter Series for absolute beginners. Builds rhythm + foundation to comfortably join Level 2 in the next semester." },
   },
-  // Bhangra currently runs Starter + L2 only (no L1). Same for ISC.
-  // Other styles + levels: empty (no fallback)
+  // Other styles: no template descriptions — teacher writes their own.
+  // TODO (item #17): fetch prior submission descriptions from teacher profile.
 };
 
 // Styles that have a Squarespace "website note" configured.
@@ -854,10 +817,12 @@ const STYLES_WITH_WEBSITE_NOTE = ['Tap Dance', 'Ballet', 'Ballet Pointes', 'Burl
 function selectSingle(el) {
   el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
-  // If this is a style chip in Section 1, update conditional fields
-  const isStyleChip = el.closest('#level-chips-wrap') === null
-    && el.parentElement.querySelector('.chip[onclick*="alert"]'); // style row has the "+ Other" alert chip
-  if (el.parentElement.dataset.single !== undefined && isStyleChip) {
+  // If this is a style chip, update conditional fields + clear custom style
+  const isStyleRow = el.closest('#style-chips');
+  if (isStyleRow) {
+    // Clear custom style display (teacher picked a standard chip)
+    const customDisplay = document.getElementById('custom-style-display');
+    if (customDisplay) customDisplay.style.display = 'none';
     const selectedStyle = el.textContent.replace(/\(.*\)/, '').trim();
     updateStarterChipVisibility(selectedStyle);
     updateWebsiteNoteVisibility(selectedStyle);
@@ -915,8 +880,13 @@ const LEVEL_NAMES = {
 };
 
 function getCurrentStyle() {
-  // Find the currently-selected style chip (first single-select chips row on the page)
-  const styleRow = document.querySelector('.section .chips[data-single] .chip.selected');
+  // Check custom style first (entered via "+ Other...")
+  const custom = document.getElementById('custom-style-chip');
+  if (custom && custom.textContent.trim() && document.getElementById('custom-style-display')?.style.display !== 'none') {
+    return custom.textContent.trim();
+  }
+  // Then check the standard style chip row
+  const styleRow = document.querySelector('#style-chips .chip.selected');
   return styleRow ? styleRow.textContent.replace(/\(.*\)/, '').trim() : '';
 }
 
@@ -958,7 +928,8 @@ function makeLevelCard(key) {
     <label class="field-label" style="margin-bottom: 10px;">Schedule</label>
     <div class="slot-row">
       <select class="day-pick">
-        <option>Monday</option><option>Tuesday</option><option selected>Wednesday</option>
+        <option value="" selected disabled>Day →</option>
+        <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
         <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
       </select>
       <input type="time" oninput="updateLevelSummary(this)">
@@ -1081,6 +1052,30 @@ function toggleDifferentTeachers(cb) {
 function toggleDropIn(cb) {
   document.getElementById('drop-in-fields').classList.toggle('hidden', !cb.checked);
 }
+
+// Custom style — "+ Other..." chip
+function addCustomStyle() {
+  const name = prompt('Enter the dance style name:');
+  if (!name || !name.trim()) return;
+  const trimmed = name.trim();
+  // Deselect any currently selected style chip
+  document.querySelectorAll('#style-chips .chip').forEach(c => c.classList.remove('selected'));
+  // Show custom display
+  const display = document.getElementById('custom-style-display');
+  const chip = document.getElementById('custom-style-chip');
+  chip.textContent = trimmed;
+  display.style.display = 'flex';
+  display.style.alignItems = 'center';
+  // Update level chips for default levels (custom styles get the default set)
+  updateStarterChipVisibility(trimmed);
+  updateWebsiteNoteVisibility(trimmed);
+  if (typeof scheduleSave === 'function') scheduleSave();
+}
+function clearCustomStyle() {
+  document.getElementById('custom-style-display').style.display = 'none';
+  document.getElementById('custom-style-chip').textContent = '';
+  if (typeof scheduleSave === 'function') scheduleSave();
+}
 function togglePill(btn) {
   const pill = btn.closest('.date-pill');
   pill.classList.toggle('excluded');
@@ -1163,8 +1158,7 @@ function validate() {
   // primary lookup always returned '' and the nth-of-type fallback pointed at
   // the wrong section. Result: submit always blocked on "Dance style" even
   // when a chip was visibly selected. The actual container id is 'style-chips'.
-  const style = getSelectedSingle('style-chips') ||
-    document.querySelector('#style-chips .chip.selected')?.textContent.replace(/\(.*\)/, '').trim();
+  const style = getCurrentStyle();
   if (!style) errs.push('Dance style');
   // 2026-05-24 audit V6: also require teacher identity + at least one slot.
   // Backend rejection is harder to read than inline.
@@ -1282,32 +1276,26 @@ async function submitForm() {
   }
 
   // Collect language (single chip; server accepts a string)
-  const lang = getSelectedSingle('lang-row') ||
-    Array.from(document.querySelectorAll('.section:nth-of-type(1) .chips[data-single]')).pop()
-      ?.querySelector('.chip.selected')?.textContent.trim() || 'EN';
-  const studio = Array.from(document.querySelectorAll('.section:nth-of-type(5) .chips[data-single]'))[0]
-    ?.querySelector('.chip.selected')?.textContent.trim() || 'No preference';
-  const minAge = Array.from(document.querySelectorAll('.section:nth-of-type(5) .chips[data-single]'))[1]
-    ?.querySelector('.chip.selected')?.textContent.trim() || '';
-  const partner = Array.from(document.querySelectorAll('.section:nth-of-type(5) .chips[data-single]'))[2]
-    ?.querySelector('.chip.selected')?.textContent.trim() || 'No';
+  const lang = getSelectedSingle('lang-chips') || 'EN';
+  const studio = getSelectedSingle('studio-pref-chips') || 'No preference';
+  const minAge = getSelectedSingle('min-age-chips') || '';
+  const partner = getSelectedSingle('partner-chips') || 'No';
 
   // Co-teachers: free-text input in Section 2 (was multi-select chips; chip list was
   // hardcoded mockup data — 2026-05-24 swap, see comment at #coteacher-chips).
   const coTeachers = (document.getElementById('coteacher-freetext')?.value || '')
     .split(',').map(s => s.trim()).filter(Boolean);
 
-  // Section 5 textareas
-  const textareas = document.querySelectorAll('.section:nth-of-type(5) textarea');
-  const description = textareas[0]?.value.trim() || '';
-  const prereq = textareas[1]?.value.trim() || '';
-  const whatToBring = textareas[2]?.value.trim() || '';
+  // Section 5 textareas — use IDs
+  const description = (document.getElementById('f-description')?.value || '').trim();
+  const prereq = (document.getElementById('f-prereq')?.value || '').trim();
+  const whatToBring = (document.getElementById('f-bring')?.value || '').trim();
   const websiteNote = (document.getElementById('website-note-input')?.value || '').trim();
 
   // Special notes (Section 7)
-  const specialNotes = (document.querySelector('.section:last-of-type textarea')?.value || '').trim();
+  const specialNotes = (document.getElementById('f-special-notes')?.value || '').trim();
 
-  const semester = document.querySelector('.section:nth-of-type(1) .chips[data-single] .chip.selected')?.textContent.trim() || 'Sep 2026 (current)';
+  const semester = getSelectedSingle('semester-chips') || 'Sep 2026 (current)';
 
   // Build per-level descriptions_by_level map
   const descByLevel = {};
@@ -1421,7 +1409,8 @@ function collectDraft() {
   return {
     v: 1,
     savedAt: new Date().toISOString(),
-    style:            grab1('style-chips'),
+    style:            getCurrentStyle(),
+    customStyle:      (document.getElementById('custom-style-display')?.style.display !== 'none') ? (document.getElementById('custom-style-chip')?.textContent.trim() || '') : '',
     semester:         grab1('semester-chips'),
     lang:             grab1('lang-chips'),
     coTeachers:       (document.getElementById('coteacher-freetext')?.value || '').split(',').map(s => s.trim()).filter(Boolean),  // 2026-05-24: read from free-text input, was grabN('coteacher-chips')
@@ -1498,8 +1487,26 @@ function restoreChipN(id, vals) {
 function restoreDraft(draft) {
   if (!draft || draft.v !== 1) return;
   try {
-    // Basics
-    restoreChip1('style-chips', draft.style);
+    // Basics — restore style (custom or standard)
+    if (draft.customStyle) {
+      // Custom style entered via "+ Other..."
+      document.querySelectorAll('#style-chips .chip').forEach(c => c.classList.remove('selected'));
+      const display = document.getElementById('custom-style-display');
+      const chip = document.getElementById('custom-style-chip');
+      if (display && chip) {
+        chip.textContent = draft.customStyle;
+        display.style.display = 'flex';
+        display.style.alignItems = 'center';
+      }
+    } else {
+      restoreChip1('style-chips', draft.style);
+    }
+    // Trigger level chip visibility for the restored style
+    const restoredStyle = draft.customStyle || draft.style;
+    if (restoredStyle) {
+      updateStarterChipVisibility(restoredStyle);
+      updateWebsiteNoteVisibility(restoredStyle);
+    }
     restoreChip1('semester-chips', draft.semester);
     restoreChip1('lang-chips', draft.lang);
 

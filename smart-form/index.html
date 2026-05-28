@@ -1892,8 +1892,7 @@
       <h3 class="card-title" id="lbl-choose-type">What are you submitting?</h3>
       <div class="type-grid">
 
-        <!-- 2026-05-24: rolled back to old inline. weekly-v2.html still has hardcoded mockup teacher list + Phase-A annotations + placeholder level descriptions. Re-route to weekly-v2 once it's wired to real Teachers sheet + real descriptions. See TASKS.md. -->
-        <div class="type-card type-card-primary" onclick="selectType('weekly-class', this)" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectType('weekly-class',this);}">
+        <div class="type-card type-card-primary" onclick="window.location.href='weekly-v2.html'" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='weekly-v2.html';}">
           <span class="type-card-icon" aria-hidden="true">📅</span>
           <div class="type-card-title" data-lbl="type-weekly-title">Weekly Class</div>
           <div class="type-card-desc" data-lbl="type-weekly-desc">A recurring class every week throughout the semester — same day, same time.</div>
@@ -7537,13 +7536,9 @@ function wsNext(dest) {
   // 2026-05-24: kept consistent with the landing-page card routing decisions.
   //   workshop  → workshop-v2.html       (card also routes here)
   //   social    → social-night-v2.html   (card also routes here)
-  //   weekly    → OLD inline form via selectType, mirroring the Weekly card
-  //               rollback. Weekly-v2 is unready (TASKS #17 — real teacher
-  //               fetch + level descriptions still mockup-flavored). When #17
-  //               ships, change this branch BACK to weekly-v2.html in the
-  //               same commit that re-routes the card.
+  //   All three types now route to their v2 forms.
   if (dest === 'workshop') { window.location.href = 'workshop-v2.html'; }
-  else if (dest === 'weekly') { selectType('weekly-class', document.querySelector('.type-card')); }
+  else if (dest === 'weekly') { window.location.href = 'weekly-v2.html'; }
   else if (dest === 'social') { window.location.href = 'social-night-v2.html'; }
   else showScreen('success');
 }
@@ -9600,9 +9595,8 @@ async function ssSubmitToShoonya() {
 
 function ssNext(dest) {
   // 2026-05-24: see wsNext above — same routing parity. Weekly → old inline
-  // until TASKS #17 wires v2 to real data; workshop → v2.
   if (dest === 'workshop') { window.location.href = 'workshop-v2.html'; }
-  else if (dest === 'weekly') { selectType('weekly-class', document.querySelector('.type-card')); }
+  else if (dest === 'weekly') { window.location.href = 'weekly-v2.html'; }
   else showScreen('success');
 }
 
