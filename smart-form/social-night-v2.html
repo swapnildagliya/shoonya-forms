@@ -1458,6 +1458,13 @@ function clearSsDraftAndReload() {
     set('f-dj-fee', d.djFee); set('f-teacher-dj', d.teacherDJ);
     set('f-description', d.description); set('f-notes', d.notes);
     (d.styles || []).forEach(v => document.querySelector(`#style-chips .chip-multi[data-val="${v}"]`)?.click());
+    // Re-sync tracker: if the restored title matches the auto-suggestion, mark it
+    // applied so subsequent style-chip changes will continue to auto-update it.
+    const _rBtn = document.getElementById('title-suggest-btn');
+    const _rTitle = document.getElementById('f-title');
+    if (_rBtn && _rTitle && _rTitle.value && _rTitle.value === _rBtn.textContent) {
+      _lastAppliedTitleSuggestion = _rTitle.value;
+    }
     (d.genres || []).forEach(v => {
       const el = document.querySelector(`#genre-chips .music-chip[data-val="${v}"]`);
       if (el) toggleGenre(el);
