@@ -838,7 +838,7 @@ function addSpecificDate(dateVal='') {
   const list = document.getElementById('specific-dates-list');
   const row = document.createElement('div');
   row.className = 'specific-date-row';
-  row.innerHTML = `<input type="date" value="${dateVal}"><button class="btn-remove" type="button">✕</button>`;
+  row.innerHTML = `<input type="date" data-ws-specific-date value="${dateVal}"><button class="btn-remove" type="button">✕</button>`;
   list.appendChild(row);
   const dateInput = row.querySelector('input');
   wsInitFlatpickr(dateInput);   // 2026-05-24: init flatpickr on the dynamically-added input
@@ -907,7 +907,7 @@ function generateSessions() {
       sessions.push({ date: ymd(d), start: defStart, end: defEnd, topic: '' });
     }
   } else if (mode === 'specific') {
-    document.querySelectorAll('#specific-dates-list input[type=date]').forEach(inp => {
+    document.querySelectorAll('#specific-dates-list [data-ws-specific-date]').forEach(inp => {
       if (inp.value) sessions.push({ date: inp.value, start: defStart, end: defEnd, topic: '' });
     });
     if (sessions.length === 0) _sessionsHint.reason = 'Add one or more specific dates above.';
@@ -1366,7 +1366,7 @@ let _wsDraftTimer = null;
 function wsCollectDraft() {
   const grab1 = id => document.getElementById(id)?.querySelector?.('.chip.selected')?.dataset?.val || '';
   const grabN = id => [...(document.getElementById(id)?.querySelectorAll('.chip.selected') || [])].map(c => c.dataset.val);
-  const specificDates = [...document.querySelectorAll('#specific-dates-list input[type="date"]')].map(i => i.value).filter(Boolean);
+  const specificDates = [...document.querySelectorAll('#specific-dates-list [data-ws-specific-date]')].map(i => i.value).filter(Boolean);
   // 2026-05-24 audit S10: persist per-session time overrides, the times-differ
   // toggle, the couple-price toggle, the min-cancel chip, and the single-session
   // (drop-in) toggle. Restore was silently losing these.
