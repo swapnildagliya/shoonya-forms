@@ -1124,6 +1124,11 @@ function validate() {
   if (getVal('f-guest-teacher') && !document.getElementById('f-guest-photo')?.files?.[0]) {
     errs.push('Guest teacher photo (required for auto-design)');
   }
+  // Guard against oversized photos that will fail silently mid-upload (Apps Script limit).
+  const _photoFile = document.getElementById('f-guest-photo')?.files?.[0];
+  if (_photoFile && _photoFile.size > 4 * 1024 * 1024) {
+    errs.push('Guest photo is too large (max 4 MB) — please compress the image first');
+  }
   return errs;
 }
 
