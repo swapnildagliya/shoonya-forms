@@ -687,10 +687,6 @@ textarea { resize: vertical; line-height: 1.6; }
         <label>Website</label>
         <div class="field-val" id="read-website"></div>
       </div>
-      <div class="field">
-        <label>TikTok</label>
-        <div class="field-val" id="read-tiktok"></div>
-      </div>
     </div>
 
     <!-- Edit mode -->
@@ -728,10 +724,6 @@ textarea { resize: vertical; line-height: 1.6; }
       <div class="field">
         <label>Website</label>
         <input type="text" id="edit-website" placeholder="https://yoursite.com">
-      </div>
-      <div class="field">
-        <label>TikTok handle</label>
-        <input type="text" id="edit-tiktok" placeholder="@yourusername">
       </div>
       <div class="save-bar visible" style="margin-top:14px;border-radius:8px;">
         <p>Unsaved changes</p>
@@ -908,7 +900,6 @@ function socialUrl(kind, val) {
     case 'instagram': return 'https://instagram.com/' + handle;
     case 'facebook':  return 'https://facebook.com/' + handle;
     case 'youtube':   return 'https://youtube.com/' + (val.charAt(0) === '@' ? val : '@' + handle);
-    case 'tiktok':    return 'https://tiktok.com/@' + handle;
     case 'website':   return 'https://' + val;
     default:          return val;
   }
@@ -940,7 +931,7 @@ function openWebsitePreview() {
   const box = document.getElementById('wcard-socials');
   box.innerHTML = '';
   [['Instagram','instagram'], ['Facebook','facebook'], ['YouTube','youtube'],
-   ['Website','website'], ['TikTok','tiktok']].forEach(([label, key]) => {
+   ['Website','website']].forEach(([label, key]) => {
     const v = profile[key];
     if (v && String(v).trim()) {
       const a = document.createElement('a');
@@ -1047,7 +1038,6 @@ function renderDetailsRead() {
   setReadVal('read-facebook',  profile.facebook);
   setReadVal('read-youtube',   profile.youtube);
   setReadVal('read-website',   profile.website);
-  setReadVal('read-tiktok',    profile.tiktok);
 }
 
 async function renderEvents() {
@@ -1142,7 +1132,6 @@ function toggleEdit(section) {
     document.getElementById('edit-facebook').value  = profile.facebook || '';
     document.getElementById('edit-youtube').value   = profile.youtube || '';
     document.getElementById('edit-website').value   = profile.website || '';
-    document.getElementById('edit-tiktok').value    = profile.tiktok || '';
     // Language chips
     const langs = parseLangs(profile.teaching_languages);
     ['EN','NL','FR'].forEach(l => {
@@ -1195,8 +1184,7 @@ async function saveSection(section) {
       instagram:           document.getElementById('edit-instagram').value.trim(),
       facebook:            document.getElementById('edit-facebook').value.trim(),
       youtube:             document.getElementById('edit-youtube').value.trim(),
-      website:             document.getElementById('edit-website').value.trim(),
-      tiktok:              document.getElementById('edit-tiktok').value.trim()
+      website:             document.getElementById('edit-website').value.trim()
     };
   }
 
