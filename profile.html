@@ -215,6 +215,11 @@ textarea { resize: vertical; line-height: 1.6; }
   padding: 2px 0;
 }
 .field-val.empty { color: var(--light); font-style: italic; }
+.bio-readmore {
+  background: none; border: none; padding: 0; margin: 8px 0 0;
+  color: var(--purple); font-weight: 700; font-size: 0.82rem; cursor: pointer;
+}
+.bio-readmore:hover { text-decoration: underline; }
 
 /* ── Language checkboxes ── */
 .lang-row {
@@ -428,7 +433,12 @@ textarea { resize: vertical; line-height: 1.6; }
   font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em;
   color: var(--purple); font-weight: 700; margin-bottom: 10px;
 }
-.wcard-bio { font-size: 0.86rem; color: #444; line-height: 1.6; margin-bottom: 12px; }
+.wcard-bio { font-size: 0.86rem; color: #444; line-height: 1.6; margin-bottom: 6px; white-space: pre-line; }
+.wcard-readmore {
+  background: none; border: none; padding: 0; margin: 0 0 12px;
+  color: var(--purple); font-weight: 700; font-size: 0.8rem; cursor: pointer;
+}
+.wcard-readmore:hover { text-decoration: underline; }
 .wcard-socials { display: flex; flex-wrap: wrap; gap: 12px; }
 .wcard-socials a {
   font-size: 0.74rem; font-weight: 700; color: var(--purple); text-decoration: none;
@@ -628,7 +638,8 @@ textarea { resize: vertical; line-height: 1.6; }
         <label>Short bio (1–2 sentences — shown on website)</label>
         <div class="field-val" id="read-bio-short"></div>
       </div>
-      <div class="field">
+      <button type="button" class="bio-readmore" id="bio-readmore" style="display:none">Read more</button>
+      <div class="field" id="read-bio-long-wrap" style="display:none">
         <label>Full bio</label>
         <div class="field-val" id="read-bio-long"></div>
       </div>
@@ -759,6 +770,7 @@ textarea { resize: vertical; line-height: 1.6; }
         <h3 class="wcard-name" id="wcard-name"></h3>
         <div class="wcard-styles" id="wcard-styles"></div>
         <p class="wcard-bio" id="wcard-bio"></p>
+        <button type="button" class="wcard-readmore" id="wcard-readmore" style="display:none">Read more</button>
         <div class="wcard-socials" id="wcard-socials"></div>
       </div>
     </div>
@@ -922,11 +934,32 @@ function openWebsitePreview() {
   const styles = parseStyles(profile.dance_styles);
   document.getElementById('wcard-styles').textContent = styles.length ? styles.join(' · ') : '';
 
-  const bioEl = document.getElementById('wcard-bio');
-  const bio = (profile.bio_short && profile.bio_short.trim())
-           || (profile.bio_long  && profile.bio_long.trim())  || '';
-  bioEl.textContent = bio || 'Add a short bio so visitors know who you are.';
-  bioEl.style.fontStyle = bio ? 'normal' : 'italic';
+  const bioEl  = document.getElementById('wcard-bio');
+  const moreEl = document.getElementById('wcard-readmore');
+  const short  = (profile.bio_short && profile.bio_short.trim()) || '';
+  const long   = (profile.bio_long  && profile.bio_long.trim())  || '';
+  const base   = short || long;   // show short if present, else long
+  if (!base) {
+    bioEl.textContent = 'Add a short bio so visitors know who you are.';
+    bioEl.style.fontStyle = 'italic';
+    moreEl.style.display = 'none';
+  } else {
+    bioEl.style.fontStyle = 'normal';
+    bioEl.textContent = base;
+    // "Read more" only when there's a distinct longer bio to reveal
+    if (long && long !== base) {
+      let expanded = false;
+      moreEl.style.display = '';
+      moreEl.textContent = 'Read more';
+      moreEl.onclick = () => {
+        expanded = !expanded;
+        bioEl.textContent = expanded ? long : base;
+        moreEl.textContent = expanded ? 'Read less' : 'Read more';
+      };
+    } else {
+      moreEl.style.display = 'none';
+    }
+  }
 
   const box = document.getElementById('wcard-socials');
   box.innerHTML = '';
@@ -1007,6 +1040,8 @@ function renderHero(isAdmin) {
 function renderBioRead() {
   const shortEl = document.getElementById('read-bio-short');
   const longEl  = document.getElementById('read-bio-long');
+  const moreEl  = document.getElementById('bio-readmore');
+  const longWrap = document.getElementById('read-bio-long-wrap');
 
   shortEl.textContent = profile.bio_short || '';
   shortEl.className   = 'field-val' + (profile.bio_short ? '' : ' empty');
@@ -1014,7 +1049,24 @@ function renderBioRead() {
 
   longEl.textContent = profile.bio_long || '';
   longEl.className   = 'field-val' + (profile.bio_long ? '' : ' empty');
-  if (!profile.bio_long) longEl.textContent = 'Not set yet';
+
+  // Read-more: the full bio stays collapsed behind a toggle (like the website).
+  const hasLong = profile.bio_long && String(profile.bio_long).trim()
+                  && String(profile.bio_long).trim() !== String(profile.bio_short || '').trim();
+  if (hasLong) {
+    let expanded = false;
+    longWrap.style.display = 'none';
+    moreEl.style.display = '';
+    moreEl.textContent = 'Read more';
+    moreEl.onclick = () => {
+      expanded = !expanded;
+      longWrap.style.display = expanded ? '' : 'none';
+      moreEl.textContent = expanded ? 'Read less' : 'Read more';
+    };
+  } else {
+    moreEl.style.display = 'none';
+    longWrap.style.display = 'none';
+  }
 }
 
 function renderDetailsRead() {
