@@ -440,12 +440,13 @@
     </div>
 
     <div class="field">
-      <label class="field-label">Teaching language</label>
+      <label class="field-label">Teaching language <span class="badge-new">multi-select</span></label>
       <div class="chips" id="lang-chips">
-        <div class="chip" data-val="EN">EN</div>
-        <div class="chip" data-val="NL">NL</div>
-        <div class="chip" data-val="FR">FR</div>
+        <div class="chip chip-multi" data-val="EN">EN</div>
+        <div class="chip chip-multi" data-val="NL">NL</div>
+        <div class="chip chip-multi" data-val="FR">FR</div>
       </div>
+      <p class="field-hint">Pick every language you'll teach in — e.g. EN + NL for a bilingual workshop.</p>
     </div>
   </div>
 
@@ -625,10 +626,10 @@
     </div>
 
     <div class="field" style="margin-top: 24px;">
-      <label class="field-label">Special pricing notes (optional)</label>
-      <textarea class="large" id="f-pricing-notes" placeholder="Anything that doesn't fit standard fields. Examples: 'Terah Taali session €35 (2hr), Kalbeliya session €30 (2hr), Saturday day pass €60', or 'Group of 4+ pays €260 each'."></textarea>
+      <label class="field-label">Special pricing notes &amp; early-bird (optional)</label>
+      <textarea class="large" id="f-pricing-notes" placeholder="Anything that doesn't fit standard fields. Examples: 'Terah Taali session €35 (2hr), Kalbeliya session €30 (2hr), Saturday day pass €60', 'Group of 4+ pays €260 each', or early-bird: 'early bird €95 until 1 Aug, then €110'."></textarea>
       <div class="annotation">
-        <strong>Admin uses this when configuring exact pricing.</strong> Don't worry about mapping it into rigid fields — write it like a human.
+        <strong>Admin uses this when configuring exact pricing.</strong> Don't worry about mapping it into rigid fields — write it like a human. Offering an <strong>early-bird or any time-limited price?</strong> Put it here <strong>with the exact date it ends</strong>. If your workshop has a <strong>registration deadline</strong>, mention it here too — it's optional, most workshops don't need one.
       </div>
     </div>
   </div>
@@ -729,13 +730,14 @@
 
 <script src="../config.js"></script>
 <script src="../login-panel.js"></script>
+<script src="../test-mode.js"></script>
 <script>
 // ───────── STATE ─────────
 const state = {
   format: '',
   styles: [],
   levels: [],
-  lang: 'EN',
+  langs: [],
   studio: 'No preference',
   partner: false,
   datePattern: 'specific',   // 2026-05-24: default to Specific dates — most workshops are single-day
@@ -768,7 +770,7 @@ function bindChips(containerId, key, multi=false) {
 bindChips('format-chips', 'format', false);
 bindChips('style-chips', 'styles', true);
 bindChips('level-chips', 'levels', true);
-bindChips('lang-chips', 'lang', false);
+bindChips('lang-chips', 'langs', true);
 bindChips('studio-chips', 'studio', false);
 bindChips('partner-chips', 'partner', false);
 
@@ -1205,7 +1207,7 @@ function _buildReviewSummaryHtml() {
       _reviewRow('Format', state.format || '', '#format-chips'),
       _reviewRow('Style(s)', (state.styles || []).join(', '), '#style-chips'),
       _reviewRow('Level(s)', (state.levels || []).join(', '), '#level-chips'),
-      _reviewRow('Language', state.lang || 'EN', '#lang-chips'),
+      _reviewRow('Language', (state.langs || []).join(' / ') || 'EN', '#lang-chips'),
     ]),
     _reviewSection('Teachers', [
       getVal('f-co-teacher') ? _reviewRow('Co-teacher', getVal('f-co-teacher'), '#f-co-teacher') : '',
@@ -1286,7 +1288,7 @@ async function submitForm() {
     guest_photo_b64:  await _fileToB64(document.getElementById('f-guest-photo')),
     guest_photo_label: getVal('f-guest-teacher'),   // backend uses this for renaming when the flat-field path is taken
     co_teacher: getVal('f-co-teacher'),
-    language: state.lang,
+    language: (state.langs || []).join(' / '),
     what_to_bring: getVal('f-bring'),
     note_shoonya: getVal('f-note'),
     partner_required: state.partner,
@@ -1315,9 +1317,12 @@ async function submitForm() {
     });
   }
 
+  // Test mode (?test=1): mark the payload so the backend previews instead of saving
+  if (window.shoonyaTestMode && window.shoonyaTestMode()) payload.testMode = true;
+
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
-  btn.textContent = 'Submitting…';
+  btn.textContent = payload.testMode ? 'Testing…' : 'Submitting…';
 
   const url = (typeof APPS_SCRIPT_URL !== 'undefined') ? APPS_SCRIPT_URL : '';
   if (!url) {
@@ -1340,6 +1345,14 @@ async function submitForm() {
     try { json = await res.json(); }
     catch (_) { throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + '). Your draft is saved.'); }
     if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ').'));
+    if (json.testMode && window.shoonyaShowTestPreview) {
+      okBox.innerHTML = window.shoonyaShowTestPreview(json);
+      okBox.style.display = '';
+      okBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      btn.disabled = false;
+      btn.textContent = 'Run another test';
+      return;
+    }
     okBox.innerHTML = `
       <strong>✓ Submitted successfully.</strong><br>
       Submitted ✓ — Shoonya will review within 48 hours and follow up by email.<br>
@@ -1380,7 +1393,7 @@ function wsCollectDraft() {
     format: grab1('format-chips'),
     styles: grabN('style-chips'),
     levels: grabN('level-chips'),
-    lang: grab1('lang-chips') || 'EN',
+    lang: grabN('lang-chips'),
     studio: grab1('studio-chips'),
     partner: grab1('partner-chips'),
     coTeacher: document.getElementById('f-co-teacher')?.value || '',
@@ -1445,7 +1458,10 @@ function wsRestoreDraft(d) {
   if (d.format) clickVal('format-chips', d.format);
   (d.styles || []).forEach(v => clickVal('style-chips', v));
   (d.levels || []).forEach(v => clickVal('level-chips', v));
-  if (d.lang) clickVal('lang-chips', d.lang);
+  // language (multi) — clear the default EN first, then apply saved (back-compat: old drafts saved a single string)
+  document.querySelectorAll('#lang-chips .chip.selected').forEach(c => c.classList.remove('selected'));
+  state.langs = [];
+  (Array.isArray(d.lang) ? d.lang : (d.lang ? [d.lang] : [])).forEach(v => clickVal('lang-chips', v));
   if (d.studio) clickVal('studio-chips', d.studio);
   if (d.partner !== undefined) clickVal('partner-chips', String(d.partner));
   // text

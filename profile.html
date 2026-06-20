@@ -384,6 +384,126 @@ textarea { resize: vertical; line-height: 1.6; }
 .upload-hint {
   font-size: 0.75rem; color: var(--light); margin-top: 6px;
 }
+
+/* ── Website-card preview modal ── */
+.preview-overlay {
+  display: none; position: fixed; inset: 0; z-index: 1000;
+  background: rgba(20,12,30,0.62); backdrop-filter: blur(2px);
+  align-items: center; justify-content: center; padding: 20px;
+}
+.preview-overlay.open { display: flex; }
+.preview-modal {
+  position: relative; background: #fff; border-radius: 14px;
+  width: 100%; max-width: 380px; padding: 20px;
+  box-shadow: 0 18px 60px rgba(0,0,0,0.35);
+}
+.preview-close {
+  position: absolute; top: 12px; right: 14px;
+  background: none; border: none; font-size: 1.1rem; color: var(--light);
+  cursor: pointer; line-height: 1;
+}
+.preview-close:hover { color: var(--dark); }
+.preview-label {
+  font-size: 0.68rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--purple); margin-bottom: 12px;
+}
+/* The card itself — editorial, mirrors the website teacher card (D-031) */
+.wcard {
+  border: 1px solid #e4e0db; border-radius: 0; overflow: hidden; background: #fff;
+}
+.wcard-photo {
+  width: 100%; aspect-ratio: 4 / 5; background: var(--purple-light) center/cover no-repeat;
+  background-position: 50% 22%; /* face-safe: bias toward the top (D-032) */
+}
+.wcard-photo.empty {
+  display: flex; align-items: center; justify-content: center;
+  color: var(--purple); font-size: 0.78rem; font-style: italic; aspect-ratio: 4 / 5;
+}
+.wcard-body { padding: 16px 18px 18px; }
+.wcard-name {
+  font-family: Georgia, 'Times New Roman', serif; /* editorial serif, like the site */
+  font-size: 1.3rem; font-weight: 700; color: var(--ink, #000); margin-bottom: 4px; line-height: 1.15;
+}
+.wcard-styles {
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--purple); font-weight: 700; margin-bottom: 10px;
+}
+.wcard-bio { font-size: 0.86rem; color: #444; line-height: 1.6; margin-bottom: 12px; }
+.wcard-socials { display: flex; flex-wrap: wrap; gap: 12px; }
+.wcard-socials a {
+  font-size: 0.74rem; font-weight: 700; color: var(--purple); text-decoration: none;
+}
+.wcard-socials a:hover { text-decoration: underline; }
+.preview-note { font-size: 0.74rem; color: var(--light); margin-top: 12px; line-height: 1.5; }
+
+/* ── Complete-profile banner ── */
+.complete-banner {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+  background: var(--purple); color: #fff;
+  border-radius: var(--radius);
+  padding: 18px 22px; margin-bottom: 16px;
+  box-shadow: 0 2px 12px rgba(107,63,160,0.25);
+}
+.complete-banner-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.complete-banner-text strong { font-size: 1rem; font-weight: 800; }
+.complete-banner-text span { font-size: 0.84rem; opacity: 0.92; line-height: 1.5; }
+.btn-complete {
+  flex-shrink: 0;
+  background: var(--yellow); color: var(--dark);
+  border: none; border-radius: 8px;
+  padding: 10px 20px; font-size: 0.88rem; font-weight: 800;
+  cursor: pointer; transition: opacity 0.2s;
+}
+.btn-complete:hover { opacity: 0.88; }
+
+/* ── Edit-profile button (hero) ── */
+.btn-edit-profile {
+  margin-top: 10px;
+  background: transparent; color: var(--purple);
+  border: 1.5px solid var(--purple); border-radius: 7px;
+  padding: 6px 14px; font-size: 0.8rem; font-weight: 700;
+  cursor: pointer; transition: all 0.15s;
+}
+.btn-edit-profile:hover { background: var(--purple); color: #fff; }
+
+/* ── Photo gallery ── */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+}
+.gallery-item {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--purple-light);
+  aspect-ratio: 1 / 1;
+  border: 1.5px solid var(--border);
+}
+.gallery-item.is-main { border-color: var(--purple); }
+.gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.gallery-main-badge {
+  position: absolute; top: 6px; left: 6px;
+  background: var(--purple); color: #fff;
+  font-size: 0.6rem; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.5px; padding: 2px 7px; border-radius: 999px;
+}
+.gallery-actions {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  display: flex; gap: 1px;
+  background: rgba(0,0,0,0.35);
+}
+.gallery-actions button {
+  flex: 1; border: none; cursor: pointer;
+  font-size: 0.65rem; font-weight: 700;
+  padding: 5px 2px; background: rgba(0,0,0,0.55); color: #fff;
+}
+.gallery-actions button:hover { background: rgba(0,0,0,0.8); }
+.gallery-actions button.remove { color: #ff9b9b; }
+.gallery-empty {
+  font-size: 0.82rem; color: var(--light); font-style: italic; padding: 6px 0;
+}
 </style>
 </head>
 <body>
@@ -456,6 +576,15 @@ textarea { resize: vertical; line-height: 1.6; }
 <div id="profile-view">
 <div class="profile-wrap">
 
+  <!-- Complete-profile banner (first-timers / incomplete) -->
+  <div id="complete-banner" class="complete-banner" style="display:none">
+    <div class="complete-banner-text">
+      <strong>Welcome! Let's set up your profile</strong>
+      <span>Add your bio, a photo and your social links — this is what appears on the Shoonya website. Then you can submit a class or event.</span>
+    </div>
+    <button class="btn-complete" onclick="openAllEdits()">Complete profile</button>
+  </div>
+
   <!-- Hero -->
   <div class="profile-hero">
     <div class="avatar-wrap">
@@ -470,7 +599,20 @@ textarea { resize: vertical; line-height: 1.6; }
       <div class="profile-name" id="display-name"></div>
       <div class="profile-styles" id="display-styles"></div>
       <div class="profile-badges" id="display-badges"></div>
+      <button id="edit-profile-btn" class="btn-edit-profile" onclick="openAllEdits()">✏️ Edit profile</button>
+      <button id="preview-card-btn" class="btn-edit-profile" onclick="openWebsitePreview()">👁 See your website card</button>
     </div>
+  </div>
+
+  <!-- Photos section -->
+  <div class="section-card" id="photos-card">
+    <div class="section-header">
+      <span class="section-title">Photos</span>
+      <button class="edit-btn" onclick="document.getElementById('gallery-input').click()">+ Add photo</button>
+    </div>
+    <input type="file" id="gallery-input" accept="image/*" style="display:none" onchange="addGalleryPhoto(this)">
+    <div id="gallery-grid" class="gallery-grid"></div>
+    <div class="upload-hint">Your first photo becomes your main portrait (shown on the website). Max 4MB each. Use "Set as main" to change which one leads.</div>
   </div>
 
   <!-- Bio section -->
@@ -533,6 +675,22 @@ textarea { resize: vertical; line-height: 1.6; }
         <label>Instagram</label>
         <div class="field-val" id="read-instagram"></div>
       </div>
+      <div class="field">
+        <label>Facebook</label>
+        <div class="field-val" id="read-facebook"></div>
+      </div>
+      <div class="field">
+        <label>YouTube</label>
+        <div class="field-val" id="read-youtube"></div>
+      </div>
+      <div class="field">
+        <label>Website</label>
+        <div class="field-val" id="read-website"></div>
+      </div>
+      <div class="field">
+        <label>TikTok</label>
+        <div class="field-val" id="read-tiktok"></div>
+      </div>
     </div>
 
     <!-- Edit mode -->
@@ -559,6 +717,22 @@ textarea { resize: vertical; line-height: 1.6; }
         <label>Instagram handle</label>
         <input type="text" id="edit-instagram" placeholder="@yourusername">
       </div>
+      <div class="field">
+        <label>Facebook (handle or URL)</label>
+        <input type="text" id="edit-facebook" placeholder="facebook.com/yourpage">
+      </div>
+      <div class="field">
+        <label>YouTube (handle or URL)</label>
+        <input type="text" id="edit-youtube" placeholder="@yourchannel">
+      </div>
+      <div class="field">
+        <label>Website</label>
+        <input type="text" id="edit-website" placeholder="https://yoursite.com">
+      </div>
+      <div class="field">
+        <label>TikTok handle</label>
+        <input type="text" id="edit-tiktok" placeholder="@yourusername">
+      </div>
       <div class="save-bar visible" style="margin-top:14px;border-radius:8px;">
         <p>Unsaved changes</p>
         <div class="save-bar-btns">
@@ -582,6 +756,24 @@ textarea { resize: vertical; line-height: 1.6; }
 </div>
 </div>
 
+<!-- Website-card preview modal -->
+<div id="preview-overlay" class="preview-overlay" onclick="if(event.target===this)closeWebsitePreview()">
+  <div class="preview-modal">
+    <button class="preview-close" onclick="closeWebsitePreview()" aria-label="Close">✕</button>
+    <div class="preview-label">How your card appears on the website</div>
+    <div class="wcard" id="wcard">
+      <div class="wcard-photo" id="wcard-photo"></div>
+      <div class="wcard-body">
+        <h3 class="wcard-name" id="wcard-name"></h3>
+        <div class="wcard-styles" id="wcard-styles"></div>
+        <p class="wcard-bio" id="wcard-bio"></p>
+        <div class="wcard-socials" id="wcard-socials"></div>
+      </div>
+    </div>
+    <div class="preview-note" id="preview-note"></div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
@@ -591,14 +783,14 @@ textarea { resize: vertical; line-height: 1.6; }
 // ── State ────────────────────────────────────────────────
 const SESSION_KEY = 'shoonya_session';
 let profile = null;
-let pin     = null;
+let token   = null;   // session token — replaces the stored PIN
 
 // ── Boot ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   const session = loadSession();
   if (session && session.profile) {
     profile = session.profile;
-    pin     = session.pin;
+    token   = session.token;
     try {
       showProfile();
     } catch (err) {
@@ -617,7 +809,7 @@ function loadSession() {
   try { return JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { return null; }
 }
 function saveSession() {
-  localStorage.setItem(SESSION_KEY, JSON.stringify({ profile, pin }));
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ profile, token }));
 }
 function logout() {
   localStorage.removeItem(SESSION_KEY);
@@ -640,7 +832,7 @@ async function gateLogin() {
     const res = await appsPost({ action: 'login', email, pin: p });
     if (res.ok) {
       profile = res.profile;
-      pin     = p;
+      token   = res.token;
       saveSession();
       showProfile();
     } else {
@@ -664,10 +856,110 @@ function showProfile() {
   document.getElementById('details-card').style.display     = isAdmin ? 'none' : '';
   document.getElementById('submissions-card').style.display = isAdmin ? 'none' : '';
 
+  // Hide the photo gallery for admin users (no public teacher card)
+  document.getElementById('photos-card').style.display = isAdmin ? 'none' : '';
+
   renderHero(isAdmin);
   renderBioRead();
   if (!isAdmin) renderDetailsRead();
+  if (!isAdmin) renderGallery();
   if (!isAdmin) renderEvents();
+  if (!isAdmin) maybePromptComplete();
+}
+
+// ── Complete-profile prompt ───────────────────────────────
+// A profile counts as "set up" once it has a short bio AND a photo. Until then
+// (or when arrived via ?complete=1) we surface the banner and open the editors.
+function isProfileIncomplete() {
+  const hasBio   = profile.bio_short && String(profile.bio_short).trim();
+  const hasPhoto = profile.photo_url && String(profile.photo_url).trim();
+  return !hasBio || !hasPhoto;
+}
+
+function maybePromptComplete() {
+  const forced = new URLSearchParams(location.search).get('complete') === '1';
+  const incomplete = isProfileIncomplete();
+  const banner = document.getElementById('complete-banner');
+  if (banner) banner.style.display = incomplete ? '' : 'none';
+  if (incomplete || forced) openAllEdits();
+}
+
+function refreshCompleteBanner() {
+  const banner = document.getElementById('complete-banner');
+  if (banner) banner.style.display = isProfileIncomplete() ? '' : 'none';
+}
+
+function openAllEdits() {
+  ['bio', 'details'].forEach(s => {
+    const read = document.getElementById(s + '-read');
+    if (read && read.style.display !== 'none') toggleEdit(s);  // open only if currently closed
+  });
+  const target = document.getElementById('bio-card');
+  if (target && target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+// ── Website-card preview ──────────────────────────────────
+function socialUrl(kind, val) {
+  val = String(val || '').trim();
+  if (!val) return '';
+  if (/^https?:\/\//i.test(val)) return val;
+  const handle = val.replace(/^@/, '');
+  switch (kind) {
+    case 'instagram': return 'https://instagram.com/' + handle;
+    case 'facebook':  return 'https://facebook.com/' + handle;
+    case 'youtube':   return 'https://youtube.com/' + (val.charAt(0) === '@' ? val : '@' + handle);
+    case 'tiktok':    return 'https://tiktok.com/@' + handle;
+    case 'website':   return 'https://' + val;
+    default:          return val;
+  }
+}
+
+function openWebsitePreview() {
+  const photo = document.getElementById('wcard-photo');
+  if (profile.photo_url) {
+    photo.style.backgroundImage = 'url("' + profile.photo_url + '")';
+    photo.classList.remove('empty');
+    photo.textContent = '';
+  } else {
+    photo.style.backgroundImage = '';
+    photo.classList.add('empty');
+    photo.textContent = 'No photo yet';
+  }
+
+  document.getElementById('wcard-name').textContent = profile.name || 'Your name';
+
+  const styles = parseStyles(profile.dance_styles);
+  document.getElementById('wcard-styles').textContent = styles.length ? styles.join(' · ') : '';
+
+  const bioEl = document.getElementById('wcard-bio');
+  const bio = (profile.bio_short && profile.bio_short.trim())
+           || (profile.bio_long  && profile.bio_long.trim())  || '';
+  bioEl.textContent = bio || 'Add a short bio so visitors know who you are.';
+  bioEl.style.fontStyle = bio ? 'normal' : 'italic';
+
+  const box = document.getElementById('wcard-socials');
+  box.innerHTML = '';
+  [['Instagram','instagram'], ['Facebook','facebook'], ['YouTube','youtube'],
+   ['Website','website'], ['TikTok','tiktok']].forEach(([label, key]) => {
+    const v = profile[key];
+    if (v && String(v).trim()) {
+      const a = document.createElement('a');
+      a.href = socialUrl(key, v); a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = label;
+      box.appendChild(a);
+    }
+  });
+
+  const approved = String(profile.approved || '').toLowerCase() === 'yes';
+  document.getElementById('preview-note').textContent = approved
+    ? '✓ Live on the website now.'
+    : 'Preview only — your card goes live once Shoonya approves your profile.';
+
+  document.getElementById('preview-overlay').classList.add('open');
+}
+
+function closeWebsitePreview() {
+  document.getElementById('preview-overlay').classList.remove('open');
 }
 
 function renderHero(isAdmin) {
@@ -746,9 +1038,16 @@ function renderDetailsRead() {
   langsEl.textContent = langs.length ? langs.join(', ') : 'Not set yet';
   langsEl.className   = 'field-val' + (langs.length ? '' : ' empty');
 
-  const instaEl = document.getElementById('read-instagram');
-  instaEl.textContent = profile.instagram || 'Not set yet';
-  instaEl.className   = 'field-val' + (profile.instagram ? '' : ' empty');
+  function setReadVal(id, val) {
+    const el = document.getElementById(id);
+    el.textContent = val || 'Not set yet';
+    el.className   = 'field-val' + (val ? '' : ' empty');
+  }
+  setReadVal('read-instagram', profile.instagram);
+  setReadVal('read-facebook',  profile.facebook);
+  setReadVal('read-youtube',   profile.youtube);
+  setReadVal('read-website',   profile.website);
+  setReadVal('read-tiktok',    profile.tiktok);
 }
 
 async function renderEvents() {
@@ -757,7 +1056,7 @@ async function renderEvents() {
 
   try {
     const url = (typeof APPS_SCRIPT_URL !== 'undefined' ? APPS_SCRIPT_URL : '')
-      + '?action=getTeacherSubmissions&email=' + encodeURIComponent(profile.email || '');
+      + '?action=getTeacherSubmissions&token=' + encodeURIComponent(token || '');
     const res  = await fetch(url, { redirect: 'follow' });
     const text = await res.text();
     const match = text.match(/\{[\s\S]*\}/);
@@ -840,6 +1139,10 @@ function toggleEdit(section) {
     const styles = parseStyles(profile.dance_styles);
     document.getElementById('edit-dance-styles').value = styles.join(', ');
     document.getElementById('edit-instagram').value = profile.instagram || '';
+    document.getElementById('edit-facebook').value  = profile.facebook || '';
+    document.getElementById('edit-youtube').value   = profile.youtube || '';
+    document.getElementById('edit-website').value   = profile.website || '';
+    document.getElementById('edit-tiktok').value    = profile.tiktok || '';
     // Language chips
     const langs = parseLangs(profile.teaching_languages);
     ['EN','NL','FR'].forEach(l => {
@@ -889,12 +1192,16 @@ async function saveSection(section) {
     updates = {
       dance_styles:        JSON.stringify(styles),
       teaching_languages:  langs.join(','),
-      instagram:           document.getElementById('edit-instagram').value.trim()
+      instagram:           document.getElementById('edit-instagram').value.trim(),
+      facebook:            document.getElementById('edit-facebook').value.trim(),
+      youtube:             document.getElementById('edit-youtube').value.trim(),
+      website:             document.getElementById('edit-website').value.trim(),
+      tiktok:              document.getElementById('edit-tiktok').value.trim()
     };
   }
 
   try {
-    const res = await appsPost({ action: 'updateProfile', email: profile.email, pin, updates });
+    const res = await appsPost({ action: 'updateProfile', token, updates });
     if (res.ok) {
       // Update local profile
       Object.assign(profile, updates);
@@ -903,6 +1210,7 @@ async function saveSection(section) {
       renderHero();
       if (section === 'bio')     renderBioRead();
       if (section === 'details') renderDetailsRead();
+      refreshCompleteBanner();   // hide once bio + photo present (or re-show if cleared)
       showToast('Saved ✓', 'success');
     } else {
       showToast(res.error || 'Save failed', 'error');
@@ -931,19 +1239,21 @@ async function uploadPhoto(input) {
     try {
       const res = await appsPost({
         action:      'uploadPhoto',
-        email:       profile.email,
-        pin,
+        token,
         photoBase64: base64,
         fileName:    file.name
       });
       if (res.ok) {
         profile.photo_url = res.photoUrl;
+        if (res.photos) profile.photos = res.photos;
         saveSession();
         // Update avatar
         const img = document.getElementById('avatar-img');
         img.src = res.photoUrl;
         img.style.display = '';
         document.getElementById('avatar-initials').style.display = 'none';
+        renderGallery();
+        refreshCompleteBanner();
         showToast('Photo updated ✓', 'success');
       } else {
         showToast(res.error || 'Upload failed', 'error');
@@ -953,6 +1263,111 @@ async function uploadPhoto(input) {
     }
   };
   reader.readAsDataURL(file);
+}
+
+// ── Photo gallery ─────────────────────────────────────────
+function parsePhotos(val) {
+  if (Array.isArray(val)) return val;
+  if (!val) return [];
+  try {
+    const parsed = JSON.parse(val);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch { return []; }
+}
+
+function renderGallery() {
+  const grid = document.getElementById('gallery-grid');
+  if (!grid) return;
+  const photos = parsePhotos(profile.photos);
+
+  if (!photos.length) {
+    grid.innerHTML = '<div class="gallery-empty">No photos yet. Add your portrait and a few action shots.</div>';
+    return;
+  }
+
+  grid.innerHTML = '';
+  photos.forEach(p => {
+    if (!p || !p.url) return;
+    const isMain = profile.photo_url && p.url === profile.photo_url;
+    const item = document.createElement('div');
+    item.className = 'gallery-item' + (isMain ? ' is-main' : '');
+    const fid = escHtmlP(p.fileId || '');
+    item.innerHTML =
+      (isMain ? '<span class="gallery-main-badge">Main</span>' : '') +
+      `<img src="${escHtmlP(p.url)}" alt="${escHtmlP(p.label || '')}">` +
+      `<div class="gallery-actions">` +
+        (isMain ? '' : `<button onclick="setMainGalleryPhoto('${fid}')">Set as main</button>`) +
+        `<button class="remove" onclick="removeGalleryPhoto('${fid}')">Remove</button>` +
+      `</div>`;
+    grid.appendChild(item);
+  });
+}
+
+async function addGalleryPhoto(input) {
+  const file = input.files[0];
+  input.value = '';
+  if (!file) return;
+  if (file.size > 4 * 1024 * 1024) { showToast('Photo must be under 4MB', 'error'); return; }
+
+  showToast('Uploading photo…');
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const res = await appsPost({
+        action: 'addPhoto', token,
+        photoBase64: e.target.result, fileName: file.name
+      });
+      if (res.ok) {
+        if (res.photos)   profile.photos    = res.photos;
+        if (res.photoUrl) profile.photo_url = res.photoUrl;
+        saveSession();
+        renderGallery();
+        renderHero(false);
+        refreshCompleteBanner();
+        showToast('Photo added ✓', 'success');
+      } else {
+        showToast(res.error || 'Upload failed', 'error');
+      }
+    } catch (err) { showToast('Upload error', 'error'); }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function removeGalleryPhoto(fileId) {
+  if (!fileId) return;
+  if (!confirm('Remove this photo?')) return;
+  showToast('Removing…');
+  try {
+    const res = await appsPost({ action: 'removePhoto', token, fileId });
+    if (res.ok) {
+      profile.photos    = res.photos || [];
+      profile.photo_url = res.photoUrl || '';
+      saveSession();
+      renderGallery();
+      renderHero(false);
+      refreshCompleteBanner();
+      showToast('Photo removed ✓', 'success');
+    } else {
+      showToast(res.error || 'Remove failed', 'error');
+    }
+  } catch (err) { showToast('Connection error', 'error'); }
+}
+
+async function setMainGalleryPhoto(fileId) {
+  if (!fileId) return;
+  showToast('Updating main photo…');
+  try {
+    const res = await appsPost({ action: 'setMainPhoto', token, fileId });
+    if (res.ok) {
+      profile.photo_url = res.photoUrl;
+      saveSession();
+      renderGallery();
+      renderHero(false);
+      showToast('Main photo updated ✓', 'success');
+    } else {
+      showToast(res.error || 'Update failed', 'error');
+    }
+  } catch (err) { showToast('Connection error', 'error'); }
 }
 
 // ── Forgot PIN ────────────────────────────────────────────

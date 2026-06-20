@@ -74,6 +74,12 @@
   .qlink { display:inline-flex; align-items:center; gap:5px; background:var(--purple); color:#fff; text-decoration:none; font-size:.72rem; font-weight:700; padding:7px 14px; border-radius:8px; }
   .qlink:hover { background:#5a3490; }
 
+  /* Teacher approval toggle */
+  .appr-toggle { border:1.5px solid var(--border); background:#fff; color:var(--muted); font-size:.74rem; font-weight:700; padding:5px 12px; border-radius:20px; cursor:pointer; white-space:nowrap; }
+  .appr-toggle.on { background:#d4edda; border-color:#2e7d32; color:#155724; }
+  .appr-toggle:hover { border-color:var(--purple); }
+  .appr-toggle:disabled { opacity:.5; cursor:default; }
+
   /* Discount rules */
   .rule { display:flex; align-items:flex-start; gap:10px; margin-bottom:10px; padding:10px 14px; background:#f8f4ff; border-radius:8px; }
   .rule-icon { font-size:1.1rem; flex-shrink:0; }
@@ -134,6 +140,19 @@
       <a class="qlink" href="https://script.google.com/home" target="_blank">⚙️ Apps Script</a>
       <a class="qlink" href="https://github.com/swapnildagliya/shoonya-forms" target="_blank">💻 GitHub Repo</a>
     </div>
+  </div>
+
+  <!-- ─── TEACHER WEBSITE APPROVAL ─────────────────────────── -->
+  <div class="card">
+    <div class="card-title">Teachers — Website Approval
+      <span class="badge" id="appr-count">…</span>
+    </div>
+    <div class="page-sub" style="margin-bottom:12px;">Approve a teacher to publish their profile (bio, photo, social links) to the website feed. Approve complete profiles only.</div>
+    <div id="appr-status" style="font-size:.82rem;color:var(--muted);">Loading teachers…</div>
+    <table id="appr-table" style="display:none;">
+      <thead><tr><th>Teacher</th><th>Profile</th><th>Website</th></tr></thead>
+      <tbody id="appr-body"></tbody>
+    </table>
   </div>
 
   <!-- ─── DISCOUNT RULES ──────────────────────────────────── -->
@@ -290,6 +309,7 @@
 
 </main>
 
+<script src="../config.js"></script>
 <script>
 const ADMIN_PW = 'Sh00ny@2126';
 
@@ -299,6 +319,7 @@ function unlock() {
     document.getElementById('lock').style.display = 'none';
     document.getElementById('dashboard').style.display = '';
     sessionStorage.setItem('shoonya_admin', '1');
+    loadTeachers();
   } else {
     document.getElementById('lock-err').style.display = '';
     document.getElementById('lock-pw').value = '';
@@ -313,10 +334,79 @@ function lockOut() {
   document.getElementById('lock-pw').value = '';
 }
 
+// ── Teacher website approval ──────────────────────────────
+function escA(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+async function loadTeachers() {
+  const statusEl = document.getElementById('appr-status');
+  const table    = document.getElementById('appr-table');
+  const body     = document.getElementById('appr-body');
+  const countEl  = document.getElementById('appr-count');
+  if (typeof APPS_SCRIPT_URL === 'undefined' || !APPS_SCRIPT_URL) {
+    statusEl.textContent = 'Apps Script URL not configured.'; return;
+  }
+  statusEl.style.display = ''; statusEl.textContent = 'Loading teachers…';
+  table.style.display = 'none';
+  try {
+    const url = APPS_SCRIPT_URL + '?action=adminListTeachers&secret=' + encodeURIComponent(ADMIN_PW);
+    const res = await fetch(url, { redirect: 'follow' });
+    const data = await res.json();
+    if (!data.ok) { statusEl.textContent = data.error || 'Could not load teachers.'; return; }
+    const teachers = data.teachers || [];
+    countEl.textContent = teachers.filter(t => t.approved).length + '/' + teachers.length + ' live';
+    body.innerHTML = '';
+    teachers.forEach(t => {
+      const complete = t.hasPhoto && t.hasBio;
+      const profileCell = complete
+        ? '<span style="color:#2e7d32;font-weight:600;">✓ complete</span>'
+        : '<span style="color:#c62828;">' + (!t.hasBio ? 'no bio ' : '') + (!t.hasPhoto ? 'no photo' : '') + '</span>';
+      const tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td style="font-weight:600;">' + escA(t.name) +
+          '<div style="font-size:.7rem;color:var(--muted);font-weight:400;">' + escA(t.email) + '</div></td>' +
+        '<td>' + profileCell + '</td><td></td>';
+      const btn = document.createElement('button');
+      btn.className = 'appr-toggle' + (t.approved ? ' on' : '');
+      btn.textContent = t.approved ? '● Published' : '○ Not published';
+      btn.onclick = () => setApproved(t.email, !t.approved, btn);
+      tr.children[2].appendChild(btn);
+      body.appendChild(tr);
+    });
+    statusEl.style.display = 'none';
+    table.style.display = '';
+  } catch (e) {
+    statusEl.textContent = 'Connection error loading teachers.';
+  }
+}
+
+async function setApproved(email, approved, btn) {
+  btn.disabled = true;
+  const prev = btn.textContent;
+  btn.textContent = '…';
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'adminSetApproved', secret: ADMIN_PW, email, approved })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      loadTeachers(); // refresh the list + live count
+    } else {
+      btn.textContent = prev; btn.disabled = false;
+      alert(data.error || 'Could not update.');
+    }
+  } catch (e) {
+    btn.textContent = prev; btn.disabled = false;
+    alert('Connection error.');
+  }
+}
+
 // Auto-unlock if already authenticated this session
 if (sessionStorage.getItem('shoonya_admin') === '1') {
   document.getElementById('lock').style.display = 'none';
   document.getElementById('dashboard').style.display = '';
+  loadTeachers();
 }
 </script>
 </body>

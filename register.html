@@ -392,10 +392,10 @@ input.error { border-color: #e74c3c; }
       <div class="success-icon">🎉</div>
       <h2>You're in, <span id="successName"></span>!</h2>
       <p>Your Shoonya teacher account is ready.</p>
-      <p>Use your email and PIN to log in on any of our submission forms or your profile page.</p>
+      <p>First, let's set up your profile — your bio, photos and social links. This is what appears on the website. You can submit a class or event right after.</p>
       <div class="success-links">
-        <a class="btn" href="smart-form/index.html">Submit an Event →</a>
-        <a class="btn-outline" href="profile.html">View My Profile</a>
+        <a class="btn" href="profile.html?complete=1">Complete My Profile →</a>
+        <a class="btn-outline" href="smart-form/index.html">Skip for now — submit an event</a>
       </div>
     </div>
   </div>
@@ -492,7 +492,7 @@ async function submitStep2() {
       // Save session so profile.html auto-loads after registration
       if (result.profile) {
         try {
-          localStorage.setItem('shoonya_session', JSON.stringify({ profile: result.profile, pin }));
+          localStorage.setItem('shoonya_session', JSON.stringify({ profile: result.profile, token: result.token }));
         } catch (e) {}
       }
       goToScreen(3);

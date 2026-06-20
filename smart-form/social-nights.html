@@ -697,6 +697,7 @@
 
 <script src="../config.js"></script>
 <script src="../login-panel.js"></script>
+<script src="../test-mode.js"></script>
 <script>
 // 2026-05-24 audit L9: set a time-input value AND refresh flatpickr's alt-input
 // if one is attached. The quick-pick buttons used to set .value directly,
@@ -1327,9 +1328,12 @@ async function submitForm() {
 
   // 2026-05-24 (audit P1): removed `console.log('Social night payload:', …)` — was dumping the full payload (incl. teacher email, DJ fee, internal notes) into the user's browser console on every submit.
 
+  // Test mode (?test=1): mark the payload so the backend previews instead of saving
+  if (window.shoonyaTestMode && window.shoonyaTestMode()) payload.testMode = true;
+
   const btn = document.querySelector('.btn-primary');
   btn.disabled = true;
-  btn.textContent = 'Submitting…';
+  btn.textContent = payload.testMode ? 'Testing…' : 'Submitting…';
 
   const url = (typeof APPS_SCRIPT_URL !== 'undefined') ? APPS_SCRIPT_URL : '';
   if (!url) {
@@ -1351,6 +1355,14 @@ async function submitForm() {
     try { json = await res.json(); }
     catch (_) { throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + '). Your draft is saved.'); }
     if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ').'));
+    if (json.testMode && window.shoonyaShowTestPreview) {
+      succEl.innerHTML = window.shoonyaShowTestPreview(json);
+      succEl.style.display = 'block';
+      succEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      btn.disabled = false;
+      btn.textContent = 'Run another test';
+      return;
+    }
     succEl.innerHTML = `
       <strong>✅ Social night submitted!</strong><br>
       <em>${payload.title}</em> — ${payload.date}<br>

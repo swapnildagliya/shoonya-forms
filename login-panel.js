@@ -11,14 +11,15 @@
 
   // ── State ───────────────────────────────────────────────
   let currentProfile = null;
-  let currentPin     = null;
+  let currentToken   = null;
 
   // ── Session helpers ─────────────────────────────────────
-  function saveSession(profile, pin) {
+  // Session holds { profile, token } — the PIN is never persisted client-side.
+  function saveSession(profile, token) {
     currentProfile = profile;
-    currentPin     = pin;
+    currentToken   = token;
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ profile, pin }));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ profile, token }));
     } catch (e) {}
   }
 
@@ -32,7 +33,7 @@
 
   function clearSession() {
     currentProfile = null;
-    currentPin     = null;
+    currentToken   = null;
     try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
   }
 
@@ -272,7 +273,7 @@
     const session = loadSession();
     if (session && session.profile) {
       currentProfile = session.profile;
-      currentPin     = session.pin;
+      currentToken   = session.token;
       panel.innerHTML = loggedInBarHTML(session.profile);
     } else {
       panel.innerHTML = `
@@ -405,7 +406,18 @@
     try {
       const result = await appsPost({ action: 'login', email, pin });
       if (result.ok) {
-        saveSession(result.profile, pin);
+        saveSession(result.profile, result.token);
+        // Smart redirect: a teacher whose profile isn't set up yet (no bio +
+        // no photo) is sent to the profile page to complete it. A teacher who
+        // is already set up stays here on the Submit hub — straight to the task.
+        const p = result.profile || {};
+        const incomplete = !(p.bio_short && String(p.bio_short).trim()) ||
+                           !(p.photo_url && String(p.photo_url).trim());
+        if (incomplete) {
+          const base = location.pathname.includes('/smart-form/') ? '../' : '';
+          window.location.href = base + 'profile.html?complete=1';
+          return;
+        }
         // Update the top bar to show logged-in state
         const panel = document.getElementById('shoonya-login-panel');
         panel.innerHTML = loggedInBarHTML(result.profile);

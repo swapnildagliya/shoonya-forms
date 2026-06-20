@@ -1537,6 +1537,27 @@
   }
   .admin-bar.visible { display: flex; }
   .admin-bar__flag { color: var(--highlight-yellow); white-space: nowrap; }
+
+  /* Thin "profile incomplete" nudge — sibling of the admin bar, not a wall */
+  .incomplete-bar {
+    display: none; align-items: center; gap: var(--space-1); flex-wrap: wrap;
+    background: var(--lilac, #f0ebff); color: #4a2e7a;
+    font-family: var(--font-body); font-size: var(--type-body-sm);
+    padding: var(--space-1) var(--space-2);
+    border-bottom: var(--line) solid var(--vibrant, #6B3FA0);
+  }
+  .incomplete-bar.visible { display: flex; }
+  .incomplete-bar__text { flex: 1 1 auto; min-width: 0; }
+  .incomplete-bar__cta {
+    flex-shrink: 0; color: var(--vibrant, #6B3FA0); font-weight: 700;
+    text-decoration: none; white-space: nowrap;
+  }
+  .incomplete-bar__cta:hover { text-decoration: underline; }
+  .incomplete-bar__close {
+    flex-shrink: 0; background: none; border: none; cursor: pointer;
+    color: #4a2e7a; opacity: 0.55; font-size: 1rem; line-height: 1; padding: 2px 4px;
+  }
+  .incomplete-bar__close:hover { opacity: 1; }
   .admin-bar__intro { color: var(--mist); white-space: nowrap; text-transform: none; letter-spacing: 0; font-weight: 400; font-size: var(--type-body-sm); }
   .admin-bar__select {
     flex: 1; min-width: 180px;
@@ -1883,6 +1904,13 @@
   <button onclick="adminClearTeacher()" id="admin-clear-btn" class="admin-bar__clear">✕ Clear</button>
 </div>
 
+<!-- ── PROFILE INCOMPLETE REMINDER (logged-in teacher missing bio/photo) ── -->
+<div id="profile-incomplete-bar" class="incomplete-bar">
+  <span class="incomplete-bar__text">Your teacher profile is incomplete — add your bio &amp; photo so it shows on the website.</span>
+  <a class="incomplete-bar__cta" href="../profile.html?complete=1">Finish profile →</a>
+  <button class="incomplete-bar__close" onclick="dismissIncompleteBar()" aria-label="Dismiss">✕</button>
+</div>
+
 <main id="main-content">
 <div class="container">
 
@@ -1892,19 +1920,19 @@
       <h3 class="card-title" id="lbl-choose-type">What are you submitting?</h3>
       <div class="type-grid">
 
-        <div class="type-card type-card-primary" onclick="window.location.href='weekly-v2.html'" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='weekly-v2.html';}">
+        <div class="type-card type-card-primary" onclick="window.location.href='weekly-classes.html'" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='weekly-classes.html';}">
           <span class="type-card-icon" aria-hidden="true">📅</span>
           <div class="type-card-title" data-lbl="type-weekly-title">Weekly Class</div>
           <div class="type-card-desc" data-lbl="type-weekly-desc">A recurring class every week throughout the semester — same day, same time.</div>
         </div>
 
-        <div class="type-card" onclick="window.location.href='workshop-v2.html'" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='workshop-v2.html';}">
+        <div class="type-card" onclick="window.location.href='workshops.html'" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='workshops.html';}">
           <span class="type-card-icon" aria-hidden="true">🎓</span>
           <div class="type-card-title" data-lbl="type-workshop-title">Workshop</div>
           <div class="type-card-desc" data-lbl="type-workshop-desc">A guest teacher or intensive — one session, a weekend, or a short series.</div>
         </div>
 
-        <div class="type-card" onclick="window.location.href='social-night-v2.html'" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='social-night-v2.html';}">
+        <div class="type-card" onclick="window.location.href='social-nights.html'" tabindex="0" role="button" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='social-nights.html';}">
           <span class="type-card-icon" aria-hidden="true">🎉</span>
           <div class="type-card-title" data-lbl="type-social-title">Social Night</div>
           <div class="type-card-desc" data-lbl="type-social-desc">A one-off dance evening, practice night, milonga, or party with optional workshops.</div>
@@ -4856,21 +4884,20 @@ async function wcSaveScheduleToProfile(style, levels, meta) {
 
     // Build payload — admin-bypass when acting-as, normal PIN flow otherwise
     let payload;
+    let sessToken = '';
+    try { sessToken = JSON.parse(localStorage.getItem('shoonya_session') || '{}').token || ''; } catch(e) {}
     if (isAdminActing) {
       payload = {
         action:        'updateAnyProfile',
-        admin_email:   loggedInProfile.email,
+        admin_token:   sessToken,
         target_email:  targetProfile.email || '',
         target_name:   targetProfile.name  || '',
         updates:       { associated_events: JSON.stringify(ae) },
       };
     } else {
-      let pin = '';
-      try { pin = JSON.parse(localStorage.getItem('shoonya_session') || '{}').pin || ''; } catch(e) {}
       payload = {
         action:  'updateProfile',
-        email:   targetProfile.email,
-        pin,
+        token:   sessToken,
         updates: { associated_events: JSON.stringify(ae) },
       };
     }
@@ -4913,16 +4940,15 @@ async function saveEventToProfile(type, eventData) {
     const isDupe = ae.own.some(ev => ev.title === eventData.title && ev.date === eventData.date);
     if (!isDupe) ae.own.push(eventData);
 
-    let pin = '';
-    try { pin = JSON.parse(localStorage.getItem('shoonya_session') || '{}').pin || ''; } catch(e) {}
+    let sessToken = '';
+    try { sessToken = JSON.parse(localStorage.getItem('shoonya_session') || '{}').token || ''; } catch(e) {}
 
     await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         action:  'updateProfile',
-        email:   loggedInProfile.email,
-        pin,
+        token:   sessToken,
         updates: { associated_events: JSON.stringify(ae) }
       })
     });
@@ -7534,12 +7560,12 @@ function wsRenderCoTeacherChips() {
 
 function wsNext(dest) {
   // 2026-05-24: kept consistent with the landing-page card routing decisions.
-  //   workshop  → workshop-v2.html       (card also routes here)
-  //   social    → social-night-v2.html   (card also routes here)
+  //   workshop  → workshops.html       (card also routes here)
+  //   social    → social-nights.html   (card also routes here)
   //   All three types now route to their v2 forms.
-  if (dest === 'workshop') { window.location.href = 'workshop-v2.html'; }
-  else if (dest === 'weekly') { window.location.href = 'weekly-v2.html'; }
-  else if (dest === 'social') { window.location.href = 'social-night-v2.html'; }
+  if (dest === 'workshop') { window.location.href = 'workshops.html'; }
+  else if (dest === 'weekly') { window.location.href = 'weekly-classes.html'; }
+  else if (dest === 'social') { window.location.href = 'social-nights.html'; }
   else showScreen('success');
 }
 
@@ -7733,9 +7759,29 @@ function saveRemembered(name, email) {
 // ─── TEACHER PROFILE CARD ────────────────────────────────────────────
 let loggedInProfile = null;
 
+// Thin nudge for teachers who skipped completing their profile. A profile is
+// "set up" once it has a bio AND a photo. Dismissible per session (reappears
+// next visit until completed). Hidden for admins (no public card).
+function maybeShowIncompleteBar(profile) {
+  const bar = document.getElementById('profile-incomplete-bar');
+  if (!bar || !profile) return;
+  const isAdmin    = profile.role === 'admin';
+  const hasBio     = profile.bio_short && String(profile.bio_short).trim();
+  const hasPhoto   = profile.photo_url && String(profile.photo_url).trim();
+  const dismissed  = sessionStorage.getItem('shoonya_incomplete_dismissed') === '1';
+  bar.classList.toggle('visible', !isAdmin && (!hasBio || !hasPhoto) && !dismissed);
+}
+
+function dismissIncompleteBar() {
+  sessionStorage.setItem('shoonya_incomplete_dismissed', '1');
+  const bar = document.getElementById('profile-incomplete-bar');
+  if (bar) bar.classList.remove('visible');
+}
+
 function showTeacherProfileCard(profile) {
   loggedInProfile = profile;
   updateHeaderProfileBtn();
+  maybeShowIncompleteBar(profile);
   const card = document.getElementById('teacher-profile-card');
   if (!card) return;
 
@@ -8433,11 +8479,9 @@ function navGoHome() {
 })();
 
 function navGoProfile() {
-  // If logged in, show name + link to profile page
+  // If logged in, go straight to the profile page (no confirm dialog)
   if (typeof loggedInProfile !== 'undefined' && loggedInProfile) {
-    if (confirm('Go to your Shoonya profile page?')) {
-      window.location.href = '../profile.html';
-    }
+    window.location.href = '../profile.html';
     return;
   }
   // Not logged in — open login modal
@@ -9595,8 +9639,8 @@ async function ssSubmitToShoonya() {
 
 function ssNext(dest) {
   // 2026-05-24: see wsNext above — same routing parity. Weekly → old inline
-  if (dest === 'workshop') { window.location.href = 'workshop-v2.html'; }
-  else if (dest === 'weekly') { window.location.href = 'weekly-v2.html'; }
+  if (dest === 'workshop') { window.location.href = 'workshops.html'; }
+  else if (dest === 'weekly') { window.location.href = 'weekly-classes.html'; }
   else showScreen('success');
 }
 

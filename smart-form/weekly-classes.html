@@ -388,11 +388,12 @@
     /* Stack grids */
     .row, .row3 { grid-template-columns: 1fr; gap: 12px; }
 
-    /* Slot row: day on one line, times on next, delete floats right */
-    .slot-row { grid-template-columns: 1fr auto; grid-template-rows: auto auto; gap: 8px; }
-    .slot-row .day-pick { grid-column: 1 / -1; }
-    .slot-row input[type="time"] { }
-    .slot-row .btn-remove { grid-row: 1; grid-column: 2; align-self: start; }
+    /* Slot row (mobile): day + delete inline on row 1, the two times on row 2.
+       (Was: day spanned full width, which orphaned the ✕ on its own empty line.) */
+    .slot-row { grid-template-columns: 1fr 1fr auto; grid-template-rows: auto auto; gap: 8px; }
+    .slot-row .day-pick { grid-column: 1 / 3; grid-row: 1; }
+    .slot-row .btn-remove { grid-row: 1; grid-column: 3; align-self: center; }
+    .slot-row input[type="time"] { grid-row: 2; }
 
     /* Level card */
     .level-card { padding: 16px; }
@@ -755,6 +756,7 @@
 
 <script src="../config.js"></script>
 <script src="../login-panel.js"></script>
+<script src="../test-mode.js"></script>
 <script>
 // Canonical style → allowed-levels map. Defaults are L1/L2/L3/Open.
 // Tap goes up to L6. Bhangra + ISC also offer Starter Series.
@@ -1336,9 +1338,12 @@ async function submitForm() {
     submitted_via: 'weekly-v2-form',
   };
 
+  // Test mode (?test=1): mark the payload so the backend previews instead of saving
+  if (window.shoonyaTestMode && window.shoonyaTestMode()) payload.testMode = true;
+
   const btn = document.getElementById('submit-btn');
   btn.disabled = true;
-  btn.textContent = 'Submitting…';
+  btn.textContent = payload.testMode ? 'Testing…' : 'Submitting…';
 
   const url = (typeof APPS_SCRIPT_URL !== 'undefined') ? APPS_SCRIPT_URL : '';
   if (!url) {
@@ -1360,6 +1365,14 @@ async function submitForm() {
     try { json = await res.json(); }
     catch (_) { throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + '). Your draft is saved.'); }
     if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ').'));
+    if (json.testMode && window.shoonyaShowTestPreview) {
+      okBox.innerHTML = window.shoonyaShowTestPreview(json);
+      okBox.style.display = '';
+      okBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      btn.disabled = false;
+      btn.textContent = 'Run another test';
+      return;
+    }
     okBox.innerHTML = `
       <strong>✓ Submitted successfully.</strong><br>
       Submitted ✓ — Shoonya will review within 48 hours and follow up by email.<br>
