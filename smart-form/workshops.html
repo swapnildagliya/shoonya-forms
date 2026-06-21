@@ -781,6 +781,7 @@
 <script src="../login-panel.js"></script>
 <script src="../test-mode.js"></script>
 <script src="../image-resize.js"></script>
+<script src="../form-kernel.js"></script>
 <script>
 // ───────── TEACHER ROSTER ─────────
 // Fetched on load; used to power the teacher-name autocomplete picker.
@@ -1358,73 +1359,301 @@ function _reviewSection(title, rows) {
   return `<div class="review-section"><div class="review-section-title">${_esc(title)}</div>${visible}</div>`;
 }
 
-function _buildReviewSummaryHtml() {
+// ═══════════════════════════════════════════════════════════════════════════
+// FORM-KERNEL MIGRATION (2026-06-21) — workshops form.
+// A single declarative WORKSHOP_SPEC the kernel reads from for collect / draft /
+// restore / review / payload, so those paths can no longer drift. Mirrors the
+// weekly migration. Design notes specific to workshops:
+//  • The form keeps its `state` object (chips drive it via bindChips on click).
+//    So chip COLLECT reads `state`, and chip RESTORE clicks the matching chip
+//    (_wsClickChip) which fires bindChips → updates `state` AND the .selected UI.
+//  • Numeric fields use getNum() (number-or-null) NOT the kernel's string `number`
+//    kind, because this form's payload sends real numbers / null (capacity:16,
+//    price_full:45, earlybird_price:null) — unlike the weekly form which sends
+//    numeric strings. capacity/min/age add `|| ''` in payloadValue (legacy parity).
+//  • Async photo reads (guest/host b64 + photos[]) stay OUT of the spec — the
+//    kernel's collect is synchronous. submitForm() reads them with await and
+//    merges them (+ action/type/submitted_via meta) as `extra` into buildPayload.
+//  • The historically-fragile SCHEDULE restore (date pattern → dates →
+//    updateSessionsPreview → toggles → per-session time/topic overrides →
+//    drop-in exclusions, which regressed twice before the 2026-06-21 rewrite) is
+//    kept ATOMIC inside the `sessions` field's draftCollect/draftRestore via
+//    _wsCollectScheduleDraft/_wsRestoreScheduleDraft (lifted verbatim). The
+//    couple-price / times-differ / single-session toggles travel in that same
+//    schedule bundle because their restore order matters relative to the
+//    sessions render.
+// ═══════════════════════════════════════════════════════════════════════════
+function _wsClickChip(cid, val) { document.querySelector(`#${cid} .chip[data-val="${val}"]`)?.click(); }
+
+// Sessions review string (lifted from the old _buildReviewSummaryHtml).
+function _wsFmtSessionsReview() {
   const sessions = collectSessions();
-  // 2026-05-24: only annotate "(no drop-in)" in the review summary when the
-  // drop-in toggle is ON. When the toggle is OFF, every session is trivially
-  // not-drop-in, so the annotation adds nothing but visual noise.
   const dropinEnabled = document.getElementById('f-single-session')?.checked;
-  const fmtSessions = sessions.length
+  return sessions.length
     ? sessions.map(s => fmtDateLabel(s.date) + ' · ' + s.start + '–' + s.end + (dropinEnabled && s.dropIn === false ? ' (no drop-in)' : '') + (s.topic ? ' — ' + s.topic : '')).join('\n')
     : '';
-  return [
-    _reviewSection('Who', [
-      _reviewRow('Submitting as', getVal('f-teacher-name'), null),
-      _reviewRow('Email', getVal('f-teacher-email'), null),
-    ]),
-    _reviewSection('Basics', [
-      _reviewRow('Title', getVal('f-title'), '#f-title'),
-      _reviewRow('Format', state.format || '', '#format-chips'),
-      _reviewRow('Style(s)', (state.styles || []).join(', '), '#style-chips'),
-      _reviewRow('Level(s)', (state.levels || []).join(', '), '#level-chips'),
-      _reviewRow('Language', (state.langs || []).join(' / ') || 'EN', '#lang-chips'),
-    ]),
-    _reviewSection('Teachers', [
-      getVal('f-co-teacher') ? _reviewRow('Co-teacher', getVal('f-co-teacher'), '#f-co-teacher') : '',
-      getVal('f-guest-teacher') ? _reviewRow('Guest teacher', getVal('f-guest-teacher'), '#f-guest-teacher') : '',
-      getVal('f-guest-web') ? _reviewRow('Guest web/IG', getVal('f-guest-web'), '#f-guest-web') : '',
-      getVal('f-guest-bio') ? _reviewRow('Guest bio', getVal('f-guest-bio'), '#f-guest-bio') : '',
-      getVal('f-video-link') ? _reviewRow('Video link', getVal('f-video-link'), '#f-video-link') : '',
-      getVal('f-host-bio') ? _reviewRow('Host bio', getVal('f-host-bio'), '#host-bio-field') : '',
-    ]),
-    _reviewSection('Schedule', [
-      _reviewRow('Date pattern', state.datePattern || '', '#pattern-' + state.datePattern),
-      _reviewRow('Sessions', fmtSessions, '#sessions-preview'),
-    ]),
-    _reviewSection('Pricing', [
-      _reviewRow('Full price', getVal('f-price-full') ? '€' + getVal('f-price-full') : '', '#f-price-full'),
-      getVal('f-price-full') ? _reviewRow('Member price', '€' + (Math.round(parseFloat(getVal('f-price-full')) * 0.9 * 100) / 100) + ' (auto)', null) : '',
-      dropinEnabled ? _reviewRow('Per-session price', getVal('f-price-per-person') ? '€' + getVal('f-price-per-person') : '', '#f-price-per-person') : '',
-      dropinEnabled && document.getElementById('f-couple-price')?.checked ? _reviewRow('Couple price', getVal('f-price-couple') ? '€' + getVal('f-price-couple') : '', '#f-price-couple') : '',
-      getVal('f-earlybird-price') ? _reviewRow('Early-bird price', '€' + getVal('f-earlybird-price') + (getVal('f-earlybird-deadline') ? ' until ' + getVal('f-earlybird-deadline') : ''), '#earlybird-block') : '',
-      getVal('f-pricing-notes') ? _reviewRow('Pricing notes', getVal('f-pricing-notes'), '#f-pricing-notes') : '',
-    ]),
-    _reviewSection('Logistics', [
-      state.studio ? _reviewRow('Preferred studio', state.studio, '#studio-chips') : '',
-      state.partner ? _reviewRow('Partner required?', state.partner, '#partner-chips') : '',
-      getNum('f-max') ? _reviewRow('Max students', getNum('f-max'), '#f-max') : '',
-      getNum('f-min') ? _reviewRow('Min participants', getNum('f-min'), '#f-min') : '',
-      // FIX E: add fields that are submitted but were missing from the review.
-      getNum('f-min-age') ? _reviewRow('Min age', getNum('f-min-age'), '#f-min-age') : '',
-      (function(){ const chip = document.querySelector('#min-cond-chips .chip.selected'); return chip ? _reviewRow('Cancel if under min', chip.dataset.val === 'true' ? 'Yes' : 'No', '#min-cond-chips') : ''; })(),
-    ]),
-    _reviewSection('Content', [
-      getVal('f-description') ? _reviewRow('Description', getVal('f-description'), '#f-description') : '',
-      getVal('f-prereq') ? _reviewRow('Prerequisites', getVal('f-prereq'), '#f-prereq') : '',
-      getVal('f-bring') ? _reviewRow('What to bring', getVal('f-bring'), '#f-bring') : '',
-      getVal('f-note') ? _reviewRow('Note to Shoonya', getVal('f-note'), '#f-note') : '',
-    ]),
-    // FIX E: show photo upload status (guest + host) so teacher can verify before submit.
-    (function(){
-      const guestName = getVal('f-guest-teacher');
-      const hasGuestPhoto = !!document.getElementById('f-guest-photo')?.files?.[0];
-      const hasHostPhoto  = !!document.getElementById('f-host-photo')?.files?.[0];
-      const parts = [];
-      if (guestName) parts.push('Guest (' + guestName + '): ' + (hasGuestPhoto ? '✓ photo uploaded' : '⚠ no photo'));
-      if (hasHostPhoto) parts.push('Host: ✓ photo uploaded');
-      return parts.length ? _reviewSection('Photos', [_reviewRow('', parts.join('\n'), null)]) : '';
-    })(),
-  ].filter(Boolean).join('');
+}
+
+// Photo-status review section (photos aren't spec fields — appended after the
+// spec-driven sections, exactly as the old review did).
+function _wsPhotosReviewSection() {
+  const guestName = getVal('f-guest-teacher');
+  const hasGuestPhoto = !!document.getElementById('f-guest-photo')?.files?.[0];
+  const hasHostPhoto  = !!document.getElementById('f-host-photo')?.files?.[0];
+  const parts = [];
+  if (guestName) parts.push('Guest (' + guestName + '): ' + (hasGuestPhoto ? '✓ photo uploaded' : '⚠ no photo'));
+  if (hasHostPhoto) parts.push('Host: ✓ photo uploaded');
+  return parts.length ? _reviewSection('Photos', [_reviewRow('', parts.join('\n'), null)]) : '';
+}
+
+// ── Schedule complex: draft snapshot of the raw inputs that REGENERATE sessions
+// (not the computed sessions array). Lifted from the proven wsCollectDraft. ──
+function _wsCollectScheduleDraft() {
+  const specificDates = [...document.querySelectorAll('#specific-dates-list [data-ws-specific-date]')].map(i => i.value).filter(Boolean);
+  const perSessionTimes = [...document.querySelectorAll('#per-session-times-list input[type="time"]')].map(inp => ({
+    idx: parseInt(inp.dataset.idx, 10), field: inp.dataset.field, value: inp.value || '',
+  })).filter(o => isFinite(o.idx) && o.value);
+  const perSessionTopics = [...document.querySelectorAll('#session-topics-list input[data-field="topic"]')].map(inp => ({
+    idx: parseInt(inp.dataset.idx, 10), topic: inp.value || '',
+  })).filter(o => isFinite(o.idx) && o.topic);
+  return {
+    datePattern: state.datePattern,
+    contStart: document.getElementById('f-cont-start')?.value || '',
+    contEnd:   document.getElementById('f-cont-end')?.value || '',
+    recDow:    document.getElementById('f-rec-dow')?.value || '',
+    recStart:  document.getElementById('f-rec-start')?.value || '',
+    recEnd:    document.getElementById('f-rec-end')?.value || '',
+    specificDates,
+    defaultStart: document.getElementById('f-default-start')?.value || '',
+    defaultEnd:   document.getElementById('f-default-end')?.value || '',
+    timesDiffer:   document.getElementById('f-times-differ')?.checked || false,
+    perSessionTimes,
+    perSessionTopics,
+    singleSession: document.getElementById('f-single-session')?.checked || false,
+    couplePrice:   document.getElementById('f-couple-price')?.checked || false,
+    // per-session drop-in EXCLUSIONS = the dates the teacher UNchecked (default all-checked)
+    dropinExclusions: [...document.querySelectorAll('#dropin-sessions-list input[type="checkbox"][data-session-date]')]
+      .filter(cb => !cb.checked).map(cb => cb.dataset.sessionDate),
+  };
+}
+
+// ── Schedule complex: rebuild the date UI + per-session overrides ATOMICALLY,
+// in the exact order the proven wsRestoreDraft used (dates → updateSessionsPreview
+// → toggles → time/topic overrides → drop-in exclusions). ──
+function _wsRestoreScheduleDraft(d) {
+  if (!d) return;
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  set('f-cont-start', d.contStart); set('f-cont-end', d.contEnd);
+  set('f-rec-dow', d.recDow); set('f-rec-start', d.recStart); set('f-rec-end', d.recEnd);
+  set('f-default-start', d.defaultStart); set('f-default-end', d.defaultEnd);
+  // date pattern tab
+  if (d.datePattern) {
+    document.querySelectorAll('.date-pattern-tab').forEach(t => { if (t.dataset.mode === d.datePattern) t.click(); });
+  }
+  // FIX A: drop seeded blank specific rows before restoring saved ones (avoid N+1 + stray blank).
+  if (d.datePattern === 'specific' && Array.isArray(d.specificDates) && d.specificDates.length) {
+    document.querySelectorAll('#specific-dates-list [data-ws-specific-date]').forEach(inp => {
+      if (!inp.value) inp.closest('.specific-date-row')?.remove();
+    });
+  }
+  (d.specificDates || []).forEach(dateVal => addSpecificDate(dateVal));
+
+  // THE renderer — populates state.sessions + per-session time/topic inputs + drop-in checkboxes.
+  updateSessionsPreview();
+
+  // Toggles (panels show/hide; inputs already rendered above).
+  const singleCb = document.getElementById('f-single-session');
+  if (singleCb && d.singleSession) { singleCb.checked = true; toggleSingleSession(singleCb); }
+  const coupleCb = document.getElementById('f-couple-price');
+  if (coupleCb && d.couplePrice) { coupleCb.checked = true; toggleCouplePrice(coupleCb); }
+  const timesDifferCb = document.getElementById('f-times-differ');
+  if (timesDifferCb && d.timesDiffer) { timesDifferCb.checked = true; toggleSessionTimes(timesDifferCb); }
+
+  // Per-session TIME overrides.
+  if (Array.isArray(d.perSessionTimes)) {
+    d.perSessionTimes.forEach(o => {
+      const inp = document.querySelector('#per-session-times-list input[data-idx="' + o.idx + '"][data-field="' + o.field + '"]');
+      if (inp) inp.value = o.value;
+    });
+  }
+  // Per-session TOPIC overrides.
+  if (Array.isArray(d.perSessionTopics)) {
+    d.perSessionTopics.forEach(o => {
+      const inp = document.querySelector('#session-topics-list input[data-idx="' + o.idx + '"][data-field="topic"]');
+      if (inp) inp.value = o.topic;
+    });
+  }
+  // Per-session DROP-IN exclusions (renderDropinSessions defaults all checked).
+  if (Array.isArray(d.dropinExclusions) && d.dropinExclusions.length) {
+    d.dropinExclusions.forEach(dateVal => {
+      const cb = document.querySelector('#dropin-sessions-list input[type="checkbox"][data-session-date="' + dateVal + '"]');
+      if (cb) cb.checked = false;
+    });
+  }
+}
+
+// `section` + `reviewMode` drive the review modal grouping (see _buildReviewSummaryHtml):
+//   reviewMode:'always' → row always rendered ("(not set)" placeholder if empty)
+//   reviewMode:'ifset'  → row omitted entirely when its review value is empty
+const WORKSHOP_SPEC = [
+  // ── Who (hidden identity; draft restore must NOT overwrite a live login value) ──
+  { key:'teacher_name', label:'Submitting as', dom:'f-teacher-name', kind:'text', jump:null, section:'Who', reviewMode:'always',
+    draftCollect: () => (FormKernel.byId('f-teacher-name')?.value || ''),
+    draftRestore: (v) => { const el = FormKernel.byId('f-teacher-name'); if (el && !el.value && v) { el.value = v; updateHostMediaBlock(); } } },
+  { key:'email', label:'Email', dom:'f-teacher-email', kind:'text', jump:null, section:'Who', reviewMode:'always',
+    draftCollect: () => (FormKernel.byId('f-teacher-email')?.value || ''),
+    draftRestore: (v) => { const el = FormKernel.byId('f-teacher-email'); if (el && !el.value && v) el.value = v; } },
+
+  // ── Basics ──
+  { key:'title', label:'Title', dom:'f-title', kind:'text', jump:'#f-title', section:'Basics', reviewMode:'always' },
+  // primary style (payload 'style') — derived from styles[0]; not in draft/review
+  { key:'style', payloadKey:'style', dom:'style-chips', kind:'custom', review:false, draft:false,
+    collect: () => state.styles[0] || '' },
+  { key:'styles', label:'Style(s)', dom:'style-chips', kind:'custom', jump:'#style-chips', section:'Basics', reviewMode:'always',
+    collect: () => [...state.styles],
+    restore: (v) => (v || []).forEach(x => _wsClickChip('style-chips', x)),
+    reviewValue: (v) => (v || []).join(', ') },
+  { key:'levels', label:'Level(s)', dom:'level-chips', kind:'custom', jump:'#level-chips', section:'Basics', reviewMode:'always',
+    collect: () => [...state.levels],
+    restore: (v) => (v || []).forEach(x => _wsClickChip('level-chips', x)),
+    reviewValue: (v) => (v || []).join(', ') },
+  // format → payload 'Format' (Capitalized); format_internal carries the raw value.
+  // Clicking the chip fires bindChips (updates state.format + updateSessionsPreview)
+  // and the chip listener (updateEarlybirdVisibility) — same as a user click.
+  { key:'format', label:'Format', dom:'format-chips', kind:'custom', jump:'#format-chips', section:'Basics', reviewMode:'always',
+    collect: () => state.format,
+    restore: (v) => { if (v) _wsClickChip('format-chips', v); },
+    reviewValue: (v) => v || '',
+    payloadValue: (v) => v ? (v.charAt(0).toUpperCase() + v.slice(1)) : '' },
+  { key:'format_internal', payloadKey:'format_internal', dom:'format-chips', kind:'custom', review:false, draft:false,
+    collect: () => state.format },
+  { key:'language', label:'Language', dom:'lang-chips', kind:'custom', jump:'#lang-chips', section:'Basics', reviewMode:'always',
+    collect: () => [...state.langs],
+    // clear the preset EN first, then re-apply saved langs (back-compat: old drafts saved a string)
+    draftRestore: (v) => { document.querySelectorAll('#lang-chips .chip.selected').forEach(c => c.classList.remove('selected')); state.langs = []; (Array.isArray(v) ? v : (v ? [v] : [])).forEach(x => _wsClickChip('lang-chips', x)); },
+    reviewValue: (v) => (v || []).join(' / ') || 'EN',
+    payloadValue: (v) => (v || []).join(' / ') },
+
+  // ── Teachers ──
+  { key:'co_teacher', label:'Co-teacher', dom:'f-co-teacher', kind:'text', jump:'#f-co-teacher', section:'Teachers', reviewMode:'ifset' },
+  { key:'guest_teacher', label:'Guest teacher', dom:'f-guest-teacher', kind:'text', jump:'#f-guest-teacher', section:'Teachers', reviewMode:'ifset',
+    draftRestore: (v) => { const el = FormKernel.byId('f-guest-teacher'); if (el && v) { el.value = v; document.getElementById('guest-bio-field').style.display = ''; document.getElementById('guest-photo-field').style.display = ''; } } },
+  { key:'guest_web', label:'Guest web/IG', dom:'f-guest-web', kind:'text', jump:'#f-guest-web', section:'Teachers', reviewMode:'ifset' },
+  { key:'guest_bio', label:'Guest bio', dom:'f-guest-bio', kind:'text', jump:'#f-guest-bio', section:'Teachers', reviewMode:'ifset' },
+  { key:'video_link', label:'Video link', dom:'f-video-link', kind:'text', jump:'#f-video-link', section:'Teachers', reviewMode:'ifset' },
+  { key:'host_bio', label:'Host bio', dom:'f-host-bio', kind:'text', jump:'#host-bio-field', section:'Teachers', reviewMode:'ifset' },
+  // teacher_known: global flag set by updateHostMediaBlock (roster match). Payload only.
+  { key:'teacher_known', payloadKey:'teacher_known', dom:'f-teacher-name', kind:'custom', review:false, draft:false,
+    collect: () => teacherKnown },
+
+  // ── Schedule (COMPLEX) ──
+  // collect → payload sessions array; draft snapshot is the raw schedule inputs
+  // (rebuilt atomically). date_pattern is a review-only sibling row.
+  { key:'sessions', label:'Sessions', dom:'sessions-preview', kind:'custom', jump:'#sessions-preview', section:'Schedule', reviewMode:'always',
+    collect: () => collectSessions().map(s => ({ date: s.date, start: s.start, end: s.end, topic: s.topic || '', dropIn: !!s.dropIn })),
+    reviewValue: () => _wsFmtSessionsReview(),
+    draftCollect: () => _wsCollectScheduleDraft(),
+    draftRestore: (v) => _wsRestoreScheduleDraft(v) },
+  { key:'date_pattern', label:'Date pattern', dom:'sessions-preview', kind:'custom', payload:false, draft:false, jump:null, section:'Schedule', reviewMode:'always',
+    collect: () => state.datePattern || '',
+    reviewValue: (v) => v || '' },
+
+  // ── Pricing ──
+  { key:'price_full', label:'Full price', dom:'f-price-full', kind:'custom', jump:'#f-price-full', section:'Pricing', reviewMode:'ifset',
+    collect: () => getNum('f-price-full'),
+    restore: (v) => { const el = FormKernel.byId('f-price-full'); if (el && v != null && v !== '') { el.value = v; updateMemberPrice(); } },
+    reviewValue: (v) => v ? ('€' + v) : '' },
+  // auto member price (10% off). Payload + review only (derives from price_full).
+  { key:'price_member', payloadKey:'price_member', dom:'f-price-full', kind:'custom', draft:false, jump:null, label:'Member price', section:'Pricing', reviewMode:'ifset',
+    collect: () => { const f = getNum('f-price-full'); return f ? Math.round(f * 0.90 * 100) / 100 : null; },
+    reviewValue: (v) => v != null ? ('€' + v + ' (auto)') : '' },
+  // per-session + couple prices only SHOWN in review when the single-session
+  // (drop-in) toggle / couple toggle are on — but always SENT (legacy parity).
+  { key:'price_per_person', label:'Per-session price', dom:'f-price-per-person', kind:'custom', jump:'#f-price-per-person', section:'Pricing', reviewMode:'ifset',
+    collect: () => getNum('f-price-per-person'),
+    restore: (v) => { const el = FormKernel.byId('f-price-per-person'); if (el && v != null && v !== '') el.value = v; },
+    reviewValue: () => (document.getElementById('f-single-session')?.checked && getVal('f-price-per-person')) ? ('€' + getVal('f-price-per-person')) : '' },
+  { key:'price_couple', label:'Couple price', dom:'f-price-couple', kind:'custom', jump:'#f-price-couple', section:'Pricing', reviewMode:'ifset',
+    collect: () => getNum('f-price-couple'),
+    restore: (v) => { const el = FormKernel.byId('f-price-couple'); if (el && v != null && v !== '') el.value = v; },
+    reviewValue: () => (document.getElementById('f-single-session')?.checked && document.getElementById('f-couple-price')?.checked && getVal('f-price-couple')) ? ('€' + getVal('f-price-couple')) : '' },
+  { key:'earlybird_price', label:'Early-bird price', dom:'f-earlybird-price', kind:'custom', jump:'#earlybird-block', section:'Pricing', reviewMode:'ifset',
+    collect: () => getNum('f-earlybird-price'),
+    restore: (v) => { const el = FormKernel.byId('f-earlybird-price'); if (el && v != null && v !== '') el.value = v; },
+    reviewValue: () => getVal('f-earlybird-price') ? ('€' + getVal('f-earlybird-price') + (getVal('f-earlybird-deadline') ? ' until ' + getVal('f-earlybird-deadline') : '')) : '' },
+  // earlybird_deadline: sent in payload, shown as part of the early-bird row above (review:false).
+  { key:'earlybird_deadline', payloadKey:'earlybird_deadline', label:'Early-bird deadline', dom:'f-earlybird-deadline', kind:'text', review:false, jump:'#earlybird-block' },
+  { key:'pricing_notes', label:'Pricing notes', dom:'f-pricing-notes', kind:'text', jump:'#f-pricing-notes', section:'Pricing', reviewMode:'ifset' },
+
+  // ── Logistics ──
+  // preferred_studio defaults to 'No preference' and the old review showed it even
+  // then — keep that parity (reviewValue non-empty → always rendered).
+  { key:'preferred_studio', label:'Preferred studio', dom:'studio-chips', kind:'custom', jump:'#studio-chips', section:'Logistics', reviewMode:'ifset',
+    collect: () => state.studio,
+    restore: (v) => { if (v) _wsClickChip('studio-chips', v); },
+    reviewValue: (v) => v || '' },
+  // partner_required is a boolean; old review showed the raw boolean only when truthy.
+  { key:'partner_required', label:'Partner required?', dom:'partner-chips', kind:'custom', jump:'#partner-chips', section:'Logistics', reviewMode:'ifset',
+    collect: () => state.partner,
+    draftCollect: () => state.partner,
+    draftRestore: (v) => { if (v !== undefined) _wsClickChip('partner-chips', String(v)); },
+    reviewValue: (v) => v ? String(v) : '',
+    payloadValue: (v) => v },
+  { key:'capacity', label:'Max students', dom:'f-max', kind:'custom', jump:'#f-max', section:'Logistics', reviewMode:'ifset',
+    collect: () => getNum('f-max'),
+    restore: (v) => { const el = FormKernel.byId('f-max'); if (el && v != null && v !== '') el.value = v; },
+    reviewValue: () => getNum('f-max') ? getNum('f-max') : '',
+    payloadValue: (v) => v || '' },
+  { key:'min_participants', label:'Min participants', dom:'f-min', kind:'custom', jump:'#f-min', section:'Logistics', reviewMode:'ifset',
+    collect: () => getNum('f-min'),
+    restore: (v) => { const el = FormKernel.byId('f-min'); if (el && v != null && v !== '') { el.value = v; toggleMinConditional(); } },
+    reviewValue: () => getNum('f-min') ? getNum('f-min') : '',
+    payloadValue: (v) => v || '' },
+  { key:'age_min', label:'Min age', dom:'f-min-age', kind:'custom', jump:'#f-min-age', section:'Logistics', reviewMode:'ifset',
+    collect: () => getNum('f-min-age'),
+    restore: (v) => { const el = FormKernel.byId('f-min-age'); if (el && v != null && v !== '') el.value = v; },
+    reviewValue: () => getNum('f-min-age') ? getNum('f-min-age') : '',
+    payloadValue: (v) => v || '' },
+  { key:'min_cancel_if_under', label:'Cancel if under min', dom:'min-cond-chips', kind:'custom', jump:'#min-cond-chips', section:'Logistics', reviewMode:'ifset',
+    collect: () => (document.querySelector('#min-cond-chips .chip.selected')?.dataset.val === 'true') || false,
+    // default 'Run regardless' chip is preselected on load; only restore the 'true' state.
+    draftRestore: (v) => { if (v === true) { const chip = document.querySelector('#min-cond-chips .chip[data-val="true"]'); if (chip) selectMinCond(chip); } },
+    reviewValue: () => { const chip = document.querySelector('#min-cond-chips .chip.selected'); return chip ? (chip.dataset.val === 'true' ? 'Yes' : 'No') : ''; },
+    payloadValue: (v) => v },
+
+  // ── Content ──
+  { key:'approved_description', label:'Description', dom:'f-description', kind:'text', jump:'#f-description', section:'Content', reviewMode:'ifset' },
+  { key:'prerequisites', label:'Prerequisites', dom:'f-prereq', kind:'text', jump:'#f-prereq', section:'Content', reviewMode:'ifset' },
+  { key:'what_to_bring', label:'What to bring', dom:'f-bring', kind:'text', jump:'#f-bring', section:'Content', reviewMode:'ifset' },
+  { key:'note_shoonya', label:'Note to Shoonya', dom:'f-note', kind:'text', jump:'#f-note', section:'Content', reviewMode:'ifset' },
+];
+
+// 2026-06-21 form-kernel migration: review rows now come from FormKernel.buildReview
+// (same WORKSHOP_SPEC that builds the payload), grouped by each field's `section`.
+// Photo status (not a spec field) is appended after, exactly as the old review did.
+const _WS_REVIEW_SECTION_ORDER = ['Who', 'Basics', 'Teachers', 'Schedule', 'Pricing', 'Logistics', 'Content'];
+function _buildReviewSummaryHtml() {
+  const rows = FormKernel.buildReview(WORKSHOP_SPEC);
+  const fieldByKey = {};
+  WORKSHOP_SPEC.forEach(f => { fieldByKey[f.key] = f; });
+  const grouped = {};
+  rows.forEach(r => {
+    const f = fieldByKey[r.key];
+    const section = f.section;
+    if (!section) return;
+    (grouped[section] = grouped[section] || []).push({ row: r, mode: f.reviewMode || 'ifset' });
+  });
+  let html = _WS_REVIEW_SECTION_ORDER.map(section => {
+    const entries = grouped[section] || [];
+    const inner = entries.map(({ row, mode }) => {
+      const empty = row.value === '' || row.value == null;
+      if (mode === 'ifset' && empty) return '';
+      return _reviewRow(row.label, row.value, row.jump);
+    });
+    return _reviewSection(section, inner);
+  }).filter(Boolean).join('');
+  html += _wsPhotosReviewSection();
+  return html;
 }
 
 async function submitForm() {
@@ -1444,81 +1673,37 @@ async function submitForm() {
   const sessions = collectSessions();
   const isSeries = state.format === 'series';
 
-  const payload = {
+  // 2026-06-21 form-kernel migration: the payload is now built declaratively from
+  // WORKSHOP_SPEC (single source of truth for collect/draft/review/payload). The
+  // async photo group + routing meta are merged as `extra` — they can't live in
+  // the spec because (a) the kernel's collect is synchronous and (b) photos[]
+  // composes other fields. The legacy flat photo fields + structured photos[]
+  // here reproduce the EXACT shape the old inline payload sent.
+  const guestPhotoB64 = await _fileToB64(document.getElementById('f-guest-photo'));
+  const hostPhotoB64  = await _fileToB64(document.getElementById('f-host-photo'));
+  const guestPhotoName = document.getElementById('f-guest-photo')?.files?.[0]?.name || '';
+  const hostPhotoName  = document.getElementById('f-host-photo')?.files?.[0]?.name || '';
+  const photos = [];
+  if (guestPhotoB64) {
+    photos.push({ role: 'guest_teacher', label: getVal('f-guest-teacher') || 'Guest teacher', b64: guestPhotoB64, filename: guestPhotoName });
+  }
+  if (hostPhotoB64) {
+    photos.push({ role: 'host_teacher', label: getVal('f-teacher-name') || 'Host teacher', b64: hostPhotoB64, filename: hostPhotoName });
+  }
+
+  const payload = FormKernel.buildPayload(WORKSHOP_SPEC, {
+    // routing / meta (type is dynamic: series vs workshop)
     action: 'generateOutputPackage',
     type: isSeries ? 'series' : 'workshop',
-    title: getVal('f-title'),
-    style: state.styles[0] || '',           // primary style (backend compatibility)
-    styles: state.styles,                   // full array (multi-style)
-    levels: state.levels,
-    sessions: sessions.map(s => ({
-      date: s.date,
-      start: s.start,
-      end: s.end,
-      topic: s.topic || '',
-      dropIn: !!s.dropIn,   // 2026-05-24: per-session drop-in eligibility flag (see collectSessions)
-    })),
-    format: state.format.charAt(0).toUpperCase() + state.format.slice(1),
-    format_internal: state.format,
-    teacher_name: getVal('f-teacher-name'),
-    email: getVal('f-teacher-email'),
-    approved_description: getVal('f-description'),
-    prerequisites: getVal('f-prereq'),
-    preferred_studio: state.studio,
-    guest_teacher: getVal('f-guest-teacher'),
-    guest_web: getVal('f-guest-web'),
-    guest_bio: getVal('f-guest-bio'),
-    // 2026-05-24 photo wire-up: legacy flat field kept; structured `photos[]`
-    // is built below. Backend renames saved file to "<guest teacher name>.jpg".
-    guest_photo_name: document.getElementById('f-guest-photo')?.files?.[0]?.name || '',
-    guest_photo_b64:  await _fileToB64(document.getElementById('f-guest-photo')),
-    guest_photo_label: getVal('f-guest-teacher'),   // backend uses this for renaming when the flat-field path is taken
-    co_teacher: getVal('f-co-teacher'),
-    language: (state.langs || []).join(' / '),
-    what_to_bring: getVal('f-bring'),
-    note_shoonya: getVal('f-note'),
-    partner_required: state.partner,
-    age_min: getNum('f-min-age') || '',
-    capacity: getNum('f-max') || '',
-    min_participants: getNum('f-min') || '',
-    min_cancel_if_under: (document.querySelector('#min-cond-chips .chip.selected')?.dataset.val === 'true') || false,
-    price_full: getNum('f-price-full'),
-    price_member: (function(){ const f = getNum('f-price-full'); return f ? Math.round(f * 0.90 * 100) / 100 : null; })(),  // auto: 10% off full
-    price_per_person: getNum('f-price-per-person'),
-    price_couple: getNum('f-price-couple'),
-    pricing_notes: getVal('f-pricing-notes'),
-    earlybird_price: getNum('f-earlybird-price'),
-    earlybird_deadline: getVal('f-earlybird-deadline'),
-    video_link: getVal('f-video-link'),
-    teacher_known: teacherKnown,
-    host_bio: getVal('f-host-bio'),
-    // host photo name + b64 wired below (async, like guest photo)
-    host_photo_name: document.getElementById('f-host-photo')?.files?.[0]?.name || '',
-    host_photo_b64:  await _fileToB64(document.getElementById('f-host-photo')),
     submitted_via: 'workshop-v2-form',
-  };
-
-  // 2026-05-24 photo wire-up: also send structured `photos[]` so backend can
-  // rename + return direct CDN URL. Workshop only has one photo slot (guest
-  // teacher), so the array has 0 or 1 entries. Legacy flat fields above are
-  // kept for back-compat.
-  payload.photos = [];
-  if (payload.guest_photo_b64) {
-    payload.photos.push({
-      role: 'guest_teacher',
-      label: getVal('f-guest-teacher') || 'Guest teacher',
-      b64: payload.guest_photo_b64,
-      filename: payload.guest_photo_name || '',
-    });
-  }
-  if (payload.host_photo_b64) {
-    payload.photos.push({
-      role: 'host_teacher',
-      label: getVal('f-teacher-name') || 'Host teacher',
-      b64: payload.host_photo_b64,
-      filename: payload.host_photo_name || '',
-    });
-  }
+    // photo group (async)
+    guest_photo_name: guestPhotoName,
+    guest_photo_b64:  guestPhotoB64,
+    guest_photo_label: getVal('f-guest-teacher'),   // backend renames the saved file using this
+    host_photo_name: hostPhotoName,
+    host_photo_b64:  hostPhotoB64,
+    photos: photos,
+  });
 
   // Test mode (?test=1): mark the payload so the backend previews instead of saving
   if (window.shoonyaTestMode && window.shoonyaTestMode()) payload.testMode = true;
@@ -1579,86 +1764,22 @@ async function submitForm() {
 }
 
 // ───────── AUTOSAVE ─────────
-const WS_DRAFT_KEY = 'shoonya_workshop_draft_v1';
+// 2026-06-21 form-kernel migration: the draft schema is now keyed by the
+// WORKSHOP_SPEC keys (not the legacy ad-hoc keys), so collect/draft/restore can't
+// drift. Key bumped v1→v2 — a stale v1 draft has incompatible keys, so the new
+// key simply doesn't find it (clean ignore). The complex SCHEDULE field carries
+// draftCollect/draftRestore in the spec (_ws*ScheduleDraft) to keep its exact
+// snapshot shape + atomic rebuild order.
+const WS_DRAFT_KEY = 'shoonya_workshop_draft_v2';
 let _wsDraftTimer = null;
-
-function wsCollectDraft() {
-  const grab1 = id => document.getElementById(id)?.querySelector?.('.chip.selected')?.dataset?.val || '';
-  const grabN = id => [...(document.getElementById(id)?.querySelectorAll('.chip.selected') || [])].map(c => c.dataset.val);
-  const specificDates = [...document.querySelectorAll('#specific-dates-list [data-ws-specific-date]')].map(i => i.value).filter(Boolean);
-  // 2026-05-24 audit S10: persist per-session time overrides, the times-differ
-  // toggle, the couple-price toggle, the min-cancel chip, and the single-session
-  // (drop-in) toggle. Restore was silently losing these.
-  const perSessionTimes = [...document.querySelectorAll('#per-session-times-list input[type="time"]')].map(inp => ({
-    idx: parseInt(inp.dataset.idx, 10),
-    field: inp.dataset.field,
-    value: inp.value || '',
-  })).filter(o => isFinite(o.idx) && o.value);
-  // 2026-06-21: also persist per-session topic text — restore was dropping it.
-  const perSessionTopics = [...document.querySelectorAll('#session-topics-list input[data-field="topic"]')].map(inp => ({
-    idx: parseInt(inp.dataset.idx, 10),
-    topic: inp.value || '',
-  })).filter(o => isFinite(o.idx) && o.topic);
-  return {
-    v: 1, savedAt: new Date().toISOString(),
-    format: grab1('format-chips'),
-    styles: grabN('style-chips'),
-    levels: grabN('level-chips'),
-    lang: grabN('lang-chips'),
-    studio: grab1('studio-chips'),
-    partner: grab1('partner-chips'),
-    coTeacher: document.getElementById('f-co-teacher')?.value || '',
-    guestTeacher: document.getElementById('f-guest-teacher')?.value || '',
-    guestWeb: document.getElementById('f-guest-web')?.value || '',
-    guestBio: document.getElementById('f-guest-bio')?.value || '',
-    datePattern: state.datePattern,
-    contStart: document.getElementById('f-cont-start')?.value || '',
-    contEnd: document.getElementById('f-cont-end')?.value || '',
-    recDow: document.getElementById('f-rec-dow')?.value || '',
-    recStart: document.getElementById('f-rec-start')?.value || '',
-    recEnd: document.getElementById('f-rec-end')?.value || '',
-    specificDates,
-    defaultStart: document.getElementById('f-default-start')?.value || '',
-    defaultEnd: document.getElementById('f-default-end')?.value || '',
-    timesDiffer: document.getElementById('f-times-differ')?.checked || false,
-    perSessionTimes,
-    perSessionTopics,
-    singleSession: document.getElementById('f-single-session')?.checked || false,
-    couplePrice: document.getElementById('f-couple-price')?.checked || false,
-    minCancelIfUnder: (document.querySelector('#min-cond-chips .chip.selected')?.dataset.val === 'true') || false,
-    priceFull: document.getElementById('f-price-full')?.value || '',
-    pricePerPerson: document.getElementById('f-price-per-person')?.value || '',
-    priceCouple: document.getElementById('f-price-couple')?.value || '',
-    pricingNotes: document.getElementById('f-pricing-notes')?.value || '',
-    earlybirdPrice: document.getElementById('f-earlybird-price')?.value || '',
-    earlybirdDeadline: document.getElementById('f-earlybird-deadline')?.value || '',
-    videoLink: document.getElementById('f-video-link')?.value || '',
-    hostBio: document.getElementById('f-host-bio')?.value || '',
-    description: document.getElementById('f-description')?.value || '',
-    prereq: document.getElementById('f-prereq')?.value || '',
-    whatToBring: document.getElementById('f-bring')?.value || '',
-    maxStudents: document.getElementById('f-max')?.value || '',
-    minPart: document.getElementById('f-min')?.value || '',
-    minAge: document.getElementById('f-min-age')?.value || '',
-    note: document.getElementById('f-note')?.value || '',
-    title: getVal('f-title'),
-    teacherName: document.getElementById('f-teacher-name')?.value || '',
-    teacherEmail: document.getElementById('f-teacher-email')?.value || '',
-    // per-session drop-in EXCLUSIONS = the session dates the teacher UNchecked
-    // (default is all-checked; we persist the exceptions so restore matches submit)
-    dropinExclusions: [...document.querySelectorAll('#dropin-sessions-list input[type="checkbox"][data-session-date]')]
-      .filter(cb => !cb.checked).map(cb => cb.dataset.sessionDate),
-  };
-}
 
 function wsScheduleSave() {
   clearTimeout(_wsDraftTimer);
   _wsDraftTimer = setTimeout(() => {
     try {
-      const d = wsCollectDraft();
-      localStorage.setItem(WS_DRAFT_KEY, JSON.stringify(d));
+      const d = FormKernel.saveDraft(WORKSHOP_SPEC, WS_DRAFT_KEY);
       showWsDraftBanner(d.savedAt);
-    } catch(e) {}
+    } catch(e) { /* localStorage blocked (private mode etc) — fail silently */ }
   }, 800);
 }
 
@@ -1675,114 +1796,25 @@ function clearWsDraftAndReload() {
   window.location.reload();
 }
 
+// 2026-06-21 form-kernel migration: restore now iterates WORKSHOP_SPEC (same source
+// as collect/payload), so a restored draft can't drift from what's submitted. The
+// spec field order is restore-safe: chips (format/styles/levels/lang/studio/partner)
+// rebuild `state` before the sessions field's atomic schedule rebuild runs; the
+// early-bird/host-media side-effects fire from the format-chip + teacher-name
+// restores. The schedule complex (dates → updateSessionsPreview → toggles →
+// per-session overrides → drop-in exclusions) is rebuilt atomically inside the
+// `sessions` field's draftRestore (_wsRestoreScheduleDraft).
 function wsRestoreDraft(d) {
   if (!d || d.v !== 1) return;
-  // chips
-  const clickVal = (cid, val) => document.querySelector(`#${cid} .chip[data-val="${val}"]`)?.click();
-  if (d.format) clickVal('format-chips', d.format);
-  (d.styles || []).forEach(v => clickVal('style-chips', v));
-  (d.levels || []).forEach(v => clickVal('level-chips', v));
-  // language (multi) — clear the default EN first, then apply saved (back-compat: old drafts saved a single string)
-  document.querySelectorAll('#lang-chips .chip.selected').forEach(c => c.classList.remove('selected'));
-  state.langs = [];
-  (Array.isArray(d.lang) ? d.lang : (d.lang ? [d.lang] : [])).forEach(v => clickVal('lang-chips', v));
-  if (d.studio) clickVal('studio-chips', d.studio);
-  if (d.partner !== undefined) clickVal('partner-chips', String(d.partner));
-  // text
-  const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
-  if (d.title) set('f-title', d.title);
-  set('f-teacher-name', d.teacherName); set('f-teacher-email', d.teacherEmail);
-  set('f-co-teacher', d.coTeacher); set('f-guest-teacher', d.guestTeacher);
-  set('f-guest-web', d.guestWeb); set('f-guest-bio', d.guestBio);
-  set('f-cont-start', d.contStart); set('f-cont-end', d.contEnd);
-  set('f-rec-dow', d.recDow); set('f-rec-start', d.recStart); set('f-rec-end', d.recEnd);
-  set('f-default-start', d.defaultStart);
-  set('f-default-end', d.defaultEnd);   // 2026-05-24 audit S10
-  set('f-price-full', d.priceFull); if (d.priceFull) updateMemberPrice();
-  set('f-price-per-person', d.pricePerPerson); set('f-price-couple', d.priceCouple);
-  set('f-pricing-notes', d.pricingNotes);
-  set('f-earlybird-price', d.earlybirdPrice);
-  if (d.earlybirdDeadline) { set('f-earlybird-deadline', d.earlybirdDeadline); }
-  set('f-video-link', d.videoLink);
-  set('f-host-bio', d.hostBio);
-  set('f-description', d.description); set('f-prereq', d.prereq);
-  set('f-bring', d.whatToBring); set('f-max', d.maxStudents); set('f-min', d.minPart);
-  set('f-min-age', d.minAge);
-  set('f-note', d.note);
-  // guest fields toggle
-  if (d.guestTeacher) {
-    document.getElementById('guest-bio-field').style.display = '';
-    document.getElementById('guest-photo-field').style.display = '';
+  try {
+    FormKernel.restoreDraft(WORKSHOP_SPEC, d);
+    // early-bird block visibility is normally toggled by the format-chip listener's
+    // setTimeout; call it directly so it's settled synchronously on restore too.
+    updateEarlybirdVisibility();
+    showWsDraftBanner(d.savedAt);
+  } catch(e) {
+    console.warn('Workshop draft restore failed:', e);
   }
-  // early-bird block — re-evaluate now that format chip has been restored
-  updateEarlybirdVisibility();
-  // host-media block — re-evaluate based on teacher name (roster may not be loaded yet,
-  // so this is best-effort on restore; the input listener will re-run when roster arrives)
-  updateHostMediaBlock();
-  // specific dates
-  if (d.datePattern) {
-    document.querySelectorAll('.date-pattern-tab').forEach(t => {
-      if (t.dataset.mode === d.datePattern) t.click();
-    });
-  }
-  // FIX A: if we are about to restore specific dates, first remove ANY seeded
-  // blank rows so they don't linger alongside the restored ones. The page seeds
-  // one empty row on load; if we then addSpecificDate() for each saved date we
-  // end up with N+1 rows and a stray blank that corrupts collectSessions().
-  if (d.datePattern === 'specific' && Array.isArray(d.specificDates) && d.specificDates.length) {
-    document.querySelectorAll('#specific-dates-list [data-ws-specific-date]').forEach(inp => {
-      if (!inp.value) inp.closest('.specific-date-row')?.remove();
-    });
-  }
-  (d.specificDates || []).forEach(dateVal => {
-    addSpecificDate(dateVal);
-  });
-
-  // CRITICAL (2026-06-21 rewrite): explicitly regenerate the session preview.
-  // updateSessionsPreview() is THE renderer — it populates state.sessions and
-  // creates the per-session time inputs (#per-session-times-list), topic inputs
-  // (#session-topics-list), and per-session drop-in checkboxes (#dropin-sessions-list).
-  // The toggles below only SHOW/HIDE their panels; they do NOT create these inputs.
-  // (Two earlier restore attempts wrongly relied on the toggles to render, so the
-  // override values had nothing to write to and submit fell back to defaults.)
-  updateSessionsPreview();
-
-  // Restore toggles + min-cancel chip (panels show/hide; inputs already rendered above).
-  const singleCb = document.getElementById('f-single-session');
-  if (singleCb && d.singleSession) { singleCb.checked = true; toggleSingleSession(singleCb); }
-  const coupleCb = document.getElementById('f-couple-price');
-  if (coupleCb && d.couplePrice) { coupleCb.checked = true; toggleCouplePrice(coupleCb); }
-  const timesDifferCb = document.getElementById('f-times-differ');
-  if (timesDifferCb && d.timesDiffer) { timesDifferCb.checked = true; toggleSessionTimes(timesDifferCb); }
-  if (d.minPart) { toggleMinConditional(); }
-  if (d.minCancelIfUnder === true) {
-    const chip = document.querySelector('#min-cond-chips .chip[data-val="true"]');
-    if (chip) selectMinCond(chip);
-  }
-
-  // Apply per-session TIME overrides (inputs now exist after updateSessionsPreview).
-  if (Array.isArray(d.perSessionTimes)) {
-    d.perSessionTimes.forEach(o => {
-      const inp = document.querySelector('#per-session-times-list input[data-idx="' + o.idx + '"][data-field="' + o.field + '"]');
-      if (inp) inp.value = o.value;
-    });
-  }
-  // Apply per-session TOPIC overrides.
-  if (Array.isArray(d.perSessionTopics)) {
-    d.perSessionTopics.forEach(o => {
-      const inp = document.querySelector('#session-topics-list input[data-idx="' + o.idx + '"][data-field="topic"]');
-      if (inp) inp.value = o.topic;
-    });
-  }
-  // Apply per-session DROP-IN exclusions: uncheck the dates the teacher had unchecked
-  // (renderDropinSessions defaults all to checked; we re-apply the saved exceptions).
-  if (Array.isArray(d.dropinExclusions) && d.dropinExclusions.length) {
-    d.dropinExclusions.forEach(dateVal => {
-      const cb = document.querySelector('#dropin-sessions-list input[type="checkbox"][data-session-date="' + dateVal + '"]');
-      if (cb) cb.checked = false;
-    });
-  }
-  showWsDraftBanner(d.savedAt);
 }
 
 // Init: restore draft on load
