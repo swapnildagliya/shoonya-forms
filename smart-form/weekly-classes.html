@@ -758,6 +758,7 @@
 </div>
 
 <script src="../config.js"></script>
+<script src="../form-kernel.js"></script>
 <script src="../login-panel.js"></script>
 <script src="../test-mode.js"></script>
 <script>
@@ -1166,6 +1167,8 @@ function collectLevels() {
     });
     const desc = card.querySelector('textarea')?.value.trim() || '';
     if (slots.length > 0) {
+      // display_label is '' for ALL levels (built-in AND custom) — this matches the
+      // pre-migration payload exactly; `level` already carries the custom name. (Not a bug.)
       levels.push({ level: levelName, display_label: '', slots, description: desc });
     }
   });
@@ -1257,45 +1260,293 @@ function _reviewSection(title, rows) {
   return `<div class="review-section"><div class="review-section-title">${_esc(title)}</div>${visible}</div>`;
 }
 
+// 2026-06-21 form-kernel migration: review rows now come from FormKernel.buildReview
+// (same WEEKLY_SPEC that builds the payload), so the review can't drift from what's
+// sent. Rows are grouped by each field's `section`; `reviewMode:'always'` rows always
+// render ("(not set)" if empty), `reviewMode:'ifset'` rows are omitted when empty.
+const _REVIEW_SECTION_ORDER = ['Who', 'Basics', 'Levels & schedule', 'Details'];
 function _buildReviewSummaryHtml(ctx) {
-  const style = ctx.style || '';
-  const levels = ctx.levels || [];
-  const semester = document.querySelector('#semester-chips .chip.selected')?.textContent.trim() || '';
-  const lang = document.querySelector('#lang-chips .chip.selected')?.textContent.trim() || '';
-  const coTeachers = (document.getElementById('coteacher-freetext')?.value || '').trim();
-  const levelLines = levels.map(l => {
-    const slots = (l.slots || []).map(s => s.day + ' ' + s.start + '–' + s.end).join(', ');
-    return l.level + (l.description ? ' — ' + l.description.slice(0, 80) + (l.description.length > 80 ? '…' : '') : '') + (slots ? '\n  ' + slots : '');
-  }).join('\n\n');
-
-  return [
-    _reviewSection('Who', [
-      _reviewRow('Submitting as', document.getElementById('f-teacher-name')?.value || '', null),
-      _reviewRow('Email', document.getElementById('f-teacher-email')?.value || '', null),
-    ]),
-    _reviewSection('Basics', [
-      _reviewRow('Dance style', style, '#style-chips'),
-      _reviewRow('Semester', semester, '#semester-chips'),
-      _reviewRow('Teaching language', lang, '#lang-chips'),
-      coTeachers ? _reviewRow('Co-teacher(s)', coTeachers, '#coteacher-freetext') : '',
-    ]),
-    _reviewSection('Levels & schedule', [
-      _reviewRow('Levels', levelLines || '(none)', '#level-cards'),
-    ]),
-    // FIX E: include all submitted fields so review == what's sent.
-    _reviewSection('Details', [
-      document.getElementById('f-description')?.value ? _reviewRow('Description', document.getElementById('f-description').value, '#f-description') : '',
-      document.getElementById('f-prereq')?.value ? _reviewRow('Prerequisites', document.getElementById('f-prereq').value, '#f-prereq') : '',
-      document.getElementById('f-bring')?.value ? _reviewRow('What to bring', document.getElementById('f-bring').value, '#f-bring') : '',
-      document.getElementById('f-max-students')?.value ? _reviewRow('Max students', document.getElementById('f-max-students').value, '#f-max-students') : '',
-      document.querySelector('#min-age-chips .chip.selected')?.textContent.trim() ? _reviewRow('Min age', document.querySelector('#min-age-chips .chip.selected').textContent.trim(), '#min-age-chips') : '',
-      document.getElementById('website-note-input')?.value ? _reviewRow('Website note', document.getElementById('website-note-input').value, '#website-note-input') : '',
-      document.getElementById('dropin-cb')?.checked ? _reviewRow('Drop-in', 'Yes' + (document.getElementById('f-dropin-price')?.value ? ' — €' + document.getElementById('f-dropin-price').value : ''), '#dropin-cb') : '',
-      (function(){ var labels = [...document.querySelectorAll('#open-house-chips .chip.selected')].map(c => c.textContent.trim()); return labels.length ? _reviewRow('Open House availability', labels.join(', '), '#open-house-chips') : ''; })(),
-      document.getElementById('f-special-notes')?.value ? _reviewRow('Special notes', document.getElementById('f-special-notes').value, '#f-special-notes') : '',
-    ]),
-  ].filter(Boolean).join('');
+  const rows = FormKernel.buildReview(WEEKLY_SPEC);
+  const fieldByKey = {};
+  WEEKLY_SPEC.forEach(f => { fieldByKey[f.key] = f; });
+  const grouped = {};
+  rows.forEach(r => {
+    const f = fieldByKey[r.key];
+    const section = f.section;
+    if (!section) return;          // fields without a section aren't shown in review
+    (grouped[section] = grouped[section] || []).push({ row: r, mode: f.reviewMode || 'ifset' });
+  });
+  return _REVIEW_SECTION_ORDER.map(section => {
+    const entries = grouped[section] || [];
+    const html = entries.map(({ row, mode }) => {
+      const empty = row.value === '' || row.value == null;
+      if (mode === 'ifset' && empty) return '';        // omit empty optional rows
+      return _reviewRow(row.label, row.value, row.jump);
+    });
+    return _reviewSection(section, html);
+  }).filter(Boolean).join('');
 }
+
+// ─── FORM-KERNEL MIGRATION (2026-06-21) ──────────────────────────────────────
+// Single declarative FIELD_SPEC the kernel reads from for collect / draft /
+// restore / review / payload — so those paths can no longer drift. The four
+// COMPLEX weekly fields (levels, descriptions_by_level, class_description,
+// opendeur_availability) use kind:'custom' with explicit collect/restore so they
+// keep their EXACT current output shapes. Every standard field maps spec.key →
+// the same payloadKey the hand-written builder used.
+//
+// Helper: the levels "complex" is collected ONCE into state.__levels (full
+// collectLevels() output incl. per-level description) so descriptions_by_level
+// and class_description can derive from it without re-reading the DOM. Each runs
+// collectLevels() itself (idempotent DOM read) — identical to the old builder,
+// which also called collectLevels() inside validate() and again in the payload.
+
+function _wcDescByLevel(levels) {
+  const m = {};
+  (levels || []).forEach(l => { if (l.description) m[l.level] = l.description; });
+  return m;
+}
+
+// ── Complex-field draft collect/restore (preserve EXACT legacy behavior) ──
+// dance_style draft value is an object so the custom-style display can be
+// reproduced precisely on restore: { style, customStyle }.
+function _wcCollectStyleDraft() {
+  return {
+    style: getCurrentStyle(),
+    customStyle: (document.getElementById('custom-style-display')?.style.display !== 'none')
+      ? (document.getElementById('custom-style-chip')?.textContent.trim() || '') : '',
+  };
+}
+function _wcRestoreStyleDraft(v) {
+  v = v || {};
+  if (v.customStyle) {
+    document.querySelectorAll('#style-chips .chip').forEach(c => c.classList.remove('selected'));
+    const display = document.getElementById('custom-style-display');
+    const chip = document.getElementById('custom-style-chip');
+    if (display && chip) {
+      chip.textContent = v.customStyle;
+      display.style.display = 'flex';
+      display.style.alignItems = 'center';
+    }
+  } else {
+    FormKernel.restoreChip1('style-chips', v.style);
+  }
+  const restoredStyle = v.customStyle || v.style;
+  if (restoredStyle) {
+    updateStarterChipVisibility(restoredStyle);
+    updateWebsiteNoteVisibility(restoredStyle);
+    updateDropInVisibility(restoredStyle);   // FIX F guard on restore
+  }
+}
+
+// levels draft: full per-card snapshot incl. level key, custom flag, slots, desc.
+function _wcCollectLevelsDraft() {
+  const levels = [];
+  document.querySelectorAll('#level-cards .level-card').forEach(card => {
+    const key = card.dataset.level;
+    const isCustom = !!document.querySelector(`#level-chips-wrap .chip[data-level-key="${CSS.escape(key)}"][data-custom="true"]`);
+    const slots = [...card.querySelectorAll('.slot-row')].map(row => ({
+      day: row.querySelector('.day-pick')?.value || '',
+      start: row.querySelectorAll('input[type="time"]')[0]?.value || '',
+      end:   row.querySelectorAll('input[type="time"]')[1]?.value || '',
+    }));
+    const description = card.querySelector('textarea')?.value.trim() || '';
+    levels.push({ key, isCustom, slots, description });
+  });
+  return levels;
+}
+// 2026-06-21 FIX: actively REBUILD the dynamic levels UI on restore — the old
+// version relied on chip.click() round-tripping through the global click listener
+// AND on the level chip pre-existing in the DOM. Custom levels (the "+ Other
+// level…" path) have NO authored chip, so their cards never rebuilt and the
+// whole levels field came back empty (submit then blocked). We now, for each
+// saved level: (1) ensure its chip exists in #level-chips-wrap (create a custom
+// chip exactly like addCustomLevel() if missing), (2) call the form's own
+// toggleLevel() so the level CARD renders into #level-cards, (3) fill the card's
+// slot day/start/end + description from the saved data. Mirrors how a user
+// builds the field, so the restored DOM produces the identical collect payload.
+function _wcRestoreLevelsDraft(levels) {
+  if (!levels || !levels.length) return;
+  const wrap = document.getElementById('level-chips-wrap');
+  const addBtn = document.getElementById('add-custom-level-chip');
+  const savedKeys = levels.map(l => l.key);
+
+  // 1) Deselect any level chips that aren't in the saved set (and drop their cards).
+  if (wrap) {
+    wrap.querySelectorAll('.chip[data-level-key]').forEach(chip => {
+      const key = chip.dataset.levelKey;
+      if (chip.classList.contains('selected') && !savedKeys.includes(key)) {
+        toggleLevel(chip, key);   // removes the .selected state + its card
+      }
+    });
+  }
+
+  // 2) For each saved level: ensure the chip exists, select it (render the card).
+  levels.forEach(lvData => {
+    const key = lvData.key;
+    let chip = wrap ? wrap.querySelector(`.chip[data-level-key="${CSS.escape(key)}"]`) : null;
+    // Custom level → its chip was never authored / not added by the style; recreate it.
+    if (!chip && wrap) {
+      LEVEL_LABELS[key] = LEVEL_LABELS[key] || key;
+      chip = document.createElement('div');
+      chip.className = 'chip chip-multi';
+      chip.dataset.levelKey = key;
+      if (lvData.isCustom) chip.dataset.custom = 'true';
+      chip.textContent = LEVEL_LABELS[key];
+      chip.onclick = function () { toggleLevel(chip, key); };
+      wrap.insertBefore(chip, addBtn || null);
+    }
+    if (!chip) return;
+    // Render the card via the form's own toggle (only if not already selected).
+    if (!chip.classList.contains('selected')) {
+      toggleLevel(chip, key);
+    } else if (!document.querySelector(`.level-card[data-level="${CSS.escape(key)}"]`)) {
+      // Edge case: chip marked selected but card missing — force a clean rebuild.
+      chip.classList.remove('selected');
+      toggleLevel(chip, key);
+    }
+  });
+
+  // 3) Fill each rendered card's slots + description from the saved data.
+  levels.forEach(lvData => {
+    const card = document.querySelector(`.level-card[data-level="${CSS.escape(lvData.key)}"]`);
+    if (!card || !lvData.slots || !lvData.slots.length) return;
+    const rows = [...card.querySelectorAll('.slot-row')];
+    rows.slice(1).forEach(r => r.remove());
+    lvData.slots.forEach((slotData, idx) => {
+      let row;
+      if (idx === 0) { row = card.querySelector('.slot-row'); }
+      else { row = card.querySelector('.slot-row').cloneNode(true); card.querySelector('.btn-add').before(row); }
+      if (!row) return;
+      const dayPick = row.querySelector('.day-pick');
+      if (dayPick) dayPick.value = slotData.day;
+      const times = row.querySelectorAll('input[type="time"]');
+      if (times[0]) times[0].value = slotData.start;
+      if (times[1]) times[1].value = slotData.end;
+    });
+    if (lvData.description) { const ta = card.querySelector('textarea'); if (ta) ta.value = lvData.description; }
+    const firstTime = card.querySelector('input[type="time"]');
+    if (firstTime) updateLevelSummary(firstTime);
+  });
+}
+
+// `section` + `reviewMode` drive the review modal grouping (see _buildReviewSummaryHtml):
+//   reviewMode:'always' → row always rendered ("(not set)" placeholder if empty)
+//   reviewMode:'ifset'  → row omitted entirely when its review value is empty (default)
+const WEEKLY_SPEC = [
+  // ── Who (identity, hidden fields filled by login) ──
+  // Draft restore must NOT overwrite a live login value (login wins); only fill if empty.
+  { key:'teacher_name', label:'Submitting as', dom:'f-teacher-name', kind:'text', jump:null,
+    section:'Who', reviewMode:'always',
+    draftCollect: () => (document.getElementById('f-teacher-name')?.value || ''),
+    draftRestore: (v) => { const el = document.getElementById('f-teacher-name'); if (el && !el.value && v) el.value = v; } },
+  { key:'email',        label:'Email',         dom:'f-teacher-email', kind:'text', jump:null,
+    section:'Who', reviewMode:'always',
+    draftCollect: () => (document.getElementById('f-teacher-email')?.value || ''),
+    draftRestore: (v) => { const el = document.getElementById('f-teacher-email'); if (el && !el.value && v) el.value = v; } },
+
+  // ── Basics ──
+  // dance_style: custom collect (custom-style chip OR standard chip) via getCurrentStyle().
+  // Draft snapshot is an object {style, customStyle} so the custom-style display is
+  // reproduced precisely on restore.
+  { key:'dance_style', label:'Dance style', dom:'style-chips', kind:'custom', jump:'#style-chips',
+    section:'Basics', reviewMode:'always',
+    collect: () => getCurrentStyle(),
+    reviewValue: (v) => v || '',
+    draftCollect: () => _wcCollectStyleDraft(),
+    draftRestore: (v) => _wcRestoreStyleDraft(v) },
+
+  // diff-teach checkbox: not in payload, but persisted in the draft (legacy parity).
+  { key:'different_teachers', dom:'diff-teach-cb', kind:'checkbox', payload:false, review:false,
+    onToggle: (cb) => toggleDifferentTeachers(cb) },
+  // semester: chip-single already strips "(current)" via stripParen; extra guard keeps parity.
+  { key:'semester_name', label:'Semester', dom:'semester-chips', kind:'chip-single', jump:'#semester-chips',
+    section:'Basics', reviewMode:'always',
+    payloadValue: (v) => String(v || 'Sep 2026').replace(/\s*\(current\)/, '') },
+  { key:'teaching_language', label:'Teaching language', dom:'lang-chips', kind:'chip-single',
+    jump:'#lang-chips', default:'EN', section:'Basics', reviewMode:'always' },
+  // co_teacher: free-text → split/trim/filter → joined with " · " in payload.
+  { key:'co_teacher', label:'Co-teacher(s)', dom:'coteacher-freetext', kind:'custom', jump:'#coteacher-freetext',
+    section:'Basics', reviewMode:'ifset',
+    collect: () => (document.getElementById('coteacher-freetext')?.value || '').split(',').map(s => s.trim()).filter(Boolean),
+    restore: (v) => { const el = document.getElementById('coteacher-freetext'); if (el && Array.isArray(v)) el.value = v.join(', '); },
+    reviewValue: (v) => (Array.isArray(v) ? v : []).join(', '),
+    payloadValue: (v) => (Array.isArray(v) ? v : []).join(' · ') },
+
+  // ── Levels & schedule (COMPLEX) ──
+  // The levels builder. collect → full collectLevels() output (level/display_label/slots/description);
+  // payload emits only {level, display_label, slots}.
+  { key:'levels', label:'Levels', dom:'level-cards', kind:'custom', jump:'#level-cards',
+    section:'Levels & schedule', reviewMode:'always',
+    collect: () => collectLevels(),
+    reviewValue: (levels) => (levels || []).map(l => {
+      const slots = (l.slots || []).map(s => s.day + ' ' + s.start + '–' + s.end).join(', ');
+      return l.level + (l.description ? ' — ' + l.description.slice(0, 80) + (l.description.length > 80 ? '…' : '') : '') + (slots ? '\n  ' + slots : '');
+    }).join('\n\n') || '(none)',
+    payloadValue: (levels) => (levels || []).map(l => ({ level: l.level, display_label: l.display_label || '', slots: l.slots })),
+    // Draft snapshot is per-card (key/isCustom/slots/description) so card+chip
+    // state rebuilds exactly on restore.
+    draftCollect: () => _wcCollectLevelsDraft(),
+    draftRestore: (v) => _wcRestoreLevelsDraft(v) },
+  // descriptions_by_level: { "<level>": "<desc>" } for levels that have a description.
+  { key:'descriptions_by_level', dom:'level-cards', kind:'custom', review:false, draft:false,
+    collect: () => _wcDescByLevel(collectLevels()),
+    payloadValue: (v) => v || {} },
+  // class_description: composed from descriptions_by_level, else falls back to the general textarea.
+  { key:'class_description', dom:'f-description', kind:'custom', review:false, draft:false,
+    collect: () => {
+      const dbl = _wcDescByLevel(collectLevels());
+      return Object.entries(dbl).map(([lv, t]) => lv + ':\n' + t).join('\n\n') ||
+        (document.getElementById('f-description')?.value || '').trim();
+    } },
+
+  // ── Details (review rows omitted when empty) ──
+  { key:'class_description_general', label:'Description', dom:'f-description', kind:'text',
+    payload:false, jump:'#f-description', section:'Details', reviewMode:'ifset' },   // review/draft only; payload uses class_description above
+  { key:'prereq', label:'Prerequisites', dom:'f-prereq', kind:'text', jump:'#f-prereq', section:'Details', reviewMode:'ifset' },
+  { key:'what_to_bring', label:'What to bring', dom:'f-bring', kind:'text', jump:'#f-bring', section:'Details', reviewMode:'ifset' },
+  { key:'max_students', label:'Max students', dom:'f-max-students', kind:'number', jump:'#f-max-students', section:'Details', reviewMode:'ifset' },
+  { key:'age_min', label:'Min age', dom:'min-age-chips', kind:'chip-single', jump:'#min-age-chips', section:'Details', reviewMode:'ifset' },
+  // review:false on these two is INTENTIONAL and matches the pre-migration form —
+  // the review modal only lists meaningful/filled fields, not default-y values like
+  // "No preference" / partner=No. They ARE still sent in the payload. (Not a bug.)
+  { key:'preferred_studio', label:'Studio preference', dom:'studio-pref-chips', kind:'chip-single',
+    review:false, jump:'#studio-pref-chips', default:'No preference' },
+  { key:'partner_required', label:'Partner registration', dom:'partner-chips', kind:'custom',
+    review:false, jump:'#partner-chips',
+    collect: () => (getSelectedSingle('partner-chips') || 'No'),
+    restore: (v) => FormKernel.restoreChip1('partner-chips', v),
+    payloadValue: (v) => String(v || 'No').toLowerCase().includes('yes') },
+  { key:'website_note', label:'Website note', dom:'website-note-input', kind:'text', jump:'#website-note-input', section:'Details', reviewMode:'ifset' },
+
+  // ── Drop-in ──
+  { key:'dropin_enabled', label:'Drop-in', dom:'dropin-cb', kind:'checkbox', jump:'#dropin-cb',
+    section:'Details', reviewMode:'ifset', onToggle: (cb) => toggleDropIn(cb),
+    reviewValue: (v) => v ? ('Yes' + (document.getElementById('f-dropin-price')?.value ? ' — €' + document.getElementById('f-dropin-price').value : '')) : '' },
+  // dropin_price only goes in the payload when drop-in is actually enabled (the
+  // style guard unchecks #dropin-cb for non-drop-in styles). Prevents a stale price
+  // riding along after a teacher switches Dance & Fit/Pilates → a non-drop-in style.
+  // (Backend already ignores it for non-allowed styles; this keeps the payload clean too.)
+  { key:'dropin_price', dom:'f-dropin-price', kind:'number', review:false, jump:'#f-dropin-price',
+    payloadValue: () => (document.getElementById('dropin-cb')?.checked ? (document.getElementById('f-dropin-price')?.value || '') : '') },
+
+  // ── Open House (COMPLEX) — chips → { "<label>": true } ──
+  { key:'opendeur_availability', label:'Open House availability', dom:'open-house-chips', kind:'custom', jump:'#open-house-chips',
+    section:'Details', reviewMode:'ifset',
+    collect: () => {
+      const o = {};
+      document.querySelectorAll('#open-house-chips .chip.selected').forEach(c => { o[c.textContent.trim()] = true; });
+      return o;
+    },
+    restore: (v) => FormKernel.restoreChipN('open-house-chips', Object.keys(v || {})),
+    reviewValue: (v) => Object.keys(v || {}).join(', ') },
+
+  // ── Special notes (section 7) → payload key pricing_notes ──
+  { key:'pricing_notes', label:'Special notes', dom:'f-special-notes', kind:'text', jump:'#f-special-notes', section:'Details', reviewMode:'ifset' },
+];
+
+// Meta keys the kernel merges into every weekly payload (routing/internal).
+const WEEKLY_META = { action:'submit', type:'weekly-class', structured:true, submitted_via:'weekly-v2-form' };
 
 async function submitForm() {
   const errBox = document.getElementById('submit-error');
@@ -1311,75 +1562,8 @@ async function submitForm() {
     return;
   }
 
-  // Collect language (single chip; server accepts a string)
-  const lang = getSelectedSingle('lang-chips') || 'EN';
-  const studio = getSelectedSingle('studio-pref-chips') || 'No preference';
-  const minAge = getSelectedSingle('min-age-chips') || '';
-  const partner = getSelectedSingle('partner-chips') || 'No';
-
-  // Co-teachers: free-text input in Section 2 (was multi-select chips; chip list was
-  // hardcoded mockup data — 2026-05-24 swap, see comment at #coteacher-chips).
-  const coTeachers = (document.getElementById('coteacher-freetext')?.value || '')
-    .split(',').map(s => s.trim()).filter(Boolean);
-
-  // Section 5 textareas — use IDs
-  const description = (document.getElementById('f-description')?.value || '').trim();
-  const prereq = (document.getElementById('f-prereq')?.value || '').trim();
-  const whatToBring = (document.getElementById('f-bring')?.value || '').trim();
-  const websiteNote = (document.getElementById('website-note-input')?.value || '').trim();
-
-  // Special notes (Section 7)
-  const specialNotes = (document.getElementById('f-special-notes')?.value || '').trim();
-
-  const semester = getSelectedSingle('semester-chips') || 'Sep 2026 (current)';
-
-  // Build per-level descriptions_by_level map
-  const descByLevel = {};
-  levels.forEach(l => { if (l.description) descByLevel[l.level] = l.description; });
-
-  const payload = {
-    action: 'submit',
-    type: 'weekly-class',
-    teacher_name: document.getElementById('f-teacher-name').value.trim(),
-    email: document.getElementById('f-teacher-email').value.trim(),
-    dance_style: style,
-    semester_name: semester.replace(/\s*\(current\)/, ''),
-    levels: levels.map(l => ({
-      level: l.level,
-      display_label: l.display_label || '',
-      slots: l.slots,
-    })),
-    descriptions_by_level: descByLevel,
-    class_description: Object.entries(descByLevel)
-      .map(([lv, txt]) => lv + ':\n' + txt).join('\n\n') || description,
-    teaching_language: lang,
-    co_teacher: coTeachers.join(' · '),
-    preferred_studio: studio,
-    age_min: minAge,
-    partner_required: partner.toLowerCase().includes('yes'),
-    what_to_bring: whatToBring,
-    prereq,
-    website_note: websiteNote,
-    // 2026-06-21: open-house availability is now collected from the selected
-    // chips. The backend buildSheetRow weekly branch maps {label:true} →
-    // "label ✅" directly (Object.keys(o).map(...)), so the chip LABEL is the key
-    // — no ISO-date translation is needed. Sends one {label: true} per selected
-    // slot; an empty object when nothing is selected.
-    opendeur_availability: (function(){
-      var o = {};
-      document.querySelectorAll('#open-house-chips .chip.selected').forEach(function(c){ o[c.textContent.trim()] = true; });
-      return o;
-    })(),
-    pricing_notes: specialNotes,
-    // audit 2026-06-21: these were collected for the autosave draft but never put
-    // in the submit payload, so they silently vanished. max_students maps to the
-    // sheet "Max Students" column; drop-in fields are captured in the raw email.
-    max_students: document.getElementById('f-max-students')?.value || '',
-    dropin_enabled: document.getElementById('dropin-cb')?.checked || false,
-    dropin_price: document.getElementById('f-dropin-price')?.value || '',
-    structured: true,
-    submitted_via: 'weekly-v2-form',
-  };
+  // Build the payload declaratively from WEEKLY_SPEC (single source of truth).
+  const payload = FormKernel.buildPayload(WEEKLY_SPEC, WEEKLY_META);
 
   // Test mode (?test=1): mark the payload so the backend previews instead of saving
   if (window.shoonyaTestMode && window.shoonyaTestMode()) payload.testMode = true;
@@ -1398,16 +1582,9 @@ async function submitForm() {
   }
 
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload),
-    });
-    // 2026-05-24 audit S2: surface real error reason instead of generic.
-    let json;
-    try { json = await res.json(); }
-    catch (_) { throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + '). Your draft is saved.'); }
-    if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ').'));
+    // 2026-06-21: fetch + non-JSON guard + ok:false handling now live in
+    // FormKernel.submit (mirrors the prior inline behavior exactly).
+    const json = await FormKernel.submit({ url, payload });
     if (json.testMode && window.shoonyaShowTestPreview) {
       okBox.innerHTML = window.shoonyaShowTestPreview(json);
       okBox.style.display = '';
@@ -1445,51 +1622,24 @@ async function submitForm() {
 // ─── DRAFT AUTOSAVE ──────────────────────────────────────────────────────────
 // Saves form state to localStorage every 800ms after last input.
 // Restores on page load. Cleared on successful submit.
-const DRAFT_KEY = 'shoonya_weekly_draft_v1';
+// 2026-06-21 form-kernel migration: the draft schema is now keyed by the
+// WEEKLY_SPEC keys (not the legacy ad-hoc keys), so collect/draft/restore can't
+// drift. Bumped v1→v2 — a stale v1 draft has incompatible keys, so it's ignored
+// (the restore guard checks the version). Complex fields (dance_style, levels)
+// carry draftCollect/draftRestore in the spec to keep their exact snapshot shape.
+const DRAFT_KEY = 'shoonya_weekly_draft_v2';
 let _draftTimer = null;
 
+// Kept as a named function in case other code calls it; now delegates to the kernel.
 function collectDraft() {
-  const grab1 = id => document.getElementById(id)?.querySelector('.chip.selected')?.textContent.trim() || '';
-  const grabN = id => [...(document.getElementById(id)?.querySelectorAll('.chip.selected') || [])].map(c => c.textContent.trim());
-
-  const levels = [];
-  document.querySelectorAll('#level-cards .level-card').forEach(card => {
-    const key = card.dataset.level;
-    const isCustom = !!document.querySelector(`#level-chips-wrap .chip[data-level-key="${CSS.escape(key)}"][data-custom="true"]`);
-    const slots = [...card.querySelectorAll('.slot-row')].map(row => ({
-      day: row.querySelector('.day-pick')?.value || '',
-      start: row.querySelectorAll('input[type="time"]')[0]?.value || '',
-      end:   row.querySelectorAll('input[type="time"]')[1]?.value || '',
-    }));
-    const description = card.querySelector('textarea')?.value.trim() || '';
-    levels.push({ key, isCustom, slots, description });
+  const draft = { v: 1, savedAt: new Date().toISOString() };
+  WEEKLY_SPEC.forEach(f => {
+    if (f.draft === false) return;
+    draft[f.key] = (typeof f.draftCollect === 'function') ? f.draftCollect()
+                 : (typeof f.collect === 'function') ? f.collect()
+                 : (FormKernel.collect([f])[f.key]);
   });
-
-  return {
-    v: 1,
-    savedAt: new Date().toISOString(),
-    teacherName:      document.getElementById('f-teacher-name')?.value || '',
-    teacherEmail:     document.getElementById('f-teacher-email')?.value || '',
-    style:            getCurrentStyle(),
-    customStyle:      (document.getElementById('custom-style-display')?.style.display !== 'none') ? (document.getElementById('custom-style-chip')?.textContent.trim() || '') : '',
-    semester:         grab1('semester-chips'),
-    lang:             grab1('lang-chips'),
-    coTeachers:       (document.getElementById('coteacher-freetext')?.value || '').split(',').map(s => s.trim()).filter(Boolean),  // 2026-05-24: read from free-text input, was grabN('coteacher-chips')
-    differentTeachers: document.getElementById('diff-teach-cb')?.checked || false,
-    levels,
-    dropIn:           document.getElementById('dropin-cb')?.checked || false,
-    dropInPrice:      document.getElementById('f-dropin-price')?.value || '',
-    description:      document.getElementById('f-description')?.value.trim() || '',
-    prereq:           document.getElementById('f-prereq')?.value.trim() || '',
-    whatToBring:      document.getElementById('f-bring')?.value.trim() || '',
-    maxStudents:      document.getElementById('f-max-students')?.value || '',
-    websiteNote:      document.getElementById('website-note-input')?.value.trim() || '',
-    minAge:           grab1('min-age-chips'),
-    studio:           grab1('studio-pref-chips'),
-    partner:          grab1('partner-chips'),
-    openHouse:        grabN('open-house-chips'),
-    specialNotes:     document.getElementById('f-special-notes')?.value.trim() || '',
-  };
+  return draft;
 }
 
 function scheduleSave() {
@@ -1545,129 +1695,14 @@ function restoreChipN(id, vals) {
   });
 }
 
+// 2026-06-21 form-kernel migration: restore now iterates WEEKLY_SPEC (same source
+// as collect/payload), so a restored draft can't drift from what's submitted.
+// Field order in the spec is restore-safe: dance_style (rebuilds level chips)
+// runs before levels; dropin_enabled before dropin_price.
 function restoreDraft(draft) {
   if (!draft || draft.v !== 1) return;
   try {
-    // Teacher identity (filled by login). Only set from draft if the field is
-    // empty — a live login still wins so we never overwrite with stale values.
-    const tn = document.getElementById('f-teacher-name');
-    if (tn && !tn.value && draft.teacherName) tn.value = draft.teacherName;
-    const te = document.getElementById('f-teacher-email');
-    if (te && !te.value && draft.teacherEmail) te.value = draft.teacherEmail;
-
-    // Basics — restore style (custom or standard)
-    if (draft.customStyle) {
-      // Custom style entered via "+ Other..."
-      document.querySelectorAll('#style-chips .chip').forEach(c => c.classList.remove('selected'));
-      const display = document.getElementById('custom-style-display');
-      const chip = document.getElementById('custom-style-chip');
-      if (display && chip) {
-        chip.textContent = draft.customStyle;
-        display.style.display = 'flex';
-        display.style.alignItems = 'center';
-      }
-    } else {
-      restoreChip1('style-chips', draft.style);
-    }
-    // Trigger level chip visibility for the restored style
-    const restoredStyle = draft.customStyle || draft.style;
-    if (restoredStyle) {
-      updateStarterChipVisibility(restoredStyle);
-      updateWebsiteNoteVisibility(restoredStyle);
-      // FIX F: apply drop-in guard on restore so a saved drop-in state for a
-      // non-allowed style doesn't silently persist after draft reload.
-      updateDropInVisibility(restoredStyle);
-    }
-    restoreChip1('semester-chips', draft.semester);
-    restoreChip1('lang-chips', draft.lang);
-
-    // Co-teachers (free-text since 2026-05-24; was restoreChipN)
-    const ftEl = document.getElementById('coteacher-freetext');
-    if (ftEl && Array.isArray(draft.coTeachers)) ftEl.value = draft.coTeachers.join(', ');
-
-    // Different teachers
-    const diffCb = document.getElementById('diff-teach-cb');
-    if (diffCb && diffCb.checked !== draft.differentTeachers) {
-      diffCb.checked = draft.differentTeachers;
-      toggleDifferentTeachers(diffCb);
-    }
-
-    // Levels — sync chip selection, then fill cards
-    if (draft.levels && draft.levels.length) {
-      const savedKeys = draft.levels.map(l => l.key);
-      // Deselect chips not in saved, select ones that are
-      document.querySelectorAll('#level-chips-wrap .chip[data-level-key]').forEach(chip => {
-        const key = chip.dataset.levelKey;
-        const want = savedKeys.includes(key);
-        const have = chip.classList.contains('selected');
-        if (have && !want) chip.click();
-        else if (!have && want) chip.click();
-      });
-
-      // Fill each level card
-      draft.levels.forEach(lvData => {
-        const card = document.querySelector(`.level-card[data-level="${CSS.escape(lvData.key)}"]`);
-        if (!card || !lvData.slots || !lvData.slots.length) return;
-
-        // Remove all slot rows except the first, then repopulate
-        const rows = [...card.querySelectorAll('.slot-row')];
-        rows.slice(1).forEach(r => r.remove());
-
-        lvData.slots.forEach((slotData, idx) => {
-          let row;
-          if (idx === 0) {
-            row = card.querySelector('.slot-row');
-          } else {
-            // Clone the source row — the inline onclick="removeSlotRow(this)"
-            // is preserved by cloneNode so newly-added rows are removable.
-            row = card.querySelector('.slot-row').cloneNode(true);
-            card.querySelector('.btn-add').before(row);
-          }
-          if (!row) return;
-          const dayPick = row.querySelector('.day-pick');
-          if (dayPick) dayPick.value = slotData.day;
-          const times = row.querySelectorAll('input[type="time"]');
-          if (times[0]) times[0].value = slotData.start;
-          if (times[1]) times[1].value = slotData.end;
-        });
-
-        // Description
-        if (lvData.description) {
-          const ta = card.querySelector('textarea');
-          if (ta) ta.value = lvData.description;
-        }
-
-        // Update slot summary badge
-        const firstTime = card.querySelector('input[type="time"]');
-        if (firstTime) updateLevelSummary(firstTime);
-      });
-    }
-
-    // Drop-in
-    const dropCb = document.getElementById('dropin-cb');
-    if (dropCb && dropCb.checked !== draft.dropIn) {
-      dropCb.checked = draft.dropIn;
-      toggleDropIn(dropCb);
-    }
-    if (draft.dropInPrice) {
-      const dp = document.getElementById('f-dropin-price');
-      if (dp) dp.value = draft.dropInPrice;
-    }
-
-    // Details
-    if (draft.description)  { const el = document.getElementById('f-description');  if (el) el.value = draft.description; }
-    if (draft.prereq)       { const el = document.getElementById('f-prereq');       if (el) el.value = draft.prereq; }
-    if (draft.whatToBring)  { const el = document.getElementById('f-bring');        if (el) el.value = draft.whatToBring; }
-    if (draft.maxStudents)  { const el = document.getElementById('f-max-students'); if (el) el.value = draft.maxStudents; }
-    if (draft.websiteNote)  { const el = document.getElementById('website-note-input'); if (el) el.value = draft.websiteNote; }
-
-    restoreChip1('min-age-chips', draft.minAge);
-    restoreChip1('studio-pref-chips', draft.studio);
-    restoreChip1('partner-chips', draft.partner);
-    restoreChipN('open-house-chips', draft.openHouse);
-
-    if (draft.specialNotes) { const el = document.getElementById('f-special-notes'); if (el) el.value = draft.specialNotes; }
-
+    FormKernel.restoreDraft(WEEKLY_SPEC, draft);
     showDraftBanner(draft.savedAt, true);
   } catch(e) {
     console.warn('Draft restore failed:', e);
