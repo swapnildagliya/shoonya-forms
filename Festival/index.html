@@ -369,27 +369,33 @@
     </div>
   </div>
 
-  <button class="btn-submit" onclick="submitForm()">Submit Festival →</button>
+  <button class="btn-submit" id="festival-submit-btn" onclick="submitForm()">Submit Festival →</button>
 
 </div><!-- /festival-form-content -->
 
 </div><!-- /container -->
 
-<!-- Modal -->
+<!-- Modal — P1-4: REVIEW then CONFIRM. Nothing is sent until "Confirm & submit". -->
 <div class="modal-overlay" id="modal">
   <div class="modal">
-    <h3>✅ Submission Ready</h3>
-    <p id="modal-instruction">Copy the text below and email it to <strong>info@shoonyadance.com</strong>. We'll take care of the rest!</p>
+    <h3>Review your festival submission</h3>
+    <p id="modal-instruction">Check the details below. When it looks right, press <strong>Confirm &amp; submit</strong>.</p>
     <div class="out-block" id="modal-output"></div>
     <button class="btn-copy" id="copy-btn" onclick="copyOutput()">Copy to Clipboard</button>
     <div id="sheetStatus" style="display:none;margin-top:10px;font-size:.8rem;color:#27ae60;font-weight:700;"></div>
-    <br>
-    <button class="modal-close" onclick="document.getElementById('modal').classList.remove('open')">Close</button>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="modal-close" style="margin-top:0;flex:1;" onclick="document.getElementById('modal').classList.remove('open')">Back to form</button>
+      <button id="festival-confirm-btn" style="flex:1;background:var(--purple);color:#fff;border:none;border-radius:7px;font-size:.85rem;font-weight:800;padding:9px 20px;cursor:pointer;" onclick="confirmAndSubmit()">Confirm &amp; submit</button>
+    </div>
   </div>
 </div>
 
 <script src="../config.js"></script>
 <script src="../login-panel.js"></script>
+<!-- P1-3: shared test-mode (?test=1 → preview without saving). P0-2: client-side
+     image downscale + HEIC rejection before upload. Both match the other forms. -->
+<script src="../test-mode.js"></script>
+<script src="../image-resize.js"></script>
 <script>
 // ── LOGIN GATE ──────────────────────────────────────────────────────────────
 function setFestivalGate(isLoggedIn) {
@@ -400,24 +406,52 @@ function setFestivalGate(isLoggedIn) {
   form.style.display = isLoggedIn ? ''     : 'none';
 }
 
+// P2 (2026-06-21): best-effort organiser prefill from a saved session. Guards
+// every field write so a missing input can't throw. login-panel.js also
+// prefills these IDs on load — this is a belt-and-braces fallback that runs
+// regardless of the panel's render timing.
+function festivalPrefillFromSession(profile) {
+  if (!profile) return;
+  try {
+    const setIf = (id, v) => { const el = document.getElementById(id); if (el && v && !el.value) el.value = v; };
+    const name = (profile.name || '').trim();
+    const parts = name ? name.split(/\s+/) : [];
+    setIf('first-name', parts[0] || '');
+    setIf('last-name', parts.slice(1).join(' ') || '');
+    setIf('display-name', name);
+    setIf('email', profile.email || '');
+  } catch (e) { /* best-effort — never block the form */ }
+}
+
 // Check saved session on load
 (function festivalGateInit() {
   try {
     const raw = localStorage.getItem('shoonya_session');
     const session = raw ? JSON.parse(raw) : null;
-    setFestivalGate(!!(session && session.profile));
+    const loggedIn = !!(session && session.profile);
+    setFestivalGate(loggedIn);
+    if (loggedIn) festivalPrefillFromSession(session.profile);
   } catch (e) { setFestivalGate(false); }
 })();
 
 // Login panel fires this event once a user logs in successfully
-window.addEventListener('shoonya:login', () => setFestivalGate(true));
+window.addEventListener('shoonya:login', (e) => {
+  setFestivalGate(true);
+  if (e && e.detail) festivalPrefillFromSession(e.detail);
+});
 
 // ── APPS SCRIPT BACKEND ─────────────────────────────────────────────────────
 
 
+// P1-4 (2026-06-21): now RETURNS a result so confirmAndSubmit can await it and
+// show success/preview/failure based on the real response. On success it stays
+// silent (the caller owns the success copy); on failure it shows the backup
+// notice and returns { ok:false }.
+//   → { ok:true, json, testMode } on success
+//   → { ok:false, error }        on failure (backup already fired)
 async function sendToSheet(payload) {
   const msg = document.getElementById('sheetStatus');
-  if (!APPS_SCRIPT_URL) return;
+  if (!APPS_SCRIPT_URL) return { ok: false, error: 'APPS_SCRIPT_URL not configured' };
   // POST as text/plain (CORS-safe "simple request" — no preflight). Unlike the
   // old no-cors version, we READ the JSON response so we can tell success from
   // failure. no-cors hid every error and always showed "✅ Saved" even when the
@@ -432,11 +466,12 @@ async function sendToSheet(payload) {
     try { json = await res.json(); }
     catch (_) { throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + ')'); }
     if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ')'));
-    if (msg) { msg.style.display = 'block'; msg.style.color = ''; msg.textContent = '✅ Saved to Google Sheets & notification sent!'; }
+    return { ok: true, json: json, testMode: !!json.testMode };
   } catch (err) {
     // Primary failed — save to the independent backup sink so nothing is lost.
     try { if (typeof sendToBackup === 'function') sendToBackup(payload, err.message); } catch(_) {}
     if (msg) { msg.style.display = 'block'; msg.style.color = '#c0392b'; msg.textContent = '⚠️ Could not save right now — your entry was sent to a backup. Please let Shoonya know.'; }
+    return { ok: false, error: err && err.message };
   }
 }
 
@@ -450,16 +485,26 @@ function loadConfig() {
   const uitEl  = document.getElementById('adm-uitpas');
   if (discEl) discEl.value = CONFIG.classDiscount;
   if (uitEl)  uitEl.value  = CONFIG.uitpasDiscount;
-  document.getElementById('disc-pct-label').textContent  = CONFIG.classDiscount + '%';
-  document.getElementById('uitpas-pct-label').textContent = CONFIG.uitpasDiscount + '%';
+  // P0-1 (2026-06-21): null-guard every label write. `#disc-pct-label` does not
+  // exist in this form's markup — the unguarded write threw before the init
+  // sequence (addPriceTier / addProgrammeSlot) could run, so the form loaded
+  // with NO default pricing tier and NO programme slot. Guarding makes a missing
+  // element a no-op instead of an exception.
+  const discLabel = document.getElementById('disc-pct-label');
+  if (discLabel) discLabel.textContent = CONFIG.classDiscount + '%';
+  const uitLabel = document.getElementById('uitpas-pct-label');
+  if (uitLabel) uitLabel.textContent = CONFIG.uitpasDiscount + '%';
 }
 
 function saveAdminConfig() {
   CONFIG.classDiscount  = parseFloat(document.getElementById('adm-disc').value)   || 12;
   CONFIG.uitpasDiscount = parseFloat(document.getElementById('adm-uitpas').value) || 80;
   localStorage.setItem('shoonya_festival_config', JSON.stringify(CONFIG));
-  document.getElementById('disc-pct-label').textContent  = CONFIG.classDiscount + '%';
-  document.getElementById('uitpas-pct-label').textContent = CONFIG.uitpasDiscount + '%';
+  // P0-1: same guard as loadConfig — #disc-pct-label is absent in this form.
+  const discLabel = document.getElementById('disc-pct-label');
+  if (discLabel) discLabel.textContent = CONFIG.classDiscount + '%';
+  const uitLabel = document.getElementById('uitpas-pct-label');
+  if (uitLabel) uitLabel.textContent = CONFIG.uitpasDiscount + '%';
   const msg = document.getElementById('admin-saved-msg');
   msg.style.display = 'inline';
   setTimeout(() => msg.style.display = 'none', 2000);
@@ -715,7 +760,30 @@ function fmtDate(dateStr) {
 }
 
 // ── SUBMIT ────────────────────────────────────────────────────────────────────
-function submitForm() {
+// P1-4 (2026-06-21): stores the fully-built payload + text blob between the
+// REVIEW step (submitForm) and the CONFIRM step (confirmAndSubmit). Submit no
+// longer fires the network call directly — it builds + previews, and only an
+// explicit "Confirm & submit" click sends and awaits the response.
+let _festivalPending = null;
+
+// P1-5 time-sanity helper: end ≤ start is invalid UNLESS it's an after-midnight
+// slot (end < 07:00 treated as next morning). Mirrors social-nights.html.
+function _festTimeSane(start, end) {
+  if (!start || !end) return true; // partial times handled by required-field checks
+  const NEXT_MORNING = 7 * 60;
+  function toMins(hhmm) {
+    const p = String(hhmm).split(':');
+    if (p.length < 2) return null;
+    const m = parseInt(p[0], 10) * 60 + parseInt(p[1], 10);
+    return isFinite(m) ? m : null;
+  }
+  let s = toMins(start), e = toMins(end);
+  if (s === null || e === null) return true;
+  if (e < NEXT_MORNING) e += 24 * 60;   // after-midnight end
+  return e > s;
+}
+
+async function submitForm() {
   const required = [
     ['first-name','First Name'],['last-name','Last Name'],['email','Email'],
     ['festival-name','Festival Name'],['date-start','Start Date'],['date-end','End Date'],
@@ -735,6 +803,48 @@ function submitForm() {
 
   const progSlots = document.querySelectorAll('#programme-slots .slot-card');
   if (!progSlots.length) { alert('Please add at least one programme slot.'); return; }
+
+  // P1-5 (2026-06-21): validate EACH programme row, not just "≥1 exists".
+  // Required per row: day, start, end, title, teacher, studio. Plus time-sanity
+  // (end after start unless after-midnight). Level/desc stay optional.
+  const progErrors = [];
+  progSlots.forEach((card, i) => {
+    const n = i + 1;
+    const day     = card.querySelector('.day-select').value;
+    const start   = card.querySelector('.slot-start').value;
+    const end     = card.querySelector('.slot-end').value;
+    const title   = card.querySelector('.slot-title').value.trim();
+    const teacher = card.querySelector('.slot-teacher').value.trim();
+    const studio  = card.querySelector('.slot-studio').value;
+    if (!day)     progErrors.push(`Slot ${n}: pick a day.`);
+    if (!start)   progErrors.push(`Slot ${n}: start time is required.`);
+    if (!end)     progErrors.push(`Slot ${n}: end time is required.`);
+    if (!title)   progErrors.push(`Slot ${n}: title / topic is required.`);
+    if (!teacher) progErrors.push(`Slot ${n}: teacher / artist is required.`);
+    if (!studio)  progErrors.push(`Slot ${n}: studio / room is required.`);
+    if (start && end && !_festTimeSane(start, end)) {
+      progErrors.push(`Slot ${n}: end time (${end}) is before or equal to start (${start}). For an after-midnight slot use a time like 01:00.`);
+    }
+  });
+  if (progErrors.length) { alert('Please fix the programme:\n\n• ' + progErrors.join('\n• ')); return; }
+
+  // P1-6 (2026-06-21): a tier with a label but no amount is rejected; require at
+  // least one of regular/early_bird/member per tier (or an explicit "free"
+  // indication in the label/description). Empty tiers are dropped, not pushed.
+  const priceErrors = [];
+  document.querySelectorAll('#price-tiers .price-tier').forEach((tier, i) => {
+    const label   = tier.querySelector('.tier-label').value.trim();
+    const desc    = tier.querySelector('.tier-desc').value.trim();
+    const regular = tier.querySelector('.tier-regular').value.trim();
+    const early   = tier.querySelector('.tier-early').value.trim();
+    const member  = tier.querySelector('.tier-member').value.trim();
+    const hasAmount = !!(regular || early || member);
+    const looksFree = /\bfree\b|\bgratis\b|€\s*0\b/i.test(label + ' ' + desc);
+    if (label && !hasAmount && !looksFree) {
+      priceErrors.push(`Pricing "${label}": enter at least one price (regular / early bird / member), or write "free" if it's free.`);
+    }
+  });
+  if (priceErrors.length) { alert('Please fix the pricing:\n\n• ' + priceErrors.join('\n• ')); return; }
 
   const firstName   = val('first-name');
   const lastName    = val('last-name');
@@ -889,12 +999,6 @@ function submitForm() {
   lines.push('═══════════════════════════════════════════════════════');
 
   const submissionText = lines.join('\n');
-  document.getElementById('modal-output').textContent = submissionText;
-  if (APPS_SCRIPT_URL) {
-    const instr = document.getElementById('modal-instruction');
-    if (instr) { instr.innerHTML = '✅ Submitted automatically — saved to Google Sheets and Shoonya has been notified. Keep a copy below if needed:'; instr.style.color = '#27ae60'; }
-  }
-  document.getElementById('modal').classList.add('open');
 
   // Build structured teachers/djs/pricing arrays (already collected above for
   // the text blob — re-collect here so the backend gets typed fields, not
@@ -931,7 +1035,9 @@ function submitForm() {
     const regular = tier.querySelector('.tier-regular').value.trim();
     const early   = tier.querySelector('.tier-early').value.trim();
     const member  = tier.querySelector('.tier-member').value.trim();
-    if (!label && !regular) return;
+    // P1-6: drop a tier only when it's entirely empty. A label-with-no-amount
+    // can't reach here (validation blocks it above unless it's marked free).
+    if (!label && !desc && !regular && !early && !member) return;
     pricingArr.push({ label, description: desc, regular, early_bird: early, member });
   });
 
@@ -978,7 +1084,100 @@ function submitForm() {
     structured: true,
   };
 
-  sendToSheet(payload);
+  // P0-2 (2026-06-21): convert each uploaded image via shoonyaResizeImage into a
+  // structured payload.photos = [{role,label,b64,filename}] exactly like
+  // workshops.html. Previously the form only built thumbnail previews and the
+  // payload carried NO image data — banner/additional images were never
+  // submitted. HEIC rejection propagates (resize helper throws) and is surfaced
+  // to the organiser instead of silently uploading undecodable bytes.
+  const submitBtn = document.getElementById('festival-submit-btn');
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Preparing…'; }
+  try {
+    payload.photos = await festivalCollectPhotos();
+  } catch (err) {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Festival →'; }
+    alert(err && err.message ? err.message : 'One of your images could not be processed. Please convert it to JPEG or PNG and try again.');
+    return;
+  }
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Submit Festival →'; }
+
+  // P1-3: ?test=1 (or the flagged test account) → preview without saving.
+  if (window.shoonyaTestMode && window.shoonyaTestMode()) payload.testMode = true;
+
+  // P1-4: REVIEW step only. Stash the built payload + text, fill the modal with
+  // what WILL be submitted, and wait for an explicit "Confirm & submit" click.
+  // No success copy is shown here — the network call has not happened yet.
+  _festivalPending = { payload, submissionText };
+  openFestivalReview(submissionText, payload);
+}
+
+// P0-2 helper: read both image inputs, resize each, build photos[]. Banner first.
+async function festivalCollectPhotos() {
+  const photos = [];
+  const bannerInput = document.getElementById('banner-input');
+  const bannerFile = bannerInput && bannerInput.files && bannerInput.files[0];
+  if (bannerFile) {
+    const out = await window.shoonyaResizeImage(bannerFile, { maxDim: 2000, quality: 0.85 });
+    if (out && out.b64) photos.push({ role: 'banner', label: 'Festival banner', b64: out.b64, filename: out.name || bannerFile.name || '' });
+  }
+  const extraInput = document.getElementById('extra-input');
+  const extraFiles = extraInput && extraInput.files ? Array.from(extraInput.files) : [];
+  for (let i = 0; i < extraFiles.length; i++) {
+    const f = extraFiles[i];
+    const out = await window.shoonyaResizeImage(f, { maxDim: 2000, quality: 0.85 });
+    if (out && out.b64) photos.push({ role: 'additional', label: 'Additional image ' + (i + 1), b64: out.b64, filename: out.name || f.name || '' });
+  }
+  return photos;
+}
+
+// P1-4: build + show the REVIEW modal. Confirm button awaits the real send.
+function openFestivalReview(submissionText, payload) {
+  const out = document.getElementById('modal-output');
+  if (out) out.textContent = submissionText;
+  const title = document.querySelector('#modal .modal h3');
+  const instr = document.getElementById('modal-instruction');
+  const photoCount = (payload.photos || []).length;
+  const testing = !!payload.testMode;
+  if (title) title.textContent = testing ? '🧪 Review (Test Mode)' : 'Review your festival submission';
+  if (instr) {
+    instr.style.color = '';
+    instr.innerHTML = 'Check the details below.' +
+      (photoCount ? ' <strong>' + photoCount + ' image' + (photoCount === 1 ? '' : 's') + '</strong> will be uploaded.' : '') +
+      ' When it looks right, press <strong>Confirm &amp; submit</strong>.';
+  }
+  // Reset the action buttons to the review state (in case of a previous attempt).
+  const confirmBtn = document.getElementById('festival-confirm-btn');
+  if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = testing ? 'Confirm & run test' : 'Confirm & submit'; confirmBtn.style.display = ''; }
+  const statusEl = document.getElementById('sheetStatus');
+  if (statusEl) { statusEl.style.display = 'none'; statusEl.textContent = ''; }
+  document.getElementById('modal').classList.add('open');
+}
+
+// P1-4: CONFIRM step. Sends, AWAITS the response, then shows success OR failure.
+// Never shows success before the network result returns.
+async function confirmAndSubmit() {
+  if (!_festivalPending) return;
+  const { payload } = _festivalPending;
+  const confirmBtn = document.getElementById('festival-confirm-btn');
+  const statusEl = document.getElementById('sheetStatus');
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = payload.testMode ? 'Testing…' : 'Submitting…'; }
+
+  const result = await sendToSheet(payload);
+
+  if (result && result.ok) {
+    if (result.testMode && window.shoonyaShowTestPreview) {
+      if (statusEl) { statusEl.style.display = 'block'; statusEl.style.color = ''; statusEl.innerHTML = window.shoonyaShowTestPreview(result.json || result); }
+      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Run another test'; }
+    } else {
+      const instr = document.getElementById('modal-instruction');
+      if (instr) { instr.innerHTML = '✅ Submitted — saved to Google Sheets and Shoonya has been notified. Keep a copy below if needed:'; instr.style.color = '#27ae60'; }
+      if (confirmBtn) { confirmBtn.style.display = 'none'; }
+      _festivalPending = null;
+    }
+  } else {
+    // Failure — sendToSheet already showed the backup notice. Re-enable retry.
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Try again'; }
+  }
 }
 
 function copyOutput() {
@@ -1085,11 +1284,18 @@ if (typeof MutationObserver !== 'undefined') {
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
-loadConfig();
-addPriceTier('Full Festival Pass', 'All main workshops + Community Class + Opening Party', '', '', '');
-addPriceTier('Day Pass', '', '', '', '');
-addPriceTier('Single Workshop', '90 min class', '', '', '');
-addProgrammeSlot();
+// P0-1 (2026-06-21): each step is independently guarded so one failure can't
+// abort the rest. Previously loadConfig() threw (missing #disc-pct-label) before
+// the default price tiers and programme slot were ever created, leaving the form
+// blank. Now every init step runs even if a sibling step fails.
+(function festivalInit() {
+  function step(fn) { try { fn(); } catch (e) { try { console.error('Festival init step failed:', e); } catch(_){} } }
+  step(loadConfig);
+  step(function() { addPriceTier('Full Festival Pass', 'All main workshops + Community Class + Opening Party', '', '', ''); });
+  step(function() { addPriceTier('Day Pass', '', '', '', ''); });
+  step(function() { addPriceTier('Single Workshop', '90 min class', '', '', ''); });
+  step(function() { addProgrammeSlot(); });
+})();
 </script>
 </body>
 </html>
