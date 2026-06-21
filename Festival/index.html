@@ -190,6 +190,13 @@
       <label>Email <span class="req">*</span></label>
       <input type="email" id="email" placeholder="your@email.com" />
     </div>
+
+    <!-- 2026-06-21: optional co-organiser / partner org (e.g. Ghent Tap Festival
+         is run by Shoonya Dance Centre & Tapdance Promotion). -->
+    <div class="field">
+      <label>Co-organiser / partner <span style="font-weight:400;color:var(--mid);">(optional)</span></label>
+      <input type="text" id="co-organiser" placeholder="e.g. Tapdance Promotion — if co-hosted with another organisation" />
+    </div>
   </div>
 
   <!-- Section 2: Festival Details -->
@@ -390,6 +397,7 @@
   </div>
 </div>
 
+<script src="../form-kernel.js"></script>
 <script src="../config.js"></script>
 <script src="../login-panel.js"></script>
 <!-- P1-3: shared test-mode (?test=1 → preview without saving). P0-2: client-side
@@ -568,8 +576,12 @@ function dayOptions(selected='') {
 }
 
 // ── PROGRAMME SLOTS ───────────────────────────────────────────────────────────
-const ACTIVITY_TYPES = ['Workshop','Social Dance','DJ Set','Performance','Opening Party','Closing Party','Technique Lab','Community Class','Other'];
-const LEVELS = ['All Levels','Beginner','Open Level','Intermediate','Advanced'];
+// 2026-06-21: added Lecture/Discussion, Film Screening, Guided Tour, Museum
+// Exhibition so lecture/film/tour/exhibition items get a real type instead of
+// collapsing into "Other" (real festivals — Leylet Raqs, GIDF — are full of them).
+const ACTIVITY_TYPES = ['Workshop','Social Dance','DJ Set','Performance','Opening Party','Closing Party','Technique Lab','Community Class','Lecture / Discussion','Film Screening','Guided Tour','Museum Exhibition','Other'];
+// 2026-06-21: added 'Adv. Beginner' + 'Standard' (tap-festival vocabulary).
+const LEVELS = ['All Levels','Beginner','Adv. Beginner','Open Level','Intermediate','Advanced','Standard'];
 const STUDIOS = ['Ananta','Ananta 1','Ananta 2','Art Deco','Art Deco 1','Art Deco 2','Studio Aakash (2nd Floor)','Main Stage','Outdoor'];
 let slotCount = 0;
 
@@ -616,6 +628,21 @@ function addProgrammeSlot() {
       <div>
         <div class="slot-label">Studio / Room</div>
         <select class="slot-studio"><option value="">— Studio —</option>${STUDIOS.map(s=>`<option>${s}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:160px;max-width:220px;">
+        <div class="slot-label">Pass inclusion</div>
+        <select class="slot-inclusion">
+          <option value="">Included in pass</option>
+          <option>Separate ticket</option>
+          <option>Add-on</option>
+          <option>Free</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:160px;max-width:220px;">
+        <div class="slot-label">Fee / ticket <span style="font-weight:400;color:var(--mid);">(optional — e.g. 15)</span></div>
+        <input type="text" class="slot-fee" placeholder="Leave blank if included / free"/>
       </div>
     </div>
     <button class="slot-desc-toggle" onclick="toggleSlotDesc(${id})">＋ Add workshop description</button>
@@ -783,69 +810,102 @@ function _festTimeSane(start, end) {
   return e > s;
 }
 
-async function submitForm() {
-  const required = [
-    ['first-name','First Name'],['last-name','Last Name'],['email','Email'],
-    ['festival-name','Festival Name'],['date-start','Start Date'],['date-end','End Date'],
-    ['dance-styles','Dance Style(s)'],['description','Festival Description']
-  ];
-  for (const [id, label] of required) {
-    if (!val(id)) { alert(`Please fill in: ${label}`); document.getElementById(id).focus(); return; }
-  }
-  if (val('date-start') > val('date-end')) { alert('End date must be after start date.'); return; }
+// ── SHARED TYPED-ARRAY COLLECTORS (single source of truth) ──────────────────
+// 2026-06-21 form-kernel migration: each repeater is collected ONCE into a typed
+// array here. BOTH the structured payload (via FESTIVAL_SPEC custom fields) AND
+// the human-readable submissionText blob consume these — no more dual iteration
+// that could drift. Shapes are lifted verbatim from the pre-migration inline
+// collectors so the payload + submissionText stay byte-identical.
 
-  // Sanity check (May 2026): warn on far-future dates
-  const dateWarn = dateFutureWarning(val('date-start'));
-  if (dateWarn && !confirm(dateWarn + '\n\nClick OK to proceed, Cancel to fix.')) {
-    document.getElementById('date-start').focus();
-    return;
-  }
-
-  const progSlots = document.querySelectorAll('#programme-slots .slot-card');
-  if (!progSlots.length) { alert('Please add at least one programme slot.'); return; }
-
-  // P1-5 (2026-06-21): validate EACH programme row, not just "≥1 exists".
-  // Required per row: day, start, end, title, teacher, studio. Plus time-sanity
-  // (end after start unless after-midnight). Level/desc stay optional.
-  const progErrors = [];
-  progSlots.forEach((card, i) => {
-    const n = i + 1;
-    const day     = card.querySelector('.day-select').value;
-    const start   = card.querySelector('.slot-start').value;
-    const end     = card.querySelector('.slot-end').value;
-    const title   = card.querySelector('.slot-title').value.trim();
-    const teacher = card.querySelector('.slot-teacher').value.trim();
-    const studio  = card.querySelector('.slot-studio').value;
-    if (!day)     progErrors.push(`Slot ${n}: pick a day.`);
-    if (!start)   progErrors.push(`Slot ${n}: start time is required.`);
-    if (!end)     progErrors.push(`Slot ${n}: end time is required.`);
-    if (!title)   progErrors.push(`Slot ${n}: title / topic is required.`);
-    if (!teacher) progErrors.push(`Slot ${n}: teacher / artist is required.`);
-    if (!studio)  progErrors.push(`Slot ${n}: studio / room is required.`);
-    if (start && end && !_festTimeSane(start, end)) {
-      progErrors.push(`Slot ${n}: end time (${end}) is before or equal to start (${start}). For an after-midnight slot use a time like 01:00.`);
-    }
+// Programme — every slot, in DOM order (no filtering; validation gates emptiness).
+function festCollectProgramme() {
+  const slots = [];
+  document.querySelectorAll('#programme-slots .slot-card').forEach(card => {
+    slots.push({
+      day:     card.querySelector('.day-select').value,
+      start:   card.querySelector('.slot-start').value,
+      end:     card.querySelector('.slot-end').value,
+      type:    card.querySelector('.slot-type').value,
+      title:   card.querySelector('.slot-title').value.trim(),
+      teacher: card.querySelector('.slot-teacher').value.trim(),
+      level:   card.querySelector('.slot-level').value,
+      studio:  card.querySelector('.slot-studio').value,
+      // 2026-06-21: structured pass-inclusion ('' = included in pass / Separate
+      // ticket / Add-on / Free) + optional per-slot fee/ticket amount.
+      inclusion: card.querySelector('.slot-inclusion')?.value || '',
+      fee:     card.querySelector('.slot-fee')?.value.trim() || '',
+      desc:    card.querySelector('.slot-description').value.trim(),
+    });
   });
-  if (progErrors.length) { alert('Please fix the programme:\n\n• ' + progErrors.join('\n• ')); return; }
+  return slots;
+}
 
-  // P1-6 (2026-06-21): a tier with a label but no amount is rejected; require at
-  // least one of regular/early_bird/member per tier (or an explicit "free"
-  // indication in the label/description). Empty tiers are dropped, not pushed.
-  const priceErrors = [];
-  document.querySelectorAll('#price-tiers .price-tier').forEach((tier, i) => {
+// Teachers — drop a card only when it has no first/last/display name (legacy rule).
+// Returns a RICH shape that carries the raw first/last/display + a `_displayEntered`
+// flag so the submissionText formatter can reproduce the EXACT pre-migration
+// "Legal Name" line condition (display && (first||last)). The FESTIVAL_SPEC
+// `teachers` field strips this back to the golden shape via payloadValue, so the
+// payload carries only {legal_name, display_name, style, bio, link}. ONE collector,
+// both consumers — no drift.
+function festCollectTeachers() {
+  const teachersArr = [];
+  document.querySelectorAll('#teachers-list .person-card').forEach(card => {
+    const first   = card.querySelector('.tc-first')?.value.trim()   || '';
+    const last    = card.querySelector('.tc-last')?.value.trim()    || '';
+    const display = card.querySelector('.tc-display')?.value.trim() || '';
+    const style   = card.querySelector('.tc-style')?.value.trim()   || '';
+    const bio     = card.querySelector('.tc-bio')?.value.trim()     || '';
+    const link    = card.querySelector('.tc-link')?.value.trim()    || '';
+    if (!first && !last && !display) return;
+    teachersArr.push({
+      legal_name: (first + ' ' + last).trim(),
+      display_name: display || (first + ' ' + last).trim(),
+      style, bio, link,
+      _first: first, _last: last, _displayEntered: !!display
+    });
+  });
+  return teachersArr;
+}
+
+// Strip a rich teacher entry to the golden payload shape (drops the _ helpers).
+function festTeacherToPayload(t) {
+  return { legal_name: t.legal_name, display_name: t.display_name, style: t.style, bio: t.bio, link: t.link };
+}
+
+// DJs — drop a card with no name (legacy rule).
+function festCollectDjs() {
+  const djsArr = [];
+  document.querySelectorAll('#djs-list .person-card').forEach(card => {
+    const name   = card.querySelector('.dj-name')?.value.trim()   || '';
+    const styles = card.querySelector('.dj-styles')?.value.trim() || '';
+    const bio    = card.querySelector('.dj-bio')?.value.trim()    || '';
+    if (!name) return;
+    djsArr.push({ name, styles, bio });
+  });
+  return djsArr;
+}
+
+// Pricing — drop only an entirely-empty tier (legacy rule). A label-with-no-amount
+// can't reach here (validation in submitForm blocks it unless marked free).
+function festCollectPricing() {
+  const pricingArr = [];
+  document.querySelectorAll('#price-tiers .price-tier').forEach(tier => {
     const label   = tier.querySelector('.tier-label').value.trim();
     const desc    = tier.querySelector('.tier-desc').value.trim();
     const regular = tier.querySelector('.tier-regular').value.trim();
     const early   = tier.querySelector('.tier-early').value.trim();
     const member  = tier.querySelector('.tier-member').value.trim();
-    const hasAmount = !!(regular || early || member);
-    const looksFree = /\bfree\b|\bgratis\b|€\s*0\b/i.test(label + ' ' + desc);
-    if (label && !hasAmount && !looksFree) {
-      priceErrors.push(`Pricing "${label}": enter at least one price (regular / early bird / member), or write "free" if it's free.`);
-    }
+    if (!label && !desc && !regular && !early && !member) return;
+    pricingArr.push({ label, description: desc, regular, early_bird: early, member });
   });
-  if (priceErrors.length) { alert('Please fix the pricing:\n\n• ' + priceErrors.join('\n• ')); return; }
+  return pricingArr;
+}
 
+// Build the human-readable submission blob from the SAME typed arrays the payload
+// uses. Pure formatter — no DOM repeater reads, only the shared arrays + simple
+// fields. Reproduces the pre-migration text byte-for-byte (sans the timestamp
+// line, which carries new Date() and is normalised by the golden gate).
+function festBuildSubmissionText(slots, teachersArr, djsArr, pricingArr) {
   const firstName   = val('first-name');
   const lastName    = val('last-name');
   const displayName = val('display-name') || `${firstName} ${lastName}`;
@@ -862,6 +922,7 @@ async function submitForm() {
   lines.push(`  Legal Name:  ${firstName} ${lastName}`);
   if (val('display-name')) lines.push(`  Display Name: ${displayName}`);
   lines.push(`  Email:       ${val('email')}`);
+  if (val('co-organiser')) lines.push(`  Co-organiser: ${val('co-organiser')}`);
   lines.push('');
 
   // Festival
@@ -875,22 +936,8 @@ async function submitForm() {
   if (val('dress-code')) lines.push(`  Dress Code:  ${val('dress-code')}`);
   lines.push('');
 
-  // Programme — grouped by day
+  // Programme — grouped by day (consumes the shared `slots` array)
   lines.push('▌ PROGRAMME');
-  const slots = [];
-  progSlots.forEach(card => {
-    slots.push({
-      day:     card.querySelector('.day-select').value,
-      start:   card.querySelector('.slot-start').value,
-      end:     card.querySelector('.slot-end').value,
-      type:    card.querySelector('.slot-type').value,
-      title:   card.querySelector('.slot-title').value.trim(),
-      teacher: card.querySelector('.slot-teacher').value.trim(),
-      level:   card.querySelector('.slot-level').value,
-      studio:  card.querySelector('.slot-studio').value,
-      desc:    card.querySelector('.slot-description').value.trim(),
-    });
-  });
   const byDay = {};
   slots.forEach(s => {
     const key = s.day || 'Unassigned';
@@ -904,60 +951,53 @@ async function submitForm() {
     lines.push(`  ${dayObj ? dayObj.label.toUpperCase() : 'UNASSIGNED'}`);
     byDay[dayKey].sort((a,b) => (a.start||'').localeCompare(b.start||'')).forEach(s => {
       const time = s.start ? `${s.start}${s.end?' – '+s.end:''}` : '';
-      const parts = [time, s.type, s.title, s.teacher, s.level, s.studio].filter(Boolean);
+      const feeLabel = s.fee ? (/^\d/.test(s.fee) ? '€'+s.fee : s.fee) : '';
+      const parts = [time, s.type, s.title, s.teacher, s.level, s.studio, s.inclusion, feeLabel].filter(Boolean);
       lines.push(`    ${parts.join(' | ')}`);
       if (s.desc) lines.push(`      → ${s.desc}`);
     });
     lines.push('');
   });
 
-  // Teachers
-  const teacherCards = document.querySelectorAll('#teachers-list .person-card');
-  if (teacherCards.length) {
+  // Teachers (consumes the shared `teachersArr` — re-derives the legal/first/last
+  // split from the typed entry so the text matches the structured array exactly).
+  if (teachersArr.length) {
     lines.push('▌ TEACHERS & ARTISTS');
-    teacherCards.forEach((card, i) => {
-      const first   = card.querySelector('.tc-first')?.value.trim()   || '';
-      const last    = card.querySelector('.tc-last')?.value.trim()    || '';
-      const display = card.querySelector('.tc-display')?.value.trim() || '';
-      const style   = card.querySelector('.tc-style')?.value.trim()   || '';
-      const bio     = card.querySelector('.tc-bio')?.value.trim()     || '';
-      const link    = card.querySelector('.tc-link')?.value.trim()    || '';
-      if (!first && !last && !display) return;
+    teachersArr.forEach((t, i) => {
+      const first   = t._first || '';
+      const last    = t._last || '';
+      const display = t._displayEntered ? (t.display_name || '') : '';
+      // Exact pre-migration condition: header uses display || "first last";
+      // Legal Name line prints iff a display was entered AND there's a first/last.
       lines.push(`  ${i+1}. ${display || (first+' '+last).trim()}`);
       if (display && (first||last)) lines.push(`     Legal Name: ${(first+' '+last).trim()}`);
-      if (style)   lines.push(`     Style(s):   ${style}`);
-      if (bio)     lines.push(`     Bio:        ${bio}`);
-      if (link)    lines.push(`     Link:       ${link}`);
+      if (t.style) lines.push(`     Style(s):   ${t.style}`);
+      if (t.bio)   lines.push(`     Bio:        ${t.bio}`);
+      if (t.link)  lines.push(`     Link:       ${t.link}`);
     });
     lines.push('');
   }
 
-  // DJs
-  const djCards = document.querySelectorAll('#djs-list .person-card');
-  if (djCards.length) {
+  // DJs (consumes the shared `djsArr`)
+  if (djsArr.length) {
     lines.push('▌ DJs');
-    djCards.forEach((card, i) => {
-      const name   = card.querySelector('.dj-name')?.value.trim()   || '';
-      const styles = card.querySelector('.dj-styles')?.value.trim() || '';
-      const bio    = card.querySelector('.dj-bio')?.value.trim()    || '';
-      if (!name) return;
-      lines.push(`  ${i+1}. ${name}`);
-      if (styles) lines.push(`     Music: ${styles}`);
-      if (bio)    lines.push(`     Bio:   ${bio}`);
+    djsArr.forEach((d, i) => {
+      lines.push(`  ${i+1}. ${d.name}`);
+      if (d.styles) lines.push(`     Music: ${d.styles}`);
+      if (d.bio)    lines.push(`     Bio:   ${d.bio}`);
     });
     lines.push('');
   }
 
-  // Pricing
-  const priceTiers = document.querySelectorAll('#price-tiers .price-tier');
-  if (priceTiers.length) {
+  // Pricing (consumes the shared `pricingArr`)
+  if (pricingArr.length) {
     lines.push('▌ PRICING');
-    priceTiers.forEach(tier => {
-      const label   = tier.querySelector('.tier-label').value.trim();
-      const desc    = tier.querySelector('.tier-desc').value.trim();
-      const regular = tier.querySelector('.tier-regular').value.trim();
-      const early   = tier.querySelector('.tier-early').value.trim();
-      const member  = tier.querySelector('.tier-member').value.trim();
+    pricingArr.forEach(t => {
+      const label   = t.label;
+      const desc    = t.description;
+      const regular = t.regular;
+      const early   = t.early_bird;
+      const member  = t.member;
       if (!label && !regular) return;
       lines.push(`  ${label || 'Ticket'}:`);
       if (desc)    lines.push(`    Includes:    ${desc}`);
@@ -998,91 +1038,176 @@ async function submitForm() {
   lines.push(`Submitted: ${new Date().toLocaleString('en-GB')}`);
   lines.push('═══════════════════════════════════════════════════════');
 
-  const submissionText = lines.join('\n');
+  return lines.join('\n');
+}
 
-  // Build structured teachers/djs/pricing arrays (already collected above for
-  // the text blob — re-collect here so the backend gets typed fields, not
-  // just a console banner string).
-  const teachersArr = [];
-  document.querySelectorAll('#teachers-list .person-card').forEach(card => {
-    const first   = card.querySelector('.tc-first')?.value.trim()   || '';
-    const last    = card.querySelector('.tc-last')?.value.trim()    || '';
-    const display = card.querySelector('.tc-display')?.value.trim() || '';
-    const style   = card.querySelector('.tc-style')?.value.trim()   || '';
-    const bio     = card.querySelector('.tc-bio')?.value.trim()     || '';
-    const link    = card.querySelector('.tc-link')?.value.trim()    || '';
-    if (!first && !last && !display) return;
-    teachersArr.push({
-      legal_name: (first + ' ' + last).trim(),
-      display_name: display || (first + ' ' + last).trim(),
-      style, bio, link
-    });
+// ── FESTIVAL_SPEC — single declarative source for the structured payload ──────
+// Simple top-level fields are kind:'text' (the kernel trims them, matching the
+// old val() reads). Fields that feed MULTIPLE payload keys are split across
+// entries with the same `dom` (e.g. festival-name → title + event_title) — each
+// reads the same input. The repeaters are kind:'custom' and reuse the shared
+// typed-array collectors above. review:false everywhere — openFestivalReview is
+// hand-written and owns the user-facing review (same call we made for social).
+// There is NO draft for this form, so no draftCollect/draftRestore are defined.
+const FESTIVAL_SPEC = [
+  // ── Identity ──
+  // teacher_name + organiser_name both = displayName (val('display-name') ||
+  // "<first> <last>"). Driven off display-name's input with a payloadValue.
+  { key:'teacher_name', payloadKey:'teacher_name', dom:'display-name', kind:'text', review:false,
+    payloadValue: () => (val('display-name') || `${val('first-name')} ${val('last-name')}`) },
+  { key:'organiser_name', payloadKey:'organiser_name', dom:'display-name', kind:'text', review:false,
+    payloadValue: () => (val('display-name') || `${val('first-name')} ${val('last-name')}`) },
+  { key:'organiser_legal_name', payloadKey:'organiser_legal_name', dom:'first-name', kind:'text', review:false,
+    payloadValue: () => `${val('first-name')} ${val('last-name')}`.trim() },
+  { key:'email', payloadKey:'email', dom:'email', kind:'text', review:false },
+  // 2026-06-21: optional co-organiser / partner org → co_organiser key.
+  { key:'co_organiser', payloadKey:'co_organiser', dom:'co-organiser', kind:'text', review:false },
+
+  // ── Festival meta ──
+  // festival-name → title + event_title (two keys, one input)
+  { key:'title', payloadKey:'title', dom:'festival-name', kind:'text', review:false },
+  { key:'event_title', payloadKey:'event_title', dom:'festival-name', kind:'text', review:false },
+  { key:'tagline', payloadKey:'tagline', dom:'tagline', kind:'text', review:false },
+  // date-start → start_date + date ; date-end → end_date
+  { key:'start_date', payloadKey:'start_date', dom:'date-start', kind:'text', review:false },
+  { key:'date', payloadKey:'date', dom:'date-start', kind:'text', review:false },
+  { key:'end_date', payloadKey:'end_date', dom:'date-end', kind:'text', review:false },
+  { key:'dance_style', payloadKey:'dance_style', dom:'dance-styles', kind:'text', review:false },
+  { key:'venue', payloadKey:'venue', dom:'venue', kind:'text', review:false },
+  { key:'language', payloadKey:'language', dom:'language', kind:'text', review:false },
+  { key:'dress_code', payloadKey:'dress_code', dom:'dress-code', kind:'text', review:false },
+
+  // ── Structured collections (repeaters) — reuse the shared typed collectors ──
+  { key:'programme', payloadKey:'programme', dom:'programme-slots', kind:'custom', review:false,
+    collect: () => festCollectProgramme() },
+  { key:'teachers', payloadKey:'teachers', dom:'teachers-list', kind:'custom', review:false,
+    collect: () => festCollectTeachers(),
+    payloadValue: (arr) => (arr || []).map(festTeacherToPayload) },
+  { key:'djs', payloadKey:'djs', dom:'djs-list', kind:'custom', review:false,
+    collect: () => festCollectDjs() },
+  { key:'pricing', payloadKey:'pricing', dom:'price-tiers', kind:'custom', review:false,
+    collect: () => festCollectPricing() },
+
+  // ── Pricing meta + group discount ──
+  { key:'early_bird_deadline', payloadKey:'early_bird_deadline', dom:'early-bird-deadline', kind:'text', review:false },
+  { key:'free_entry_note', payloadKey:'free_entry_note', dom:'free-entry-note', kind:'text', review:false },
+  // group_min/price are <input type=number> → read untrimmed string (val() trims,
+  // but they're numeric so trimming is a no-op; keep kind:'text' for parity with
+  // the old val() reads which trimmed everything).
+  { key:'group_min', payloadKey:'group_min', dom:'group-min', kind:'text', review:false },
+  { key:'group_price', payloadKey:'group_price', dom:'group-price', kind:'text', review:false },
+  { key:'group_perk', payloadKey:'group_perk', dom:'group-perk', kind:'text', review:false },
+
+  // ── Long-form ──
+  // description → description + approved_description (two keys, one input)
+  { key:'description', payloadKey:'description', dom:'description', kind:'text', review:false },
+  { key:'approved_description', payloadKey:'approved_description', dom:'description', kind:'text', review:false },
+  { key:'practical', payloadKey:'practical', dom:'practical', kind:'text', review:false },
+  // notes → note_shoonya + notes (two keys, one input)
+  { key:'note_shoonya', payloadKey:'note_shoonya', dom:'notes', kind:'text', review:false },
+  { key:'notes', payloadKey:'notes', dom:'notes', kind:'text', review:false },
+];
+
+async function submitForm() {
+  const required = [
+    ['first-name','First Name'],['last-name','Last Name'],['email','Email'],
+    ['festival-name','Festival Name'],['date-start','Start Date'],['date-end','End Date'],
+    ['dance-styles','Dance Style(s)'],['description','Festival Description']
+  ];
+  for (const [id, label] of required) {
+    if (!val(id)) { alert(`Please fill in: ${label}`); document.getElementById(id).focus(); return; }
+  }
+  if (val('date-start') > val('date-end')) { alert('End date must be after start date.'); return; }
+
+  // Sanity check (May 2026): warn on far-future dates
+  const dateWarn = dateFutureWarning(val('date-start'));
+  if (dateWarn && !confirm(dateWarn + '\n\nClick OK to proceed, Cancel to fix.')) {
+    document.getElementById('date-start').focus();
+    return;
+  }
+
+  const progSlots = document.querySelectorAll('#programme-slots .slot-card');
+  if (!progSlots.length) { alert('Please add at least one programme slot.'); return; }
+
+  // P1-5 (2026-06-21): validate EACH programme row, not just "≥1 exists".
+  // Required per row: day, start, end, title, teacher, studio. Plus time-sanity
+  // (end after start unless after-midnight). Level/desc stay optional.
+  const progErrors = [];
+  // 2026-06-21 (Codex real-festival pass): teacher + studio are required only for
+  // teaching/performing slots. Lectures, films, guided tours, museum-exhibition
+  // hours and "Other" often have no teacher and no studio (e.g. self-guided
+  // exhibition windows), so requiring them blocked those exact real-festival items.
+  const NO_STAFF_TYPES = ['Lecture / Discussion','Film Screening','Guided Tour','Museum Exhibition','Other'];
+  progSlots.forEach((card, i) => {
+    const n = i + 1;
+    const day     = card.querySelector('.day-select').value;
+    const start   = card.querySelector('.slot-start').value;
+    const end     = card.querySelector('.slot-end').value;
+    const type    = card.querySelector('.slot-type').value;
+    const title   = card.querySelector('.slot-title').value.trim();
+    const teacher = card.querySelector('.slot-teacher').value.trim();
+    const studio  = card.querySelector('.slot-studio').value;
+    const staffOptional = NO_STAFF_TYPES.includes(type);
+    if (!day)     progErrors.push(`Slot ${n}: pick a day.`);
+    if (!start)   progErrors.push(`Slot ${n}: start time is required.`);
+    if (!end)     progErrors.push(`Slot ${n}: end time is required.`);
+    if (!title)   progErrors.push(`Slot ${n}: title / topic is required.`);
+    if (!teacher && !staffOptional) progErrors.push(`Slot ${n}: teacher / artist is required.`);
+    if (!studio  && !staffOptional) progErrors.push(`Slot ${n}: studio / room is required.`);
+    if (start && end && !_festTimeSane(start, end)) {
+      progErrors.push(`Slot ${n}: end time (${end}) is before or equal to start (${start}). For an after-midnight slot use a time like 01:00.`);
+    }
   });
+  if (progErrors.length) { alert('Please fix the programme:\n\n• ' + progErrors.join('\n• ')); return; }
 
-  const djsArr = [];
-  document.querySelectorAll('#djs-list .person-card').forEach(card => {
-    const name   = card.querySelector('.dj-name')?.value.trim()   || '';
-    const styles = card.querySelector('.dj-styles')?.value.trim() || '';
-    const bio    = card.querySelector('.dj-bio')?.value.trim()    || '';
-    if (!name) return;
-    djsArr.push({ name, styles, bio });
-  });
-
-  const pricingArr = [];
-  document.querySelectorAll('#price-tiers .price-tier').forEach(tier => {
+  // P1-6 (2026-06-21): a tier with a label but no amount is rejected; require at
+  // least one of regular/early_bird/member per tier (or an explicit "free"
+  // indication in the label/description). Empty tiers are dropped, not pushed.
+  const priceErrors = [];
+  document.querySelectorAll('#price-tiers .price-tier').forEach((tier, i) => {
     const label   = tier.querySelector('.tier-label').value.trim();
     const desc    = tier.querySelector('.tier-desc').value.trim();
     const regular = tier.querySelector('.tier-regular').value.trim();
     const early   = tier.querySelector('.tier-early').value.trim();
     const member  = tier.querySelector('.tier-member').value.trim();
-    // P1-6: drop a tier only when it's entirely empty. A label-with-no-amount
-    // can't reach here (validation blocks it above unless it's marked free).
-    if (!label && !desc && !regular && !early && !member) return;
-    pricingArr.push({ label, description: desc, regular, early_bird: early, member });
+    const hasAmount = !!(regular || early || member);
+    const looksFree = /\bfree\b|\bgratis\b|€\s*0\b/i.test(label + ' ' + desc);
+    if (label && !hasAmount && !looksFree) {
+      priceErrors.push(`Pricing "${label}": enter at least one price (regular / early bird / member), or write "free" if it's free.`);
+    }
   });
+  if (priceErrors.length) { alert('Please fix the pricing:\n\n• ' + priceErrors.join('\n• ')); return; }
 
-  const payload = {
+  const uitpasPct = CONFIG.uitpasDiscount || 80;
+
+  // SINGLE SOURCE: collect each repeater ONCE into a typed array. The structured
+  // payload (via FESTIVAL_SPEC custom fields) AND the submissionText blob below
+  // both consume these — no more dual iteration / drift.
+  const slots       = festCollectProgramme();
+  const teachersArr = festCollectTeachers();
+  const djsArr      = festCollectDjs();
+  const pricingArr  = festCollectPricing();
+
+  // Human-readable backup blob — built from the SAME typed arrays the payload uses.
+  const submissionText = festBuildSubmissionText(slots, teachersArr, djsArr, pricingArr);
+
+  // 2026-06-21 form-kernel migration: the structured payload is now built
+  // declaratively from FESTIVAL_SPEC (single source for collect/payload of every
+  // simple field + the four repeaters). The values that can't live in the spec —
+  // module-level festivalDays, the computed uitpas_pct, the routing/constant meta,
+  // and the submissionText blob — are merged as `extra`. (photos[] + testMode are
+  // merged AFTER this, async/conditionally, exactly as before.) This reproduces
+  // the EXACT shape the old inline payload sent.
+  const payload = FormKernel.buildPayload(FESTIVAL_SPEC, {
     action: 'generateOutputPackage',
     type: 'festival',
-    // Identity
-    teacher_name: displayName,
-    organiser_name: displayName,
-    organiser_legal_name: (firstName + ' ' + lastName).trim(),
-    email: val('email'),
-    // Festival meta
-    title: val('festival-name'),
-    event_title: val('festival-name'),
-    tagline: val('tagline'),
-    start_date: val('date-start'),
-    end_date: val('date-end'),
-    date: val('date-start'),
-    dance_style: val('dance-styles'),
-    venue: val('venue'),
-    language: val('language'),
-    dress_code: val('dress-code'),
     festival_days: festivalDays,
-    // Structured collections
-    programme: slots,
-    teachers: teachersArr,
-    djs: djsArr,
-    pricing: pricingArr,
-    early_bird_deadline: val('early-bird-deadline'),
-    free_entry_note: val('free-entry-note'),
-    group_min: val('group-min'),
-    group_price: val('group-price'),
-    group_perk: val('group-perk'),
     uitpas_pct: uitpasPct,
-    // Long-form
-    description: val('description'),
-    approved_description: val('description'),
-    practical: val('practical'),
-    note_shoonya: val('notes'),
-    notes: val('notes'),
+    structured: true,
     // Backup text blob — kept so Swapnil's raw email contains the readable
     // submission and the generated content package still has full context.
     submissionText,
-    structured: true,
-  };
+  });
 
   // P0-2 (2026-06-21): convert each uploaded image via shoonyaResizeImage into a
   // structured payload.photos = [{role,label,b64,filename}] exactly like

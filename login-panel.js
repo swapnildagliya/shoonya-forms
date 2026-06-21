@@ -38,9 +38,16 @@
   }
 
   // ── Field pre-fill ──────────────────────────────────────
+  // 2026-06-21 (Codex Phase-4 P0): only fill EMPTY fields — never clobber what the
+  // user already typed. The prefill runs on a 50ms setTimeout, so the old
+  // unconditional overwrite could wipe a user-edited Festival display-name (and the
+  // teacher_name/organiser_name derived from it) right after they typed it, and made
+  // the deterministic golden non-reproducible. Scope: fill() only targets
+  // first-name/last-name/display-name/email — i.e. Festival + profile.html; the
+  // submission forms use their own shoonya:login listeners (f-teacher-*), unaffected.
   function fill(id, value) {
     const el = document.getElementById(id);
-    if (el && value) {
+    if (el && value && !el.value) {
       el.value = value;
       el.dispatchEvent(new Event('input', { bubbles: true }));
     }
