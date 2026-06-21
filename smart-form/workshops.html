@@ -1233,6 +1233,9 @@ async function _fileToB64(input) {
   if (!file) return null;
   // Auto-shrink before encoding so big phone photos (15-20MB) don't break the
   // Apps Script POST. Returns resized base64 (no data: prefix). See image-resize.js.
+  // FIX G: shoonyaResizeImage now rejects (throws) for HEIC files that the
+  // browser can't decode. Let that rejection propagate — submitForm's try/catch
+  // will surface the message to the teacher instead of silently uploading bad bytes.
   if (window.shoonyaResizeImage) {
     const out = await window.shoonyaResizeImage(file, { maxDim: 2000, quality: 0.85 });
     return out ? out.b64 : null;
@@ -1401,6 +1404,9 @@ function _buildReviewSummaryHtml() {
       state.partner ? _reviewRow('Partner required?', state.partner, '#partner-chips') : '',
       getNum('f-max') ? _reviewRow('Max students', getNum('f-max'), '#f-max') : '',
       getNum('f-min') ? _reviewRow('Min participants', getNum('f-min'), '#f-min') : '',
+      // FIX E: add fields that are submitted but were missing from the review.
+      getNum('f-min-age') ? _reviewRow('Min age', getNum('f-min-age'), '#f-min-age') : '',
+      (function(){ const chip = document.querySelector('#min-cond-chips .chip.selected'); return chip ? _reviewRow('Cancel if under min', chip.dataset.val === 'true' ? 'Yes' : 'No', '#min-cond-chips') : ''; })(),
     ]),
     _reviewSection('Content', [
       getVal('f-description') ? _reviewRow('Description', getVal('f-description'), '#f-description') : '',
@@ -1408,6 +1414,16 @@ function _buildReviewSummaryHtml() {
       getVal('f-bring') ? _reviewRow('What to bring', getVal('f-bring'), '#f-bring') : '',
       getVal('f-note') ? _reviewRow('Note to Shoonya', getVal('f-note'), '#f-note') : '',
     ]),
+    // FIX E: show photo upload status (guest + host) so teacher can verify before submit.
+    (function(){
+      const guestName = getVal('f-guest-teacher');
+      const hasGuestPhoto = !!document.getElementById('f-guest-photo')?.files?.[0];
+      const hasHostPhoto  = !!document.getElementById('f-host-photo')?.files?.[0];
+      const parts = [];
+      if (guestName) parts.push('Guest (' + guestName + '): ' + (hasGuestPhoto ? '✓ photo uploaded' : '⚠ no photo'));
+      if (hasHostPhoto) parts.push('Host: ✓ photo uploaded');
+      return parts.length ? _reviewSection('Photos', [_reviewRow('', parts.join('\n'), null)]) : '';
+    })(),
   ].filter(Boolean).join('');
 }
 
@@ -1696,12 +1712,23 @@ function wsRestoreDraft(d) {
       if (t.dataset.mode === d.datePattern) t.click();
     });
   }
+  // FIX A: if we are about to restore specific dates, first remove ANY seeded
+  // blank rows so they don't linger alongside the restored ones. The page seeds
+  // one empty row on load; if we then addSpecificDate() for each saved date we
+  // end up with N+1 rows and a stray blank that corrupts collectSessions().
+  if (d.datePattern === 'specific' && Array.isArray(d.specificDates) && d.specificDates.length) {
+    document.querySelectorAll('#specific-dates-list [data-ws-specific-date]').forEach(inp => {
+      if (!inp.value) inp.closest('.specific-date-row')?.remove();
+    });
+  }
   (d.specificDates || []).forEach(dateVal => {
     addSpecificDate(dateVal);
   });
-  // 2026-05-24 audit S10: restore the toggles + min-cancel chip + per-session
-  // time overrides. Restore must happen after specific dates + sessions preview
-  // so the time-input list is already rendered.
+  // FIX A: restore toggles, min-cancel chip, and per-session time overrides.
+  // toggleSessionTimes re-renders #per-session-times-list; toggleSingleSession
+  // re-renders #dropin-sessions-list. Both must fire BEFORE we set field values
+  // so the DOM elements exist. All of this is synchronous (no setTimeout) so
+  // collectSessions() reads the correct values when called from submit.
   const singleCb = document.getElementById('f-single-session');
   if (singleCb && d.singleSession) { singleCb.checked = true; toggleSingleSession(singleCb); }
   const coupleCb = document.getElementById('f-couple-price');
@@ -1713,15 +1740,29 @@ function wsRestoreDraft(d) {
     const chip = document.querySelector('#min-cond-chips .chip[data-val="true"]');
     if (chip) selectMinCond(chip);
   }
-  // Apply per-session time overrides (after generateSessions has rendered the
-  // per-session inputs via toggleSessionTimes / specific-date population).
+  // FIX A: apply per-session time overrides SYNCHRONOUSLY — the per-session
+  // inputs are now in the DOM (toggleSessionTimes was called above). A
+  // setTimeout was used before, but that caused the fields to appear in the DOM
+  // without values until after the first microtask tick, which let an early
+  // collectSessions() call (e.g. from a change listener) miss the values.
   if (Array.isArray(d.perSessionTimes) && d.perSessionTimes.length) {
-    setTimeout(() => {
-      d.perSessionTimes.forEach(o => {
-        const inp = document.querySelector('#per-session-times-list input[data-idx="' + o.idx + '"][data-field="' + o.field + '"]');
-        if (inp) inp.value = o.value;
-      });
-    }, 0);
+    d.perSessionTimes.forEach(o => {
+      const inp = document.querySelector('#per-session-times-list input[data-idx="' + o.idx + '"][data-field="' + o.field + '"]');
+      if (inp) inp.value = o.value;
+    });
+  }
+  // FIX A: restore per-session drop-in checkboxes. collectSessions() reads
+  // #dropin-sessions-list checkboxes keyed by session date; re-check the ones
+  // saved in the draft. Must happen after toggleSingleSession() rendered the list.
+  if (d.singleSession && Array.isArray(d.specificDates)) {
+    const sessions = generateSessions();
+    document.querySelectorAll('#dropin-sessions-list input[type="checkbox"]').forEach(cb => {
+      // Default: all sessions are drop-in when the toggle is on. Re-check saved
+      // drop-in state if we have it (the draft doesn't persist per-session drop-in
+      // exclusions explicitly, so leave all checked — same behaviour as before
+      // the toggle was restored; collectSessions will read them correctly).
+      cb.checked = true;
+    });
   }
   showWsDraftBanner(d.savedAt);
 }

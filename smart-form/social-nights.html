@@ -721,15 +721,36 @@ function ssSetTime(id, val) {
 // and ssCollectDraft both walk #programme-rows; if we update one and forget
 // the other they drift. Passing nullTopic:true coerces blank topics to null
 // (submit shape); nullTopic:false stores '' (draft shape).
+// FIX C helper: compute slot end time from start (HH:MM) + duration (minutes).
+// Handles wrap past midnight. Returns '' if either input is missing/invalid.
+function _ssSlotEnd(start, durationMinutes) {
+  if (!start || !durationMinutes) return '';
+  const parts = start.split(':');
+  if (parts.length < 2) return '';
+  const startMins = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+  const dur = parseInt(durationMinutes, 10);
+  if (!isFinite(startMins) || !isFinite(dur) || dur <= 0) return '';
+  const endMins = (startMins + dur) % (24 * 60);
+  const hh = String(Math.floor(endMins / 60)).padStart(2, '0');
+  const mm = String(endMins % 60).padStart(2, '0');
+  return hh + ':' + mm;
+}
+
 function ssCollectProgramme(opts) {
   const nullTopic = opts && opts.nullTopic;
   return [...document.querySelectorAll('#programme-rows .prog-card')].map(card => {
     const typeEl = card.querySelector('.chip.selected');
     const topicRaw = (card.querySelector('[data-slot="topic"]')?.value || '').trim();
+    const start    = card.querySelector('[data-slot="start"]')?.value    || '';
+    const duration = card.querySelector('[data-slot="duration"]')?.value || '';
     return {
       type: typeEl ? typeEl.dataset.type : 'workshop',
-      start: card.querySelector('[data-slot="start"]')?.value || '',
-      duration: card.querySelector('[data-slot="duration"]')?.value || '',
+      start,
+      duration,
+      // FIX C: compute end = start + duration so backend's progList formatter
+      // (code.gs ~883) can render "19:30–20:30" instead of "19:30–" for each slot.
+      // duration is kept so the backend can recompute if needed.
+      end: _ssSlotEnd(start, duration),
       level: card.querySelector('[data-slot="level"]')?.value || '',
       style: (card.querySelector('[data-slot="style"]')?.value || '').trim(),
       teacher: (card.querySelector('[data-slot="teacher"]')?.value || '').trim(),
@@ -770,6 +791,9 @@ async function _fileToB64(input) {
   if (!file) return null;
   // Auto-shrink before encoding so big phone photos (15-20MB) don't break the
   // Apps Script POST. Returns resized base64 (no data: prefix). See image-resize.js.
+  // FIX G: shoonyaResizeImage now rejects (throws) for HEIC files that the
+  // browser can't decode. Let that rejection propagate — submitForm's try/catch
+  // will surface the message to the teacher instead of silently uploading bad bytes.
   if (window.shoonyaResizeImage) {
     const out = await window.shoonyaResizeImage(file, { maxDim: 2000, quality: 0.85 });
     return out ? out.b64 : null;
@@ -1074,6 +1098,42 @@ function _collectValidationErrors() {
   if (!document.getElementById('f-date').value) errors.push('Date is required.');
   if (!document.getElementById('f-doors').value) errors.push('Doors open time is required.');
   if (!document.getElementById('f-dn-start').value) errors.push('Dance floor start time is required.');
+  // FIX B: time sanity validation. Convert HH:MM to minutes-since-midnight;
+  // times below 07:00 are treated as next-morning (add 24×60) so after-midnight
+  // end times compare correctly against same-evening doors/floor times.
+  // Mirrors the pattern used in workshops.html time checks.
+  (function() {
+    const NEXT_MORNING_THRESHOLD = 7 * 60; // times < 07:00 → next day
+    function toMins(hhmm) {
+      if (!hhmm) return null;
+      const parts = hhmm.split(':');
+      if (parts.length < 2) return null;
+      const m = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+      return isFinite(m) ? m : null;
+    }
+    function toMinsNorm(hhmm) {
+      const m = toMins(hhmm);
+      if (m === null) return null;
+      return m < NEXT_MORNING_THRESHOLD ? m + 24 * 60 : m;
+    }
+    const doorsVal   = document.getElementById('f-doors')?.value    || '';
+    const endVal     = document.getElementById('f-end')?.value      || '';
+    const dnStartVal = document.getElementById('f-dn-start')?.value || '';
+    const dnEndVal   = document.getElementById('f-dn-end')?.value   || '';
+    const doorsMins   = toMinsNorm(doorsVal);
+    const endMins     = endVal     ? toMinsNorm(endVal)     : null;
+    const dnStartMins = dnStartVal ? toMinsNorm(dnStartVal) : null;
+    const dnEndMins   = dnEndVal   ? toMinsNorm(dnEndVal)   : null;
+    if (doorsMins !== null && endMins !== null && endMins <= doorsMins) {
+      errors.push('End time (' + endVal + ') is before or equal to Doors open (' + doorsVal + '). If the event ends after midnight use a time like 02:00.');
+    }
+    if (doorsMins !== null && dnStartMins !== null && dnStartMins < doorsMins) {
+      errors.push('Dance floor opens (' + dnStartVal + ') is before Doors open (' + doorsVal + ').');
+    }
+    if (dnStartMins !== null && dnEndMins !== null && dnEndMins <= dnStartMins) {
+      errors.push('Dance floor closes (' + dnEndVal + ') is before or equal to when it opens (' + dnStartVal + ').');
+    }
+  })();
   const musicSel = document.querySelector('#music-type-chips .music-chip.selected');
   if (!musicSel) errors.push('Select who is handling the music.');
   // 2026-05-24 audit V9: require DJ name when "guest-dj" is selected.
@@ -1136,21 +1196,32 @@ function _collectValidationErrors() {
 function _buildReviewSummaryHtml() {
   const styles = getSelectedStyles();
   const musicSelected = document.querySelector('#music-type-chips .music-chip.selected');
+  const musicVal = musicSelected ? musicSelected.dataset.val : '';
   const genres = [...document.querySelectorAll('#genre-chips .music-chip.selected')].map(c => c.dataset.val || c.textContent.trim());
-  const programmeRows = [...document.querySelectorAll('#programme-rows .prog-card')].map((card, i) => {
-    const typeEl = card.querySelector('.chip.selected');
+  // FIX E: use ssCollectProgramme (same getter as submit) so review matches payload.
+  // Shows start–end per slot (end is computed via _ssSlotEnd, same as submit path).
+  const programmeRows = ssCollectProgramme({ nullTopic: false }).map(r => {
     return [
-      typeEl ? typeEl.dataset.type : '',
-      card.querySelector('[data-slot="start"]')?.value || '',
-      card.querySelector('[data-slot="duration"]')?.value || '',
-      card.querySelector('[data-slot="style"]')?.value || '',
-      card.querySelector('[data-slot="teacher"]')?.value || '',
+      r.type,
+      r.start + (r.end ? '–' + r.end : (r.duration ? ' (' + r.duration + ' min)' : '')),
+      r.style,
+      r.teacher,
+      r.topic,
     ].filter(Boolean).join(' · ');
   });
   const pricingRows = [...document.querySelectorAll('#pricing-rows .pricing-tier')].map(row => {
     const inputs = row.querySelectorAll('input');
     return (inputs[0]?.value || '') + ': €' + (inputs[1]?.value || '0');
   });
+  // FIX E: count photos that will be submitted (DJ + per-slot teachers).
+  const djPhotoFile = document.getElementById('f-dj-photo')?.files?.[0];
+  const slotPhotoCount = [...document.querySelectorAll('#programme-rows .prog-card [data-slot="teacher-photo"]')]
+    .filter(el => el.files?.[0]).length;
+  const photoSummaryParts = [];
+  if (djPhotoFile) photoSummaryParts.push('DJ photo ✓');
+  if (slotPhotoCount) photoSummaryParts.push(slotPhotoCount + ' slot photo(s) ✓');
+
+  const musicLabels = { 'guest-dj': 'Guest DJ', 'teacher-dj': 'A Shoonya teacher', 'playlist': 'Playlist only' };
 
   return [
     _reviewSection('Who', [
@@ -1162,17 +1233,20 @@ function _buildReviewSummaryHtml() {
       _reviewRow('Title', document.getElementById('f-title').value, '#f-title'),
       _reviewRow('Date', document.getElementById('f-date').value, '#f-date'),
       _reviewRow('Doors open', document.getElementById('f-doors').value, '#f-doors'),
-      _reviewRow('Event ends', document.getElementById('f-end').value || '(not set)', '#f-end'),
+      _reviewRow('Event ends', document.getElementById('f-end').value || '', '#f-end'),
       _reviewRow('Dress code', document.getElementById('f-dresscode').value || '', '#f-dresscode'),
     ]),
     _reviewSection('Dance floor', [
       _reviewRow('Floor opens', document.getElementById('f-dn-start').value, '#f-dn-start'),
-      _reviewRow('Floor closes', document.getElementById('f-dn-end').value || '', '#f-dn-end'),
-      _reviewRow('Music handled by', (function(){ var musicLabels={'guest-dj':'Guest DJ','teacher-dj':'A Shoonya teacher','playlist':'Playlist only'}; var v=musicSelected?musicSelected.dataset.val:''; return musicLabels[v]||v; })(), '#music-type-chips'),
-      document.getElementById('f-dj-name').value ? _reviewRow('DJ', document.getElementById('f-dj-name').value, '#f-dj-name') : '',
-      document.getElementById('f-dj-social').value ? _reviewRow('DJ socials', document.getElementById('f-dj-social').value, '#f-dj-social') : '',
-      document.getElementById('f-teacher-dj').value ? _reviewRow('Teacher-DJ', document.getElementById('f-teacher-dj').value, '#f-teacher-dj') : '',
+      document.getElementById('f-dn-end').value ? _reviewRow('Floor closes', document.getElementById('f-dn-end').value, '#f-dn-end') : '',
+      _reviewRow('Music handled by', musicLabels[musicVal] || musicVal, '#music-type-chips'),
+      // FIX E: show DJ name + fee together (mirrors payload shape)
+      (musicVal === 'guest-dj' && document.getElementById('f-dj-name').value) ?
+        _reviewRow('DJ', document.getElementById('f-dj-name').value + (document.getElementById('f-dj-fee')?.value ? ' — €' + document.getElementById('f-dj-fee').value : ''), '#f-dj-name') : '',
+      (musicVal === 'guest-dj' && document.getElementById('f-dj-social').value) ? _reviewRow('DJ socials', document.getElementById('f-dj-social').value, '#f-dj-social') : '',
+      (musicVal === 'teacher-dj' && document.getElementById('f-teacher-dj').value) ? _reviewRow('Teacher-DJ', document.getElementById('f-teacher-dj').value, '#f-teacher-dj') : '',
       genres.length ? _reviewRow('Genres', genres.join(', '), '#genre-chips') : '',
+      photoSummaryParts.length ? _reviewRow('Photos', photoSummaryParts.join(', '), null) : '',
     ]),
     _reviewSection('Programme', [
       programmeRows.length ? _reviewRow('Slots', programmeRows.join('\n'), '#programme-rows') : _reviewRow('Slots', '', '#programme-rows'),

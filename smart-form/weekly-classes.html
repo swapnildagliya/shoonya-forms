@@ -819,6 +819,29 @@ const SAMPLE_LEVEL_DESCRIPTIONS = {
 // Source: WS_STYLE_DATA[style].websiteNote in production.
 const STYLES_WITH_WEBSITE_NOTE = ['Tap Dance', 'Ballet', 'Ballet Pointes', 'Burlesque', 'Argentine Tango'];
 
+// FIX F: styles for which drop-in is permitted. Must match the chip text exactly.
+// "Dance & Fit" chip text is "Dance & Fit" (the &amp; is decoded by the browser).
+const DROPIN_ALLOWED_STYLES = ['Dance & Fit', 'Pilates for Dancers'];
+
+// FIX F: show/hide + enforce the drop-in checkbox based on the selected style.
+// Called whenever the style selection changes (including draft restore).
+function updateDropInVisibility(selectedStyle) {
+  const allowed = DROPIN_ALLOWED_STYLES.includes(selectedStyle);
+  const dropinRow = document.getElementById('dropin-cb')?.closest('label');
+  const dropinFieldsWrap = document.getElementById('drop-in-fields');
+  const dropinCb = document.getElementById('dropin-cb');
+  if (!dropinCb) return;
+  if (allowed) {
+    // Style permits drop-in — show the checkbox row, leave its state alone.
+    if (dropinRow) dropinRow.style.display = '';
+  } else {
+    // Style does not permit drop-in — uncheck + hide both the checkbox and fields.
+    dropinCb.checked = false;
+    if (dropinFieldsWrap) dropinFieldsWrap.classList.add('hidden');
+    if (dropinRow) dropinRow.style.display = 'none';
+  }
+}
+
 function selectSingle(el) {
   el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
@@ -831,6 +854,8 @@ function selectSingle(el) {
     const selectedStyle = el.textContent.replace(/\(.*\)/, '').trim();
     updateStarterChipVisibility(selectedStyle);
     updateWebsiteNoteVisibility(selectedStyle);
+    // FIX F: guard drop-in to allowed styles only.
+    updateDropInVisibility(selectedStyle);
   }
 }
 
@@ -1258,10 +1283,17 @@ function _buildReviewSummaryHtml(ctx) {
     _reviewSection('Levels & schedule', [
       _reviewRow('Levels', levelLines || '(none)', '#level-cards'),
     ]),
-    _reviewSection('Notes', [
-      document.querySelector('.section:nth-of-type(5) textarea')?.value
-        ? _reviewRow('Description', document.querySelector('.section:nth-of-type(5) textarea').value, '.section:nth-of-type(5)')
-        : '',
+    // FIX E: include all submitted fields so review == what's sent.
+    _reviewSection('Details', [
+      document.getElementById('f-description')?.value ? _reviewRow('Description', document.getElementById('f-description').value, '#f-description') : '',
+      document.getElementById('f-prereq')?.value ? _reviewRow('Prerequisites', document.getElementById('f-prereq').value, '#f-prereq') : '',
+      document.getElementById('f-bring')?.value ? _reviewRow('What to bring', document.getElementById('f-bring').value, '#f-bring') : '',
+      document.getElementById('f-max-students')?.value ? _reviewRow('Max students', document.getElementById('f-max-students').value, '#f-max-students') : '',
+      document.querySelector('#min-age-chips .chip.selected')?.textContent.trim() ? _reviewRow('Min age', document.querySelector('#min-age-chips .chip.selected').textContent.trim(), '#min-age-chips') : '',
+      document.getElementById('website-note-input')?.value ? _reviewRow('Website note', document.getElementById('website-note-input').value, '#website-note-input') : '',
+      document.getElementById('dropin-cb')?.checked ? _reviewRow('Drop-in', 'Yes' + (document.getElementById('f-dropin-price')?.value ? ' — €' + document.getElementById('f-dropin-price').value : ''), '#dropin-cb') : '',
+      (function(){ const sel = [...document.querySelectorAll('#open-house-chips .chip.selected')].map(c => c.textContent.trim()); return sel.length ? _reviewRow('Open House', sel.join(', '), '#open-house-chips') : ''; })(),
+      document.getElementById('f-special-notes')?.value ? _reviewRow('Special notes', document.getElementById('f-special-notes').value, '#f-special-notes') : '',
     ]),
   ].filter(Boolean).join('');
 }
@@ -1531,6 +1563,9 @@ function restoreDraft(draft) {
     if (restoredStyle) {
       updateStarterChipVisibility(restoredStyle);
       updateWebsiteNoteVisibility(restoredStyle);
+      // FIX F: apply drop-in guard on restore so a saved drop-in state for a
+      // non-allowed style doesn't silently persist after draft reload.
+      updateDropInVisibility(restoredStyle);
     }
     restoreChip1('semester-chips', draft.semester);
     restoreChip1('lang-chips', draft.lang);
