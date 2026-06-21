@@ -614,6 +614,9 @@ textarea { resize: vertical; line-height: 1.6; }
     </div>
   </div>
 
+  <!-- Save-vs-publish hint -->
+  <div class="save-publish-hint" style="font-size: 0.82rem; color: var(--light); margin: 0 0 18px; line-height: 1.5;">Edits save here instantly. They appear on shoonyadance.com once Shoonya approves your profile.</div>
+
   <!-- Photos section -->
   <div class="section-card" id="photos-card">
     <div class="section-header">
@@ -622,7 +625,7 @@ textarea { resize: vertical; line-height: 1.6; }
     </div>
     <input type="file" id="gallery-input" accept="image/*" style="display:none" onchange="addGalleryPhoto(this)">
     <div id="gallery-grid" class="gallery-grid"></div>
-    <div class="upload-hint">Your first photo becomes your main portrait (shown on the website). Max 4MB each. Use "Set as main" to change which one leads.</div>
+    <div class="upload-hint">Your first photo becomes your main portrait, shown on your shoonyadance.com profile. Any size — we'll shrink it automatically. JPEG or PNG (not HEIC). Use "Set as main" to change which one leads.</div>
   </div>
 
   <!-- Bio section -->
@@ -635,7 +638,7 @@ textarea { resize: vertical; line-height: 1.6; }
     <!-- Read mode -->
     <div id="bio-read">
       <div class="field">
-        <label>Short bio (1–2 sentences — shown on website)</label>
+        <label>Short bio (1–2 sentences — shown on shoonyadance.com)</label>
         <div class="field-val" id="read-bio-short"></div>
       </div>
       <button type="button" class="bio-readmore" id="bio-readmore" style="display:none">Read more</button>
@@ -844,7 +847,7 @@ async function gateLogin() {
       showMsg('gate-msg', 'error', res.error || 'Login failed.');
     }
   } catch (err) {
-    showMsg('gate-msg', 'error', 'Connection error. Please try again.');
+    showMsg('gate-msg', 'error', "Couldn't reach the server — check your connection and try again.");
   } finally {
     setLoading(btn, false, 'View My Profile');
   }
@@ -1270,7 +1273,7 @@ async function saveSection(section) {
       showToast(res.error || 'Save failed', 'error');
     }
   } catch (err) {
-    showToast('Connection error', 'error');
+    showToast("Couldn't reach the server — check your connection and try again.", 'error');
   } finally {
     btns.forEach(b => { b.disabled = false; b.innerHTML = 'Save ' + (section === 'bio' ? 'Bio' : 'Details'); });
   }
@@ -1287,7 +1290,7 @@ async function uploadPhoto(input) {
     // Auto-shrink any size (15-20MB phone photos) before upload — no size limit.
     // shoonyaResizeImage returns base64 WITHOUT the data: prefix, so re-add it.
     const out = await shoonyaResizeImage(file, { maxDim: 2000, quality: 0.85 });
-    if (!out || !out.b64) { showToast('Could not read that photo', 'error'); return; }
+    if (!out || !out.b64) { showToast("Couldn't read that image — try a JPEG or PNG.", 'error'); return; }
     const base64 = 'data:' + (out.type || 'image/jpeg') + ';base64,' + out.b64;
 
     const res = await appsPost({
@@ -1307,12 +1310,12 @@ async function uploadPhoto(input) {
       document.getElementById('avatar-initials').style.display = 'none';
       renderGallery();
       refreshCompleteBanner();
-      showToast('Photo updated ✓', 'success');
+      showToast('Photo saved ✓ — visible on your profile here now', 'success');
     } else {
       showToast(res.error || 'Upload failed', 'error');
     }
   } catch (err) {
-    showToast('Upload error', 'error');
+    showToast("Couldn't upload that photo — try again, or use a JPEG/PNG.", 'error');
   }
 }
 
@@ -1363,7 +1366,7 @@ async function addGalleryPhoto(input) {
   try {
     // Auto-shrink any size before upload — no size limit. (audit 2026-06-21)
     const out = await shoonyaResizeImage(file, { maxDim: 2000, quality: 0.85 });
-    if (!out || !out.b64) { showToast('Could not read that photo', 'error'); return; }
+    if (!out || !out.b64) { showToast("Couldn't read that image — try a JPEG or PNG.", 'error'); return; }
     const base64 = 'data:' + (out.type || 'image/jpeg') + ';base64,' + out.b64;
 
     const res = await appsPost({
@@ -1377,11 +1380,11 @@ async function addGalleryPhoto(input) {
       renderGallery();
       renderHero(false);
       refreshCompleteBanner();
-      showToast('Photo added ✓', 'success');
+      showToast('Photo added ✓ — visible here now', 'success');
     } else {
       showToast(res.error || 'Upload failed', 'error');
     }
-  } catch (err) { showToast('Upload error', 'error'); }
+  } catch (err) { showToast("Couldn't upload that photo — try again, or use a JPEG/PNG.", 'error'); }
 }
 
 async function removeGalleryPhoto(fileId) {
@@ -1401,7 +1404,7 @@ async function removeGalleryPhoto(fileId) {
     } else {
       showToast(res.error || 'Remove failed', 'error');
     }
-  } catch (err) { showToast('Connection error', 'error'); }
+  } catch (err) { showToast("Couldn't reach the server — check your connection and try again.", 'error'); }
 }
 
 async function setMainGalleryPhoto(fileId) {
@@ -1418,7 +1421,7 @@ async function setMainGalleryPhoto(fileId) {
     } else {
       showToast(res.error || 'Update failed', 'error');
     }
-  } catch (err) { showToast('Connection error', 'error'); }
+  } catch (err) { showToast("Couldn't reach the server — check your connection and try again.", 'error'); }
 }
 
 // ── Forgot PIN ────────────────────────────────────────────
@@ -1442,7 +1445,7 @@ async function requestResetCode() {
     } else {
       showMsg('reset-msg', 'error', res.error || 'Could not send code.');
     }
-  } catch { showMsg('reset-msg', 'error', 'Connection error.'); }
+  } catch { showMsg('reset-msg', 'error', "Couldn't reach the server — check your connection and try again."); }
 }
 
 async function doResetPin() {
@@ -1460,7 +1463,7 @@ async function doResetPin() {
     } else {
       showMsg('reset-msg', 'error', res.error || 'Could not reset PIN.');
     }
-  } catch { showMsg('reset-msg', 'error', 'Connection error.'); }
+  } catch { showMsg('reset-msg', 'error', "Couldn't reach the server — check your connection and try again."); }
 }
 
 // ── Language chips ────────────────────────────────────────

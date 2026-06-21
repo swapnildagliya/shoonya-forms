@@ -490,13 +490,13 @@
     </div>
     <div class="field" id="guest-bio-field" style="display:none;">
       <label class="field-label">Guest teacher — short bio (optional)</label>
-      <textarea id="f-guest-bio" placeholder="2–3 sentences for the website. Credentials, style background, where they're from."></textarea>
+      <textarea id="f-guest-bio" placeholder="2–3 sentences for the workshop page on shoonyadance.com. Credentials, style background, where they're from."></textarea>
       <div class="annotation">Used on the event page and promo emails.</div>
     </div>
     <div class="field" id="guest-photo-field" style="display:none;">
       <label class="field-label">Guest teacher photo <span class="req-mark">*</span></label>
       <input type="file" id="f-guest-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
-      <p class="field-hint">JPEG or PNG. Required so the auto-design generator can produce posters for this workshop. Saved to Drive as "<em>guest teacher name</em>.jpg".</p>
+      <p class="field-hint">JPEG or PNG — used on the workshop page and promo posters.</p>
     </div>
     <div class="field">
       <label class="field-label">Video — Google Drive link <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
@@ -1594,6 +1594,11 @@ function wsCollectDraft() {
     field: inp.dataset.field,
     value: inp.value || '',
   })).filter(o => isFinite(o.idx) && o.value);
+  // 2026-06-21: also persist per-session topic text — restore was dropping it.
+  const perSessionTopics = [...document.querySelectorAll('#session-topics-list input[data-field="topic"]')].map(inp => ({
+    idx: parseInt(inp.dataset.idx, 10),
+    topic: inp.value || '',
+  })).filter(o => isFinite(o.idx) && o.topic);
   return {
     v: 1, savedAt: new Date().toISOString(),
     format: grab1('format-chips'),
@@ -1617,6 +1622,7 @@ function wsCollectDraft() {
     defaultEnd: document.getElementById('f-default-end')?.value || '',
     timesDiffer: document.getElementById('f-times-differ')?.checked || false,
     perSessionTimes,
+    perSessionTopics,
     singleSession: document.getElementById('f-single-session')?.checked || false,
     couplePrice: document.getElementById('f-couple-price')?.checked || false,
     minCancelIfUnder: (document.querySelector('#min-cond-chips .chip.selected')?.dataset.val === 'true') || false,
@@ -1749,6 +1755,15 @@ function wsRestoreDraft(d) {
     d.perSessionTimes.forEach(o => {
       const inp = document.querySelector('#per-session-times-list input[data-idx="' + o.idx + '"][data-field="' + o.field + '"]');
       if (inp) inp.value = o.value;
+    });
+  }
+  // 2026-06-21: restore per-session topics — same place/pattern as times above.
+  // The topic inputs are rendered by updateSessionsPreview() (alongside the
+  // per-session time inputs), so they exist in the DOM here once sessions render.
+  if (Array.isArray(d.perSessionTopics) && d.perSessionTopics.length) {
+    d.perSessionTopics.forEach(o => {
+      const inp = document.querySelector('#session-topics-list input[data-idx="' + o.idx + '"][data-field="topic"]');
+      if (inp) inp.value = o.topic;
     });
   }
   // FIX A: restore per-session drop-in checkboxes. collectSessions() reads

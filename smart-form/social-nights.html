@@ -542,7 +542,7 @@
     <div id="guest-photo-wrap" style="display:none; margin-top: 16px;">
       <label class="field-label">Guest teacher photo (optional)</label>
       <input type="file" id="f-guest-teacher-photo" accept="image/*" style="font-size: 0.85rem; padding: 6px 0;">
-      <p class="field-hint">JPEG or PNG. Used for the event poster and website. Upload one photo for the main guest teacher.</p>
+      <p class="field-hint">JPEG or PNG. Used for the event poster and the shoonyadance.com events page. Upload one photo for the main guest teacher.</p>
     </div>
 
     <p class="field-hint" style="margin-top: 10px;">Leave empty if the event is dance floor only (no workshops).</p>
@@ -1397,6 +1397,16 @@ async function submitForm() {
     }
   }
 
+  // Extra DJs — name + social per row (backend reads data.extraDjs[].name).
+  // Photos for these rows go via payload.photos[] above; this carries the
+  // text fields so extra DJ names are not lost from the sheet.
+  payload.extraDjs = [];
+  document.querySelectorAll('#extra-djs .extra-dj-row').forEach(row => {
+    const name = (row.querySelector('[data-extra-dj="name"]')?.value || '').trim();
+    const social = (row.querySelector('[data-extra-dj="social"]')?.value || '').trim();
+    if (name || social) payload.extraDjs.push({ name, social });
+  });
+
   // Legacy flat fields — kept for back-compat with any backend code path that
   // still reads them directly. Remove once `payload.photos[]` is fully verified.
   payload.dj_photo_name            = document.getElementById('f-dj-photo')?.files?.[0]?.name || '';
@@ -1455,7 +1465,7 @@ async function submitForm() {
     succEl.innerHTML = `
       <strong>✅ Social night submitted!</strong><br>
       <em>${payload.title}</em> — ${payload.date}<br>
-      Shoonya staff will review and set up the ticket link. You'll hear back within 48 hours.
+      Shoonya will review within 48 hours and follow up by email — including setting up the ticket link.
     `;
     succEl.style.display = 'block';
     succEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
