@@ -13,13 +13,28 @@
 //   2. before submit: if (window.shoonyaTestMode()) payload.testMode = true;
 //   3. on success:   if (json.testMode) { box.innerHTML = window.shoonyaShowTestPreview(json); ...; return; }
 // ============================================================
+var TEST_ACCOUNT_EMAIL = 'swapkebolly@gmail.com';
+
 (function () {
   var on = false;
   try { on = new URLSearchParams(location.search).get('test') === '1'; } catch (e) {}
 
+  // Auto-enable for the permanent flagged test account — never writes real rows
+  function isTestAccount(email) {
+    return String(email || '').toLowerCase().trim() === TEST_ACCOUNT_EMAIL;
+  }
+  try {
+    var sess = JSON.parse(localStorage.getItem('shoonya_session') || '{}');
+    if (isTestAccount(sess.profile && sess.profile.email)) on = true;
+  } catch (e) {}
+
   window.shoonyaTestMode = function () { return on; };
 
-  if (!on) return;
+  // Expose so forms can call this after a login event
+  window.shoonyaEnableTestMode = function () {
+    on = true;
+    addBanner();
+  };
 
   // Sticky banner so it's always obvious you're not submitting for real
   function addBanner() {
@@ -31,6 +46,14 @@
       'font:600 13px/1.45 system-ui,-apple-system,sans-serif;padding:9px 14px;text-align:center;';
     document.body.insertBefore(bar, document.body.firstChild);
   }
+
+  // Auto-enable on login if test account logs in during this session
+  window.addEventListener('shoonya:login', function (e) {
+    if (isTestAccount(e.detail && e.detail.email)) window.shoonyaEnableTestMode();
+  });
+
+  if (!on) return;
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', addBanner);
   } else {

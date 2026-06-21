@@ -148,6 +148,9 @@
       <span class="badge" id="appr-count">…</span>
     </div>
     <div class="page-sub" style="margin-bottom:12px;">Approve a teacher to publish their profile (bio, photo, social links) to the website feed. Approve complete profiles only.</div>
+    <div style="margin-bottom:12px;">
+      <button id="approve-all-btn" onclick="approveAllComplete()" style="background:#1a1a1a;color:#fff;border:none;padding:8px 18px;border-radius:4px;font-size:.85rem;cursor:pointer;display:none;">Publish all complete profiles</button>
+    </div>
     <div id="appr-status" style="font-size:.82rem;color:var(--muted);">Loading teachers…</div>
     <table id="appr-table" style="display:none;">
       <thead><tr><th>Teacher</th><th>Profile</th><th>Website</th></tr></thead>
@@ -372,10 +375,39 @@ async function loadTeachers() {
       tr.children[2].appendChild(btn);
       body.appendChild(tr);
     });
+    // Show "Approve all" button only when there are complete-but-unpublished teachers
+    const hasUnapprovedComplete = teachers.some(t => !t.approved && t.hasPhoto && t.hasBio);
+    const allBtn = document.getElementById('approve-all-btn');
+    if (allBtn) allBtn.style.display = hasUnapprovedComplete ? '' : 'none';
+
     statusEl.style.display = 'none';
     table.style.display = '';
   } catch (e) {
     statusEl.textContent = 'Connection error loading teachers.';
+  }
+}
+
+async function approveAllComplete() {
+  const btn = document.getElementById('approve-all-btn');
+  btn.disabled = true;
+  btn.textContent = 'Publishing…';
+  try {
+    const url = APPS_SCRIPT_URL + '?action=adminListTeachers&secret=' + encodeURIComponent(ADMIN_PW);
+    const res = await fetch(url, { redirect: 'follow' });
+    const data = await res.json();
+    const toApprove = (data.teachers || []).filter(t => !t.approved && t.hasPhoto && t.hasBio);
+    for (const t of toApprove) {
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'adminSetApproved', secret: ADMIN_PW, email: t.email, approved: true })
+      });
+    }
+    loadTeachers();
+  } catch (e) {
+    btn.disabled = false;
+    btn.textContent = 'Publish all complete profiles';
+    alert('Connection error.');
   }
 }
 
