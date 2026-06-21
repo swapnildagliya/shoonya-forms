@@ -1292,7 +1292,7 @@ function _buildReviewSummaryHtml(ctx) {
       document.querySelector('#min-age-chips .chip.selected')?.textContent.trim() ? _reviewRow('Min age', document.querySelector('#min-age-chips .chip.selected').textContent.trim(), '#min-age-chips') : '',
       document.getElementById('website-note-input')?.value ? _reviewRow('Website note', document.getElementById('website-note-input').value, '#website-note-input') : '',
       document.getElementById('dropin-cb')?.checked ? _reviewRow('Drop-in', 'Yes' + (document.getElementById('f-dropin-price')?.value ? ' — €' + document.getElementById('f-dropin-price').value : ''), '#dropin-cb') : '',
-      (function(){ const sel = [...document.querySelectorAll('#open-house-chips .chip.selected')].map(c => c.textContent.trim()); return sel.length ? _reviewRow('Open House', sel.join(', '), '#open-house-chips') : ''; })(),
+      // Open House omitted from review until chip→ISO mapping ships (payload sends {}).
       document.getElementById('f-special-notes')?.value ? _reviewRow('Special notes', document.getElementById('f-special-notes').value, '#f-special-notes') : '',
     ]),
   ].filter(Boolean).join('');

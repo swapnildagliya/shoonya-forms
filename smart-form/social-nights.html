@@ -1086,7 +1086,8 @@ function _reviewSection(title, rows) {
 // 2026-05-24 audit V1: minimal email-shape regex.
 const _ssEmailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Mirrors submitForm's inline validation logic (kept in sync intentionally).
+// SINGLE SOURCE OF TRUTH for validation. Both the review path (line ~1039) and
+// submitForm() (line ~1281) call this — there is no separate inline submit list.
 function _collectValidationErrors() {
   const errors = [];
   const styles = getSelectedStyles();
@@ -1272,17 +1273,13 @@ async function submitForm() {
   errEl.style.display = 'none';
   succEl.style.display = 'none';
 
-  // Validate
-  const errors = [];
+  // Validate — SINGLE SOURCE OF TRUTH. The review path and the submit path both
+  // run _collectValidationErrors() so a direct submit can never bypass the
+  // time-sanity / pricing / programme / photo checks (it is a strict superset of
+  // the old inline submit list). Don't reintroduce a separate inline list here.
   const styles = getSelectedStyles();
-  if (!document.getElementById('f-teacher-name').value.trim()) errors.push('Please log in before submitting.');
-  if (styles.length === 0) errors.push('Select at least one dance style.');
-  if (!document.getElementById('f-title').value.trim()) errors.push('Event title is required.');
-  if (!document.getElementById('f-date').value) errors.push('Date is required.');
-  if (!document.getElementById('f-doors').value) errors.push('Doors open time is required.');
-  if (!document.getElementById('f-dn-start').value) errors.push('Dance floor start time is required.');
   const musicSelected = document.querySelector('#music-type-chips .music-chip.selected');
-  if (!musicSelected) errors.push('Select who is handling the music.');
+  const errors = _collectValidationErrors();
 
   if (errors.length > 0) {
     errEl.innerHTML = errors.map(e => '• ' + e).join('<br>');

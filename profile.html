@@ -1315,7 +1315,8 @@ async function uploadPhoto(input) {
       showToast(res.error || 'Upload failed', 'error');
     }
   } catch (err) {
-    showToast("Couldn't upload that photo — try again, or use a JPEG/PNG.", 'error');
+    // Surface the specific resize error (e.g. image-resize.js HEIC guidance) when present.
+    showToast(err && err.message ? err.message : "Couldn't upload that photo — try again, or use a JPEG/PNG.", 'error');
   }
 }
 
@@ -1384,7 +1385,10 @@ async function addGalleryPhoto(input) {
     } else {
       showToast(res.error || 'Upload failed', 'error');
     }
-  } catch (err) { showToast("Couldn't upload that photo — try again, or use a JPEG/PNG.", 'error'); }
+  } catch (err) {
+    // Surface the specific resize error (e.g. image-resize.js HEIC guidance) when present.
+    showToast(err && err.message ? err.message : "Couldn't upload that photo — try again, or use a JPEG/PNG.", 'error');
+  }
 }
 
 async function removeGalleryPhoto(fileId) {

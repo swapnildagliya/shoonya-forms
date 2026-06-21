@@ -1642,6 +1642,12 @@ function wsCollectDraft() {
     minAge: document.getElementById('f-min-age')?.value || '',
     note: document.getElementById('f-note')?.value || '',
     title: getVal('f-title'),
+    teacherName: document.getElementById('f-teacher-name')?.value || '',
+    teacherEmail: document.getElementById('f-teacher-email')?.value || '',
+    // per-session drop-in EXCLUSIONS = the session dates the teacher UNchecked
+    // (default is all-checked; we persist the exceptions so restore matches submit)
+    dropinExclusions: [...document.querySelectorAll('#dropin-sessions-list input[type="checkbox"][data-session-date]')]
+      .filter(cb => !cb.checked).map(cb => cb.dataset.sessionDate),
   };
 }
 
@@ -1685,6 +1691,7 @@ function wsRestoreDraft(d) {
   // text
   const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
   if (d.title) set('f-title', d.title);
+  set('f-teacher-name', d.teacherName); set('f-teacher-email', d.teacherEmail);
   set('f-co-teacher', d.coTeacher); set('f-guest-teacher', d.guestTeacher);
   set('f-guest-web', d.guestWeb); set('f-guest-bio', d.guestBio);
   set('f-cont-start', d.contStart); set('f-cont-end', d.contEnd);
@@ -1730,11 +1737,17 @@ function wsRestoreDraft(d) {
   (d.specificDates || []).forEach(dateVal => {
     addSpecificDate(dateVal);
   });
-  // FIX A: restore toggles, min-cancel chip, and per-session time overrides.
-  // toggleSessionTimes re-renders #per-session-times-list; toggleSingleSession
-  // re-renders #dropin-sessions-list. Both must fire BEFORE we set field values
-  // so the DOM elements exist. All of this is synchronous (no setTimeout) so
-  // collectSessions() reads the correct values when called from submit.
+
+  // CRITICAL (2026-06-21 rewrite): explicitly regenerate the session preview.
+  // updateSessionsPreview() is THE renderer — it populates state.sessions and
+  // creates the per-session time inputs (#per-session-times-list), topic inputs
+  // (#session-topics-list), and per-session drop-in checkboxes (#dropin-sessions-list).
+  // The toggles below only SHOW/HIDE their panels; they do NOT create these inputs.
+  // (Two earlier restore attempts wrongly relied on the toggles to render, so the
+  // override values had nothing to write to and submit fell back to defaults.)
+  updateSessionsPreview();
+
+  // Restore toggles + min-cancel chip (panels show/hide; inputs already rendered above).
   const singleCb = document.getElementById('f-single-session');
   if (singleCb && d.singleSession) { singleCb.checked = true; toggleSingleSession(singleCb); }
   const coupleCb = document.getElementById('f-couple-price');
@@ -1746,37 +1759,27 @@ function wsRestoreDraft(d) {
     const chip = document.querySelector('#min-cond-chips .chip[data-val="true"]');
     if (chip) selectMinCond(chip);
   }
-  // FIX A: apply per-session time overrides SYNCHRONOUSLY — the per-session
-  // inputs are now in the DOM (toggleSessionTimes was called above). A
-  // setTimeout was used before, but that caused the fields to appear in the DOM
-  // without values until after the first microtask tick, which let an early
-  // collectSessions() call (e.g. from a change listener) miss the values.
-  if (Array.isArray(d.perSessionTimes) && d.perSessionTimes.length) {
+
+  // Apply per-session TIME overrides (inputs now exist after updateSessionsPreview).
+  if (Array.isArray(d.perSessionTimes)) {
     d.perSessionTimes.forEach(o => {
       const inp = document.querySelector('#per-session-times-list input[data-idx="' + o.idx + '"][data-field="' + o.field + '"]');
       if (inp) inp.value = o.value;
     });
   }
-  // 2026-06-21: restore per-session topics — same place/pattern as times above.
-  // The topic inputs are rendered by updateSessionsPreview() (alongside the
-  // per-session time inputs), so they exist in the DOM here once sessions render.
-  if (Array.isArray(d.perSessionTopics) && d.perSessionTopics.length) {
+  // Apply per-session TOPIC overrides.
+  if (Array.isArray(d.perSessionTopics)) {
     d.perSessionTopics.forEach(o => {
       const inp = document.querySelector('#session-topics-list input[data-idx="' + o.idx + '"][data-field="topic"]');
       if (inp) inp.value = o.topic;
     });
   }
-  // FIX A: restore per-session drop-in checkboxes. collectSessions() reads
-  // #dropin-sessions-list checkboxes keyed by session date; re-check the ones
-  // saved in the draft. Must happen after toggleSingleSession() rendered the list.
-  if (d.singleSession && Array.isArray(d.specificDates)) {
-    const sessions = generateSessions();
-    document.querySelectorAll('#dropin-sessions-list input[type="checkbox"]').forEach(cb => {
-      // Default: all sessions are drop-in when the toggle is on. Re-check saved
-      // drop-in state if we have it (the draft doesn't persist per-session drop-in
-      // exclusions explicitly, so leave all checked — same behaviour as before
-      // the toggle was restored; collectSessions will read them correctly).
-      cb.checked = true;
+  // Apply per-session DROP-IN exclusions: uncheck the dates the teacher had unchecked
+  // (renderDropinSessions defaults all to checked; we re-apply the saved exceptions).
+  if (Array.isArray(d.dropinExclusions) && d.dropinExclusions.length) {
+    d.dropinExclusions.forEach(dateVal => {
+      const cb = document.querySelector('#dropin-sessions-list input[type="checkbox"][data-session-date="' + dateVal + '"]');
+      if (cb) cb.checked = false;
     });
   }
   showWsDraftBanner(d.savedAt);
