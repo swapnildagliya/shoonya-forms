@@ -649,7 +649,7 @@ textarea { resize: vertical; line-height: 1.6; }
     <div id="bio-edit" style="display:none;">
       <div class="field">
         <label>Short bio (1–2 sentences)</label>
-        <textarea id="edit-bio-short" rows="2" placeholder="e.g. Alex is a 3x Rueda de Casino World Champion from Romania, teaching Cuban Salsa and Bachata in Ghent since 2020."></textarea>
+        <textarea id="edit-bio-short" rows="2" placeholder="e.g. A flamenco dancer and teacher from Seville, sharing the rhythm and fire of Andalusian dance in Ghent since 2019."></textarea>
       </div>
       <div class="field">
         <label>Full bio</label>
@@ -782,6 +782,7 @@ textarea { resize: vertical; line-height: 1.6; }
 <div class="toast" id="toast"></div>
 
 <script src="./config.js"></script>
+<script src="./image-resize.js"></script>
 <script>
 
 // ── State ────────────────────────────────────────────────
@@ -1267,42 +1268,39 @@ async function uploadPhoto(input) {
   const file = input.files[0];
   if (!file) return;
 
-  if (file.size > 4 * 1024 * 1024) {
-    showToast('Photo must be under 4MB', 'error'); return;
-  }
-
   showToast('Uploading photo…');
 
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const base64 = e.target.result; // includes data:image/...;base64, prefix
-    try {
-      const res = await appsPost({
-        action:      'uploadPhoto',
-        token,
-        photoBase64: base64,
-        fileName:    file.name
-      });
-      if (res.ok) {
-        profile.photo_url = res.photoUrl;
-        if (res.photos) profile.photos = res.photos;
-        saveSession();
-        // Update avatar
-        const img = document.getElementById('avatar-img');
-        img.src = res.photoUrl;
-        img.style.display = '';
-        document.getElementById('avatar-initials').style.display = 'none';
-        renderGallery();
-        refreshCompleteBanner();
-        showToast('Photo updated ✓', 'success');
-      } else {
-        showToast(res.error || 'Upload failed', 'error');
-      }
-    } catch (err) {
-      showToast('Upload error', 'error');
+  try {
+    // Auto-shrink any size (15-20MB phone photos) before upload — no size limit.
+    // shoonyaResizeImage returns base64 WITHOUT the data: prefix, so re-add it.
+    const out = await shoonyaResizeImage(file, { maxDim: 2000, quality: 0.85 });
+    if (!out || !out.b64) { showToast('Could not read that photo', 'error'); return; }
+    const base64 = 'data:' + (out.type || 'image/jpeg') + ';base64,' + out.b64;
+
+    const res = await appsPost({
+      action:      'uploadPhoto',
+      token,
+      photoBase64: base64,
+      fileName:    out.name
+    });
+    if (res.ok) {
+      profile.photo_url = res.photoUrl;
+      if (res.photos) profile.photos = res.photos;
+      saveSession();
+      // Update avatar
+      const img = document.getElementById('avatar-img');
+      img.src = res.photoUrl;
+      img.style.display = '';
+      document.getElementById('avatar-initials').style.display = 'none';
+      renderGallery();
+      refreshCompleteBanner();
+      showToast('Photo updated ✓', 'success');
+    } else {
+      showToast(res.error || 'Upload failed', 'error');
     }
-  };
-  reader.readAsDataURL(file);
+  } catch (err) {
+    showToast('Upload error', 'error');
+  }
 }
 
 // ── Photo gallery ─────────────────────────────────────────
@@ -1347,30 +1345,30 @@ async function addGalleryPhoto(input) {
   const file = input.files[0];
   input.value = '';
   if (!file) return;
-  if (file.size > 4 * 1024 * 1024) { showToast('Photo must be under 4MB', 'error'); return; }
 
   showToast('Uploading photo…');
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    try {
-      const res = await appsPost({
-        action: 'addPhoto', token,
-        photoBase64: e.target.result, fileName: file.name
-      });
-      if (res.ok) {
-        if (res.photos)   profile.photos    = res.photos;
-        if (res.photoUrl) profile.photo_url = res.photoUrl;
-        saveSession();
-        renderGallery();
-        renderHero(false);
-        refreshCompleteBanner();
-        showToast('Photo added ✓', 'success');
-      } else {
-        showToast(res.error || 'Upload failed', 'error');
-      }
-    } catch (err) { showToast('Upload error', 'error'); }
-  };
-  reader.readAsDataURL(file);
+  try {
+    // Auto-shrink any size before upload — no size limit. (audit 2026-06-21)
+    const out = await shoonyaResizeImage(file, { maxDim: 2000, quality: 0.85 });
+    if (!out || !out.b64) { showToast('Could not read that photo', 'error'); return; }
+    const base64 = 'data:' + (out.type || 'image/jpeg') + ';base64,' + out.b64;
+
+    const res = await appsPost({
+      action: 'addPhoto', token,
+      photoBase64: base64, fileName: out.name
+    });
+    if (res.ok) {
+      if (res.photos)   profile.photos    = res.photos;
+      if (res.photoUrl) profile.photo_url = res.photoUrl;
+      saveSession();
+      renderGallery();
+      renderHero(false);
+      refreshCompleteBanner();
+      showToast('Photo added ✓', 'success');
+    } else {
+      showToast(res.error || 'Upload failed', 'error');
+    }
+  } catch (err) { showToast('Upload error', 'error'); }
 }
 
 async function removeGalleryPhoto(fileId) {

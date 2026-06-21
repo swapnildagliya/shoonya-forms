@@ -360,7 +360,7 @@
     <div class="row">
       <div class="field">
         <label class="field-label">Your name</label>
-        <input type="text" id="f-teacher-name" placeholder="Swapnil Dagliya">
+        <input type="text" id="f-teacher-name" placeholder="Your name">
       </div>
       <div class="field">
         <label class="field-label">Your email</label>
@@ -627,7 +627,7 @@
 
     <div class="field" style="margin-top: 24px;">
       <label class="field-label">Special pricing notes &amp; early-bird (optional)</label>
-      <textarea class="large" id="f-pricing-notes" placeholder="Anything that doesn't fit standard fields. Examples: 'Terah Taali session €35 (2hr), Kalbeliya session €30 (2hr), Saturday day pass €60', 'Group of 4+ pays €260 each', or early-bird: 'early bird €95 until 1 Aug, then €110'."></textarea>
+      <textarea class="large" id="f-pricing-notes" placeholder="Anything that doesn't fit the standard fields. Examples: 'single session €35 (2hr), full weekend pass €60', 'group of 4+ pays €260 each', or early-bird: 'early bird €95 until 1 Aug, then €110'."></textarea>
       <div class="annotation">
         <strong>Admin uses this when configuring exact pricing.</strong> Don't worry about mapping it into rigid fields — write it like a human. Offering an <strong>early-bird or any time-limited price?</strong> Put it here <strong>with the exact date it ends</strong>. If your workshop has a <strong>registration deadline</strong>, mention it here too — it's optional, most workshops don't need one.
       </div>
@@ -731,6 +731,7 @@
 <script src="../config.js"></script>
 <script src="../login-panel.js"></script>
 <script src="../test-mode.js"></script>
+<script src="../image-resize.js"></script>
 <script>
 // ───────── STATE ─────────
 const state = {
@@ -1067,6 +1068,12 @@ function getNum(id) {
 async function _fileToB64(input) {
   const file = input?.files?.[0];
   if (!file) return null;
+  // Auto-shrink before encoding so big phone photos (15-20MB) don't break the
+  // Apps Script POST. Returns resized base64 (no data: prefix). See image-resize.js.
+  if (window.shoonyaResizeImage) {
+    const out = await window.shoonyaResizeImage(file, { maxDim: 2000, quality: 0.85 });
+    return out ? out.b64 : null;
+  }
   return await new Promise(resolve => {
     const r = new FileReader();
     r.onload = () => resolve(String(r.result || '').split(',')[1] || null);   // strip "data:image/...;base64," prefix
@@ -1126,11 +1133,8 @@ function validate() {
   if (getVal('f-guest-teacher') && !document.getElementById('f-guest-photo')?.files?.[0]) {
     errs.push('Guest teacher photo (required for auto-design)');
   }
-  // Guard against oversized photos that will fail silently mid-upload (Apps Script limit).
-  const _photoFile = document.getElementById('f-guest-photo')?.files?.[0];
-  if (_photoFile && _photoFile.size > 4 * 1024 * 1024) {
-    errs.push('Guest photo is too large (max 4 MB) — please compress the image first');
-  }
+  // Oversized photos are auto-shrunk client-side before upload (see image-resize.js),
+  // so no size limit is enforced here — any photo a teacher picks goes through.
   return errs;
 }
 
