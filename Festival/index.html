@@ -415,22 +415,29 @@ window.addEventListener('shoonya:login', () => setFestivalGate(true));
 // ── APPS SCRIPT BACKEND ─────────────────────────────────────────────────────
 
 
-function sendToSheet(payload) {
+async function sendToSheet(payload) {
+  const msg = document.getElementById('sheetStatus');
   if (!APPS_SCRIPT_URL) return;
-  // Apps Script CORS workaround: POST as text/plain so the browser doesn't
-  // send a preflight OPTIONS request that Apps Script can't answer. Matches
-  // how smart-form/index.html submits.
-  fetch(APPS_SCRIPT_URL, {
-    method: 'POST', mode: 'no-cors',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  }).then(() => {
-    const msg = document.getElementById('sheetStatus');
-    if (msg) { msg.style.display = 'block'; msg.textContent = '✅ Saved to Google Sheets & notification sent!'; }
-  }).catch(err => {
-    const msg = document.getElementById('sheetStatus');
-    if (msg) { msg.style.display = 'block'; msg.textContent = '⚠️ Could not save to sheet.'; msg.style.color = '#c0392b'; }
-  });
+  // POST as text/plain (CORS-safe "simple request" — no preflight). Unlike the
+  // old no-cors version, we READ the JSON response so we can tell success from
+  // failure. no-cors hid every error and always showed "✅ Saved" even when the
+  // backend was down — a teacher would think it worked when it didn't.
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+    let json;
+    try { json = await res.json(); }
+    catch (_) { throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + ')'); }
+    if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ')'));
+    if (msg) { msg.style.display = 'block'; msg.style.color = ''; msg.textContent = '✅ Saved to Google Sheets & notification sent!'; }
+  } catch (err) {
+    // Primary failed — save to the independent backup sink so nothing is lost.
+    try { if (typeof sendToBackup === 'function') sendToBackup(payload, err.message); } catch(_) {}
+    if (msg) { msg.style.display = 'block'; msg.style.color = '#c0392b'; msg.textContent = '⚠️ Could not save right now — your entry was sent to a backup. Please let Shoonya know.'; }
+  }
 }
 
 // ── CONFIG ────────────────────────────────────────────────────────────────────

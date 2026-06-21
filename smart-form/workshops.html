@@ -352,6 +352,9 @@
 
   <p class="form-legend">Fields marked <span class="req-mark">*</span> are required.</p>
 
+  <!-- teacher roster datalist — populated by JS on load -->
+  <datalist id="ws-teacher-list"></datalist>
+
   <!-- TEACHER IDENTITY -->
   <div class="section" id="ws-section-who">
     <span class="section-num">0</span>
@@ -360,11 +363,26 @@
     <div class="row">
       <div class="field">
         <label class="field-label">Your name</label>
-        <input type="text" id="f-teacher-name" placeholder="Your name">
+        <input type="text" id="f-teacher-name" placeholder="Your name" list="ws-teacher-list" autocomplete="off">
+        <p class="field-hint">Pick your name to auto-use your Shoonya photo &amp; bio. New or guest organiser? Just type your name.</p>
       </div>
       <div class="field">
         <label class="field-label">Your email</label>
         <input type="email" id="f-teacher-email" placeholder="you@example.com">
+      </div>
+    </div>
+
+    <!-- shown/hidden by the teacher-name input listener -->
+    <div id="host-media-block" style="display:none;">
+      <div class="field" id="host-photo-field">
+        <label class="field-label">Your photo</label>
+        <input type="file" id="f-host-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
+        <p class="field-hint">JPEG or PNG — used on the workshop page and promo materials.</p>
+      </div>
+      <div class="field" id="host-bio-field">
+        <label class="field-label">Your short bio</label>
+        <textarea id="f-host-bio" placeholder="2–3 sentences for the website. Credentials, style background, where you're from."></textarea>
+        <div class="annotation">Used on the event page and promo emails.</div>
       </div>
     </div>
   </div>
@@ -479,6 +497,11 @@
       <label class="field-label">Guest teacher photo <span class="req-mark">*</span></label>
       <input type="file" id="f-guest-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
       <p class="field-hint">JPEG or PNG. Required so the auto-design generator can produce posters for this workshop. Saved to Drive as "<em>guest teacher name</em>.jpg".</p>
+    </div>
+    <div class="field">
+      <label class="field-label">Video link <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <input type="url" id="f-video-link" placeholder="https://drive.google.com/... or YouTube / Vimeo / Instagram">
+      <p class="field-hint">Paste a Google Drive, YouTube, Vimeo or Instagram link (set Drive links to "anyone with the link can view"). Leave blank to use existing Shoonya footage of you.</p>
     </div>
   </div>
 
@@ -625,11 +648,29 @@
       </div>
     </div>
 
-    <div class="field" style="margin-top: 24px;">
-      <label class="field-label">Special pricing notes &amp; early-bird (optional)</label>
-      <textarea class="large" id="f-pricing-notes" placeholder="Anything that doesn't fit the standard fields. Examples: 'single session €35 (2hr), full weekend pass €60', 'group of 4+ pays €260 each', or early-bird: 'early bird €95 until 1 Aug, then €110'."></textarea>
+    <!-- early-bird: shown only for series / intensive formats -->
+    <div id="earlybird-block" style="display:none; margin-top: 20px;">
+      <div class="toggle-section" style="margin: 0 0 16px;">
+        <strong style="font-size: 0.9rem;">Early-bird price <small style="font-weight:400; color:var(--mid);">(optional)</small></strong>
+        <p class="field-hint" style="margin: 4px 0 12px;">Only for multi-session intensives or miniseries. Enter the discounted amount and the date it expires.</p>
+        <div class="row">
+          <div class="field" style="margin-bottom: 0;">
+            <label class="field-label">Early-bird price</label>
+            <div class="input-wrap" style="display:flex; align-items:center; gap:6px;">€ <input type="number" id="f-earlybird-price" placeholder="95" min="0" step="0.5" style="flex:1;"></div>
+          </div>
+          <div class="field" style="margin-bottom: 0;">
+            <label class="field-label">Deadline</label>
+            <input type="date" id="f-earlybird-deadline">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top: 8px;">
+      <label class="field-label">Special pricing notes <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <textarea class="large" id="f-pricing-notes" placeholder="Anything that doesn't fit the standard fields. Examples: 'single session €35 (2hr), full weekend pass €60', 'group of 4+ pays €260 each'."></textarea>
       <div class="annotation">
-        <strong>Admin uses this when configuring exact pricing.</strong> Don't worry about mapping it into rigid fields — write it like a human. Offering an <strong>early-bird or any time-limited price?</strong> Put it here <strong>with the exact date it ends</strong>. If your workshop has a <strong>registration deadline</strong>, mention it here too — it's optional, most workshops don't need one.
+        <strong>Admin uses this when configuring exact pricing.</strong> Don't worry about mapping it into rigid fields — write it like a human. If your workshop has a <strong>registration deadline</strong>, mention it here too — it's optional, most workshops don't need one.
       </div>
     </div>
   </div>
@@ -659,10 +700,12 @@
       <div class="field">
         <label class="field-label">Max students <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
         <input type="number" id="f-max" placeholder="18" min="0">
+        <p class="field-hint">Shown publicly as "limited places".</p>
       </div>
       <div class="field">
         <label class="field-label">Min participants <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
         <input type="number" id="f-min" placeholder="6" min="0" oninput="toggleMinConditional()">
+        <p class="field-hint">Internal only — the minimum needed to run (below this the workshop may be cancelled). Not shown publicly.</p>
       </div>
     </div>
 
@@ -733,6 +776,34 @@
 <script src="../test-mode.js"></script>
 <script src="../image-resize.js"></script>
 <script>
+// ───────── TEACHER ROSTER ─────────
+// Fetched on load; used to power the teacher-name autocomplete picker.
+// Defaults to [] on any network error so it never blocks the form.
+var WS_TEACHERS = [];
+var teacherKnown = false; // true when typed name exactly matches a roster entry
+
+(function loadTeacherRoster() {
+  var url = (typeof APPS_SCRIPT_URL !== 'undefined') ? APPS_SCRIPT_URL : '';
+  if (!url) return;
+  fetch(url + '?action=listTeachersPublic')
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      if (json && json.ok && Array.isArray(json.teachers)) {
+        WS_TEACHERS = json.teachers;
+        var dl = document.getElementById('ws-teacher-list');
+        if (dl) {
+          dl.innerHTML = '';
+          json.teachers.forEach(function(t) {
+            var opt = document.createElement('option');
+            opt.value = t.name;
+            dl.appendChild(opt);
+          });
+        }
+      }
+    })
+    .catch(function() { /* non-blocking — form works without roster */ });
+})();
+
 // ───────── STATE ─────────
 const state = {
   format: '',
@@ -768,7 +839,29 @@ function bindChips(containerId, key, multi=false) {
   });
 }
 
+// Early-bird block visibility: show only for series or intensive formats
+function updateEarlybirdVisibility() {
+  var fmt = state.format;
+  // Early-bird applies to any multi-session format (series, intensive, bootcamp, 2day) —
+  // just not a single workshop. Show for everything except 'single' (and nothing selected).
+  var show = !!fmt && fmt !== 'single';
+  var block = document.getElementById('earlybird-block');
+  if (block) block.style.display = show ? '' : 'none';
+  // Also init flatpickr on the deadline date input when first revealed
+  if (show) wsInitFlatpickr(document.getElementById('f-earlybird-deadline'));
+}
+
 bindChips('format-chips', 'format', false);
+// Hook into format chip clicks to toggle the early-bird block
+document.getElementById('format-chips')?.querySelectorAll('.chip').forEach(function(chip) {
+  chip.addEventListener('click', function() {
+    // state.format is updated by bindChips before this fires (same tick, bindChips binds first)
+    // Use a microtask so state.format is already updated
+    setTimeout(updateEarlybirdVisibility, 0);
+  });
+});
+updateEarlybirdVisibility(); // run on load
+
 bindChips('style-chips', 'styles', true);
 bindChips('level-chips', 'levels', true);
 bindChips('lang-chips', 'langs', true);
@@ -786,6 +879,70 @@ document.getElementById('f-guest-teacher').addEventListener('input', function() 
   document.getElementById('guest-bio-field').style.display   = hasGuest ? '' : 'none';
   document.getElementById('guest-photo-field').style.display = hasGuest ? '' : 'none';
 });
+
+// Teacher-name picker: match against roster, show/hide host-media-block accordingly
+function updateHostMediaBlock() {
+  var typed = (document.getElementById('f-teacher-name')?.value || '').trim().toLowerCase();
+  var block = document.getElementById('host-media-block');
+  var photoField = document.getElementById('host-photo-field');
+  var bioField   = document.getElementById('host-bio-field');
+  var photoInput = document.getElementById('f-host-photo');
+  var bioInput   = document.getElementById('f-host-bio');
+  if (!block) return;
+
+  if (!typed) {
+    block.style.display = 'none';
+    teacherKnown = false;
+    return;
+  }
+
+  var match = WS_TEACHERS.find(function(t) {
+    return t.name.toLowerCase() === typed;
+  });
+
+  if (match) {
+    teacherKnown = true;
+    var needsPhoto = !match.hasPhoto;
+    var needsBio   = !match.hasBio;
+    if (!needsPhoto && !needsBio) {
+      // Library has everything — hide the block
+      block.style.display = 'none';
+    } else {
+      block.style.display = '';
+      // Set annotation explaining what's missing
+      var note = block.querySelector('#host-media-note');
+      if (!note) {
+        note = document.createElement('p');
+        note.id = 'host-media-note';
+        note.className = 'field-hint';
+        note.style.marginBottom = '12px';
+        block.insertBefore(note, block.firstChild);
+      }
+      note.textContent = "We don't have " +
+        (needsPhoto && needsBio ? 'a photo or bio' : needsPhoto ? 'a photo' : 'a bio') +
+        " of you yet — add one so your workshop page looks complete.";
+      if (photoField) photoField.style.display = needsPhoto ? '' : 'none';
+      if (bioField)   bioField.style.display   = needsBio   ? '' : 'none';
+    }
+  } else {
+    // Not in roster — show both fields
+    teacherKnown = false;
+    block.style.display = '';
+    if (photoField) photoField.style.display = '';
+    if (bioField)   bioField.style.display   = '';
+    var note = block.querySelector('#host-media-note');
+    if (!note) {
+      note = document.createElement('p');
+      note.id = 'host-media-note';
+      note.className = 'field-hint';
+      note.style.marginBottom = '12px';
+      block.insertBefore(note, block.firstChild);
+    }
+    note.textContent = "You're not in our teacher list yet — add a photo and a short bio for the page.";
+  }
+}
+
+document.getElementById('f-teacher-name')?.addEventListener('input', updateHostMediaBlock);
 
 function addCustomStyle() {
   // 2026-05-24 audit V11: kept prompt() per +Other... convention but sanitize the
@@ -1218,6 +1375,8 @@ function _buildReviewSummaryHtml() {
       getVal('f-guest-teacher') ? _reviewRow('Guest teacher', getVal('f-guest-teacher'), '#f-guest-teacher') : '',
       getVal('f-guest-web') ? _reviewRow('Guest web/IG', getVal('f-guest-web'), '#f-guest-web') : '',
       getVal('f-guest-bio') ? _reviewRow('Guest bio', getVal('f-guest-bio'), '#f-guest-bio') : '',
+      getVal('f-video-link') ? _reviewRow('Video link', getVal('f-video-link'), '#f-video-link') : '',
+      getVal('f-host-bio') ? _reviewRow('Host bio', getVal('f-host-bio'), '#host-bio-field') : '',
     ]),
     _reviewSection('Schedule', [
       _reviewRow('Date pattern', state.datePattern || '', '#pattern-' + state.datePattern),
@@ -1228,6 +1387,7 @@ function _buildReviewSummaryHtml() {
       getVal('f-price-full') ? _reviewRow('Member price', '€' + (Math.round(parseFloat(getVal('f-price-full')) * 0.9 * 100) / 100) + ' (auto)', null) : '',
       dropinEnabled ? _reviewRow('Per-session price', getVal('f-price-per-person') ? '€' + getVal('f-price-per-person') : '', '#f-price-per-person') : '',
       dropinEnabled && document.getElementById('f-couple-price')?.checked ? _reviewRow('Couple price', getVal('f-price-couple') ? '€' + getVal('f-price-couple') : '', '#f-price-couple') : '',
+      getVal('f-earlybird-price') ? _reviewRow('Early-bird price', '€' + getVal('f-earlybird-price') + (getVal('f-earlybird-deadline') ? ' until ' + getVal('f-earlybird-deadline') : ''), '#earlybird-block') : '',
       getVal('f-pricing-notes') ? _reviewRow('Pricing notes', getVal('f-pricing-notes'), '#f-pricing-notes') : '',
     ]),
     _reviewSection('Logistics', [
@@ -1303,7 +1463,15 @@ async function submitForm() {
     price_member: (function(){ const f = getNum('f-price-full'); return f ? Math.round(f * 0.90 * 100) / 100 : null; })(),  // auto: 10% off full
     price_per_person: getNum('f-price-per-person'),
     price_couple: getNum('f-price-couple'),
-    pricing_notes: getVal('f-pricing-notes'),     // NEW field
+    pricing_notes: getVal('f-pricing-notes'),
+    earlybird_price: getNum('f-earlybird-price'),
+    earlybird_deadline: getVal('f-earlybird-deadline'),
+    video_link: getVal('f-video-link'),
+    teacher_known: teacherKnown,
+    host_bio: getVal('f-host-bio'),
+    // host photo name + b64 wired below (async, like guest photo)
+    host_photo_name: document.getElementById('f-host-photo')?.files?.[0]?.name || '',
+    host_photo_b64:  await _fileToB64(document.getElementById('f-host-photo')),
     submitted_via: 'workshop-v2-form',
   };
 
@@ -1318,6 +1486,14 @@ async function submitForm() {
       label: getVal('f-guest-teacher') || 'Guest teacher',
       b64: payload.guest_photo_b64,
       filename: payload.guest_photo_name || '',
+    });
+  }
+  if (payload.host_photo_b64) {
+    payload.photos.push({
+      role: 'host_teacher',
+      label: getVal('f-teacher-name') || 'Host teacher',
+      b64: payload.host_photo_b64,
+      filename: payload.host_photo_name || '',
     });
   }
 
@@ -1367,6 +1543,9 @@ async function submitForm() {
     btn.textContent = 'Submitted ✓';
     try { localStorage.removeItem(WS_DRAFT_KEY); } catch(e) {}
   } catch (e) {
+    // Primary submission failed — fire the data to the independent backup sink
+    // so nothing is lost even if the main backend is down.
+    try { if (typeof sendToBackup === 'function') sendToBackup(payload, e.message); } catch(_) {}
     // 2026-05-24 audit S2 + S3: surface real error + throttle re-submit for 1.5s to prevent double-clicks.
     errBox.innerHTML = '⚠ ' + (e.message || 'Submission failed. Try again or email info@shoonyadance.com.') +
       '<br><small style="color:var(--mid);">Your draft is saved — try again or come back later.</small>';
@@ -1422,6 +1601,10 @@ function wsCollectDraft() {
     pricePerPerson: document.getElementById('f-price-per-person')?.value || '',
     priceCouple: document.getElementById('f-price-couple')?.value || '',
     pricingNotes: document.getElementById('f-pricing-notes')?.value || '',
+    earlybirdPrice: document.getElementById('f-earlybird-price')?.value || '',
+    earlybirdDeadline: document.getElementById('f-earlybird-deadline')?.value || '',
+    videoLink: document.getElementById('f-video-link')?.value || '',
+    hostBio: document.getElementById('f-host-bio')?.value || '',
     description: document.getElementById('f-description')?.value || '',
     prereq: document.getElementById('f-prereq')?.value || '',
     whatToBring: document.getElementById('f-bring')?.value || '',
@@ -1479,6 +1662,10 @@ function wsRestoreDraft(d) {
   set('f-price-full', d.priceFull); if (d.priceFull) updateMemberPrice();
   set('f-price-per-person', d.pricePerPerson); set('f-price-couple', d.priceCouple);
   set('f-pricing-notes', d.pricingNotes);
+  set('f-earlybird-price', d.earlybirdPrice);
+  if (d.earlybirdDeadline) { set('f-earlybird-deadline', d.earlybirdDeadline); }
+  set('f-video-link', d.videoLink);
+  set('f-host-bio', d.hostBio);
   set('f-description', d.description); set('f-prereq', d.prereq);
   set('f-bring', d.whatToBring); set('f-max', d.maxStudents); set('f-min', d.minPart);
   set('f-note', d.note);
@@ -1487,6 +1674,11 @@ function wsRestoreDraft(d) {
     document.getElementById('guest-bio-field').style.display = '';
     document.getElementById('guest-photo-field').style.display = '';
   }
+  // early-bird block — re-evaluate now that format chip has been restored
+  updateEarlybirdVisibility();
+  // host-media block — re-evaluate based on teacher name (roster may not be loaded yet,
+  // so this is best-effort on restore; the input listener will re-run when roster arrives)
+  updateHostMediaBlock();
   // specific dates
   if (d.datePattern) {
     document.querySelectorAll('.date-pattern-tab').forEach(t => {

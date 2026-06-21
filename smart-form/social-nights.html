@@ -1389,6 +1389,9 @@ async function submitForm() {
     btn.textContent = 'Submitted ✓';
     try { localStorage.removeItem(SS_DRAFT_KEY); } catch(e) {}
   } catch (e) {
+    // Primary submission failed — fire the data to the independent backup sink
+    // so nothing is lost even if the main backend is down.
+    try { if (typeof sendToBackup === 'function') sendToBackup(payload, e.message); } catch(_) {}
     // 2026-05-24 audit S2 + S3: surface real error + 1.5s throttle to prevent double-clicks.
     errEl.innerHTML = '⚠ ' + (e.message || 'Submission failed. Try again or email info@shoonyadance.com.') +
       '<br><small style="color:var(--mid);">Your draft is saved — try again or come back later.</small>';
