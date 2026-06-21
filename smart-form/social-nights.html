@@ -758,7 +758,6 @@ function addCustomStyle() {
   chip.dataset.val = name;
   chip.onclick = () => toggleStyle(chip);
   chip.textContent = '✓ ' + name;
-  chip.addEventListener('click', () => { chip.classList.toggle('selected'); updateTitleSuggestion(); });
   wrap.insertBefore(chip, addBtn);
   updateTitleSuggestion();
 }
@@ -1169,7 +1168,7 @@ function _buildReviewSummaryHtml() {
     _reviewSection('Dance floor', [
       _reviewRow('Floor opens', document.getElementById('f-dn-start').value, '#f-dn-start'),
       _reviewRow('Floor closes', document.getElementById('f-dn-end').value || '', '#f-dn-end'),
-      _reviewRow('Music handled by', musicSelected ? musicSelected.dataset.val : '', '#music-type-chips'),
+      _reviewRow('Music handled by', (function(){ var musicLabels={'guest-dj':'Guest DJ','teacher-dj':'A Shoonya teacher','playlist':'Playlist only'}; var v=musicSelected?musicSelected.dataset.val:''; return musicLabels[v]||v; })(), '#music-type-chips'),
       document.getElementById('f-dj-name').value ? _reviewRow('DJ', document.getElementById('f-dj-name').value, '#f-dj-name') : '',
       document.getElementById('f-dj-social').value ? _reviewRow('DJ socials', document.getElementById('f-dj-social').value, '#f-dj-social') : '',
       document.getElementById('f-teacher-dj').value ? _reviewRow('Teacher-DJ', document.getElementById('f-teacher-dj').value, '#f-teacher-dj') : '',
@@ -1445,6 +1444,8 @@ function ssCollectDraft() {
     teacherDJ: document.getElementById('f-teacher-dj')?.value || '',
     description: document.getElementById('f-description')?.value || '',
     notes: document.getElementById('f-notes')?.value || '',
+    dnStart: document.getElementById('f-dn-start')?.value || '',
+    dnEnd: document.getElementById('f-dn-end')?.value || '',
     pricingRows,
     programme,
   };
@@ -1488,6 +1489,8 @@ function clearSsDraftAndReload() {
     set('f-dj-name', d.djName); set('f-dj-social', d.djSocial);
     set('f-dj-fee', d.djFee); set('f-teacher-dj', d.teacherDJ);
     set('f-description', d.description); set('f-notes', d.notes);
+    if (d.dnStart) { var eDnS = document.getElementById('f-dn-start'); if (eDnS) eDnS.value = d.dnStart; }
+    if (d.dnEnd)   { var eDnE = document.getElementById('f-dn-end');   if (eDnE) eDnE.value = d.dnEnd; }
     (d.styles || []).forEach(v => document.querySelector(`#style-chips .chip-multi[data-val="${v}"]`)?.click());
     // Re-sync tracker: if the restored title matches the auto-suggestion, mark it
     // applied so subsequent style-chip changes will continue to auto-update it.

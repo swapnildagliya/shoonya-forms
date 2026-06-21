@@ -903,6 +903,19 @@ function openAllEdits() {
   if (target && target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
+// ── Drive URL normaliser ──────────────────────────────────
+// Converts legacy uc?id= and /file/d/ URLs to thumbnail?id= so stored photos render.
+// Leaves thumbnail/ and lh3.googleusercontent URLs untouched.
+function normalizeDriveUrl(u) {
+  if (!u) return u;
+  var s = String(u);
+  if (s.indexOf('drive.google.com/uc?') >= 0 || s.indexOf('drive.google.com/file') >= 0) {
+    var m = s.match(/[-\w]{25,}/);
+    if (m) return 'https://drive.google.com/thumbnail?id=' + m[0] + '&sz=w1000';
+  }
+  return u;
+}
+
 // ── Website-card preview ──────────────────────────────────
 function socialUrl(kind, val) {
   val = String(val || '').trim();
@@ -921,7 +934,7 @@ function socialUrl(kind, val) {
 function openWebsitePreview() {
   const photo = document.getElementById('wcard-photo');
   if (profile.photo_url) {
-    photo.style.backgroundImage = 'url("' + profile.photo_url + '")';
+    photo.style.backgroundImage = 'url("' + normalizeDriveUrl(profile.photo_url) + '")';
     photo.classList.remove('empty');
     photo.textContent = '';
   } else {
@@ -996,7 +1009,7 @@ function renderHero(isAdmin) {
 
   if (profile.photo_url) {
     const img = document.getElementById('avatar-img');
-    img.src = profile.photo_url;
+    img.src = normalizeDriveUrl(profile.photo_url);
     img.style.display = '';
     document.getElementById('avatar-initials').style.display = 'none';
   }
@@ -1244,8 +1257,8 @@ async function saveSection(section) {
   try {
     const res = await appsPost({ action: 'updateProfile', token, updates });
     if (res.ok) {
-      // Update local profile
-      Object.assign(profile, updates);
+      // Update local profile — prefer server-returned profile to avoid drift
+      Object.assign(profile, res.profile || updates);
       saveSession();
       cancelEdit(section);
       renderHero();
@@ -1332,7 +1345,7 @@ function renderGallery() {
     const fid = escHtmlP(p.fileId || '');
     item.innerHTML =
       (isMain ? '<span class="gallery-main-badge">Main</span>' : '') +
-      `<img src="${escHtmlP(p.url)}" alt="${escHtmlP(p.label || '')}">` +
+      `<img src="${escHtmlP(normalizeDriveUrl(p.url))}" alt="${escHtmlP(p.label || '')}">` +
       `<div class="gallery-actions">` +
         (isMain ? '' : `<button onclick="setMainGalleryPhoto('${fid}')">Set as main</button>`) +
         `<button class="remove" onclick="removeGalleryPhoto('${fid}')">Remove</button>` +
@@ -1479,7 +1492,7 @@ function parseLangs(val) {
 async function appsPost(payload) {
   const url = (typeof APPS_SCRIPT_URL !== 'undefined') ? APPS_SCRIPT_URL : '';
   if (!url) { showToast('Apps Script URL not configured', 'error'); throw new Error('No URL'); }
-  const res  = await fetch(url, { method: 'POST', redirect: 'follow', body: JSON.stringify(payload) });
+  const res  = await fetch(url, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
   const text = await res.text();
   const match = text.match(/\{[\s\S]*\}/);
   if (!match) throw new Error('Bad response');

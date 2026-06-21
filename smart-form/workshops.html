@@ -721,6 +721,12 @@
     </div>
 
     <div class="field">
+      <label class="field-label">Minimum age <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <input type="number" id="f-min-age" placeholder="e.g. 16" min="0" step="1">
+      <p class="field-hint">Leave blank if open to all ages.</p>
+    </div>
+
+    <div class="field">
       <label class="field-label">Preferred studio</label>
       <div class="chips" id="studio-chips">
         <div class="chip" data-val="No preference">No preference</div>
@@ -1456,6 +1462,7 @@ async function submitForm() {
     what_to_bring: getVal('f-bring'),
     note_shoonya: getVal('f-note'),
     partner_required: state.partner,
+    age_min: getNum('f-min-age') || '',
     capacity: getNum('f-max') || '',
     min_participants: getNum('f-min') || '',
     min_cancel_if_under: (document.querySelector('#min-cond-chips .chip.selected')?.dataset.val === 'true') || false,
@@ -1610,7 +1617,9 @@ function wsCollectDraft() {
     whatToBring: document.getElementById('f-bring')?.value || '',
     maxStudents: document.getElementById('f-max')?.value || '',
     minPart: document.getElementById('f-min')?.value || '',
+    minAge: document.getElementById('f-min-age')?.value || '',
     note: document.getElementById('f-note')?.value || '',
+    title: getVal('f-title'),
   };
 }
 
@@ -1653,6 +1662,7 @@ function wsRestoreDraft(d) {
   if (d.partner !== undefined) clickVal('partner-chips', String(d.partner));
   // text
   const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+  if (d.title) set('f-title', d.title);
   set('f-co-teacher', d.coTeacher); set('f-guest-teacher', d.guestTeacher);
   set('f-guest-web', d.guestWeb); set('f-guest-bio', d.guestBio);
   set('f-cont-start', d.contStart); set('f-cont-end', d.contEnd);
@@ -1668,6 +1678,7 @@ function wsRestoreDraft(d) {
   set('f-host-bio', d.hostBio);
   set('f-description', d.description); set('f-prereq', d.prereq);
   set('f-bring', d.whatToBring); set('f-max', d.maxStudents); set('f-min', d.minPart);
+  set('f-min-age', d.minAge);
   set('f-note', d.note);
   // guest fields toggle
   if (d.guestTeacher) {
