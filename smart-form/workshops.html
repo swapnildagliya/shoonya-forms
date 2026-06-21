@@ -1553,11 +1553,34 @@ function wsApplyStyleFilter(profile) {
   const lower = styles.map(s => s.toLowerCase());
   const wrap = document.getElementById('style-chips');
   if (!wrap) return;
+  const otherBtn = wrap.querySelector('.chip:not(.chip-multi)');   // the "+ Other..." button
+
+  // 1) Hide predefined chips the teacher doesn't teach; track which exist.
+  const predefined = new Set();
   let hiddenCount = 0;
   wrap.querySelectorAll('.chip.chip-multi').forEach(chip => {
     const val = (chip.dataset.val || '').toLowerCase();
+    predefined.add(val);
     if (!lower.includes(val)) { chip.classList.add('chip-style-hidden'); hiddenCount++; }
   });
+
+  // 2) Inject the teacher's OWN styles that aren't predefined chips (custom styles
+  //    like "Afro-fusion") so they always see what they teach. Visible, selectable.
+  styles.forEach(st => {
+    if (predefined.has(st.toLowerCase())) return;
+    const div = document.createElement('div');
+    div.className = 'chip chip-multi';
+    div.dataset.val = st;
+    div.textContent = st;
+    div.addEventListener('click', () => {
+      const idx = state.styles.indexOf(st);
+      if (idx >= 0) { state.styles.splice(idx, 1); div.classList.remove('selected'); }
+      else { state.styles.push(st); div.classList.add('selected'); }
+    });
+    wrap.insertBefore(div, otherBtn || null);
+  });
+
+  // 3) "+ Show all styles" expander (reveals the hidden predefined ones).
   if (hiddenCount > 0 && !document.getElementById('ws-show-all-styles')) {
     const showAll = document.createElement('div');
     showAll.className = 'chip';
@@ -1565,7 +1588,6 @@ function wsApplyStyleFilter(profile) {
     showAll.textContent = '+ Show all styles';
     showAll.style.cursor = 'pointer';
     showAll.onclick = () => { wrap.classList.add('show-all'); showAll.remove(); };
-    const otherBtn = wrap.querySelector('.chip:not(.chip-multi)');   // the "+ Other..." button
     if (otherBtn) wrap.insertBefore(showAll, otherBtn); else wrap.appendChild(showAll);
   }
 }
