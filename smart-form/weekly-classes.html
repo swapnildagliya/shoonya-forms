@@ -1337,6 +1337,12 @@ async function submitForm() {
     // ships (item #17), so backend doesn't store garbage in the teacher profile.
     opendeur_availability: {},
     pricing_notes: specialNotes,
+    // audit 2026-06-21: these were collected for the autosave draft but never put
+    // in the submit payload, so they silently vanished. max_students maps to the
+    // sheet "Max Students" column; drop-in fields are captured in the raw email.
+    max_students: document.getElementById('f-max-students')?.value || '',
+    dropin_enabled: document.getElementById('dropin-cb')?.checked || false,
+    dropin_price: document.getElementById('f-dropin-price')?.value || '',
     structured: true,
     submitted_via: 'weekly-v2-form',
   };
