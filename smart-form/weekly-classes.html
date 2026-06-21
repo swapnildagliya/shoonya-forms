@@ -1468,6 +1468,8 @@ function collectDraft() {
   return {
     v: 1,
     savedAt: new Date().toISOString(),
+    teacherName:      document.getElementById('f-teacher-name')?.value || '',
+    teacherEmail:     document.getElementById('f-teacher-email')?.value || '',
     style:            getCurrentStyle(),
     customStyle:      (document.getElementById('custom-style-display')?.style.display !== 'none') ? (document.getElementById('custom-style-chip')?.textContent.trim() || '') : '',
     semester:         grab1('semester-chips'),
@@ -1546,6 +1548,13 @@ function restoreChipN(id, vals) {
 function restoreDraft(draft) {
   if (!draft || draft.v !== 1) return;
   try {
+    // Teacher identity (filled by login). Only set from draft if the field is
+    // empty — a live login still wins so we never overwrite with stale values.
+    const tn = document.getElementById('f-teacher-name');
+    if (tn && !tn.value && draft.teacherName) tn.value = draft.teacherName;
+    const te = document.getElementById('f-teacher-email');
+    if (te && !te.value && draft.teacherEmail) te.value = draft.teacherEmail;
+
     // Basics — restore style (custom or standard)
     if (draft.customStyle) {
       // Custom style entered via "+ Other..."

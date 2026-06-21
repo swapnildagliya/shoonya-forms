@@ -1529,8 +1529,16 @@ function ssCollectDraft() {
   });
   // 2026-05-24 audit S9: shared collector — see ssCollectProgramme().
   const programme = ssCollectProgramme({ nullTopic: false });
+  // Extra-DJ repeater rows (name + social). Photos are files, can't be persisted.
+  const extraDjs = [...document.querySelectorAll('#extra-djs .extra-dj-row')].map(r => ({
+    name:   r.querySelector('[data-extra-dj="name"]')?.value || '',
+    social: r.querySelector('[data-extra-dj="social"]')?.value || '',
+  })).filter(d => d.name || d.social);
   return {
     v: 1, savedAt: new Date().toISOString(),
+    teacherName:  document.getElementById('f-teacher-name')?.value || '',
+    teacherEmail: document.getElementById('f-teacher-email')?.value || '',
+    extraDjs,
     styles, genres, musicType,
     title: document.getElementById('f-title')?.value || '',
     date: document.getElementById('f-date')?.value || '',
@@ -1583,6 +1591,22 @@ function clearSsDraftAndReload() {
     const d = JSON.parse(raw);
     if (!d || d.v !== 1) return;
     const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+    // Organiser identity (filled by login). Only set from draft if empty so a
+    // live login still wins; never overwrite a real session value with stale.
+    const _tn = document.getElementById('f-teacher-name');
+    if (_tn && !_tn.value && d.teacherName) _tn.value = d.teacherName;
+    const _te = document.getElementById('f-teacher-email');
+    if (_te && !_te.value && d.teacherEmail) _te.value = d.teacherEmail;
+    // Extra DJs — recreate each repeater row, then fill name/social.
+    (d.extraDjs || []).forEach(dj => {
+      addExtraDJ();
+      const row = document.getElementById('extra-djs').lastElementChild;
+      if (!row) return;
+      const nameEl = row.querySelector('[data-extra-dj="name"]');
+      if (nameEl) nameEl.value = dj.name || '';
+      const socEl = row.querySelector('[data-extra-dj="social"]');
+      if (socEl) socEl.value = dj.social || '';
+    });
     set('f-title', d.title); set('f-date', d.date);
     set('f-doors', d.doors); set('f-end', d.end);
     set('f-dresscode', d.dresscode);
