@@ -124,6 +124,9 @@
   .chip:hover { background: var(--purple-tint); }
   .chip.selected { background: var(--purple); color: white; border-color: var(--purple); }
   .chip-multi.selected::before { content: '✓ '; }
+  /* Style filter: hide non-teacher chips until "Show all" is clicked. */
+  #style-chips .chip-style-hidden { display: none; }
+  #style-chips.show-all .chip-style-hidden { display: inline-flex; }
   /* 2026-05-24: required-field markers + top-of-form legend. */
   .req-mark { color: #d32f2f; font-weight: 700; margin-left: 2px; }
   .form-legend { font-size: 0.82rem; color: var(--mid); margin: 0 0 18px; padding: 8px 12px; background: #fff8f7; border-left: 3px solid #d32f2f; border-radius: 0 4px 4px 0; }
@@ -1635,6 +1638,54 @@ document.querySelector('.container').addEventListener('click',  scheduleSave, tr
   } catch(e) {}
 })();
 
+// Style filter — show only teacher's own styles by default, inject custom ones.
+function wcParseTeacherStyles(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return [];
+  if (s.charAt(0) === '[') { try { return JSON.parse(s).map(x => String(x).trim()).filter(Boolean); } catch(e) {} }
+  return s.split(',').map(x => x.trim()).filter(Boolean);
+}
+
+function wcApplyStyleFilter(profile) {
+  const styles = wcParseTeacherStyles(profile && profile.dance_styles);
+  if (!styles.length) return;   // no profile styles → show all (don't lock out)
+  const lower = styles.map(s => s.toLowerCase());
+  const wrap = document.getElementById('style-chips');
+  if (!wrap) return;
+  const otherBtn = document.getElementById('other-style-chip');
+
+  // 1) Hide predefined chips the teacher doesn't teach; track which exist.
+  const predefined = new Set();
+  let hiddenCount = 0;
+  wrap.querySelectorAll('.chip:not(#other-style-chip):not(#wc-show-all-styles)').forEach(chip => {
+    const label = chip.textContent.trim().toLowerCase();
+    if (!label) return;
+    predefined.add(label);
+    if (!lower.includes(label)) { chip.classList.add('chip-style-hidden'); hiddenCount++; }
+  });
+
+  // 2) Inject the teacher's OWN styles that aren't predefined chips (custom styles).
+  styles.forEach(st => {
+    if (predefined.has(st.toLowerCase())) return;
+    const div = document.createElement('div');
+    div.className = 'chip';
+    div.textContent = st;
+    div.setAttribute('onclick', 'selectSingle(this)');
+    wrap.insertBefore(div, otherBtn || null);
+  });
+
+  // 3) "+ Show all styles" expander (reveals the hidden predefined ones).
+  if (hiddenCount > 0 && !document.getElementById('wc-show-all-styles')) {
+    const showAll = document.createElement('div');
+    showAll.className = 'chip';
+    showAll.id = 'wc-show-all-styles';
+    showAll.textContent = '+ Show all styles';
+    showAll.style.cursor = 'pointer';
+    showAll.onclick = () => { wrap.classList.add('show-all'); showAll.remove(); };
+    wrap.insertBefore(showAll, otherBtn || null);
+  }
+}
+
 // Teacher login — store identity in hidden fields
 window.addEventListener('shoonya:login', function(e) {
   const p = e.detail;
@@ -1642,6 +1693,7 @@ window.addEventListener('shoonya:login', function(e) {
   const emailEl = document.getElementById('f-teacher-email');
   if (nameEl) nameEl.value = p.name || '';
   if (emailEl) emailEl.value = p.email || '';
+  wcApplyStyleFilter(p);
 });
 </script>
 </body>

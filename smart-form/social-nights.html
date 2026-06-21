@@ -130,6 +130,7 @@
   /* 2026-05-24 audit P1-2: hide chips not in teacher's dance_styles by default. #style-chips.show-all reveals them after the "+ Show all styles" expand chip is clicked. */
   #style-chips .chip-style-hidden { display: none; }
   #style-chips.show-all .chip-style-hidden { display: inline-flex; }
+  .music-type-req-hint { font-size: 0.78rem; color: #d32f2f; margin: 4px 0 0; }
   /* 2026-05-24: required-field markers + top-of-form legend. */
   .req-mark { color: #d32f2f; font-weight: 700; margin-left: 2px; }
   .form-legend { font-size: 0.82rem; color: var(--mid); margin: 0 0 18px; padding: 8px 12px; background: #fff8f7; border-left: 3px solid #d32f2f; border-radius: 0 4px 4px 0; }
@@ -504,6 +505,7 @@
       <div class="field">
         <label class="field-label">Date <span class="req-mark">*</span></label>
         <input type="date" id="f-date">
+        <p class="field-hint" style="margin-top:4px;">Click to open the calendar.</p>
       </div>
       <div class="field">
         <label class="field-label">Doors open <span class="req-mark">*</span></label>
@@ -577,6 +579,7 @@
           <div class="music-chip" data-val="teacher-dj" onclick="setMusicType(this)">A Shoonya teacher</div>
           <div class="music-chip" data-val="playlist" onclick="setMusicType(this)">Playlist only</div>
         </div>
+        <p class="music-type-req-hint" id="music-type-req-hint">Select one — required.</p>
       </div>
 
       <!-- Guest DJ fields -->
@@ -816,6 +819,8 @@ function applyTitleSuggestion() {
 function setMusicType(el) {
   document.querySelectorAll('#music-type-chips .music-chip').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
+  const hint = document.getElementById('music-type-req-hint');
+  if (hint) hint.style.display = 'none';
   document.getElementById('music-guest-dj').classList.add('hidden');
   document.getElementById('music-teacher-dj').classList.add('hidden');
   if (el.dataset.val === 'guest-dj') document.getElementById('music-guest-dj').classList.remove('hidden');
@@ -1538,25 +1543,37 @@ function ssApplyStyleFilter(profile) {
   const lower = styles.map(s => s.toLowerCase());
   const wrap = document.getElementById('style-chips');
   if (!wrap) return;
+  const otherBtn = wrap.querySelector('.chip:not(.chip-multi)');   // the "+ Other..." button
+
+  // 1) Hide predefined chips the teacher doesn't teach; track which exist.
+  const predefined = new Set();
   let hiddenCount = 0;
   wrap.querySelectorAll('.chip.chip-multi').forEach(chip => {
     const val = (chip.dataset.val || '').toLowerCase();
-    if (!lower.includes(val)) {
-      chip.classList.add('chip-style-hidden');
-      hiddenCount++;
-    }
+    predefined.add(val);
+    if (!lower.includes(val)) { chip.classList.add('chip-style-hidden'); hiddenCount++; }
   });
+
+  // 2) Inject the teacher's OWN styles that aren't predefined chips (custom styles
+  //    like "Afro-fusion") so they always see what they teach. Visible, selectable.
+  styles.forEach(st => {
+    if (predefined.has(st.toLowerCase())) return;
+    const div = document.createElement('div');
+    div.className = 'chip chip-multi';
+    div.dataset.val = st;
+    div.textContent = st;
+    div.onclick = () => toggleStyle(div);
+    wrap.insertBefore(div, otherBtn || null);
+  });
+
+  // 3) "+ Show all styles" expander (reveals the hidden predefined ones).
   if (hiddenCount > 0 && !document.getElementById('ss-show-all-styles')) {
     const showAll = document.createElement('div');
     showAll.className = 'chip';
     showAll.id = 'ss-show-all-styles';
     showAll.textContent = '+ Show all styles';
     showAll.style.cursor = 'pointer';
-    showAll.onclick = () => {
-      wrap.classList.add('show-all');
-      showAll.remove();
-    };
-    const otherBtn = wrap.querySelector('.chip:not(.chip-multi)');   // the "+ Other..." button
+    showAll.onclick = () => { wrap.classList.add('show-all'); showAll.remove(); };
     if (otherBtn) wrap.insertBefore(showAll, otherBtn); else wrap.appendChild(showAll);
   }
 }
