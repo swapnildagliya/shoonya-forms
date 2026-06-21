@@ -708,6 +708,7 @@
 <script src="../login-panel.js"></script>
 <script src="../test-mode.js"></script>
 <script src="../image-resize.js"></script>
+<script src="../form-kernel.js"></script>
 <script>
 // 2026-05-24 audit L9: set a time-input value AND refresh flatpickr's alt-input
 // if one is attached. The quick-pick buttons used to set .value directly,
@@ -1148,10 +1149,16 @@ function _collectValidationErrors() {
     errors.push('Guest DJ name is required (you selected "Guest DJ").');
   }
   // 2026-05-24 audit V8: pricing tier values must be numeric if provided.
+  // P1 (Codex 2026-06-21): a tier with a label but a BLANK amount used to pass —
+  // it serialised as {label, price:null} and rendered as "€0" in review. Now a
+  // labelled tier MUST carry an amount (type 0 for a free tier).
   document.querySelectorAll('#pricing-rows .pricing-tier').forEach((row, i) => {
+    const labelInput = row.querySelectorAll('input')[0];
     const priceInput = row.querySelectorAll('input')[1];
+    const label = (labelInput?.value || '').trim();
     const raw = priceInput?.value.trim() || '';
     if (raw && isNaN(parseFloat(raw))) errors.push('Pricing tier ' + (i + 1) + ' price is not a number.');
+    else if (label && !raw) errors.push('Pricing tier ' + (i + 1) + ' ("' + label + '"): enter an amount (type 0 if it is free).');
   });
   // 2026-05-24: full per-slot programme validation. Requirements depend on slot type.
   //   Workshop / Performance: style + teacher/performer name + photo
@@ -1200,6 +1207,268 @@ function _collectValidationErrors() {
   return errors;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// FORM-KERNEL MIGRATION (2026-06-21) — social-nights form.
+// A single declarative SOCIAL_SPEC the kernel reads from for collect / draft /
+// restore / payload, so those paths can no longer drift. Mirrors the weekly +
+// workshop migrations. Design notes specific to social nights:
+//  • The form has NO `state` object — chips carry their state in the DOM
+//    (.selected class). So chip COLLECT reads the DOM directly (getSelectedStyles
+//    / genre query), and chip RESTORE clicks/toggles the matching chip.
+//  • The music-type conditionals (djName/djSocials/djFee/teacherDJ go null unless
+//    the matching music type is selected) are reproduced EXACTLY in each field's
+//    payloadValue — lifted verbatim from the pre-migration inline payload
+//    (2026-06-21 audit) so the byte-identical golden holds.
+//  • Async photo reads (dj/guest/per-slot/extra-dj b64 + the legacy flat
+//    dj_photo_*/guest_teacher_photo_* keys + structured photos[]) stay OUT of the
+//    spec — the kernel's collect is synchronous. submitForm() reads them with
+//    await and merges them (+ action/type/submitted_via meta) as `extra`.
+//  • The repeater fields (programme / pricing / extraDjs) collect via the proven
+//    getters (ssCollectProgramme etc.); their draft restore rebuilds the repeater
+//    DOM first, then fills — kept ATOMIC inside each field's draftRestore so the
+//    rebuild-on-restore order can't regress.
+//  • The review modal HTML is still produced by the hand-written
+//    _buildReviewSummaryHtml() below (its conditional row logic is intricate and
+//    user-facing); SOCIAL_SPEC drives collect/draft/payload. Each spec field sets
+//    review:false to stay out of the kernel's buildReview — the bespoke review
+//    function is the single review source, matching pre-migration output exactly.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Music type currently selected (DOM is source of truth — no state object).
+function _ssMusicType() {
+  const sel = document.querySelector('#music-type-chips .music-chip.selected');
+  return sel ? sel.dataset.val : '';
+}
+
+// Collect the pricing tiers in the EXACT submit shape (label + numeric/null price).
+// Lifted verbatim from the pre-migration submit loop (2026-05-24 audit V8).
+function _ssCollectPricing() {
+  const out = [];
+  document.querySelectorAll('#pricing-rows .pricing-tier').forEach(row => {
+    const inputs = row.querySelectorAll('input');
+    const priceRaw = inputs[1]?.value.trim() || '';
+    const priceNum = priceRaw ? parseFloat(priceRaw) : null;
+    out.push({ label: inputs[0].value.trim(), price: isFinite(priceNum) ? priceNum : null });
+  });
+  return out;
+}
+
+// Collect extra-DJ text rows (name + social). Photos travel via photos[] (async).
+// Lifted verbatim from the pre-migration submit loop.
+function _ssCollectExtraDjs() {
+  const out = [];
+  document.querySelectorAll('#extra-djs .extra-dj-row').forEach(row => {
+    const name = (row.querySelector('[data-extra-dj="name"]')?.value || '').trim();
+    const social = (row.querySelector('[data-extra-dj="social"]')?.value || '').trim();
+    if (name || social) out.push({ name, social });
+  });
+  return out;
+}
+
+// DJ fee parse — null unless guest-dj is selected AND the value parses to >= 0.
+// Lifted verbatim from the pre-migration submit (audit V10). MUST match exactly.
+function _ssDjFee() {
+  if (_ssMusicType() !== 'guest-dj') return null;
+  const raw = (document.getElementById('f-dj-fee')?.value || '').trim();
+  const n = raw ? parseFloat(raw) : NaN;
+  return isFinite(n) && n >= 0 ? n : null;
+}
+
+// ── DRAFT-only collectors/restores for the repeater + chip fields. These rebuild
+//    the repeater DOM before filling (the rebuild-on-restore order is the exact
+//    bug that bit the weekly migration — keep it atomic here). ──
+function _ssRestoreStyles(v) {
+  let madeCustom = false;
+  (v || []).forEach(x => {
+    const existing = document.querySelector(`#style-chips .chip-multi[data-val="${x}"]`);
+    if (existing) { existing.click(); return; }
+    // P1 (Codex 2026-06-21): saved value was a "+ Other..." custom style with no
+    // built-in chip → recreate it as a selected chip (mirrors addCustomStyle) so
+    // custom styles survive a draft reload instead of silently vanishing.
+    const wrap = document.getElementById('style-chips');
+    const addBtn = wrap?.querySelector('.chip:last-child');
+    if (!wrap || !addBtn) return;
+    const chip = document.createElement('div');
+    chip.className = 'chip chip-multi selected';
+    chip.dataset.val = x;
+    chip.onclick = () => toggleStyle(chip);
+    chip.textContent = '✓ ' + x;
+    wrap.insertBefore(chip, addBtn);
+    madeCustom = true;
+  });
+  if (madeCustom) updateTitleSuggestion();
+}
+function _ssRestoreGenres(v) {
+  (v || []).forEach(x => {
+    const el = document.querySelector(`#genre-chips .music-chip[data-val="${x}"]`);
+    if (el) { toggleGenre(el); return; }
+    // P1 (Codex 2026-06-21): recreate a "+ Other..." custom genre as a selected
+    // chip (mirrors addCustomGenre) so it survives a draft reload.
+    const wrap = document.getElementById('genre-chips');
+    const addBtn = wrap?.querySelector('.chip:last-child');
+    if (!wrap || !addBtn) return;
+    const chip = document.createElement('div');
+    chip.className = 'music-chip selected';
+    chip.dataset.val = x;
+    chip.textContent = x;
+    chip.onclick = () => chip.classList.toggle('selected');
+    wrap.insertBefore(chip, addBtn);
+  });
+}
+function _ssRestoreMusicType(v) {
+  if (!v) return;
+  const mt = document.querySelector(`#music-type-chips .music-chip[data-val="${v}"]`);
+  if (mt) setMusicType(mt);
+}
+function _ssRestoreExtraDjs(v) {
+  // Rebuild each extra-DJ repeater row, THEN fill name/social (DOM-first).
+  (v || []).forEach(dj => {
+    addExtraDJ();
+    const row = document.getElementById('extra-djs').lastElementChild;
+    if (!row) return;
+    const nameEl = row.querySelector('[data-extra-dj="name"]');
+    if (nameEl) nameEl.value = dj.name || '';
+    const socEl = row.querySelector('[data-extra-dj="social"]');
+    if (socEl) socEl.value = dj.social || '';
+  });
+}
+function _ssRestorePricing(v) {
+  // Replace the two seeded default tiers with the saved ones (DOM-first rebuild).
+  if (!(v || []).length) return;
+  document.getElementById('pricing-rows').innerHTML = '';
+  v.forEach(r => addPricingTier(r.label, r.price));
+}
+function _ssRestoreProgramme(v) {
+  // Rebuild each programme slot, fill values, THEN apply the type chip (which
+  // re-labels + toggles required hints) — exact order from the pre-migration restore.
+  (v || []).forEach(p => {
+    addProgrammeSlot();
+    const card = document.getElementById('programme-rows').lastElementChild;
+    if (!card) return;
+    const setVal = (slot, val) => {
+      const el = card.querySelector(`[data-slot="${slot}"]`);
+      if (el && val !== undefined && val !== null) el.value = val;
+    };
+    setVal('start', p.start);
+    setVal('duration', p.duration);
+    setVal('level', p.level);
+    setVal('style', p.style);
+    setVal('teacher', p.teacher);
+    setVal('topic', p.topic);
+    const typeChip = card.querySelector(`.chip[data-type="${p.type || 'workshop'}"]`);
+    if (typeChip) setProgType(typeChip, card.id, p.type || 'workshop');
+  });
+}
+
+// SOCIAL_SPEC — single source of truth for collect / draft / payload.
+// review:false everywhere — the bespoke _buildReviewSummaryHtml() owns the review
+// UI (its conditional row logic is too intricate to safely re-derive). Field
+// order is restore-safe: chips/identity rebuild before the repeaters' atomic
+// rebuilds; music type is restored before the conditional DJ text fields.
+const SOCIAL_SPEC = [
+  // ── Who (hidden identity; draft restore must NOT overwrite a live login value) ──
+  { key:'teacher_name', payloadKey:'teacher_name', dom:'f-teacher-name', kind:'text', review:false,
+    draftCollect: () => (FormKernel.byId('f-teacher-name')?.value || ''),
+    draftRestore: (v) => { const el = FormKernel.byId('f-teacher-name'); if (el && !el.value && v) el.value = v; } },
+  { key:'email', payloadKey:'email', dom:'f-teacher-email', kind:'text', review:false,
+    draftCollect: () => (FormKernel.byId('f-teacher-email')?.value || ''),
+    draftRestore: (v) => { const el = FormKernel.byId('f-teacher-email'); if (el && !el.value && v) el.value = v; } },
+
+  // ── Basics ──
+  // styles: chip-multi (custom — no state object; reads/writes the DOM directly).
+  { key:'styles', payloadKey:'styles', dom:'style-chips', kind:'custom', review:false,
+    collect: () => getSelectedStyles(),
+    draftRestore: (v) => _ssRestoreStyles(v) },
+  { key:'title', payloadKey:'title', dom:'f-title', kind:'text', review:false },
+  { key:'date', payloadKey:'date', dom:'f-date', kind:'text', trim:false, review:false },
+  { key:'doors', payloadKey:'doors', dom:'f-doors', kind:'text', trim:false, review:false },
+  { key:'end', payloadKey:'end', dom:'f-end', kind:'text', trim:false, review:false },
+  // dresscode: trimmed, null when blank (legacy parity).
+  { key:'dresscode', payloadKey:'dresscode', dom:'f-dresscode', kind:'custom', review:false,
+    collect: () => (FormKernel.byId('f-dresscode')?.value || '').trim(),
+    draftCollect: () => (FormKernel.byId('f-dresscode')?.value || ''),
+    restore: (v) => { const el = FormKernel.byId('f-dresscode'); if (el && v) el.value = v; },
+    payloadValue: (v) => v || null },
+
+  // ── Dance floor ──
+  { key:'dnStart', payloadKey:'dnStart', dom:'f-dn-start', kind:'text', trim:false, review:false },
+  { key:'dnEnd', payloadKey:'dnEnd', dom:'f-dn-end', kind:'text', trim:false, review:false },
+  // musicType: which chip is selected (drives the conditionals below).
+  { key:'musicType', payloadKey:'musicType', dom:'music-type-chips', kind:'custom', review:false,
+    collect: () => _ssMusicType(),
+    draftRestore: (v) => _ssRestoreMusicType(v) },
+  // DJ fields — non-null ONLY when musicType === 'guest-dj' (else null). Verbatim
+  // from the pre-migration payload; these conditionals are part of the golden.
+  { key:'djName', payloadKey:'djName', dom:'f-dj-name', kind:'custom', review:false,
+    collect: () => (FormKernel.byId('f-dj-name')?.value || '').trim(),
+    draftCollect: () => (FormKernel.byId('f-dj-name')?.value || ''),
+    restore: (v) => { const el = FormKernel.byId('f-dj-name'); if (el && v) el.value = v; },
+    payloadValue: () => (_ssMusicType() === 'guest-dj' ? (FormKernel.byId('f-dj-name').value.trim() || null) : null) },
+  { key:'djSocials', payloadKey:'djSocials', dom:'f-dj-social', kind:'custom', review:false,
+    collect: () => (FormKernel.byId('f-dj-social')?.value || '').trim(),
+    draftCollect: () => (FormKernel.byId('f-dj-social')?.value || ''),
+    restore: (v) => { const el = FormKernel.byId('f-dj-social'); if (el && v) el.value = v; },
+    payloadValue: () => (_ssMusicType() === 'guest-dj' ? (FormKernel.byId('f-dj-social').value.trim() || null) : null) },
+  { key:'djFee', payloadKey:'djFee', dom:'f-dj-fee', kind:'custom', review:false,
+    collect: () => (FormKernel.byId('f-dj-fee')?.value || ''),
+    draftCollect: () => (FormKernel.byId('f-dj-fee')?.value || ''),
+    restore: (v) => { const el = FormKernel.byId('f-dj-fee'); if (el && v) el.value = v; },
+    payloadValue: () => _ssDjFee() },
+  // teacherDJ: non-null ONLY when musicType === 'teacher-dj' (else null). Verbatim.
+  { key:'teacherDJ', payloadKey:'teacherDJ', dom:'f-teacher-dj', kind:'custom', review:false,
+    collect: () => (FormKernel.byId('f-teacher-dj')?.value || '').trim(),
+    draftCollect: () => (FormKernel.byId('f-teacher-dj')?.value || ''),
+    restore: (v) => { const el = FormKernel.byId('f-teacher-dj'); if (el && v) el.value = v; },
+    payloadValue: () => (_ssMusicType() === 'teacher-dj' ? (FormKernel.byId('f-teacher-dj').value.trim() || null) : null) },
+  // genres: chip-multi (custom — DOM-driven; includes custom-added genre chips).
+  { key:'genres', payloadKey:'genres', dom:'genre-chips', kind:'custom', review:false,
+    collect: () => [...document.querySelectorAll('#genre-chips .music-chip.selected')].map(c => c.dataset.val || c.textContent.trim()),
+    draftCollect: () => [...document.querySelectorAll('#genre-chips .music-chip.selected')].map(c => c.dataset.val),
+    draftRestore: (v) => _ssRestoreGenres(v) },
+  // extraDjs: text-row repeater (photos handled async outside the spec).
+  { key:'extraDjs', payloadKey:'extraDjs', dom:'extra-djs', kind:'custom', review:false,
+    collect: () => _ssCollectExtraDjs(),
+    draftRestore: (v) => _ssRestoreExtraDjs(v) },
+
+  // ── Programme (repeater) ──
+  // collect → submit shape (nullTopic:true); draft → '' topics (nullTopic:false).
+  { key:'programme', payloadKey:'programme', dom:'programme-rows', kind:'custom', review:false,
+    collect: () => ssCollectProgramme({ nullTopic: true }),
+    draftCollect: () => ssCollectProgramme({ nullTopic: false }),
+    draftRestore: (v) => _ssRestoreProgramme(v) },
+
+  // ── Pricing (repeater) ──
+  { key:'pricing', payloadKey:'pricing', dom:'pricing-rows', kind:'custom', review:false,
+    collect: () => _ssCollectPricing(),
+    draftCollect: () => [...document.querySelectorAll('#pricing-rows .pricing-tier')].map(row => {
+      const inputs = row.querySelectorAll('input');
+      return { label: inputs[0]?.value || '', price: inputs[1]?.value || '' };
+    }),
+    draftRestore: (v) => _ssRestorePricing(v) },
+  // earlyDeadline: ISO date string; '' when blank (legacy parity, NOT null).
+  { key:'earlyDeadline', payloadKey:'earlyDeadline', dom:'f-early-deadline', kind:'custom', review:false,
+    collect: () => (FormKernel.byId('f-early-deadline')?.value || ''),
+    draftCollect: () => (FormKernel.byId('f-early-deadline')?.value || ''),
+    draftRestore: (v) => {
+      if (!v) return;
+      const el = FormKernel.byId('f-early-deadline');
+      if (el && el._flatpickr) el._flatpickr.setDate(v, true);   // refresh flatpickr alt-input too
+      else if (el) el.value = v;
+    } },
+
+  // ── Notes ── (trimmed, null when blank — legacy parity)
+  { key:'description', payloadKey:'description', dom:'f-description', kind:'custom', review:false,
+    collect: () => (FormKernel.byId('f-description')?.value || '').trim(),
+    draftCollect: () => (FormKernel.byId('f-description')?.value || ''),
+    restore: (v) => { const el = FormKernel.byId('f-description'); if (el && v) el.value = v; },
+    payloadValue: (v) => v || null },
+  { key:'notes', payloadKey:'notes', dom:'f-notes', kind:'custom', review:false,
+    collect: () => (FormKernel.byId('f-notes')?.value || '').trim(),
+    draftCollect: () => (FormKernel.byId('f-notes')?.value || ''),
+    restore: (v) => { const el = FormKernel.byId('f-notes'); if (el && v) el.value = v; },
+    payloadValue: (v) => v || null },
+];
+
 function _buildReviewSummaryHtml() {
   const styles = getSelectedStyles();
   const musicSelected = document.querySelector('#music-type-chips .music-chip.selected');
@@ -1216,16 +1485,28 @@ function _buildReviewSummaryHtml() {
       r.topic,
     ].filter(Boolean).join(' · ');
   });
+  // P1 (Codex 2026-06-21): don't render a blank amount as "€0", and drop fully
+  // empty seeded rows. A labelled tier with no amount is blocked at validation;
+  // this is the defensive display (shows "—" rather than a fake €0).
   const pricingRows = [...document.querySelectorAll('#pricing-rows .pricing-tier')].map(row => {
     const inputs = row.querySelectorAll('input');
-    return (inputs[0]?.value || '') + ': €' + (inputs[1]?.value || '0');
-  });
+    const label = (inputs[0]?.value || '').trim();
+    const amount = (inputs[1]?.value || '').trim();
+    if (!label && !amount) return '';
+    return label + (amount ? ': €' + amount : ': —');
+  }).filter(Boolean);
   // FIX E: count photos that will be submitted (DJ + per-slot teachers).
+  // P1 (Codex 2026-06-21): also count extra-DJ photos (were collected into
+  // photos[] but never shown in the review).
   const djPhotoFile = document.getElementById('f-dj-photo')?.files?.[0];
   const slotPhotoCount = [...document.querySelectorAll('#programme-rows .prog-card [data-slot="teacher-photo"]')]
     .filter(el => el.files?.[0]).length;
+  const extraDjPhotoCount = [...document.querySelectorAll('#extra-djs .extra-dj-row [data-extra-dj="photo"]')]
+    .filter(el => el.files?.[0]).length;
+  const extraDjs = _ssCollectExtraDjs();
   const photoSummaryParts = [];
   if (djPhotoFile) photoSummaryParts.push('DJ photo ✓');
+  if (extraDjPhotoCount) photoSummaryParts.push(extraDjPhotoCount + ' extra-DJ photo(s) ✓');
   if (slotPhotoCount) photoSummaryParts.push(slotPhotoCount + ' slot photo(s) ✓');
 
   const musicLabels = { 'guest-dj': 'Guest DJ', 'teacher-dj': 'A Shoonya teacher', 'playlist': 'Playlist only' };
@@ -1252,6 +1533,9 @@ function _buildReviewSummaryHtml() {
         _reviewRow('DJ', document.getElementById('f-dj-name').value + (document.getElementById('f-dj-fee')?.value ? ' — €' + document.getElementById('f-dj-fee').value : ''), '#f-dj-name') : '',
       (musicVal === 'guest-dj' && document.getElementById('f-dj-social').value) ? _reviewRow('DJ socials', document.getElementById('f-dj-social').value, '#f-dj-social') : '',
       (musicVal === 'teacher-dj' && document.getElementById('f-teacher-dj').value) ? _reviewRow('Teacher-DJ', document.getElementById('f-teacher-dj').value, '#f-teacher-dj') : '',
+      // P1 (Codex 2026-06-21): extra DJs are collected into payload.extraDjs[] but
+      // were never shown in the review — surface them here.
+      extraDjs.length ? _reviewRow('Extra DJ(s)', extraDjs.map(d => d.name + (d.social ? ' (' + d.social + ')' : '')).join(', '), '#extra-djs') : '',
       genres.length ? _reviewRow('Genres', genres.join(', '), '#genre-chips') : '',
       photoSummaryParts.length ? _reviewRow('Photos', photoSummaryParts.join(', '), null) : '',
     ]),
@@ -1295,60 +1579,26 @@ async function submitForm() {
     return;
   }
 
-  // Collect data — uses canonical Social Night shape (type:'social-night',
-  // top-level doors/end/dnStart/dnEnd/musicType/djName/genres/pricing) so it
-  // matches what backend buildSquarespaceBlock, buildEventSummaryText,
-  // buildCanvaBrief, syncSocialNightToMasterSchedule, and saveToSheet read.
-  // Standardised 2026-05-22 (was: type:'social-event' with nested danceNight
-  // + doorsOpen/eventEnd/pricingTiers — keys the backend mostly ignored).
-  const payload = {
-    action: 'generateOutputPackage',
-    type: 'social-night',
-    teacher_name: document.getElementById('f-teacher-name').value.trim(),
-    email: document.getElementById('f-teacher-email').value.trim(),
-    styles: styles,
-    title: document.getElementById('f-title').value.trim(),
-    date: document.getElementById('f-date').value,
-    doors: document.getElementById('f-doors').value,
-    end: document.getElementById('f-end').value,
-    dresscode: document.getElementById('f-dresscode').value.trim() || null,
-    dnStart: document.getElementById('f-dn-start').value,
-    dnEnd: document.getElementById('f-dn-end').value,
-    // 2026-06-21: optional early-bird deadline → sheet "Early Bird Deadline" col L.
-    earlyDeadline: document.getElementById('f-early-deadline')?.value || '',
-    musicType: musicSelected.dataset.val,
-    // Only send DJ fields when "Guest DJ" is the chosen music type — otherwise a
-    // teacher who typed a DJ name then switched to "Playlist only" / teacher-DJ
-    // would still submit a stale DJ. (audit 2026-06-21)
-    djName: (musicSelected.dataset.val === 'guest-dj' ? (document.getElementById('f-dj-name').value.trim() || null) : null),
-    djSocials: (musicSelected.dataset.val === 'guest-dj' ? (document.getElementById('f-dj-social').value.trim() || null) : null),
-    // 2026-05-24 audit V10: parseFloat the DJ fee so backend doesn't receive a
-    // raw string ("75" / "" / "€75"). null when blank or non-numeric.
-    djFee: (function() {
-      if (musicSelected.dataset.val !== 'guest-dj') return null;
-      const raw = (document.getElementById('f-dj-fee')?.value || '').trim();
-      const n = raw ? parseFloat(raw) : NaN;
-      return isFinite(n) && n >= 0 ? n : null;
-    })(),
-    teacherDJ: (musicSelected.dataset.val === 'teacher-dj' ? (document.getElementById('f-teacher-dj').value.trim() || null) : null),
-    genres: [...document.querySelectorAll('#genre-chips .music-chip.selected')].map(c => c.dataset.val || c.textContent.trim()),
-    programme: [],
-    pricing: [],
-    description: document.getElementById('f-description').value.trim() || null,
-    notes: document.getElementById('f-notes').value.trim() || null,
-    submitted_via: 'social-night-v2-form',   // 2026-05-24 audit S8
-  };
+  // 2026-06-21 form-kernel migration: the canonical Social Night payload is now
+  // built declaratively from SOCIAL_SPEC (single source of truth for
+  // collect/draft/payload) — top-level doors/end/dnStart/dnEnd/musicType/djName/
+  // genres/programme/pricing/extraDjs all come from the spec. The async photo
+  // group (structured photos[] + the legacy flat dj_photo_*/guest_teacher_photo_*
+  // keys) + routing meta are merged as `extra` — they can't live in the spec
+  // because the kernel's collect is synchronous and photos[] composes other
+  // fields. This block reproduces the EXACT shape the old inline payload sent.
+  // (The standardised shape, type:'social-night', dates back to 2026-05-22.)
 
   // 2026-05-24 photo wire-up: structured `photos[]` array. Backend renames each
   // saved file to "<label>.jpg" (with collision suffix "DJ Kimo 2.jpg" if needed)
   // and returns BOTH the Drive viewer URL and a direct CDN URL (`directUrl`)
   // that auto-design tools (Canva, etc.) can fetch as an actual image.
-  payload.photos = [];
+  const photos = [];
 
   // Main DJ photo — label from `f-dj-name`
   const djB64 = await _fileToB64(document.getElementById('f-dj-photo'));
   if (djB64) {
-    payload.photos.push({
+    photos.push({
       role: 'dj',
       label: document.getElementById('f-dj-name').value.trim() || 'DJ',
       b64: djB64,
@@ -1365,7 +1615,7 @@ async function submitForm() {
     const photoEl = card.querySelector('[data-slot="teacher-photo"]');
     const b64 = await _fileToB64(photoEl);
     if (b64) {
-      payload.photos.push({
+      photos.push({
         role: 'programme_teacher',
         label: teacherName || 'Programme teacher',
         b64,
@@ -1380,7 +1630,7 @@ async function submitForm() {
   const gtB64 = await _fileToB64(document.getElementById('f-guest-teacher-photo'));
   if (gtB64) {
     const firstSlotTeacher = document.querySelector('#programme-rows .prog-card [data-slot="teacher"]')?.value?.trim() || '';
-    payload.photos.push({
+    photos.push({
       role: 'guest_teacher',
       label: firstSlotTeacher || 'Guest teacher',
       b64: gtB64,
@@ -1394,7 +1644,7 @@ async function submitForm() {
     const photoEl = row.querySelector('[data-extra-dj="photo"]');
     const b64 = await _fileToB64(photoEl);
     if (b64) {
-      payload.photos.push({
+      photos.push({
         role: 'dj',
         label: (nameEl?.value || '').trim() || 'Additional DJ',
         b64,
@@ -1403,32 +1653,22 @@ async function submitForm() {
     }
   }
 
-  // Extra DJs — name + social per row (backend reads data.extraDjs[].name).
-  // Photos for these rows go via payload.photos[] above; this carries the
-  // text fields so extra DJ names are not lost from the sheet.
-  payload.extraDjs = [];
-  document.querySelectorAll('#extra-djs .extra-dj-row').forEach(row => {
-    const name = (row.querySelector('[data-extra-dj="name"]')?.value || '').trim();
-    const social = (row.querySelector('[data-extra-dj="social"]')?.value || '').trim();
-    if (name || social) payload.extraDjs.push({ name, social });
-  });
-
-  // Legacy flat fields — kept for back-compat with any backend code path that
-  // still reads them directly. Remove once `payload.photos[]` is fully verified.
-  payload.dj_photo_name            = document.getElementById('f-dj-photo')?.files?.[0]?.name || '';
-  payload.dj_photo_b64             = djB64;
-  payload.guest_teacher_photo_name = document.getElementById('f-guest-teacher-photo')?.files?.[0]?.name || '';
-  payload.guest_teacher_photo_b64  = gtB64;
-
-  // 2026-05-24 audit S9: shared collector — see ssCollectProgramme().
-  payload.programme = ssCollectProgramme({ nullTopic: true });
-
-  document.querySelectorAll('#pricing-rows .pricing-tier').forEach(row => {
-    const inputs = row.querySelectorAll('input');
-    // 2026-05-24 audit V8: parse to number so backend doesn't receive "" / "€8" / stray spaces.
-    const priceRaw = inputs[1]?.value.trim() || '';
-    const priceNum = priceRaw ? parseFloat(priceRaw) : null;
-    payload.pricing.push({ label: inputs[0].value.trim(), price: isFinite(priceNum) ? priceNum : null });
+  // Build the canonical payload from SOCIAL_SPEC, then merge the async photo
+  // group + routing meta. extraDjs / programme / pricing / styles / genres /
+  // musicType + the DJ conditionals all come from the spec (matching the golden).
+  const payload = FormKernel.buildPayload(SOCIAL_SPEC, {
+    // routing / meta
+    action: 'generateOutputPackage',
+    type: 'social-night',
+    submitted_via: 'social-night-v2-form',   // 2026-05-24 audit S8
+    // structured photo array (async)
+    photos: photos,
+    // Legacy flat fields — kept for back-compat with any backend code path that
+    // still reads them directly. Remove once `photos[]` is fully verified.
+    dj_photo_name:            document.getElementById('f-dj-photo')?.files?.[0]?.name || '',
+    dj_photo_b64:             djB64,
+    guest_teacher_photo_name: document.getElementById('f-guest-teacher-photo')?.files?.[0]?.name || '',
+    guest_teacher_photo_b64:  gtB64,
   });
 
   // 2026-05-24 (audit P1): removed `console.log('Social night payload:', …)` — was dumping the full payload (incl. teacher email, DJ fee, internal notes) into the user's browser console on every submit.
@@ -1516,55 +1756,20 @@ if (typeof flatpickr === 'function') {
 }
 
 // ─── AUTOSAVE ─────────────────────────────────────────────────────────────────
-const SS_DRAFT_KEY = 'shoonya_socialnight_draft_v1';
+// 2026-06-21 form-kernel migration: the draft schema is now keyed by the
+// SOCIAL_SPEC keys (not the legacy ad-hoc keys), so collect/draft/restore can't
+// drift. Key bumped v1→v2 — a stale v1 draft has incompatible keys, so the new
+// key simply doesn't find it (clean ignore). Each complex/repeater field carries
+// draftCollect/draftRestore in the spec so its exact snapshot shape + atomic
+// DOM-rebuild order survive.
+const SS_DRAFT_KEY = 'shoonya_socialnight_draft_v2';
 let _ssDraftTimer = null;
-
-function ssCollectDraft() {
-  const styles = [...document.querySelectorAll('#style-chips .chip-multi.selected')].map(c => c.dataset.val);
-  const genres = [...document.querySelectorAll('#genre-chips .music-chip.selected')].map(c => c.dataset.val);
-  const musicType = document.querySelector('#music-type-chips .music-chip.selected')?.dataset.val || '';
-  const pricingRows = [...document.querySelectorAll('#pricing-rows .pricing-tier')].map(row => {
-    const inputs = row.querySelectorAll('input');
-    return { label: inputs[0]?.value || '', price: inputs[1]?.value || '' };
-  });
-  // 2026-05-24 audit S9: shared collector — see ssCollectProgramme().
-  const programme = ssCollectProgramme({ nullTopic: false });
-  // Extra-DJ repeater rows (name + social). Photos are files, can't be persisted.
-  const extraDjs = [...document.querySelectorAll('#extra-djs .extra-dj-row')].map(r => ({
-    name:   r.querySelector('[data-extra-dj="name"]')?.value || '',
-    social: r.querySelector('[data-extra-dj="social"]')?.value || '',
-  })).filter(d => d.name || d.social);
-  return {
-    v: 1, savedAt: new Date().toISOString(),
-    teacherName:  document.getElementById('f-teacher-name')?.value || '',
-    teacherEmail: document.getElementById('f-teacher-email')?.value || '',
-    extraDjs,
-    styles, genres, musicType,
-    title: document.getElementById('f-title')?.value || '',
-    date: document.getElementById('f-date')?.value || '',
-    doors: document.getElementById('f-doors')?.value || '',
-    end: document.getElementById('f-end')?.value || '',
-    dresscode: document.getElementById('f-dresscode')?.value || '',
-    djName: document.getElementById('f-dj-name')?.value || '',
-    djSocial: document.getElementById('f-dj-social')?.value || '',
-    djFee: document.getElementById('f-dj-fee')?.value || '',
-    teacherDJ: document.getElementById('f-teacher-dj')?.value || '',
-    description: document.getElementById('f-description')?.value || '',
-    notes: document.getElementById('f-notes')?.value || '',
-    dnStart: document.getElementById('f-dn-start')?.value || '',
-    dnEnd: document.getElementById('f-dn-end')?.value || '',
-    earlyDeadline: document.getElementById('f-early-deadline')?.value || '',
-    pricingRows,
-    programme,
-  };
-}
 
 function ssScheduleSave() {
   clearTimeout(_ssDraftTimer);
   _ssDraftTimer = setTimeout(() => {
     try {
-      const d = ssCollectDraft();
-      localStorage.setItem(SS_DRAFT_KEY, JSON.stringify(d));
+      const d = FormKernel.saveDraft(SOCIAL_SPEC, SS_DRAFT_KEY);
       showSsDraftBanner(d.savedAt);
     } catch(e) {}
   }, 800);
@@ -1583,81 +1788,35 @@ function clearSsDraftAndReload() {
   window.location.reload();
 }
 
-// Init: restore draft on load
-(function() {
+// 2026-06-21 form-kernel migration: restore now iterates SOCIAL_SPEC (same source
+// as collect/payload), so a restored draft can't drift from what's submitted.
+// Field order in the spec is restore-safe: identity + styles + music type restore
+// BEFORE the conditional DJ text fields and the repeater rebuilds. Each repeater
+// field's draftRestore rebuilds its DOM rows first, then fills (the rebuild-on-
+// restore order that regressed the weekly migration — kept atomic per field).
+function ssRestoreDraft(d) {
+  if (!d || d.v !== 1) return;   // kernel writes v:1; the SS_DRAFT_KEY v2 suffix gates stale schemas
   try {
-    const raw = localStorage.getItem(SS_DRAFT_KEY);
-    if (!raw) return;
-    const d = JSON.parse(raw);
-    if (!d || d.v !== 1) return;
-    const set = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
-    // Organiser identity (filled by login). Only set from draft if empty so a
-    // live login still wins; never overwrite a real session value with stale.
-    const _tn = document.getElementById('f-teacher-name');
-    if (_tn && !_tn.value && d.teacherName) _tn.value = d.teacherName;
-    const _te = document.getElementById('f-teacher-email');
-    if (_te && !_te.value && d.teacherEmail) _te.value = d.teacherEmail;
-    // Extra DJs — recreate each repeater row, then fill name/social.
-    (d.extraDjs || []).forEach(dj => {
-      addExtraDJ();
-      const row = document.getElementById('extra-djs').lastElementChild;
-      if (!row) return;
-      const nameEl = row.querySelector('[data-extra-dj="name"]');
-      if (nameEl) nameEl.value = dj.name || '';
-      const socEl = row.querySelector('[data-extra-dj="social"]');
-      if (socEl) socEl.value = dj.social || '';
-    });
-    set('f-title', d.title); set('f-date', d.date);
-    set('f-doors', d.doors); set('f-end', d.end);
-    set('f-dresscode', d.dresscode);
-    set('f-dj-name', d.djName); set('f-dj-social', d.djSocial);
-    set('f-dj-fee', d.djFee); set('f-teacher-dj', d.teacherDJ);
-    set('f-description', d.description); set('f-notes', d.notes);
-    if (d.dnStart) { var eDnS = document.getElementById('f-dn-start'); if (eDnS) eDnS.value = d.dnStart; }
-    if (d.dnEnd)   { var eDnE = document.getElementById('f-dn-end');   if (eDnE) eDnE.value = d.dnEnd; }
-    if (d.earlyDeadline) {
-      var eEd = document.getElementById('f-early-deadline');
-      if (eEd && eEd._flatpickr) eEd._flatpickr.setDate(d.earlyDeadline, true);  // refresh flatpickr alt-input too
-      else if (eEd) eEd.value = d.earlyDeadline;
-    }
-    (d.styles || []).forEach(v => document.querySelector(`#style-chips .chip-multi[data-val="${v}"]`)?.click());
-    // Re-sync tracker: if the restored title matches the auto-suggestion, mark it
-    // applied so subsequent style-chip changes will continue to auto-update it.
+    FormKernel.restoreDraft(SOCIAL_SPEC, d);
+    // Re-sync tracker: if the restored title matches the auto-suggestion (rebuilt
+    // when the style chips were restored above), mark it applied so subsequent
+    // style-chip changes continue to auto-update it. (Pre-migration behaviour.)
     const _rBtn = document.getElementById('title-suggest-btn');
     const _rTitle = document.getElementById('f-title');
     if (_rBtn && _rTitle && _rTitle.value && _rTitle.value === _rBtn.textContent) {
       _lastAppliedTitleSuggestion = _rTitle.value;
     }
-    (d.genres || []).forEach(v => {
-      const el = document.querySelector(`#genre-chips .music-chip[data-val="${v}"]`);
-      if (el) toggleGenre(el);
-    });
-    if (d.musicType) {
-      const mt = document.querySelector(`#music-type-chips .music-chip[data-val="${d.musicType}"]`);
-      if (mt) setMusicType(mt);
-    }
-    if ((d.pricingRows || []).length > 0) {
-      document.getElementById('pricing-rows').innerHTML = '';
-      d.pricingRows.forEach(r => addPricingTier(r.label, r.price));
-    }
-    (d.programme || []).forEach(p => {
-      addProgrammeSlot();
-      const card = document.getElementById('programme-rows').lastElementChild;
-      if (!card) return;
-      const setVal = (slot, val) => {
-        const el = card.querySelector(`[data-slot="${slot}"]`);
-        if (el && val !== undefined && val !== null) el.value = val;
-      };
-      setVal('start', p.start);
-      setVal('duration', p.duration);
-      setVal('level', p.level);
-      setVal('style', p.style);
-      setVal('teacher', p.teacher);
-      setVal('topic', p.topic);
-      const typeChip = card.querySelector(`.chip[data-type="${p.type || 'workshop'}"]`);
-      if (typeChip) setProgType(typeChip, card.id, p.type || 'workshop');
-    });
     showSsDraftBanner(d.savedAt);
+  } catch(e) {
+    console.warn('Social night draft restore failed:', e);
+  }
+}
+
+// Init: restore draft on load
+(function() {
+  try {
+    const raw = localStorage.getItem(SS_DRAFT_KEY);
+    if (raw) ssRestoreDraft(JSON.parse(raw));
   } catch(e) {}
 })();
 
