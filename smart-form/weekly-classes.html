@@ -1173,11 +1173,10 @@ function collectLevels() {
   return levels;
 }
 
-// 2026-05-24 audit V13: collectOpendeurChips() was dead code — returned chip
-// text but the result was never used (payload sends `opendeur_availability: {}`
-// per P0-2 until item #17 wires the chip→ISO date translation). Function
-// deleted. When the chip→ISO mapping ships as part of item #17, add a fresh
-// implementation that returns the canonical {ISO_DATE: {available, time}} shape.
+// 2026-06-21: open-house availability is now wired. The submit payload + review
+// modal both read `#open-house-chips .chip.selected` inline and send the chip
+// LABEL as the key ({label:true}); the backend maps that straight to "label ✅".
+// No chip→ISO translation is needed, so no separate collector function exists.
 
 // 2026-05-24 audit V1: minimal email-shape regex.
 const _wcEmailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1292,7 +1291,7 @@ function _buildReviewSummaryHtml(ctx) {
       document.querySelector('#min-age-chips .chip.selected')?.textContent.trim() ? _reviewRow('Min age', document.querySelector('#min-age-chips .chip.selected').textContent.trim(), '#min-age-chips') : '',
       document.getElementById('website-note-input')?.value ? _reviewRow('Website note', document.getElementById('website-note-input').value, '#website-note-input') : '',
       document.getElementById('dropin-cb')?.checked ? _reviewRow('Drop-in', 'Yes' + (document.getElementById('f-dropin-price')?.value ? ' — €' + document.getElementById('f-dropin-price').value : ''), '#dropin-cb') : '',
-      // Open House omitted from review until chip→ISO mapping ships (payload sends {}).
+      (function(){ var labels = [...document.querySelectorAll('#open-house-chips .chip.selected')].map(c => c.textContent.trim()); return labels.length ? _reviewRow('Open House availability', labels.join(', '), '#open-house-chips') : ''; })(),
       document.getElementById('f-special-notes')?.value ? _reviewRow('Special notes', document.getElementById('f-special-notes').value, '#f-special-notes') : '',
     ]),
   ].filter(Boolean).join('');
@@ -1361,13 +1360,16 @@ async function submitForm() {
     what_to_bring: whatToBring,
     prereq,
     website_note: websiteNote,
-    // 2026-05-24 audit P0-2: was sending literal `placeholder_0`, `placeholder_1` ...
-    // keys for open-house availability. Real shape expected by backend is keyed
-    // by ISO date (e.g. {'2026-09-13':{available:true,time:'morning'}}), and the
-    // chip-label→ISO translation was never wired ("real form would translate
-    // chip labels to ISO dates" — never built). Emit `{}` until the chip mapping
-    // ships (item #17), so backend doesn't store garbage in the teacher profile.
-    opendeur_availability: {},
+    // 2026-06-21: open-house availability is now collected from the selected
+    // chips. The backend buildSheetRow weekly branch maps {label:true} →
+    // "label ✅" directly (Object.keys(o).map(...)), so the chip LABEL is the key
+    // — no ISO-date translation is needed. Sends one {label: true} per selected
+    // slot; an empty object when nothing is selected.
+    opendeur_availability: (function(){
+      var o = {};
+      document.querySelectorAll('#open-house-chips .chip.selected').forEach(function(c){ o[c.textContent.trim()] = true; });
+      return o;
+    })(),
     pricing_notes: specialNotes,
     // audit 2026-06-21: these were collected for the autosave draft but never put
     // in the submit payload, so they silently vanished. max_students maps to the
