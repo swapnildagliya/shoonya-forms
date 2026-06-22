@@ -105,8 +105,8 @@
     background: white;
   }
   input:focus, textarea:focus, select:focus { outline: 2px solid var(--purple); outline-offset: -1px; border-color: var(--purple); }
-  textarea { resize: vertical; min-height: 80px; }
-  textarea.large { min-height: 140px; }
+  textarea { resize: vertical; min-height: 0; }
+  textarea.large { min-height: 0; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -453,7 +453,6 @@
   <div class="section">
     <span class="section-num">1</span>
     <h2 class="section-title">Class basics</h2>
-    <p class="section-hint">What are you teaching this semester?</p>
 
     <div class="field">
       <label class="field-label">Dance style <span class="req-mark">*</span></label>
@@ -494,7 +493,7 @@
         <span class="chip selected" id="custom-style-chip" style="background:var(--purple-tint); border-color:var(--purple);"></span>
         <button type="button" onclick="clearCustomStyle()" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:0.82rem; margin-left:4px;">✕ clear</button>
       </div>
-      <p class="field-hint">All Shoonya styles listed. Use "+ Other" for combos like Garba + Kalbeliya.</p>
+      <p class="field-hint">Use "+ Other" for combos like Garba + Kalbeliya.</p>
     </div>
 
     <div class="row">
@@ -520,11 +519,10 @@
   <div class="section">
     <span class="section-num">2</span>
     <h2 class="section-title">Teaching team</h2>
-    <p class="section-hint">Just you, or are you teaching with others?</p>
 
     <div class="field">
       <label class="field-label">Co-teacher(s) <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
-      <p class="field-hint" style="margin: 0 0 10px;">If you're teaching with someone, type their name(s) below — separate multiple names with a comma.</p>
+      <p class="field-hint" style="margin: 0 0 10px;">Separate multiple names with a comma.</p>
       <!-- 2026-05-24: hardcoded teacher chip list removed. Previously rendered a fake "Aanchal Mehta" (pre-selected), wrong "Alex Vandenberghe", duplicate "Badriyah" etc. — never wired to the Teachers sheet. Free-text fallback in use until TASKS #17 wires real fetch + pre-select. The submit, autosave-collect, and autosave-restore code below was updated to read from `#coteacher-freetext` instead of the old chip-multi DOM. -->
       <div id="coteacher-chips">
         <input type="text" id="coteacher-freetext" placeholder="e.g. Sonja, Wim" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.95rem;">
@@ -533,7 +531,7 @@
 
     <label class="checkbox-row">
       <input type="checkbox" id="diff-teach-cb" onchange="toggleDifferentTeachers(this)">
-      Different teachers on different days (e.g. Tap L1 on Mon with Jordan, on Wed with Teddy)
+      Different teachers on different days
     </label>
 
     <div class="toggle-section hidden" id="per-slot-teacher-note">
@@ -547,7 +545,7 @@
   <div class="section">
     <span class="section-num">3</span>
     <h2 class="section-title">Levels &amp; slots</h2>
-    <p class="section-hint">Pick the levels you're offering. Each gets its own schedule below.</p>
+    <p class="section-hint">Each level gets its own schedule below.</p>
 
     <div class="field">
       <label class="field-label">Levels offered <span class="req-mark">*</span> <span class="badge-new">multi-select</span></label>
@@ -622,7 +620,6 @@
   <div class="section">
     <span class="section-num">5</span>
     <h2 class="section-title">Details</h2>
-    <p class="section-hint">Description and practical details for your class page.</p>
 
     <!-- 2026-06-22: drop-in is a per-class teacher choice (moved here from the
          hidden Pricing section so teachers can actually set it). -->
@@ -631,30 +628,29 @@
         <input type="checkbox" id="dropin-cb" onchange="toggleDropIn(this)">
         Drop-in allowed for this class
       </label>
-      <p class="field-hint">Tick per class — e.g. allow drop-ins one day but not another. Leave unchecked for commitment-only courses.</p>
+      <p class="field-hint">Applies to this class only — e.g. drop-ins Wednesday but not Tuesday. Leave unchecked for commitment-only courses.</p>
       <div class="toggle-section hidden" id="drop-in-fields">
         <div class="field">
           <label class="field-label">Drop-in price (€)</label>
           <input type="number" id="f-dropin-price" placeholder="18" min="0" step="0.5">
-          <p class="field-hint">Single-class price for occasional attendees.</p>
         </div>
       </div>
     </div>
 
     <div class="field">
-      <label class="field-label">General class description</label>
-      <textarea class="large" id="f-description" placeholder="Describe the class and who it's for — the vibe, what students will learn, and what makes it special. Each level can have its own focus."></textarea>
-      <p class="field-hint">Used when a level doesn't have its own description above. Optional if every level above has its own.</p>
+      <label class="field-label">General class description <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <textarea class="large" id="f-description" rows="4" placeholder="The class, who it's for, what students will learn."></textarea>
+      <p class="field-hint">Used for any level without its own description above.</p>
     </div>
 
     <div class="field">
       <label class="field-label">Prerequisites</label>
-      <textarea id="f-prereq" placeholder="L1: open to all. L2: at least one season at L1 or equivalent."></textarea>
+      <textarea id="f-prereq" rows="2" placeholder="L1: open to all. L2: at least one season at L1 or equivalent."></textarea>
     </div>
 
     <div class="field">
       <label class="field-label">What to bring / dress code</label>
-      <textarea id="f-bring" placeholder="Comfortable dance shoes (or socks for hardwood). Water bottle."></textarea>
+      <textarea id="f-bring" rows="2" placeholder="Comfortable dance shoes (or socks for hardwood). Water bottle."></textarea>
     </div>
 
     <div class="field">
@@ -694,17 +690,17 @@
 
     <!-- Website note — only shown for styles configured to display one (Tap Dance, Ballet Pointes, Burlesque, etc.). -->
     <div class="field" id="website-note-field" style="display: none;">
-      <label class="field-label">Website note <span class="badge-new">style-specific</span></label>
-      <p class="field-hint" style="margin: 0 0 8px;">Extra info shown on the Squarespace class page — appears only for styles configured to display this (e.g. Tap Dance "Free shoe lending available", Ballet "Pointe shoes required for Level 3").</p>
-      <textarea id="website-note-input" placeholder="e.g. Free shoe lending available for new students."></textarea>
+      <label class="field-label">Website note</label>
+      <p class="field-hint" style="margin: 0 0 8px;">Extra info shown on the class page (e.g. "Free shoe lending available").</p>
+      <textarea id="website-note-input" rows="2" placeholder="e.g. Free shoe lending available for new students."></textarea>
     </div>
   </div>
 
   <!-- SECTION 6: OPENDEURDAG -->
   <div class="section">
     <span class="section-num">6</span>
-    <h2 class="section-title">Open House (Opendeurdag) <span class="badge-new">simplified</span></h2>
-    <p class="section-hint">Which Open House dates can you teach a free trial of this class?</p>
+    <h2 class="section-title">Open House (Opendeurdag)</h2>
+    <p class="section-hint">When can you teach a free trial of this class?</p>
 
     <div class="field">
       <label class="field-label">Available dates <span class="badge-new">multi-select</span></label>
@@ -716,21 +712,17 @@
         <div class="chip chip-multi" onclick="toggleMulti(this)">Sun 14 Sep — afternoon</div>
         <div class="chip chip-multi selected" onclick="toggleMulti(this)">Sun 14 Sep — evening</div>
       </div>
-      <p class="field-hint">Pick all time-slots you can teach a free trial during Open House weekend.</p>
     </div>
   </div>
 
   <!-- SECTION 7: SPECIAL NOTES -->
   <div class="section">
     <span class="section-num">7</span>
-    <h2 class="section-title">Special notes <span class="badge-new">catch-all</span></h2>
-    <p class="section-hint">Anything else Shoonya should know — equipment needs, scheduling concerns, prop requests, anything that doesn't fit a field above.</p>
+    <h2 class="section-title">Special notes <small style="font-weight:400; font-size:1rem; color:var(--mid);">(optional)</small></h2>
+    <p class="section-hint">Anything the fields above don't cover.</p>
 
     <div class="field">
-      <textarea class="large" id="f-special-notes" placeholder="Examples: 'Need mirror on the long wall', 'Aakash works better for floor work', 'L3 students bring their own pointes', 'May ask for projector for music theory session in week 4'."></textarea>
-      <div class="annotation">
-        <strong>Shoonya reads this during review</strong> — use it for anything the fields above don't cover.
-      </div>
+      <textarea class="large" id="f-special-notes" rows="3" placeholder="e.g. Need a mirror on the long wall · Aakash works better for floor work · L3 students bring their own pointes"></textarea>
     </div>
   </div>
 

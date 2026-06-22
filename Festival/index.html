@@ -126,9 +126,9 @@
 </header>
 <div class="hero">
   <h2>Festival Submission</h2>
-  <p>Fill in the details below. We'll handle shoonyadance.com, calendar and social media.</p>
+  <p>Tell us about your festival. We'll take it from there.</p>
 </div>
-<div class="notice">Questions? <a href="https://www.shoonyadance.com/contact">Contact us</a></div>
+<div class="notice"><a href="https://www.shoonyadance.com/contact">Need help?</a></div>
 
 <div class="container">
 
@@ -136,7 +136,7 @@
 <div id="festival-login-required" class="card" style="display:none;text-align:center;">
   <div class="card-title" style="border-bottom:none;">🌟 Festival Submission</div>
   <p style="font-size:.92rem;color:#555;margin:10px 0 20px;">
-    Festival submissions require a Shoonya account so we can pre-fill your details and keep your submissions in one place.
+    Please log in to continue.
   </p>
   <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
     <button style="background:var(--purple);color:#fff;border:none;border-radius:8px;font-size:.9rem;font-weight:700;padding:10px 22px;cursor:pointer;"
@@ -156,7 +156,7 @@
 <!-- Admin Panel -->
 <div id="admin-panel">
   <div class="panel-title">⚙ Admin Configuration — Admin Only</div>
-  <div style="font-size:.73rem;color:#888;margin-bottom:14px;">Hidden from organisers. Settings are saved in the browser.</div>
+  <div style="font-size:.73rem;color:#888;margin-bottom:14px;">Saved in this browser.</div>
   <div class="admin-row">
     <div><label>Multi-class / Student discount (%)</label><input type="number" id="adm-disc" placeholder="12" /></div>
     <div><label>UITPAS discount (%)</label><input type="number" id="adm-uitpas" placeholder="80" /></div>
@@ -181,9 +181,8 @@
     </div>
 
     <div class="field">
-      <label>Display / Stage Name</label>
-      <input type="text" id="display-name" placeholder="e.g. El Sol — shown on promotions if different from legal name" />
-      <div class="hint">Leave blank to use your legal name.</div>
+      <label>Display / Stage Name <span style="font-weight:400;color:#888;">(optional)</span></label>
+      <input type="text" id="display-name" placeholder="e.g. El Sol" />
     </div>
 
     <div class="field">
@@ -195,7 +194,7 @@
          is run by Shoonya Dance Centre & Tapdance Promotion). -->
     <div class="field">
       <label>Co-organiser / partner <span style="font-weight:400;color:#888;">(optional)</span></label>
-      <input type="text" id="co-organiser" placeholder="e.g. Tapdance Promotion — if co-hosted with another organisation" />
+      <input type="text" id="co-organiser" placeholder="e.g. Tapdance Promotion" />
     </div>
   </div>
 
@@ -209,7 +208,7 @@
     </div>
 
     <div class="field">
-      <label>Tagline / Subtitle</label>
+      <label>Tagline / Subtitle <span style="font-weight:400;color:#888;">(optional)</span></label>
       <input type="text" id="tagline" placeholder="e.g. Three days of dance, music and community" />
     </div>
 
@@ -227,14 +226,12 @@
     <div class="field">
       <label>Dance Style(s) <span class="req">*</span></label>
       <input type="text" id="dance-styles" placeholder="e.g. Salsa, Bachata, Kizomba" />
-      <div class="hint">List all styles featured at this festival.</div>
     </div>
 
     <div class="row-2">
       <div class="field">
-        <label>Venue / Location</label>
-        <input type="text" id="venue" placeholder="e.g. Shoonya Dance Centre, Stapelplein 41, Ghent" />
-        <div class="hint">Leave blank if held at Shoonya as usual.</div>
+        <label>Venue / Location <span style="font-weight:400;color:#888;">(optional)</span></label>
+        <input type="text" id="venue" placeholder="Leave blank if at Shoonya" />
       </div>
       <div class="field">
         <label>Teaching Language(s)</label>
@@ -251,7 +248,7 @@
     </div>
 
     <div class="field">
-      <label>Dress Code</label>
+      <label>Dress Code <span style="font-weight:400;color:#888;">(optional)</span></label>
       <input type="text" id="dress-code" placeholder="e.g. Real dance shoes, socks, or barefoot" />
     </div>
   </div>
@@ -259,7 +256,7 @@
   <!-- Section 3: Programme -->
   <div class="card">
     <div class="card-title">3 — Programme</div>
-    <div class="info-box">Add every activity — workshops, social dances, performances, DJ sets. For each workshop, add a short description of what participants will learn.</div>
+    <div class="info-box">Add each activity: workshops, socials, performances, DJ sets.</div>
 
     <div id="day-tabs-wrap" class="hidden">
       <div id="day-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;"></div>
@@ -272,7 +269,7 @@
   <!-- Section 4: Teachers & Artists -->
   <div class="card">
     <div class="card-title">4 — Teachers & Artists</div>
-    <div class="info-box">Add every guest teacher or artist performing at the festival. Regular Shoonya teachers can be skipped unless they need a bio update.</div>
+    <div class="info-box">Add guest teachers and artists. Skip regular Shoonya teachers — unless their bio or photo needs updating.</div>
 
     <div id="teachers-list"></div>
     <button class="btn-add-row" onclick="addTeacherCard()">+ Add Teacher / Artist</button>
@@ -289,18 +286,18 @@
   <!-- Section 6: Pricing -->
   <div class="card">
     <div class="card-title">6 — Pricing</div>
-    <div class="info-box">Add one tier per pass or ticket type. Include what each pass covers in the description — this appears in the pricing table on shoonyadance.com once approved.</div>
+    <div class="info-box">One tier per pass or ticket type.</div>
 
     <div id="price-tiers"></div>
     <button class="btn-add-row" onclick="addPriceTier()" style="margin-top:4px;">+ Add Pricing Tier</button>
 
     <div class="row-2" style="margin-top:14px;">
       <div class="field">
-        <label>Early Bird Deadline</label>
+        <label>Early Bird Deadline <span style="font-weight:400;color:#888;">(optional)</span></label>
         <input type="date" id="early-bird-deadline" />
       </div>
       <div class="field">
-        <label>Free Entry Note</label>
+        <label>Free Entry Note <span style="font-weight:400;color:#888;">(optional)</span></label>
         <input type="text" id="free-entry-note" placeholder="e.g. Free for children under 12" />
       </div>
     </div>
@@ -324,8 +321,7 @@
     </div>
 
     <div class="info-box" style="margin-top:14px;">
-      All Shoonya members get a discounted price on all passes and single workshops.
-      An <strong id="uitpas-pct-label">80%</strong> social tariff applies with UITPAS.
+      Member discount and the <strong id="uitpas-pct-label">80%</strong> UITPAS tariff are applied automatically.
     </div>
   </div>
 
@@ -335,32 +331,32 @@
 
     <div class="field">
       <label>Festival Description <span class="req">*</span></label>
-      <textarea id="description" rows="6" placeholder="What's this festival about? What can attendees expect? What makes it special?"></textarea>
+      <textarea id="description" rows="4" placeholder="What's this festival about, and what makes it special?"></textarea>
     </div>
 
     <div class="field">
-      <label>Practical Info</label>
-      <textarea id="practical" rows="3" placeholder="e.g. Registration required / No partner needed / Beginner-friendly / Food and drinks available…"></textarea>
+      <label>Practical Info <span style="font-weight:400;color:#888;">(optional)</span></label>
+      <textarea id="practical" rows="3" placeholder="e.g. Registration required · No partner needed · Beginner-friendly"></textarea>
     </div>
 
     <div class="field">
-      <label>Anything else for us?</label>
-      <textarea id="notes" rows="3" placeholder="Setup requirements, special requests, anything we should know…"></textarea>
+      <label>Anything else? <span style="font-weight:400;color:#888;">(optional)</span></label>
+      <textarea id="notes" rows="2" placeholder="Setup needs, special requests…"></textarea>
     </div>
   </div>
 
   <!-- Section 8: Images -->
   <div class="card">
-    <div class="card-title">8 — Images (Optional)</div>
-    <div class="info-box">Only needed if you have new images. Skip if you've shared them before.</div>
+    <div class="card-title">8 — Images <span style="font-weight:400;font-size:.78rem;color:#aaa;text-transform:none;letter-spacing:0;">(optional)</span></div>
+    <div class="info-box">Skip if you've shared images before.</div>
 
     <div class="field">
-      <label>Festival Banner / Promotional Image</label>
+      <label>Festival Banner</label>
       <div class="upload-zone" onclick="document.getElementById('banner-input').click()">
         <input type="file" id="banner-input" accept="image/*" onchange="handleUpload(this,'banner-preview','banner-warn',1200)" />
         <div class="ico">🎪</div>
-        <p>Click to upload a festival banner<br><span style="font-size:.73rem;">Minimum 1200px wide recommended</span></p>
-        <div class="warn" id="banner-warn">⚠ Image appears low resolution — minimum 1200px wide recommended.</div>
+        <p>Upload a banner<br><span style="font-size:.73rem;">1200px wide or larger</span></p>
+        <div class="warn" id="banner-warn">⚠ Low resolution — 1200px wide or larger is best.</div>
       </div>
       <div class="up-preview" id="banner-preview"></div>
     </div>
@@ -370,7 +366,7 @@
       <div class="upload-zone" onclick="document.getElementById('extra-input').click()">
         <input type="file" id="extra-input" accept="image/*" multiple onchange="handleMultiUpload(this,'extra-preview')" />
         <div class="ico">📸</div>
-        <p>Click to upload additional images (artist photos, past editions…)<br><span style="font-size:.73rem;">You can select multiple files</span></p>
+        <p>Upload more images<br><span style="font-size:.73rem;">Select multiple files</span></p>
       </div>
       <div class="up-preview" id="extra-preview"></div>
     </div>
@@ -641,14 +637,14 @@ function addProgrammeSlot() {
         </select>
       </div>
       <div style="flex:1;min-width:160px;max-width:220px;">
-        <div class="slot-label">Extra fee <span style="font-weight:400;color:#888;">(optional — e.g. €15)</span></div>
-        <input type="text" class="slot-fee" placeholder="Leave blank if included / free"/>
+        <div class="slot-label">Extra fee <span style="font-weight:400;color:#888;">(optional)</span></div>
+        <input type="text" class="slot-fee" placeholder="e.g. €15 — blank if included"/>
       </div>
     </div>
-    <button class="slot-desc-toggle" onclick="toggleSlotDesc(${id})">＋ Add workshop description</button>
+    <button class="slot-desc-toggle" onclick="toggleSlotDesc(${id})">＋ Add description</button>
     <div class="slot-desc" id="slot-desc-${id}">
-      <div class="slot-label" style="margin-bottom:4px;">Workshop Description</div>
-      <textarea class="slot-description" rows="3" placeholder="What will participants learn or experience? What makes this session special? This text appears on the website listing."></textarea>
+      <div class="slot-label" style="margin-bottom:4px;">Description</div>
+      <textarea class="slot-description" rows="4" placeholder="What will participants learn or experience?"></textarea>
     </div>
   `;
   container.appendChild(div);
@@ -658,7 +654,7 @@ function toggleSlotDesc(id) {
   const desc = document.getElementById(`slot-desc-${id}`);
   const btn = desc.previousElementSibling;
   const isOpen = desc.classList.toggle('open');
-  btn.textContent = isOpen ? '－ Hide description' : '＋ Add workshop description';
+  btn.textContent = isOpen ? '－ Hide description' : '＋ Add description';
 }
 
 // ── TEACHER CARDS ─────────────────────────────────────────────────────────────
@@ -679,11 +675,11 @@ function addTeacherCard() {
       <div class="field"><label>Last Name</label><input type="text" class="tc-last" placeholder="e.g. Dupont" /></div>
     </div>
     <div class="row-2">
-      <div class="field"><label>Display / Stage Name</label><input type="text" class="tc-display" placeholder="e.g. El Sol" /></div>
+      <div class="field"><label>Display / Stage Name <span style="font-weight:400;color:#888;">(optional)</span></label><input type="text" class="tc-display" placeholder="e.g. El Sol" /></div>
       <div class="field"><label>Dance Style(s)</label><input type="text" class="tc-style" placeholder="e.g. Cuban Salsa, Rueda" /></div>
     </div>
-    <div class="field"><label>Short Bio</label><textarea class="tc-bio" rows="3" placeholder="Brief bio for the website — training, background, what makes their teaching special…"></textarea></div>
-    <div class="field"><label>Website / Social Media</label><input type="text" class="tc-link" placeholder="https://instagram.com/handle" /></div>
+    <div class="field"><label>Short Bio</label><textarea class="tc-bio" rows="4" placeholder="A short bio for the website — training, background, what makes their teaching special."></textarea></div>
+    <div class="field"><label>Website / Social <span style="font-weight:400;color:#888;">(optional)</span></label><input type="text" class="tc-link" placeholder="https://instagram.com/handle" /></div>
   `;
   list.appendChild(div);
 }
@@ -705,7 +701,7 @@ function addDjCard() {
       <div class="field"><label>DJ Name / Handle</label><input type="text" class="dj-name" placeholder="e.g. DJ Marco" /></div>
       <div class="field"><label>Music Styles</label><input type="text" class="dj-styles" placeholder="e.g. Kizomba, Semba, Ghettozouk" /></div>
     </div>
-    <div class="field"><label>Short Bio <span style="font-weight:400;color:#aaa;">(optional)</span></label><textarea class="dj-bio" rows="2" placeholder="Optional — helpful for guest DJs or featured sets"></textarea></div>
+    <div class="field"><label>Short Bio <span style="font-weight:400;color:#888;">(optional)</span></label><textarea class="dj-bio" rows="4" placeholder="A short bio — helpful for guest DJs or featured sets"></textarea></div>
   `;
   list.appendChild(div);
 }
@@ -725,7 +721,7 @@ function addPriceTier(label='', desc='', regular='', earlybird='', member='') {
       <button class="btn-rm" onclick="document.getElementById('tier-${id}').remove()">✕</button>
     </div>
     <div class="price-tier-desc">
-      <input type="text" class="tier-desc" value="${desc}" placeholder="What's included (e.g. All main workshops Fri–Sun, Community Class, Opening Party)" />
+      <input type="text" class="tier-desc" value="${desc}" placeholder="What's included" />
     </div>
     <div class="price-tier-prices">
       <div>

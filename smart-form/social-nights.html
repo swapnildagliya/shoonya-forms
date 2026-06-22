@@ -98,6 +98,8 @@
     margin-bottom: 8px;
   }
   .field-hint { font-size: 0.78rem; color: var(--light); margin-top: 4px; font-style: italic; }
+  /* standardised small muted "(optional)" marker (display only). */
+  .opt { font-weight: 400; font-style: italic; text-transform: none; letter-spacing: 0; color: var(--light); }
   input[type="text"], input[type="email"], input[type="number"], input[type="date"],
   input[type="time"], textarea, select {
     width: 100%;
@@ -109,7 +111,7 @@
     background: white;
   }
   input:focus, textarea:focus, select:focus { outline: 2px solid var(--purple); outline-offset: -1px; border-color: var(--purple); }
-  textarea { resize: vertical; min-height: 80px; }
+  textarea { resize: vertical; min-height: 0; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -448,7 +450,7 @@
 <div class="container">
 
   <h1>Social Night Submission</h1>
-  <p class="subtitle">Submit a social night, milonga, practice night, or themed party evening.</p>
+  <p class="subtitle">Submit a social night, milonga, practice night, or themed party.</p>
 
   <!-- 2026-05-24 audit: third v2 beta-tester banner stripped (the earlier sweep missed this variant — "Redesigned form (v2). Single page, smarter programme builder"). Now consistent with workshop-v2 + weekly-v2. -->
 
@@ -489,7 +491,7 @@
         <div class="chip chip-multi" data-val="Tap Dance" onclick="toggleStyle(this)">Tap Dance</div>
         <div class="chip" onclick="addCustomStyle()">+ Other...</div>
       </div>
-      <p class="field-hint">Pick all styles the evening covers. Used to auto-suggest the title.</p>
+      <p class="field-hint">Pick all that apply.</p>
     </div>
 
     <div class="field">
@@ -498,14 +500,13 @@
       <div class="title-suggestion" id="title-suggestion">
         Use this title: <button onclick="applyTitleSuggestion()" id="title-suggest-btn"></button>
       </div>
-      <p class="field-hint">Auto-suggested from your style selection — edit freely.</p>
+      <p class="field-hint">Suggested from your styles — edit freely.</p>
     </div>
 
     <div class="row3">
       <div class="field">
         <label class="field-label">Date <span class="req-mark">*</span></label>
         <input type="date" id="f-date">
-        <p class="field-hint" style="margin-top:4px;">Past dates can't be selected.</p>
       </div>
       <div class="field">
         <label class="field-label">Doors open <span class="req-mark">*</span></label>
@@ -525,8 +526,8 @@
     </div>
 
     <div class="field">
-      <label class="field-label">Dress code <span style="font-weight:400; font-style:italic; text-transform:none; letter-spacing:0;">(optional)</span></label>
-      <input type="text" id="f-dresscode" placeholder="e.g. Red &amp; Black · Glitter &amp; Glamour — leave blank if none">
+      <label class="field-label">Dress code <span class="opt">(optional)</span></label>
+      <input type="text" id="f-dresscode" placeholder="e.g. Red &amp; Black · Glitter &amp; Glamour">
     </div>
   </div>
 
@@ -540,18 +541,18 @@
     <button class="btn-add" onclick="addProgrammeSlot()">+ Add a programme slot</button>
 
     <div id="guest-photo-wrap" style="display:none; margin-top: 16px;">
-      <label class="field-label">Guest teacher photo (optional)</label>
+      <label class="field-label">Guest teacher photo <span class="opt">(optional)</span></label>
       <input type="file" id="f-guest-teacher-photo" accept="image/*" style="font-size: 0.85rem; padding: 6px 0;">
-      <p class="field-hint">JPEG or PNG. Used for the event poster and the shoonyadance.com events page. Upload one photo for the main guest teacher.</p>
+      <p class="field-hint">JPEG or PNG — one photo of the main guest teacher.</p>
     </div>
 
-    <p class="field-hint" style="margin-top: 10px;">Leave empty if the event is dance floor only (no workshops).</p>
+    <p class="field-hint" style="margin-top: 10px;">Leave empty for a dance-floor-only night.</p>
 
     <!-- DANCE NIGHT BLOCK — always present -->
     <hr class="divider">
     <div class="dance-night-block">
       <div class="dn-label">🎵 Dance floor</div>
-      <div class="dn-sub">Always included — fill in the timing and music.</div>
+      <div class="dn-sub">Timing and music.</div>
 
       <div class="row" style="margin-bottom: 18px;">
         <div class="field">
@@ -593,19 +594,19 @@
             <input type="text" id="f-dj-name" placeholder="DJ name or alias" class="dn-input">
           </div>
           <div class="field">
-            <label class="field-label dn-label-purple">DJ website / Instagram</label>
-            <input type="text" id="f-dj-social" placeholder="Instagram or website (optional)" class="dn-input">
+            <label class="field-label dn-label-purple">DJ website / Instagram <span class="opt">(optional)</span></label>
+            <input type="text" id="f-dj-social" placeholder="@handle or link" class="dn-input">
           </div>
         </div>
         <div class="field">
           <label class="field-label dn-label-purple">DJ fee (€)</label>
-          <input type="number" id="f-dj-fee" placeholder="e.g. 200" min="0" step="0.5" class="dn-input" style="max-width: 140px;">
-          <p class="field-hint dn-hint-purple">For Shoonya's records only — never shown publicly.</p>
+          <input type="number" id="f-dj-fee" placeholder="200" min="0" step="0.5" class="dn-input" style="max-width: 140px;">
+          <p class="field-hint dn-hint-purple">Not shown publicly.</p>
         </div>
         <div class="field">
           <label class="field-label dn-label-purple">DJ photo</label>
           <input type="file" id="f-dj-photo" accept="image/*" style="font-size: 0.85rem; padding: 6px 0;">
-          <p class="field-hint dn-hint-purple">JPEG or PNG. Used for the event poster and social promo.</p>
+          <p class="field-hint dn-hint-purple">JPEG or PNG.</p>
         </div>
       </div>
 
@@ -619,7 +620,7 @@
 
       <!-- Genres + extra DJs (shared for all music types) -->
       <div class="field" style="margin-top: 6px;">
-        <label class="field-label">Dance styles the DJ will play <span class="badge-new">multi-select</span></label>
+        <label class="field-label">Styles the DJ will play <span class="badge-new">multi-select</span></label>
         <div class="chips" id="genre-chips" style="margin-bottom: 8px;">
           <div class="music-chip" data-val="Bachata" onclick="toggleGenre(this)">Bachata</div>
           <div class="music-chip" data-val="Salsa" onclick="toggleGenre(this)">Salsa</div>
@@ -630,7 +631,7 @@
           <div class="music-chip" data-val="Flamenco" onclick="toggleGenre(this)">Flamenco</div>
           <div class="chip dn-other-chip" onclick="addCustomGenre()">+ Other...</div>
         </div>
-        <p class="field-hint dn-hint-purple">Used for the schedule page and social media promo.</p>
+        <p class="field-hint dn-hint-purple">Shown on the schedule and promo.</p>
       </div>
 
       <!-- Additional DJs -->
@@ -645,8 +646,8 @@
   <!-- SECTION 3: PRICING -->
   <div class="section">
     <span class="section-num">3</span>
-    <h2 class="section-title">Pricing <span class="badge-new">tiers</span></h2>
-    <p class="section-hint">Add one row per price tier (e.g. advance, door, members).</p>
+    <h2 class="section-title">Pricing</h2>
+    <p class="section-hint">One row per price (e.g. advance, door, members).</p>
 
     <div id="pricing-rows">
       <!-- seeded with two default rows -->
@@ -654,13 +655,13 @@
     <button class="btn-add" onclick="addPricingTier()" style="margin-top: 4px;">+ Add pricing tier</button>
 
     <div class="field" style="margin-top: 16px;">
-      <label class="field-label">Early-bird deadline <span style="font-weight:400; font-style:italic; text-transform:none; letter-spacing:0;">(optional)</span></label>
+      <label class="field-label">Early-bird deadline <span class="opt">(optional)</span></label>
       <input type="date" id="f-early-deadline">
-      <p class="field-hint">If your advance / early price ends on a date, set it here.</p>
+      <p class="field-hint">When the advance price ends.</p>
     </div>
 
     <div class="annotation" style="margin-top: 16px;">
-      <strong>Advance tickets</strong> — Shoonya sets up the ticket link after approval. Just submit the pricing here.
+      <strong>Advance tickets</strong> — Shoonya sets up the ticket link after approval.
     </div>
   </div>
 
@@ -668,16 +669,16 @@
   <div class="section">
     <span class="section-num">4</span>
     <h2 class="section-title">Description &amp; notes</h2>
-    <p class="section-hint">Anything we need to know, and the public blurb for the website.</p>
+    <p class="section-hint">The public blurb, plus anything for Shoonya staff.</p>
 
     <div class="field">
       <label class="field-label">Public description</label>
-      <textarea id="f-description" class="large" placeholder="The vibe, what to expect, who it's for… This will appear on the events page."></textarea>
+      <textarea id="f-description" class="large" rows="4" placeholder="The vibe, what to expect, who it's for… Shown on the events page."></textarea>
     </div>
 
     <div class="field">
-      <label class="field-label">Internal notes <span style="font-weight:400; font-style:italic; text-transform:none; letter-spacing:0;">(optional)</span></label>
-      <textarea id="f-notes" placeholder="Anything Shoonya staff should know — setup requirements, special requests, etc."></textarea>
+      <label class="field-label">Internal notes <span class="opt">(optional)</span></label>
+      <textarea id="f-notes" rows="2" placeholder="Setup needs, special requests… Not shown publicly."></textarea>
     </div>
   </div>
 
@@ -944,11 +945,11 @@ function addProgrammeSlot() {
     <div class="field">
       <label class="field-label">Teacher / performer photo <span class="req-mark">*</span></label>
       <input type="file" data-slot="teacher-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
-      <p class="field-hint" style="margin: 4px 0 0; font-size: 0.78rem;">Add the teacher/performer name above first, then upload their photo.</p>
+      <p class="field-hint" style="margin: 4px 0 0; font-size: 0.78rem;">Add the name above first.</p>
     </div>
     <div class="field">
       <label class="field-label prog-topic-label">Topic / description <small style="font-weight:400; font-style:italic; color:var(--mid);">(pick type above)</small></label>
-      <input type="text" data-slot="topic" placeholder="e.g. Body movement fundamentals, Advanced footwork…">
+      <input type="text" data-slot="topic" placeholder="e.g. Advanced footwork">
       <p class="field-hint prog-type-hint" style="margin: 4px 0 0; font-size: 0.78rem;"></p>
     </div>
   `;
@@ -983,14 +984,14 @@ function setProgType(el, cardId, type) {
   const teacherLabel = card.querySelector('.prog-teacher-label');
   const topicLabel = card.querySelector('.prog-topic-label');
   if (type === 'other') {
-    if (topicHint) topicHint.textContent = 'Required for "Other" — explain what this slot is.';
+    if (topicHint) topicHint.textContent = 'Required — what is this slot?';
     if (topicLabel) topicLabel.innerHTML = 'What is this? <span class="req-mark">*</span>';
-    if (styleLabel) styleLabel.innerHTML = 'Style <small style="font-weight:400; color:var(--mid);">(optional)</small>';
-    if (teacherLabel) teacherLabel.innerHTML = 'Teacher / performer <small style="font-weight:400; color:var(--mid);">(optional)</small>';
+    if (styleLabel) styleLabel.innerHTML = 'Style <span class="opt">(optional)</span>';
+    if (teacherLabel) teacherLabel.innerHTML = 'Teacher / performer <span class="opt">(optional)</span>';
   } else {
     if (topicHint) topicHint.textContent = '';
     const personLabel = type === 'performance' ? 'Performer' : 'Teacher';
-    if (topicLabel) topicLabel.innerHTML = 'Topic / description <small style="font-weight:400; font-style:italic; color:var(--mid);">(optional)</small>';
+    if (topicLabel) topicLabel.innerHTML = 'Topic / description <span class="opt">(optional)</span>';
     if (styleLabel) styleLabel.innerHTML = 'Style <span class="req-mark">*</span>';
     if (teacherLabel) teacherLabel.innerHTML = personLabel + ' <span class="req-mark">*</span>';
   }
@@ -1011,13 +1012,13 @@ function addExtraDJ() {
   row.innerHTML = `
     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
       <input type="text" class="dn-input" data-extra-dj="name" placeholder="DJ name or alias" style="flex: 1; min-width: 180px;">
-      <input type="text" class="dn-input" data-extra-dj="social" placeholder="Instagram / website (optional)" style="flex: 1; min-width: 180px;">
+      <input type="text" class="dn-input" data-extra-dj="social" placeholder="@handle or link" style="flex: 1; min-width: 180px;">
       <button class="btn-remove-dark" type="button" aria-label="Remove extra DJ" onclick="this.closest('.extra-dj-row').remove()">✕</button>
     </div>
     <div style="margin-top: 8px;">
-      <label class="field-label" style="font-size: 0.78rem; color: #c49cee; margin-bottom: 4px; display: block;">Photo (optional)</label>
+      <label class="field-label" style="font-size: 0.78rem; color: #c49cee; margin-bottom: 4px; display: block;">Photo <span class="opt">(optional)</span></label>
       <input type="file" data-extra-dj="photo" accept="image/*" class="dn-input" style="font-size: 0.85rem; padding: 6px 8px;">
-      <p class="field-hint" style="margin: 4px 0 0; font-size: 0.78rem; color: #B7A1D6;">Add the DJ's name above first, then upload their photo.</p>
+      <p class="field-hint" style="margin: 4px 0 0; font-size: 0.78rem; color: #B7A1D6;">Add the DJ's name above first.</p>
     </div>
   `;
   wrap.appendChild(row);
