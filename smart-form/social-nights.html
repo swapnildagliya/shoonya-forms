@@ -496,7 +496,7 @@
       <label class="field-label">Event title <span class="req-mark">*</span></label>
       <input type="text" id="f-title" placeholder="e.g. Salsa &amp; Bachata — Social Night">
       <div class="title-suggestion" id="title-suggestion">
-        Suggested: <button onclick="applyTitleSuggestion()" id="title-suggest-btn"></button>
+        Use this title: <button onclick="applyTitleSuggestion()" id="title-suggest-btn"></button>
       </div>
       <p class="field-hint">Auto-suggested from your style selection — edit freely.</p>
     </div>
@@ -505,7 +505,7 @@
       <div class="field">
         <label class="field-label">Date <span class="req-mark">*</span></label>
         <input type="date" id="f-date">
-        <p class="field-hint" style="margin-top:4px;">Click to open the calendar.</p>
+        <p class="field-hint" style="margin-top:4px;">Past dates can't be selected.</p>
       </div>
       <div class="field">
         <label class="field-label">Doors open <span class="req-mark">*</span></label>
@@ -534,10 +534,10 @@
   <div class="section">
     <span class="section-num">2</span>
     <h2 class="section-title">Programme</h2>
-    <p class="section-hint">Add workshops, performances, or other slots before the dance floor opens.</p>
+    <p class="section-hint">Add any slots before the dance floor opens.</p>
 
     <div id="programme-rows"></div>
-    <button class="btn-add" onclick="addProgrammeSlot()">+ Add workshop or performance slot</button>
+    <button class="btn-add" onclick="addProgrammeSlot()">+ Add a programme slot</button>
 
     <div id="guest-photo-wrap" style="display:none; margin-top: 16px;">
       <label class="field-label">Guest teacher photo (optional)</label>
@@ -579,7 +579,7 @@
           <div class="music-chip" data-val="teacher-dj" onclick="setMusicType(this)">A Shoonya teacher</div>
           <div class="music-chip" data-val="playlist" onclick="setMusicType(this)">Playlist only</div>
         </div>
-        <p class="music-type-req-hint" id="music-type-req-hint">Select one — required.</p>
+        <p class="music-type-req-hint" id="music-type-req-hint">Pick how the music is handled.</p>
       </div>
 
       <!-- Guest DJ fields -->
@@ -594,13 +594,13 @@
           </div>
           <div class="field">
             <label class="field-label dn-label-purple">DJ website / Instagram</label>
-            <input type="text" id="f-dj-social" placeholder="Optional" class="dn-input">
+            <input type="text" id="f-dj-social" placeholder="Instagram or website (optional)" class="dn-input">
           </div>
         </div>
         <div class="field">
           <label class="field-label dn-label-purple">DJ fee (€)</label>
           <input type="number" id="f-dj-fee" placeholder="e.g. 200" min="0" step="0.5" class="dn-input" style="max-width: 140px;">
-          <p class="field-hint dn-hint-purple">Internal. Not shown publicly.</p>
+          <p class="field-hint dn-hint-purple">For Shoonya's records only — never shown publicly.</p>
         </div>
         <div class="field">
           <label class="field-label dn-label-purple">DJ photo</label>
@@ -692,7 +692,7 @@
     <div class="review-overlay" id="review-overlay" onclick="if(event.target===this)closeReviewModal()">
       <div class="review-modal" role="dialog" aria-modal="true" aria-labelledby="review-title">
         <h2 id="review-title">Review your social night submission</h2>
-        <p class="review-sub">Click <strong>Edit</strong> on any row to jump back to the field and change it. Then come back here to submit for real.</p>
+        <p class="review-sub">Click <strong>Edit</strong> on any row to jump back to the field and change it, then return here to submit.</p>
         <div id="review-body"></div>
         <div class="review-actions">
           <button type="button" class="review-btn-cancel" onclick="closeReviewModal()">Back to form</button>
@@ -944,7 +944,7 @@ function addProgrammeSlot() {
     <div class="field">
       <label class="field-label">Teacher / performer photo <span class="req-mark">*</span></label>
       <input type="file" data-slot="teacher-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
-      <p class="field-hint" style="margin: 4px 0 0; font-size: 0.78rem;">Saved to Drive as "<em>name</em>.jpg" — type the name above first.</p>
+      <p class="field-hint" style="margin: 4px 0 0; font-size: 0.78rem;">Add the teacher/performer name above first, then upload their photo.</p>
     </div>
     <div class="field">
       <label class="field-label prog-topic-label">Topic / description <small style="font-weight:400; font-style:italic; color:var(--mid);">(pick type above)</small></label>
@@ -1017,7 +1017,7 @@ function addExtraDJ() {
     <div style="margin-top: 8px;">
       <label class="field-label" style="font-size: 0.78rem; color: #c49cee; margin-bottom: 4px; display: block;">Photo (optional)</label>
       <input type="file" data-extra-dj="photo" accept="image/*" class="dn-input" style="font-size: 0.85rem; padding: 6px 8px;">
-      <p class="field-hint" style="margin: 4px 0 0; font-size: 0.78rem; color: #B7A1D6;">Saved to Drive as "<em>DJ name</em>.jpg" — type the DJ's name above first.</p>
+      <p class="field-hint" style="margin: 4px 0 0; font-size: 0.78rem; color: #B7A1D6;">Add the DJ's name above first, then upload their photo.</p>
     </div>
   `;
   wrap.appendChild(row);
@@ -1100,7 +1100,7 @@ function _collectValidationErrors() {
   const styles = getSelectedStyles();
   const email = document.getElementById('f-teacher-email')?.value.trim() || '';
   if (!document.getElementById('f-teacher-name').value.trim()) errors.push('Please log in before submitting.');
-  if (email && !_ssEmailRe.test(email)) errors.push('Email looks like a typo — please log out and back in.');   // V1
+  if (email && !_ssEmailRe.test(email)) errors.push('Your account email looks malformed. Please sign out and sign in again — if it persists, reach us via the contact page (https://www.shoonyadance.com/contact).');   // V1
   if (styles.length === 0) errors.push('Select at least one dance style.');
   if (!document.getElementById('f-title').value.trim()) errors.push('Event title is required.');
   if (!document.getElementById('f-date').value) errors.push('Date is required.');
@@ -1157,7 +1157,7 @@ function _collectValidationErrors() {
     const priceInput = row.querySelectorAll('input')[1];
     const label = (labelInput?.value || '').trim();
     const raw = priceInput?.value.trim() || '';
-    if (raw && isNaN(parseFloat(raw))) errors.push('Pricing tier ' + (i + 1) + ' price is not a number.');
+    if (raw && isNaN(parseFloat(raw))) errors.push('Pricing tier ' + (i + 1) + ' ("' + label + '"): the amount must be a number.');
     else if (label && !raw) errors.push('Pricing tier ' + (i + 1) + ' ("' + label + '"): enter an amount (type 0 if it is free).');
   });
   // 2026-05-24: full per-slot programme validation. Requirements depend on slot type.
@@ -1181,11 +1181,11 @@ function _collectValidationErrors() {
       const role = type === 'performance' ? 'performer' : 'teacher';
       if (!styleVal)   errors.push('Slot ' + slotNum + ' (' + type + '): style is required.');
       if (!teacherVal) errors.push('Slot ' + slotNum + ' (' + type + '): ' + role + ' name is required.');
-      if (teacherVal && !photoFile) errors.push('Slot ' + slotNum + ': photo for "' + teacherVal + '" is required (auto-design).');
+      if (teacherVal && !photoFile) errors.push('Slot ' + slotNum + ': a photo of "' + teacherVal + '" is required — it\'s used to build the event poster.');
     } else if (type === 'other') {
       if (!topicVal) errors.push('Slot ' + slotNum + ' (other): description is required — explain what this slot is.');
       // Style + teacher optional for "other"; photo required only if a teacher name is filled
-      if (teacherVal && !photoFile) errors.push('Slot ' + slotNum + ': photo for "' + teacherVal + '" is required (auto-design).');
+      if (teacherVal && !photoFile) errors.push('Slot ' + slotNum + ': a photo of "' + teacherVal + '" is required — it\'s used to build the event poster.');
     }
   });
   // 2026-05-24: DJ photo required when Guest DJ is selected (auto-design needs it).
@@ -1193,7 +1193,7 @@ function _collectValidationErrors() {
     const djName = document.getElementById('f-dj-name').value.trim();
     const djPhoto = document.getElementById('f-dj-photo')?.files?.[0];
     if (djName && !djPhoto) {
-      errors.push('Photo for "' + djName + '" (DJ) is required.');
+      errors.push('A photo of DJ "' + djName + '" is required — it\'s used to build the event poster.');
     }
   }
   // 2026-05-24: each extra DJ row with a name must also have a photo.
@@ -1682,7 +1682,7 @@ async function submitForm() {
 
   const url = (typeof APPS_SCRIPT_URL !== 'undefined') ? APPS_SCRIPT_URL : '';
   if (!url) {
-    errEl.textContent = '⚠ APPS_SCRIPT_URL not configured. Make sure config.js is loaded.';
+    errEl.innerHTML = '⚠ The form isn\'t set up correctly. Please reach us via the <a href="https://www.shoonyadance.com/contact">contact page</a>.';
     errEl.style.display = 'block';
     btn.disabled = false;
     btn.textContent = 'Submit social night →';
@@ -1711,7 +1711,7 @@ async function submitForm() {
     succEl.innerHTML = `
       <strong>✅ Social night submitted!</strong><br>
       <em>${payload.title}</em> — ${payload.date}<br>
-      Shoonya will review within 48 hours and follow up by email — including setting up the ticket link.
+      Shoonya will review within 48 hours and follow up by email. If you set advance pricing, we'll set up the ticket link then.
     `;
     succEl.style.display = 'block';
     succEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1722,7 +1722,7 @@ async function submitForm() {
     // so nothing is lost even if the main backend is down.
     try { if (typeof sendToBackup === 'function') sendToBackup(payload, e.message); } catch(_) {}
     // 2026-05-24 audit S2 + S3: surface real error + 1.5s throttle to prevent double-clicks.
-    errEl.innerHTML = '⚠ ' + (e.message || 'Submission failed. Try again or email info@shoonyadance.com.') +
+    errEl.innerHTML = '⚠ ' + (e.message || 'Submission failed. Try again or reach us via the <a href="https://www.shoonyadance.com/contact">contact page</a>.') +
       '<br><small style="color:var(--mid);">Your draft is saved — try again or come back later.</small>';
     errEl.style.display = 'block';
     btn.textContent = 'Wait a moment…';

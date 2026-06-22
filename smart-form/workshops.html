@@ -346,7 +346,7 @@
 <div class="container">
 
   <h1>Workshop Submission</h1>
-  <p class="subtitle">Tell us about your workshop, intensive, bootcamp, or miniseries.</p>
+  <p class="subtitle">Tell us about your workshop, intensive, bootcamp, or mini-series.</p>
 
   <!-- 2026-05-24: v2 beta-tester banner removed. Production form, teachers shouldn't see the version messaging. -->
 
@@ -359,7 +359,7 @@
   <div class="section" id="ws-section-who">
     <span class="section-num">0</span>
     <h2 class="section-title">Who are you?</h2>
-    <p class="section-hint">So we know who's submitting.</p>
+    <p class="section-hint">So we know who's submitting this workshop.</p>
     <div class="row">
       <div class="field">
         <label class="field-label">Your name</label>
@@ -377,12 +377,12 @@
       <div class="field" id="host-photo-field">
         <label class="field-label">Your photo</label>
         <input type="file" id="f-host-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
-        <p class="field-hint">JPEG or PNG — used on the workshop page and promo materials.</p>
+        <p class="field-hint">JPEG or PNG — used on your workshop page on shoonyadance.com and promo materials.</p>
       </div>
       <div class="field" id="host-bio-field">
         <label class="field-label">Your short bio</label>
         <textarea id="f-host-bio" placeholder="2–3 sentences for the website. Credentials, style background, where you're from."></textarea>
-        <div class="annotation">Used on the event page and promo emails.</div>
+        <div class="annotation">Used on your workshop page on shoonyadance.com and promo materials.</div>
       </div>
     </div>
   </div>
@@ -464,7 +464,7 @@
         <div class="chip chip-multi" data-val="NL">NL</div>
         <div class="chip chip-multi" data-val="FR">FR</div>
       </div>
-      <p class="field-hint">Pick every language you'll teach in — e.g. EN + NL for a bilingual workshop.</p>
+      <p class="field-hint">Pick every language you'll teach in — e.g. EN + NL if you'll switch between them.</p>
     </div>
   </div>
 
@@ -481,7 +481,7 @@
       </div>
       <div class="field">
         <label class="field-label">Guest teacher (optional)</label>
-        <input type="text" id="f-guest-teacher" placeholder="external guest from outside Shoonya">
+        <input type="text" id="f-guest-teacher" placeholder="e.g. Wilmer Lozano">
       </div>
     </div>
     <div class="field">
@@ -491,17 +491,17 @@
     <div class="field" id="guest-bio-field" style="display:none;">
       <label class="field-label">Guest teacher — short bio (optional)</label>
       <textarea id="f-guest-bio" placeholder="2–3 sentences for the workshop page on shoonyadance.com. Credentials, style background, where they're from."></textarea>
-      <div class="annotation">Used on the event page and promo emails.</div>
+      <div class="annotation">Used on your workshop page on shoonyadance.com and promo materials.</div>
     </div>
     <div class="field" id="guest-photo-field" style="display:none;">
       <label class="field-label">Guest teacher photo <span class="req-mark">*</span></label>
       <input type="file" id="f-guest-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
-      <p class="field-hint">JPEG or PNG — used on the workshop page and promo posters.</p>
+      <p class="field-hint">JPEG or PNG — used on your workshop page on shoonyadance.com and promo materials.</p>
     </div>
     <div class="field">
       <label class="field-label">Video — Google Drive link <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <input type="url" id="f-video-link" placeholder="https://drive.google.com/file/d/...">
-      <p class="field-hint">Upload the <strong>actual video file to Google Drive</strong> and paste the share link (set to "anyone with the link can view") — that way we can use the real footage directly. A YouTube or Instagram link also works, but we'd have to re-download it, so Drive is best. Leave blank to use existing Shoonya footage of you.</p>
+      <p class="field-hint">Upload the video to <strong>Google Drive</strong> (set to "anyone with the link can view") and paste the share link. A YouTube or Instagram link works too, but the quality is lower — leave blank to use existing Shoonya footage of you.</p>
     </div>
   </div>
 
@@ -533,7 +533,7 @@
     </div>
 
     <div class="date-pattern-content" id="pattern-recurring">
-      <p class="field-hint" style="margin: 0 0 10px;">For miniseries like "every Wednesday from Feb to April".</p>
+      <p class="field-hint" style="margin: 0 0 10px;">For mini-series like "every Wednesday from Feb to April".</p>
       <div class="row3">
         <div class="field">
           <label class="field-label">Day of week</label>
@@ -599,17 +599,18 @@
   <div class="section">
     <span class="section-num">4</span>
     <h2 class="section-title">Pricing <span class="badge-new">redesigned</span></h2>
-    <p class="section-hint">Just the basics. Use "special pricing notes" below for anything that doesn't fit.</p>
+    <p class="section-hint">Just the basics. Use "Special pricing notes" below for anything that doesn't fit.</p>
 
     <div class="price-row">
-      <label>Full price <span class="req-mark">*</span> <small style="color: var(--mid);">— complete workshop, non-member. <em>Required unless you fill "Special pricing notes" below.</em></small></label>
+      <label>Full price <span class="req-mark">*</span></label>
       <div class="input-wrap">€ <input type="number" id="f-price-full" placeholder="150" min="0" step="0.5" oninput="updateMemberPrice()"></div>
     </div>
+    <p class="field-hint">Price for the whole workshop, standard (non-member) rate. Leave blank only if you describe pricing in "Special pricing notes" below.</p>
 
     <div class="price-row" style="background: #EAFAF0; opacity: 0.9;">
       <label>
         Shoonya member price
-        <small style="color: var(--mid);">— 10% off, auto-calculated</small>
+        <small style="color: var(--mid);">— 10% off, set automatically</small>
       </label>
       <div class="input-wrap" style="color: #14532D; font-weight: 600;">
         € <span id="f-price-member-display" style="font-size: 1.05rem;">—</span>
@@ -652,7 +653,7 @@
     <div id="earlybird-block" style="display:none; margin-top: 20px;">
       <div class="toggle-section" style="margin: 0 0 16px;">
         <strong style="font-size: 0.9rem;">Early-bird price <small style="font-weight:400; color:var(--mid);">(optional)</small></strong>
-        <p class="field-hint" style="margin: 4px 0 12px;">Only for multi-session intensives or miniseries. Enter the discounted amount and the date it expires.</p>
+        <p class="field-hint" style="margin: 4px 0 12px;">Only for multi-session intensives or mini-series. Enter the discounted amount and the date it expires.</p>
         <div class="row">
           <div class="field" style="margin-bottom: 0;">
             <label class="field-label">Early-bird price</label>
@@ -716,7 +717,7 @@
         <div class="chip" data-val="true" onclick="selectMinCond(this)">Cancel + notify students</div>
       </div>
       <p id="min-cond-note" class="field-hint" style="display:none; color: #9C3D1C; background:#FBEEEA; border:1px solid #E5B5A5; border-radius:6px; padding:8px 12px; margin-top: 8px;">
-        ⚠️ Shoonya will message registered students and issue refunds if the minimum isn't met 1 week before the event.
+        ⚠️ If the minimum isn't reached by 1 week before the start, Shoonya will notify registered students and refund them.
       </p>
     </div>
 
@@ -1311,7 +1312,7 @@ function openReviewModal() {
   const errs = validate();
   const errBox = document.getElementById('submit-error');
   if (errs.length > 0) {
-    errBox.innerHTML = '<strong>Please fix:</strong> ' + errs.join(', ');
+    errBox.innerHTML = '<strong>Please check these fields:</strong> ' + errs.join(', ');
     errBox.style.display = '';
     errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
@@ -1664,7 +1665,7 @@ async function submitForm() {
 
   const errors = validate();
   if (errors.length > 0) {
-    errBox.innerHTML = '<strong>Please fill in:</strong> ' + errors.join(', ');
+    errBox.innerHTML = '<strong>Please check these fields:</strong> ' + errors.join(', ');
     errBox.style.display = '';
     errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
@@ -1717,7 +1718,7 @@ async function submitForm() {
     errBox.textContent = '⚠ APPS_SCRIPT_URL not configured. Make sure config.js is loaded.';
     errBox.style.display = '';
     btn.disabled = false;
-    btn.textContent = 'Submit workshop →';
+    btn.textContent = 'Review & submit →';
     return;
   }
 
@@ -1731,7 +1732,7 @@ async function submitForm() {
     // If JSON parse fails (e.g. HTML 500 page), include status + statusText so it's debuggable.
     let json;
     try { json = await res.json(); }
-    catch (_) { throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + '). Your draft is saved.'); }
+    catch (_) { throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + ').'); }
     if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ').'));
     if (json.testMode && window.shoonyaShowTestPreview) {
       okBox.innerHTML = window.shoonyaShowTestPreview(json);
@@ -1742,8 +1743,7 @@ async function submitForm() {
       return;
     }
     okBox.innerHTML = `
-      <strong>✓ Submitted successfully.</strong><br>
-      Submitted ✓ — Shoonya will review within 48 hours and follow up by email.<br>
+      <strong>✓ Submitted. Shoonya will review your workshop within 48 hours and email you — nothing goes live on shoonyadance.com until it's approved.</strong><br>
       <small style="color: var(--mid);">Format: ${state.format} · Styles: ${state.styles.join(', ')} · Sessions: ${sessions.length}</small>
     `;
     okBox.style.display = '';
@@ -1755,11 +1755,11 @@ async function submitForm() {
     // so nothing is lost even if the main backend is down.
     try { if (typeof sendToBackup === 'function') sendToBackup(payload, e.message); } catch(_) {}
     // 2026-05-24 audit S2 + S3: surface real error + throttle re-submit for 1.5s to prevent double-clicks.
-    errBox.innerHTML = '⚠ ' + (e.message || 'Submission failed. Try again or email info@shoonyadance.com.') +
+    errBox.innerHTML = '⚠ ' + (e.message || 'Submission failed. Try again or reach us via the <a href="https://www.shoonyadance.com/contact">contact page</a>.') +
       '<br><small style="color:var(--mid);">Your draft is saved — try again or come back later.</small>';
     errBox.style.display = '';
     btn.textContent = 'Wait a moment…';
-    setTimeout(() => { btn.disabled = false; btn.textContent = 'Submit workshop →'; }, 1500);
+    setTimeout(() => { btn.disabled = false; btn.textContent = 'Review & submit →'; }, 1500);
   }
 }
 

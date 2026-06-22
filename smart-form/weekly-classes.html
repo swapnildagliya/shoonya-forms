@@ -524,7 +524,7 @@
 
     <div class="field">
       <label class="field-label">Co-teacher(s) <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
-      <p class="field-hint" style="margin: 0 0 10px;">If you're teaching with someone, type their name(s) below — separate multiple names with a comma. Leave blank if teaching solo.</p>
+      <p class="field-hint" style="margin: 0 0 10px;">If you're teaching with someone, type their name(s) below — separate multiple names with a comma.</p>
       <!-- 2026-05-24: hardcoded teacher chip list removed. Previously rendered a fake "Aanchal Mehta" (pre-selected), wrong "Alex Vandenberghe", duplicate "Badriyah" etc. — never wired to the Teachers sheet. Free-text fallback in use until TASKS #17 wires real fetch + pre-select. The submit, autosave-collect, and autosave-restore code below was updated to read from `#coteacher-freetext` instead of the old chip-multi DOM. -->
       <div id="coteacher-chips">
         <input type="text" id="coteacher-freetext" placeholder="e.g. Sonja, Wim" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-family:inherit; font-size:0.95rem;">
@@ -635,10 +635,10 @@
   <div class="section">
     <span class="section-num">5</span>
     <h2 class="section-title">Details</h2>
-    <p class="section-hint">Marketing copy + practical info.</p>
+    <p class="section-hint">Description and practical details for your class page.</p>
 
     <div class="field">
-      <label class="field-label">General class description (fallback)</label>
+      <label class="field-label">General class description</label>
       <textarea class="large" id="f-description" placeholder="Describe the class and who it's for — the vibe, what students will learn, and what makes it special. Each level can have its own focus."></textarea>
       <p class="field-hint">Used when a level doesn't have its own description above. Optional if every level above has its own.</p>
     </div>
@@ -659,7 +659,7 @@
     </div>
 
     <div class="field">
-      <label class="field-label">Min age</label>
+      <label class="field-label">Minimum age</label>
       <div class="chips" data-single id="min-age-chips">
         <div class="chip" onclick="selectSingle(this)">All ages</div>
         <div class="chip" onclick="selectSingle(this)">9+</div>
@@ -700,7 +700,7 @@
   <div class="section">
     <span class="section-num">6</span>
     <h2 class="section-title">Open House (Opendeurdag) <span class="badge-new">simplified</span></h2>
-    <p class="section-hint">Which Open House dates can you teach a trial of this class?</p>
+    <p class="section-hint">Which Open House dates can you teach a free trial of this class?</p>
 
     <div class="field">
       <label class="field-label">Available dates <span class="badge-new">multi-select</span></label>
@@ -723,9 +723,9 @@
     <p class="section-hint">Anything else Shoonya should know — equipment needs, scheduling concerns, prop requests, anything that doesn't fit a field above.</p>
 
     <div class="field">
-      <textarea class="large" id="f-special-notes" placeholder="Examples: 'Need mirror on the long wall', 'Aakash works better for floor work', 'L3 students bring their own pointes', 'May ask for projector for music theory session in week 4'..."></textarea>
+      <textarea class="large" id="f-special-notes" placeholder="Examples: 'Need mirror on the long wall', 'Aakash works better for floor work', 'L3 students bring their own pointes', 'May ask for projector for music theory session in week 4'."></textarea>
       <div class="annotation">
-        <strong>Admin reads this when reviewing.</strong> Catches edge cases the structured fields can't express.
+        <strong>Shoonya reads this during review</strong> — use it for anything the fields above don't cover.
       </div>
     </div>
   </div>
@@ -741,11 +741,11 @@
     <div class="review-overlay" id="review-overlay" onclick="if(event.target===this)closeReviewModal()">
       <div class="review-modal" role="dialog" aria-modal="true" aria-labelledby="review-title">
         <h2 id="review-title">Review your weekly class submission</h2>
-        <p class="review-sub">Click <strong>Edit</strong> on any row to jump back to the field and change it. Then come back here to submit for real.</p>
+        <p class="review-sub">Click <strong>Edit</strong> on any row to jump back to the field and change it, then return here to submit.</p>
         <div id="review-body"></div>
         <div class="review-actions">
           <button type="button" class="review-btn-cancel" onclick="closeReviewModal()">Back to form</button>
-          <button type="button" class="review-btn-submit" onclick="confirmSubmit()">Submit weekly class</button>
+          <button type="button" class="review-btn-submit" onclick="confirmSubmit()">Submit weekly class →</button>
         </div>
       </div>
     </div>
@@ -1196,7 +1196,7 @@ function validate() {
   // Backend rejection is harder to read than inline.
   const teacherName = document.getElementById('f-teacher-name')?.value.trim() || '';
   const teacherEmail = document.getElementById('f-teacher-email')?.value.trim() || '';
-  if (!teacherName) errs.push('Please log in before submitting');
+  if (!teacherName) errs.push('Log in before submitting');
   if (teacherEmail && !_wcEmailRe.test(teacherEmail)) errs.push('Your email (looks like a typo)');   // V1
   const levels = collectLevels();
   if (levels.length === 0) errs.push('At least one level with a valid time slot');
@@ -1216,7 +1216,7 @@ function openReviewModal() {
   const { errs, style, levels } = validate();
   const errBox = document.getElementById('submit-error');
   if (errs.length > 0) {
-    errBox.innerHTML = '<strong>Please fill in:</strong> ' + errs.join(', ');
+    errBox.innerHTML = '<strong>Please check:</strong> ' + errs.join(', ');
     errBox.style.display = '';
     errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
@@ -1556,7 +1556,7 @@ async function submitForm() {
 
   const { errs, style, levels } = validate();
   if (errs.length > 0) {
-    errBox.innerHTML = '<strong>Please fill in:</strong> ' + errs.join(', ');
+    errBox.innerHTML = '<strong>Please check:</strong> ' + errs.join(', ');
     errBox.style.display = '';
     errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
     return;
@@ -1574,7 +1574,7 @@ async function submitForm() {
 
   const url = (typeof APPS_SCRIPT_URL !== 'undefined') ? APPS_SCRIPT_URL : '';
   if (!url) {
-    errBox.textContent = '⚠ APPS_SCRIPT_URL not configured. Make sure config.js is loaded.';
+    errBox.innerHTML = '⚠ Something went wrong on our end — please try again shortly, or use the <a href="https://www.shoonyadance.com/contact">contact page</a>.';
     errBox.style.display = '';
     btn.disabled = false;
     btn.textContent = 'Submit weekly class →';
@@ -1594,8 +1594,7 @@ async function submitForm() {
       return;
     }
     okBox.innerHTML = `
-      <strong>✓ Submitted successfully.</strong><br>
-      Submitted ✓ — Shoonya will review within 48 hours and follow up by email.<br>
+      <strong>✓ Submitted to Shoonya.</strong> We'll review within 48 hours and follow up by email.<br>
       ${levels.length} level${levels.length === 1 ? '' : 's'} captured.<br>
       <small style="color: var(--mid);">Style: ${style} · Levels: ${levels.map(l=>l.level).join(', ')}</small>
     `;
@@ -1610,7 +1609,7 @@ async function submitForm() {
     // so nothing is lost even if the main backend is down.
     try { if (typeof sendToBackup === 'function') sendToBackup(payload, e.message); } catch(_) {}
     // 2026-05-24 audit S2 + S3: surface real error + 1.5s throttle.
-    errBox.innerHTML = '⚠ ' + (e.message || 'Submission failed. Try again or email info@shoonyadance.com.') +
+    errBox.innerHTML = '⚠ ' + (e.message || 'Submission failed. Try again, or reach us via the <a href="https://www.shoonyadance.com/contact">contact page</a>.') +
       '<br><small style="color:var(--mid);">Your draft is saved — try again or come back later.</small>';
     errBox.style.display = '';
     btn.textContent = 'Wait a moment…';

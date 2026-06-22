@@ -126,9 +126,9 @@
 </header>
 <div class="hero">
   <h2>Festival Submission</h2>
-  <p>Fill in the details below. We'll handle website, calendar and social media.</p>
+  <p>Fill in the details below. We'll handle shoonyadance.com, calendar and social media.</p>
 </div>
-<div class="notice">Questions? Email us at <strong>info@shoonyadance.com</strong></div>
+<div class="notice">Questions? <a href="https://www.shoonyadance.com/contact">Contact us</a></div>
 
 <div class="container">
 
@@ -136,7 +136,7 @@
 <div id="festival-login-required" class="card" style="display:none;text-align:center;">
   <div class="card-title" style="border-bottom:none;">🌟 Festival Submission</div>
   <p style="font-size:.92rem;color:#555;margin:10px 0 20px;">
-    Festival submissions require a teacher account so we can pre-fill your details and track your events.
+    Festival submissions require a Shoonya account so we can pre-fill your details and keep your submissions in one place.
   </p>
   <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
     <button style="background:var(--purple);color:#fff;border:none;border-radius:8px;font-size:.9rem;font-weight:700;padding:10px 22px;cursor:pointer;"
@@ -194,7 +194,7 @@
     <!-- 2026-06-21: optional co-organiser / partner org (e.g. Ghent Tap Festival
          is run by Shoonya Dance Centre & Tapdance Promotion). -->
     <div class="field">
-      <label>Co-organiser / partner <span style="font-weight:400;color:var(--mid);">(optional)</span></label>
+      <label>Co-organiser / partner <span style="font-weight:400;color:#888;">(optional)</span></label>
       <input type="text" id="co-organiser" placeholder="e.g. Tapdance Promotion — if co-hosted with another organisation" />
     </div>
   </div>
@@ -259,14 +259,14 @@
   <!-- Section 3: Programme -->
   <div class="card">
     <div class="card-title">3 — Programme</div>
-    <div class="info-box">Add every activity — workshops, social dances, performances, DJ sets. For workshops, expand the description field to add what participants will learn.</div>
+    <div class="info-box">Add every activity — workshops, social dances, performances, DJ sets. For each workshop, add a short description of what participants will learn.</div>
 
     <div id="day-tabs-wrap" class="hidden">
       <div id="day-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;"></div>
     </div>
 
     <div id="programme-slots"></div>
-    <button class="btn-add-row" onclick="addProgrammeSlot()">+ Add Slot</button>
+    <button class="btn-add-row" onclick="addProgrammeSlot()">+ Add Activity</button>
   </div>
 
   <!-- Section 4: Teachers & Artists -->
@@ -289,7 +289,7 @@
   <!-- Section 6: Pricing -->
   <div class="card">
     <div class="card-title">6 — Pricing</div>
-    <div class="info-box">Add one tier per pass or ticket type. Include what each pass covers in the description — this goes directly on the website pricing table.</div>
+    <div class="info-box">Add one tier per pass or ticket type. Include what each pass covers in the description — this appears in the pricing table on shoonyadance.com once approved.</div>
 
     <div id="price-tiers"></div>
     <button class="btn-add-row" onclick="addPriceTier()" style="margin-top:4px;">+ Add Pricing Tier</button>
@@ -344,7 +344,7 @@
     </div>
 
     <div class="field">
-      <label>Any other notes for us?</label>
+      <label>Anything else for us?</label>
       <textarea id="notes" rows="3" placeholder="Setup requirements, special requests, anything we should know…"></textarea>
     </div>
   </div>
@@ -376,7 +376,7 @@
     </div>
   </div>
 
-  <button class="btn-submit" id="festival-submit-btn" onclick="submitForm()">Submit Festival →</button>
+  <button class="btn-submit" id="festival-submit-btn" onclick="submitForm()">Submit for review →</button>
 
 </div><!-- /festival-form-content -->
 
@@ -388,7 +388,7 @@
     <h3>Review your festival submission</h3>
     <p id="modal-instruction">Check the details below. When it looks right, press <strong>Confirm &amp; submit</strong>.</p>
     <div class="out-block" id="modal-output"></div>
-    <button class="btn-copy" id="copy-btn" onclick="copyOutput()">Copy to Clipboard</button>
+    <button class="btn-copy" id="copy-btn" onclick="copyOutput()">Copy</button>
     <div id="sheetStatus" style="display:none;margin-top:10px;font-size:.8rem;color:#27ae60;font-weight:700;"></div>
     <div style="display:flex;gap:10px;margin-top:16px;">
       <button class="modal-close" style="margin-top:0;flex:1;" onclick="document.getElementById('modal').classList.remove('open')">Back to form</button>
@@ -478,7 +478,7 @@ async function sendToSheet(payload) {
   } catch (err) {
     // Primary failed — save to the independent backup sink so nothing is lost.
     try { if (typeof sendToBackup === 'function') sendToBackup(payload, err.message); } catch(_) {}
-    if (msg) { msg.style.display = 'block'; msg.style.color = '#c0392b'; msg.textContent = '⚠️ Could not save right now — your entry was sent to a backup. Please let Shoonya know.'; }
+    if (msg) { msg.style.display = 'block'; msg.style.color = '#c0392b'; msg.innerHTML = '⚠️ Could not save right now — but your entry was saved safely. Please try again, or use the <a href="https://www.shoonyadance.com/contact">contact page</a> if it keeps failing.'; }
     return { ok: false, error: err && err.message };
   }
 }
@@ -581,7 +581,7 @@ function dayOptions(selected='') {
 // collapsing into "Other" (real festivals — Leylet Raqs, GIDF — are full of them).
 const ACTIVITY_TYPES = ['Workshop','Social Dance','DJ Set','Performance','Opening Party','Closing Party','Technique Lab','Community Class','Lecture / Discussion','Film Screening','Guided Tour','Museum Exhibition','Other'];
 // 2026-06-21: added 'Adv. Beginner' + 'Standard' (tap-festival vocabulary).
-const LEVELS = ['All Levels','Beginner','Adv. Beginner','Open Level','Intermediate','Advanced','Standard'];
+const LEVELS = ['All Levels','Beginner','Advanced Beginner','Open Level','Intermediate','Advanced','Standard'];
 const STUDIOS = ['Ananta','Ananta 1','Ananta 2','Art Deco','Art Deco 1','Art Deco 2','Studio Aakash (2nd Floor)','Main Stage','Outdoor'];
 let slotCount = 0;
 
@@ -618,7 +618,7 @@ function addProgrammeSlot() {
         <input type="text" class="slot-title" placeholder="e.g. The Martial Grace of Mayurbhanj Chhau"/>
       </div>
       <div>
-        <div class="slot-label">Teacher / DJ / Artist</div>
+        <div class="slot-label">Teacher / Artist (or DJ)</div>
         <input type="text" class="slot-teacher" placeholder="e.g. Chris & Jana"/>
       </div>
       <div>
@@ -634,14 +634,14 @@ function addProgrammeSlot() {
       <div style="flex:1;min-width:160px;max-width:220px;">
         <div class="slot-label">Pass inclusion</div>
         <select class="slot-inclusion">
-          <option value="">Included in pass</option>
+          <option value="">Included in pass (default)</option>
           <option>Separate ticket</option>
           <option>Add-on</option>
           <option>Free</option>
         </select>
       </div>
       <div style="flex:1;min-width:160px;max-width:220px;">
-        <div class="slot-label">Fee / ticket <span style="font-weight:400;color:var(--mid);">(optional — e.g. 15)</span></div>
+        <div class="slot-label">Extra fee <span style="font-weight:400;color:#888;">(optional — e.g. €15)</span></div>
         <input type="text" class="slot-fee" placeholder="Leave blank if included / free"/>
       </div>
     </div>
@@ -705,7 +705,7 @@ function addDjCard() {
       <div class="field"><label>DJ Name / Handle</label><input type="text" class="dj-name" placeholder="e.g. DJ Marco" /></div>
       <div class="field"><label>Music Styles</label><input type="text" class="dj-styles" placeholder="e.g. Kizomba, Semba, Ghettozouk" /></div>
     </div>
-    <div class="field"><label>Short Bio <span style="font-weight:400;color:#aaa;">(optional)</span></label><textarea class="dj-bio" rows="2" placeholder="Optional — only needed for guest DJs or featured sets"></textarea></div>
+    <div class="field"><label>Short Bio <span style="font-weight:400;color:#aaa;">(optional)</span></label><textarea class="dj-bio" rows="2" placeholder="Optional — helpful for guest DJs or featured sets"></textarea></div>
   `;
   list.appendChild(div);
 }
@@ -1148,14 +1148,15 @@ async function submitForm() {
     const teacher = card.querySelector('.slot-teacher').value.trim();
     const studio  = card.querySelector('.slot-studio').value;
     const staffOptional = NO_STAFF_TYPES.includes(type);
-    if (!day)     progErrors.push(`Slot ${n}: pick a day.`);
-    if (!start)   progErrors.push(`Slot ${n}: start time is required.`);
-    if (!end)     progErrors.push(`Slot ${n}: end time is required.`);
-    if (!title)   progErrors.push(`Slot ${n}: title / topic is required.`);
-    if (!teacher && !staffOptional) progErrors.push(`Slot ${n}: teacher / artist is required.`);
-    if (!studio  && !staffOptional) progErrors.push(`Slot ${n}: studio / room is required.`);
+    const label = title ? `Activity ${n} ("${title}")` : `Activity ${n}`;
+    if (!day)     progErrors.push(`${label}: pick a day.`);
+    if (!start)   progErrors.push(`${label}: start time is required.`);
+    if (!end)     progErrors.push(`${label}: end time is required.`);
+    if (!title)   progErrors.push(`Activity ${n}: title / topic is required.`);
+    if (!teacher && !staffOptional) progErrors.push(`${label}: teacher / artist is required.`);
+    if (!studio  && !staffOptional) progErrors.push(`${label}: studio / room is required.`);
     if (start && end && !_festTimeSane(start, end)) {
-      progErrors.push(`Slot ${n}: end time (${end}) is before or equal to start (${start}). For an after-midnight slot use a time like 01:00.`);
+      progErrors.push(`${label}: end time (${end}) is before or equal to start (${start}). If this slot runs past midnight, enter the actual end time (e.g. 01:00).`);
     }
   });
   if (progErrors.length) { alert('Please fix the programme:\n\n• ' + progErrors.join('\n• ')); return; }
@@ -1295,7 +1296,7 @@ async function confirmAndSubmit() {
       if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = 'Run another test'; }
     } else {
       const instr = document.getElementById('modal-instruction');
-      if (instr) { instr.innerHTML = '✅ Submitted — saved to Google Sheets and Shoonya has been notified. Keep a copy below if needed:'; instr.style.color = '#27ae60'; }
+      if (instr) { instr.innerHTML = "✅ Submitted to Shoonya. We'll review your festival and add it to shoonyadance.com once approved. Keep a copy below if you need it:"; instr.style.color = '#27ae60'; }
       if (confirmBtn) { confirmBtn.style.display = 'none'; }
       _festivalPending = null;
     }
