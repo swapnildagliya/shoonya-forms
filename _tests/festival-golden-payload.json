@@ -1,0 +1,52 @@
+{
+  "action": "generateOutputPackage",
+  "approved_description": "ZZ QA festival description.",
+  "co_organiser": "ZZ Partner Org",
+  "dance_style": "Bachata, Salsa",
+  "date": "2026-11-21",
+  "description": "ZZ QA festival description.",
+  "djs": [
+    { "bio": "ZZ dj bio", "name": "ZZ DJ", "styles": "Salsa" }
+  ],
+  "dress_code": "Casual",
+  "early_bird_deadline": "2026-11-14",
+  "email": "swapkebolly@gmail.com",
+  "end_date": "2026-11-22",
+  "event_title": "ZZ QA Festival",
+  "festival_days": [
+    { "date": "2026-11-21", "label": "Day 1 — Sat 21 Nov" },
+    { "date": "2026-11-22", "label": "Day 2 — Sun 22 Nov" }
+  ],
+  "free_entry_note": "",
+  "group_min": "5",
+  "group_perk": "free drink",
+  "group_price": "70",
+  "language": "English",
+  "note_shoonya": "ZZ NOTE FOR SHOONYA.",
+  "notes": "ZZ NOTE FOR SHOONYA.",
+  "organiser_legal_name": "ZZ QA Org",
+  "organiser_name": "ZZ QA Festival Org",
+  "photos": [],
+  "practical": "ZZ practical info.",
+  "pricing": [
+    { "description": "All workshops", "early_bird": "75", "label": "Full Pass", "member": "80", "regular": "90" },
+    { "description": "One day", "early_bird": "35", "label": "Day Pass", "member": "36", "regular": "40" },
+    { "description": "One session", "early_bird": "", "label": "Single Workshop", "member": "18", "regular": "20" }
+  ],
+  "programme": [
+    { "day": "2026-11-21", "desc": "", "end": "12:00", "fee": "15", "inclusion": "Separate ticket", "level": "All Levels", "start": "10:00", "studio": "Art Deco", "teacher": "ZZ Teacher", "title": "ZZ QA workshop", "type": "Workshop" }
+  ],
+  "start_date": "2026-11-21",
+  "structured": true,
+  "submissionText": "═══════════════════════════════════════════════════════\n  SHOONYA DANCE CENTRE — FESTIVAL SUBMISSION\n═══════════════════════════════════════════════════════\n\n▌ ORGANISER\n  Legal Name:  ZZ QA Org\n  Display Name: ZZ QA Festival Org\n  Email:       swapkebolly@gmail.com\n  Co-organiser: ZZ Partner Org\n\n▌ FESTIVAL\n  Name:        ZZ QA Festival\n  Tagline:     ZZ tagline\n  Dates:       Saturday, 21 November 2026 → Sunday, 22 November 2026\n  Style(s):    Bachata, Salsa\n  Venue:       Shoonya Dance Centre\n  Language:    English\n  Dress Code:  Casual\n\n▌ PROGRAMME\n  DAY 1 — SAT 21 NOV\n    10:00 – 12:00 | Workshop | ZZ QA workshop | ZZ Teacher | All Levels | Art Deco | Separate ticket | €15\n\n▌ TEACHERS & ARTISTS\n  1. ZZ Display\n     Legal Name: ZZ Teacher\n     Style(s):   Bachata\n     Bio:        ZZ bio\n     Link:       https://example.com\n\n▌ DJs\n  1. ZZ DJ\n     Music: Salsa\n     Bio:   ZZ dj bio\n\n▌ PRICING\n  Full Pass:\n    Includes:    All workshops\n    Regular:     €90\n    Early Bird:  €75\n    Members:     €80\n  Day Pass:\n    Includes:    One day\n    Regular:     €40\n    Early Bird:  €35\n    Members:     €36\n  Single Workshop:\n    Includes:    One session\n    Regular:     €20\n    Members:     €18\n  Early Bird Deadline: Saturday, 14 November 2026\n  Group Discount: Groups of 5+ → €70 per person + free drink\n  80% social tariff with UITPAS\n\n▌ DESCRIPTION\n  ZZ QA festival description.\n\n▌ PRACTICAL INFO\n  ZZ practical info.\n\n▌ NOTES\n  ZZ NOTE FOR SHOONYA.\n\n═══════════════════════════════════════════════════════\nSubmitted: <NORMALIZED>\n═══════════════════════════════════════════════════════",
+  "tagline": "ZZ tagline",
+  "teacher_name": "ZZ QA Festival Org",
+  "teachers": [
+    { "bio": "ZZ bio", "display_name": "ZZ Display", "legal_name": "ZZ Teacher", "link": "https://example.com", "style": "Bachata" }
+  ],
+  "testMode": true,
+  "title": "ZZ QA Festival",
+  "type": "festival",
+  "uitpas_pct": 80,
+  "venue": "Shoonya Dance Centre"
+}

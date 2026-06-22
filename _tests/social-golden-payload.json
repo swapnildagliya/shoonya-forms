@@ -1,0 +1,53 @@
+{
+  "action": "generateOutputPackage",
+  "date": "2026-11-21",
+  "description": "ZZ QA social description.",
+  "djFee": null,
+  "djName": null,
+  "djSocials": null,
+  "dj_photo_b64": null,
+  "dj_photo_name": "",
+  "dnEnd": "02:00",
+  "dnStart": "22:30",
+  "doors": "22:00",
+  "dresscode": "ZZ QA dress",
+  "earlyDeadline": "2026-11-14",
+  "email": "swapkebolly@gmail.com",
+  "end": "02:00",
+  "extraDjs": [],
+  "genres": [
+    "Bachata",
+    "Salsa"
+  ],
+  "guest_teacher_photo_b64": null,
+  "guest_teacher_photo_name": "",
+  "musicType": "teacher-dj",
+  "notes": "ZZ QA NOTE FOR SHOONYA.",
+  "photos": [],
+  "pricing": [
+    { "label": "Advance", "price": 8 },
+    { "label": "Door", "price": 12 }
+  ],
+  "programme": [
+    {
+      "duration": "45 min",
+      "end": "21:15",
+      "level": "Beginner",
+      "start": "20:30",
+      "style": "Bachata",
+      "teacher": "",
+      "topic": "ZZ QA other slot description",
+      "type": "other"
+    }
+  ],
+  "styles": [
+    "Bachata",
+    "Salsa"
+  ],
+  "submitted_via": "social-night-v2-form",
+  "teacherDJ": "ZZ QA Teacher DJ",
+  "teacher_name": "ZZ QA Social Org",
+  "testMode": true,
+  "title": "ZZ QA Social",
+  "type": "social-night"
+}

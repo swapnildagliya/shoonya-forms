@@ -1,0 +1,34 @@
+{
+  "_note": "GOLDEN baseline payload for the weekly-classes form captured 2026-06-21 BEFORE the form-kernel migration. The migrated form MUST reproduce this exact payload for the same deterministic fill (see weekly-fill.eval.js). Compare key-by-key (order-independent). 'testMode' is added by ?test=1 and is expected.",
+  "action": "submit",
+  "type": "weekly-class",
+  "structured": true,
+  "submitted_via": "weekly-v2-form",
+  "teacher_name": "ZZ QA Kernel Teacher",
+  "email": "swapkebolly@gmail.com",
+  "dance_style": "Dance & Fit",
+  "semester_name": "Sep 2026",
+  "teaching_language": "EN",
+  "co_teacher": "",
+  "levels": [
+    { "level": "Open level", "display_label": "", "slots": [ { "day": "Monday", "start": "18:00", "end": "19:00" } ] }
+  ],
+  "descriptions_by_level": {},
+  "class_description": "ZZ QA kernel description.",
+  "prereq": "None.",
+  "what_to_bring": "Water.",
+  "max_students": "12",
+  "age_min": "12+",
+  "preferred_studio": "No preference",
+  "partner_required": false,
+  "website_note": "",
+  "pricing_notes": "ZZ QA NOTE FOR SHOONYA kernel.",
+  "dropin_enabled": true,
+  "dropin_price": "10",
+  "opendeur_availability": {
+    "Sat 13 Sep — morning": true,
+    "Sat 13 Sep — afternoon": true,
+    "Sun 14 Sep — evening": true
+  },
+  "testMode": true
+}
