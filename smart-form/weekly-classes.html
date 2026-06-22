@@ -613,19 +613,6 @@
       <div class="value" style="color: #075985;">auto</div>
     </div>
 
-    <label class="checkbox-row" style="margin-top: 16px;">
-      <input type="checkbox" id="dropin-cb" onchange="toggleDropIn(this)">
-      Drop-in allowed (Dance & Fit / Pilates only — leave unchecked otherwise)
-    </label>
-
-    <div class="toggle-section hidden" id="drop-in-fields">
-      <div class="field">
-        <label class="field-label">Drop-in price (€)</label>
-        <input type="number" id="f-dropin-price" placeholder="18" min="0" step="0.5">
-        <p class="field-hint">Single-class price for occasional attendees.</p>
-      </div>
-    </div>
-
     <div class="annotation" style="margin-top: 18px;">
       Pricing is set by Shoonya based on class duration and session count. Updates automatically when you skip dates in the schedule above.
     </div>
@@ -636,6 +623,23 @@
     <span class="section-num">5</span>
     <h2 class="section-title">Details</h2>
     <p class="section-hint">Description and practical details for your class page.</p>
+
+    <!-- 2026-06-22: drop-in is a per-class teacher choice (moved here from the
+         hidden Pricing section so teachers can actually set it). -->
+    <div class="field">
+      <label class="checkbox-row" style="margin-top: 4px;">
+        <input type="checkbox" id="dropin-cb" onchange="toggleDropIn(this)">
+        Drop-in allowed for this class
+      </label>
+      <p class="field-hint">Tick per class — e.g. allow drop-ins one day but not another. Leave unchecked for commitment-only courses.</p>
+      <div class="toggle-section hidden" id="drop-in-fields">
+        <div class="field">
+          <label class="field-label">Drop-in price (€)</label>
+          <input type="number" id="f-dropin-price" placeholder="18" min="0" step="0.5">
+          <p class="field-hint">Single-class price for occasional attendees.</p>
+        </div>
+      </div>
+    </div>
 
     <div class="field">
       <label class="field-label">General class description</label>
@@ -820,27 +824,14 @@ const SAMPLE_LEVEL_DESCRIPTIONS = {
 // Source: WS_STYLE_DATA[style].websiteNote in production.
 const STYLES_WITH_WEBSITE_NOTE = ['Tap Dance', 'Ballet', 'Ballet Pointes', 'Burlesque', 'Argentine Tango'];
 
-// FIX F: styles for which drop-in is permitted. Must match the chip text exactly.
-// "Dance & Fit" chip text is "Dance & Fit" (the &amp; is decoded by the browser).
-const DROPIN_ALLOWED_STYLES = ['Dance & Fit', 'Pilates for Dancers'];
-
-// FIX F: show/hide + enforce the drop-in checkbox based on the selected style.
-// Called whenever the style selection changes (including draft restore).
+// 2026-06-22: drop-in is a PER-CLASS teacher choice (e.g. Tuesday Yoga no /
+// Wednesday Yoga yes), NOT gated by style. The checkbox + price are always
+// available; the teacher ticks it per submission. (Kept as a function — still
+// called from selectSingle + draft restore — but it now only ensures the row
+// is visible and never force-unchecks.)
 function updateDropInVisibility(selectedStyle) {
-  const allowed = DROPIN_ALLOWED_STYLES.includes(selectedStyle);
   const dropinRow = document.getElementById('dropin-cb')?.closest('label');
-  const dropinFieldsWrap = document.getElementById('drop-in-fields');
-  const dropinCb = document.getElementById('dropin-cb');
-  if (!dropinCb) return;
-  if (allowed) {
-    // Style permits drop-in — show the checkbox row, leave its state alone.
-    if (dropinRow) dropinRow.style.display = '';
-  } else {
-    // Style does not permit drop-in — uncheck + hide both the checkbox and fields.
-    dropinCb.checked = false;
-    if (dropinFieldsWrap) dropinFieldsWrap.classList.add('hidden');
-    if (dropinRow) dropinRow.style.display = 'none';
-  }
+  if (dropinRow) dropinRow.style.display = '';
 }
 
 function selectSingle(el) {
