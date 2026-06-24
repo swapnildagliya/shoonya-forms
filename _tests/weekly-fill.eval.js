@@ -7,7 +7,11 @@
   const setV=(id,v)=>{const e=document.getElementById(id);if(e){e.value=v;e.dispatchEvent(new Event('input',{bubbles:true}));e.dispatchEvent(new Event('change',{bubbles:true}));}return !!e;};
   const clickByText=(sel,re)=>{const c=[...document.querySelectorAll(sel)].find(x=>re.test(x.textContent));if(c)c.click();return !!c;};
   const log={};
-  setV('f-teacher-name','ZZ QA Kernel Teacher'); setV('f-teacher-email','swapkebolly@gmail.com');
+  const loginProfile={name:'ZZ QA Kernel Teacher',email:'swapkebolly@gmail.com',dance_styles:'["Dance & Fit"]'};
+  localStorage.setItem('shoonya_session',JSON.stringify({profile:loginProfile,token:'test-token'}));
+  window.dispatchEvent(new CustomEvent('shoonya:login',{detail:loginProfile}));
+  log.name=document.getElementById('f-teacher-name')?.value===loginProfile.name;
+  log.email=document.getElementById('f-teacher-email')?.value===loginProfile.email;
   log.style=clickByText('#style-chips .chip',/^\s*Dance & Fit\s*$/);
   await new Promise(r=>setTimeout(r,120));
   log.level=clickByText('#level-chips-wrap .chip',/open level/i);

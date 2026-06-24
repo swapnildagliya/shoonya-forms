@@ -1367,13 +1367,11 @@ function _ssRestoreProgramme(v) {
 // order is restore-safe: chips/identity rebuild before the repeaters' atomic
 // rebuilds; music type is restored before the conditional DJ text fields.
 const SOCIAL_SPEC = [
-  // ── Who (hidden identity; draft restore must NOT overwrite a live login value) ──
-  { key:'teacher_name', payloadKey:'teacher_name', dom:'f-teacher-name', kind:'text', review:false,
-    draftCollect: () => (FormKernel.byId('f-teacher-name')?.value || ''),
-    draftRestore: (v) => { const el = FormKernel.byId('f-teacher-name'); if (el && !el.value && v) el.value = v; } },
-  { key:'email', payloadKey:'email', dom:'f-teacher-email', kind:'text', review:false,
-    draftCollect: () => (FormKernel.byId('f-teacher-email')?.value || ''),
-    draftRestore: (v) => { const el = FormKernel.byId('f-teacher-email'); if (el && !el.value && v) el.value = v; } },
+  // ── Who (hidden identity; filled only by shared teacher login) ──
+  // Identity is never restored from drafts. A saved draft must not become a
+  // substitute for the shared teacher login session.
+  { key:'teacher_name', payloadKey:'teacher_name', dom:'f-teacher-name', kind:'text', review:false, draft:false },
+  { key:'email', payloadKey:'email', dom:'f-teacher-email', kind:'text', review:false, draft:false },
 
   // ── Basics ──
   // styles: chip-multi (custom — no state object; reads/writes the DOM directly).

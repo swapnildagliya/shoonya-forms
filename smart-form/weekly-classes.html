@@ -1418,15 +1418,12 @@ function _wcRestoreLevelsDraft(levels) {
 //   reviewMode:'ifset'  → row omitted entirely when its review value is empty (default)
 const WEEKLY_SPEC = [
   // ── Who (identity, hidden fields filled by login) ──
-  // Draft restore must NOT overwrite a live login value (login wins); only fill if empty.
+  // Identity is never restored from drafts. A saved draft must not become a
+  // substitute for the shared teacher login session.
   { key:'teacher_name', label:'Submitting as', dom:'f-teacher-name', kind:'text', jump:null,
-    section:'Who', reviewMode:'always',
-    draftCollect: () => (document.getElementById('f-teacher-name')?.value || ''),
-    draftRestore: (v) => { const el = document.getElementById('f-teacher-name'); if (el && !el.value && v) el.value = v; } },
+    section:'Who', reviewMode:'always', draft:false },
   { key:'email',        label:'Email',         dom:'f-teacher-email', kind:'text', jump:null,
-    section:'Who', reviewMode:'always',
-    draftCollect: () => (document.getElementById('f-teacher-email')?.value || ''),
-    draftRestore: (v) => { const el = document.getElementById('f-teacher-email'); if (el && !el.value && v) el.value = v; } },
+    section:'Who', reviewMode:'always', draft:false },
 
   // ── Basics ──
   // dance_style: custom collect (custom-style chip OR standard chip) via getCurrentStyle().

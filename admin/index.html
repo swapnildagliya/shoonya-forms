@@ -80,6 +80,25 @@
   .appr-toggle:hover { border-color:var(--purple); }
   .appr-toggle:disabled { opacity:.5; cursor:default; }
 
+  /* Teacher approval — expandable preview */
+  .appr-row { cursor:pointer; }
+  .appr-row .prev-caret { display:inline-block; width:13px; color:var(--purple); font-size:.72rem; }
+  .appr-detail > td { padding:0 !important; background:#fbf9ff; border-top:none; }
+  .appr-detail:hover > td { background:#fbf9ff; }
+  .prev-wrap { display:flex; gap:18px; padding:16px 16px 18px; align-items:flex-start; flex-wrap:wrap; }
+  .prev-photos { display:flex; gap:8px; flex-wrap:wrap; max-width:430px; }
+  .prev-photos img { width:118px; height:150px; object-fit:cover; border-radius:8px; border:1px solid var(--border); background:#eee; }
+  .prev-meta { flex:1; min-width:260px; }
+  .prev-chip { display:inline-block; background:#efe7fb; color:var(--purple); font-size:.7rem; font-weight:700; padding:3px 10px; border-radius:12px; margin:0 5px 5px 0; }
+  .prev-langs { font-size:.74rem; color:var(--muted); margin:6px 0 10px; }
+  .prev-bioshort { font-size:.86rem; font-weight:600; margin-bottom:8px; }
+  .prev-biolong { font-size:.8rem; color:#333; line-height:1.55; max-height:220px; overflow:auto; }
+  .prev-social { margin-top:12px; font-size:.76rem; display:flex; gap:14px; flex-wrap:wrap; }
+  .prev-social a, .prev-social span { color:var(--purple); text-decoration:none; }
+  .prev-social a:hover { text-decoration:underline; }
+  .prev-note { font-size:.72rem; color:var(--muted); margin-top:12px; padding-top:10px; border-top:1px dashed var(--border); }
+  .prev-empty { color:var(--muted); font-size:.8rem; padding:16px; }
+
   /* Discount rules */
   .rule { display:flex; align-items:flex-start; gap:10px; margin-bottom:10px; padding:10px 14px; background:#f8f4ff; border-radius:8px; }
   .rule-icon { font-size:1.1rem; flex-shrink:0; }
@@ -147,7 +166,7 @@
     <div class="card-title">Teachers — Website Approval
       <span class="badge" id="appr-count">…</span>
     </div>
-    <div class="page-sub" style="margin-bottom:12px;">Approve a teacher to publish their profile (bio, photo, social links) to the website feed. Approve complete profiles only.</div>
+    <div class="page-sub" style="margin-bottom:12px;">Click a teacher to preview their submitted profile (photos, bio, styles, socials) before you publish. Approving pushes them live to the website feed — approve complete profiles only.</div>
     <div style="margin-bottom:12px;">
       <button id="approve-all-btn" onclick="approveAllComplete()" style="background:#1a1a1a;color:#fff;border:none;padding:8px 18px;border-radius:4px;font-size:.85rem;cursor:pointer;display:none;">Publish all complete profiles</button>
     </div>
@@ -339,6 +358,55 @@ function lockOut() {
 
 // ── Teacher website approval ──────────────────────────────
 function escA(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escML(s){ return escA(s).replace(/\n/g,'<br>'); }
+function normName(s){ return String(s||'').toLowerCase().trim().replace(/\s+/g,' '); }
+
+// Full profile data (bio, photos, styles, socials) keyed by NAME — used for the
+// preview that shows BEFORE you approve. Pulled from the public feed (all=1 = incl.
+// unapproved). NB: the public feed intentionally omits email, so we join by name.
+let PROFILE_MAP = {};
+async function loadProfileMap() {
+  try {
+    const res = await fetch(APPS_SCRIPT_URL + '?action=getPublicTeachers&all=1', { redirect: 'follow' });
+    const data = await res.json();
+    PROFILE_MAP = {};
+    (data.teachers || []).forEach(t => {
+      const k = normName(t.name);
+      if (k) PROFILE_MAP[k] = t;
+    });
+  } catch (e) { PROFILE_MAP = {}; }
+}
+
+function previewSocials(p) {
+  const out = [];
+  if (p.instagram) out.push('<a href="https://instagram.com/' + escA(String(p.instagram).replace(/^@/,'')) + '" target="_blank">Instagram ' + escA(p.instagram) + '</a>');
+  if (p.facebook)  out.push('<span>Facebook: ' + escA(p.facebook) + '</span>');
+  if (p.youtube)   out.push('<span>YouTube ' + escA(p.youtube) + '</span>');
+  if (p.website)   out.push('<a href="' + escA(p.website) + '" target="_blank">Website</a>');
+  return out.join('');
+}
+
+function renderProfilePreview(name) {
+  const p = PROFILE_MAP[normName(name)];
+  if (!p) return '<div class="prev-empty">No profile data in the feed for this teacher yet — reopen the panel to retry.</div>';
+  const photos = (p.photos || []).filter(ph => ph && ph.url)
+    .map(ph => '<img src="' + escA(ph.url) + '" loading="lazy" alt="">').join('');
+  const styles = (p.dance_styles || []).map(s => '<span class="prev-chip">' + escA(s) + '</span>').join('');
+  const langs  = (p.teaching_languages || []).join(', ');
+  const social = previewSocials(p);
+  return '<div class="prev-wrap">' +
+      (photos ? '<div class="prev-photos">' + photos + '</div>'
+              : '<div class="prev-empty" style="padding:0;">No photos uploaded.</div>') +
+      '<div class="prev-meta">' +
+        (styles ? '<div>' + styles + '</div>' : '') +
+        (langs  ? '<div class="prev-langs">Teaches in: ' + escA(langs) + '</div>' : '') +
+        (p.bio_short ? '<p class="prev-bioshort">' + escML(p.bio_short) + '</p>' : '') +
+        (p.bio_long  ? '<p class="prev-biolong">'  + escML(p.bio_long)  + '</p>' : '') +
+        (social ? '<div class="prev-social">' + social + '</div>' : '') +
+        '<div class="prev-note">Submitted classes &amp; workshops aren\'t shown here yet — check the Weekly Classes / Workshops sheets above. (Coming to this preview in a later update.)</div>' +
+      '</div>' +
+    '</div>';
+}
 
 async function loadTeachers() {
   const statusEl = document.getElementById('appr-status');
@@ -351,29 +419,51 @@ async function loadTeachers() {
   statusEl.style.display = ''; statusEl.textContent = 'Loading teachers…';
   table.style.display = 'none';
   try {
+    const profileMapReady = loadProfileMap(); // fetch preview data in parallel
     const url = APPS_SCRIPT_URL + '?action=adminListTeachers&secret=' + encodeURIComponent(ADMIN_PW);
     const res = await fetch(url, { redirect: 'follow' });
     const data = await res.json();
     if (!data.ok) { statusEl.textContent = data.error || 'Could not load teachers.'; return; }
+    await profileMapReady;
     const teachers = data.teachers || [];
     countEl.textContent = teachers.filter(t => t.approved).length + '/' + teachers.length + ' live';
     body.innerHTML = '';
     teachers.forEach(t => {
+      const email = String(t.email || '').toLowerCase().trim();
       const complete = t.hasPhoto && t.hasBio;
       const profileCell = complete
         ? '<span style="color:#2e7d32;font-weight:600;">✓ complete</span>'
         : '<span style="color:#c62828;">' + (!t.hasBio ? 'no bio ' : '') + (!t.hasPhoto ? 'no photo' : '') + '</span>';
       const tr = document.createElement('tr');
+      tr.className = 'appr-row';
       tr.innerHTML =
-        '<td style="font-weight:600;">' + escA(t.name) +
-          '<div style="font-size:.7rem;color:var(--muted);font-weight:400;">' + escA(t.email) + '</div></td>' +
+        '<td style="font-weight:600;"><span class="prev-caret">▸</span>' + escA(t.name) +
+          '<div style="font-size:.7rem;color:var(--muted);font-weight:400;margin-left:13px;">' + escA(t.email) + '</div></td>' +
         '<td>' + profileCell + '</td><td></td>';
+
+      // Expandable preview row (built lazily on first open)
+      const detail = document.createElement('tr');
+      detail.className = 'appr-detail';
+      detail.style.display = 'none';
+      const dtd = document.createElement('td');
+      dtd.colSpan = 3;
+      detail.appendChild(dtd);
+      let built = false;
+      tr.addEventListener('click', (ev) => {
+        if (ev.target.closest('.appr-toggle')) return; // don't toggle when clicking publish
+        const open = detail.style.display !== 'none';
+        if (!open && !built) { dtd.innerHTML = renderProfilePreview(t.name); built = true; }
+        detail.style.display = open ? 'none' : '';
+        tr.querySelector('.prev-caret').textContent = open ? '▸' : '▾';
+      });
+
       const btn = document.createElement('button');
       btn.className = 'appr-toggle' + (t.approved ? ' on' : '');
       btn.textContent = t.approved ? '● Published' : '○ Not published';
-      btn.onclick = () => setApproved(t.email, !t.approved, btn);
+      btn.onclick = (ev) => { ev.stopPropagation(); setApproved(t.email, !t.approved, btn); };
       tr.children[2].appendChild(btn);
       body.appendChild(tr);
+      body.appendChild(detail);
     });
     // Show "Approve all" button only when there are complete-but-unpublished teachers
     const hasUnapprovedComplete = teachers.some(t => !t.approved && t.hasPhoto && t.hasBio);

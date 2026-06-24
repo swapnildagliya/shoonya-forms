@@ -10,10 +10,13 @@
 (async () => {
   const setV = (id, v) => { const e = document.getElementById(id); if (e) { e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); } return !!e; };
   const clickVal = (cid, val) => { const c = document.querySelector(`#${cid} .chip[data-val="${val}"]`); if (c) c.click(); return !!c; };
+  const loginProfile = { name: 'ZZ QA Kernel Teacher', email: 'swapkebolly@gmail.com', photo_url: 'https://example.com/teacher.jpg', bio_short: 'Test bio', dance_styles: '["Bachata","Salsa"]' };
+  localStorage.setItem('shoonya_session', JSON.stringify({ profile: loginProfile, token: 'test-token' }));
+  window.dispatchEvent(new CustomEvent('shoonya:login', { detail: loginProfile }));
   const log = {};
 
-  log.name  = setV('f-teacher-name', 'ZZ QA Kernel Teacher');
-  log.email = setV('f-teacher-email', 'swapkebolly@gmail.com');
+  log.name  = document.getElementById('f-teacher-name')?.value === loginProfile.name;
+  log.email = document.getElementById('f-teacher-email')?.value === loginProfile.email;
   log.title = setV('f-title', 'ZZ QA Kernel Workshop');
 
   log.format = clickVal('format-chips', 'single');

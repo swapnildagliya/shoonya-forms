@@ -20,10 +20,13 @@
 (async () => {
   const setV = (id, v) => { const e = document.getElementById(id); if (e) { e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); } return !!e; };
   const styleClick = (re) => { const c = [...document.querySelectorAll('#style-chips .chip')].find(x => re.test(x.textContent)); if (c) c.click(); return !!c; };
+  const loginProfile = { name: 'ZZ QA Social Org', email: 'swapkebolly@gmail.com', dance_styles: '["Bachata","Salsa"]' };
+  localStorage.setItem('shoonya_session', JSON.stringify({ profile: loginProfile, token: 'test-token' }));
+  window.dispatchEvent(new CustomEvent('shoonya:login', { detail: loginProfile }));
   const log = {};
 
-  setV('f-teacher-name', 'ZZ QA Social Org');
-  setV('f-teacher-email', 'swapkebolly@gmail.com');
+  log.name = document.getElementById('f-teacher-name')?.value === loginProfile.name;
+  log.email = document.getElementById('f-teacher-email')?.value === loginProfile.email;
   setV('f-title', 'ZZ QA Social');
   log.s1 = styleClick(/^\s*Bachata\s*$/);
   log.s2 = styleClick(/^\s*Salsa\s*$/);

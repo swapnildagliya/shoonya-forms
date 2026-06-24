@@ -355,36 +355,20 @@
   <!-- teacher roster datalist — populated by JS on load -->
   <datalist id="ws-teacher-list"></datalist>
 
-  <!-- TEACHER IDENTITY -->
-  <div class="section" id="ws-section-who">
-    <span class="section-num">0</span>
-    <h2 class="section-title">Who are you?</h2>
-    <p class="section-hint">So we know who's submitting this workshop.</p>
-    <div class="row">
-      <div class="field">
-        <label class="field-label">Your name</label>
-        <input type="text" id="f-teacher-name" placeholder="Start typing — pick your name" list="ws-teacher-list" autocomplete="off">
-        <p class="field-hint">Pick your name to reuse your Shoonya photo &amp; bio. New here? Just type it.</p>
-      </div>
-      <div class="field">
-        <label class="field-label">Your email</label>
-        <input type="email" id="f-teacher-email" placeholder="you@example.com">
-      </div>
-    </div>
+  <!-- TEACHER IDENTITY (hidden — filled only by login-panel.js) -->
+  <input type="hidden" id="f-teacher-name">
+  <input type="hidden" id="f-teacher-email">
 
-    <!-- shown/hidden by the teacher-name input listener -->
-    <div id="host-media-block" style="display:none;">
-      <div class="field" id="host-photo-field">
-        <label class="field-label">Your photo</label>
-        <input type="file" id="f-host-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
-        <p class="field-hint">JPEG or PNG — for your workshop page.</p>
-      </div>
-      <div class="field" id="host-bio-field">
-        <label class="field-label">Your short bio</label>
-        <textarea id="f-host-bio" rows="2" placeholder="2–3 sentences. Background, style, where you're from."></textarea>
-      </div>
+  <div class="section" id="ws-login-required" style="display:none; text-align:center;">
+    <h2 class="section-title">Log in to submit a workshop</h2>
+    <p class="section-hint">Use the same teacher login once, then all Shoonya submission forms will recognise you.</p>
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:16px;">
+      <button class="btn-primary" type="button" onclick="slpOpenModal()" style="width:auto; padding:12px 24px;">Log in</button>
+      <button type="button" onclick="window.location.href='../register.html'" style="background:#fff; color:var(--purple); border:2px solid var(--purple); border-radius:8px; font-size:.9rem; font-weight:700; padding:10px 22px; cursor:pointer;">Register →</button>
     </div>
   </div>
+
+  <div id="ws-form-content" style="display:none;">
 
   <!-- DRAFT BANNER -->
   <div id="ws-draft-banner" style="display:none; background:#FFF8E5; border:1px solid #F0DDA4; border-radius:8px; padding:12px 18px; margin-bottom:20px; font-size:0.88rem; color:#5C4400; justify-content:space-between; align-items:center; gap:12px;">
@@ -472,6 +456,19 @@
     <span class="section-num">2</span>
     <h2 class="section-title">Teachers</h2>
     <p class="section-hint">Who's teaching? Add co-teachers and guests if needed.</p>
+
+    <!-- shown only if the logged-in profile is missing reusable media -->
+    <div id="host-media-block" style="display:none;">
+      <div class="field" id="host-photo-field">
+        <label class="field-label">Your photo</label>
+        <input type="file" id="f-host-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
+        <p class="field-hint">JPEG or PNG — for your workshop page.</p>
+      </div>
+      <div class="field" id="host-bio-field">
+        <label class="field-label">Your short bio</label>
+        <textarea id="f-host-bio" rows="2" placeholder="2–3 sentences. Background, style, where you're from."></textarea>
+      </div>
+    </div>
 
     <div class="row">
       <div class="field">
@@ -768,6 +765,8 @@
     </div>
   </div>
 
+  </div>
+
   <p style="text-align: center; margin-top: 32px; font-size: 0.78rem; color: var(--light);">
     Shoonya Dance Centre · Stapelplein 41, 9000 Gent
   </p>
@@ -785,6 +784,7 @@
 // Defaults to [] on any network error so it never blocks the form.
 var WS_TEACHERS = [];
 var teacherKnown = false; // true when typed name exactly matches a roster entry
+var WS_LOGGED_IN_PROFILE = null;
 
 (function loadTeacherRoster() {
   var url = (typeof APPS_SCRIPT_URL !== 'undefined') ? APPS_SCRIPT_URL : '';
@@ -900,9 +900,18 @@ function updateHostMediaBlock() {
     return;
   }
 
-  var match = WS_TEACHERS.find(function(t) {
-    return t.name.toLowerCase() === typed;
-  });
+  var match = null;
+  if (WS_LOGGED_IN_PROFILE && String(WS_LOGGED_IN_PROFILE.name || '').trim().toLowerCase() === typed) {
+    match = {
+      name: WS_LOGGED_IN_PROFILE.name || '',
+      hasPhoto: !!String(WS_LOGGED_IN_PROFILE.photo_url || '').trim(),
+      hasBio: !!String(WS_LOGGED_IN_PROFILE.bio_short || WS_LOGGED_IN_PROFILE.bio_long || '').trim()
+    };
+  } else {
+    match = WS_TEACHERS.find(function(t) {
+      return t.name.toLowerCase() === typed;
+    });
+  }
 
   if (match) {
     teacherKnown = true;
@@ -1282,8 +1291,7 @@ const _emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function validate() {
   const errs = [];
-  if (!getVal('f-teacher-name')) errs.push('Your name');
-  if (!getVal('f-teacher-email')) errs.push('Your email');
+  if (!getVal('f-teacher-name') || !getVal('f-teacher-email')) errs.push('Please log in before submitting');
   else if (!_emailRe.test(getVal('f-teacher-email'))) errs.push('Your email (looks like a typo)');
   if (!getVal('f-title')) errs.push('Workshop title');
   if (!state.format) errs.push('Format');
@@ -1493,13 +1501,13 @@ function _wsRestoreScheduleDraft(d) {
 //   reviewMode:'always' → row always rendered ("(not set)" placeholder if empty)
 //   reviewMode:'ifset'  → row omitted entirely when its review value is empty
 const WORKSHOP_SPEC = [
-  // ── Who (hidden identity; draft restore must NOT overwrite a live login value) ──
+  // ── Who (hidden identity; filled only by shared teacher login) ──
+  // Identity is never restored from drafts. A saved draft must not become a
+  // substitute for the shared teacher login session.
   { key:'teacher_name', label:'Submitting as', dom:'f-teacher-name', kind:'text', jump:null, section:'Who', reviewMode:'always',
-    draftCollect: () => (FormKernel.byId('f-teacher-name')?.value || ''),
-    draftRestore: (v) => { const el = FormKernel.byId('f-teacher-name'); if (el && !el.value && v) { el.value = v; updateHostMediaBlock(); } } },
+    draft:false },
   { key:'email', label:'Email', dom:'f-teacher-email', kind:'text', jump:null, section:'Who', reviewMode:'always',
-    draftCollect: () => (FormKernel.byId('f-teacher-email')?.value || ''),
-    draftRestore: (v) => { const el = FormKernel.byId('f-teacher-email'); if (el && !el.value && v) el.value = v; } },
+    draft:false },
 
   // ── Basics ──
   { key:'title', label:'Title', dom:'f-title', kind:'text', jump:'#f-title', section:'Basics', reviewMode:'always' },
@@ -1796,8 +1804,9 @@ function clearWsDraftAndReload() {
 // as collect/payload), so a restored draft can't drift from what's submitted. The
 // spec field order is restore-safe: chips (format/styles/levels/lang/studio/partner)
 // rebuild `state` before the sessions field's atomic schedule rebuild runs; the
-// early-bird/host-media side-effects fire from the format-chip + teacher-name
-// restores. The schedule complex (dates → updateSessionsPreview → toggles →
+  // early-bird side-effects fire from the format-chip restores. Identity comes
+  // only from login, never draft restore. The schedule complex (dates →
+  // updateSessionsPreview → toggles →
 // per-session overrides → drop-in exclusions) is rebuilt atomically inside the
 // `sessions` field's draftRestore (_wsRestoreScheduleDraft).
 function wsRestoreDraft(d) {
@@ -1886,17 +1895,42 @@ function wsApplyStyleFilter(profile) {
   }
 }
 
-// Teacher login — pre-fill identity fields and hide Section 0
-window.addEventListener('shoonya:login', function(e) {
-  const p = e.detail;
+function wsSetLoginGate(isLoggedIn) {
+  const gate = document.getElementById('ws-login-required');
+  const form = document.getElementById('ws-form-content');
+  if (gate) gate.style.display = isLoggedIn ? 'none' : '';
+  if (form) form.style.display = isLoggedIn ? '' : 'none';
+}
+
+function wsStoredSessionProfile() {
+  try {
+    const raw = localStorage.getItem('shoonya_session');
+    const session = raw ? JSON.parse(raw) : null;
+    return session && session.profile ? session.profile : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function wsApplyLoggedInProfile(p) {
+  if (!p) { wsSetLoginGate(false); return; }
+  WS_LOGGED_IN_PROFILE = p;
   const nameEl = document.getElementById('f-teacher-name');
   const emailEl = document.getElementById('f-teacher-email');
-  if (nameEl) { nameEl.value = p.name || ''; nameEl.readOnly = true; }
-  if (emailEl) { emailEl.value = p.email || ''; emailEl.readOnly = true; }
-  // Hide "Who are you?" section — login bar at top already shows the teacher
-  const sec0 = document.getElementById('ws-section-who');
-  if (sec0) sec0.style.display = 'none';
+  if (nameEl) nameEl.value = p.name || '';
+  if (emailEl) emailEl.value = p.email || '';
+  updateHostMediaBlock();
   wsApplyStyleFilter(p);   // 2026-05-24 audit P1-2
+  wsSetLoginGate(!!(p.name && p.email));
+}
+
+// Teacher login — pre-fill identity from the shared session only.
+(function wsInitLoginGate() {
+  wsApplyLoggedInProfile(wsStoredSessionProfile());
+})();
+
+window.addEventListener('shoonya:login', function(e) {
+  wsApplyLoggedInProfile(e.detail);
 });
 </script>
 </body>
