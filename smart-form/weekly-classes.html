@@ -437,6 +437,23 @@
   <input type="hidden" id="f-teacher-name">
   <input type="hidden" id="f-teacher-email">
 
+  <!-- HARD LOGIN GATE — added 2026-07-22 (Swapnil's decision).
+       Before this, a teacher could fill the entire form logged out and only
+       discovered at SUBMIT that a login was required. That also meant the
+       style filter and any pre-fill never engaged. truth/form-design-principles.md
+       has said "weekly class form: login is required" all along; the form just
+       never enforced it up front. Mirrors the workshops.html gate. -->
+  <div class="section" id="wc-login-required" style="display:none; text-align:center;">
+    <h2 class="section-title">Log in to submit a class</h2>
+    <p class="section-hint">Use the same teacher login once, then all Shoonya submission forms will recognise you.</p>
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:16px;">
+      <button class="btn-primary" type="button" onclick="slpOpenModal()" style="width:auto; padding:12px 24px;">Log in</button>
+      <button type="button" onclick="window.location.href='../register.html'" style="background:#fff; color:var(--purple); border:2px solid var(--purple); border-radius:8px; font-size:.9rem; font-weight:700; padding:10px 22px; cursor:pointer;">Register →</button>
+    </div>
+  </div>
+
+  <div id="wc-form-content" style="display:none;">
+
   <!-- PRE-FILL BANNER — 2026-05-24: hidden until the pre-fill logic is actually wired. Previously hardcoded "Bollywood / Spring 2026" text was shown to every teacher. Will be re-enabled with real per-teacher per-style copy as part of TASKS #17. -->
   <div style="display: none; background: var(--green-tint); border: 1px solid #BBE9CB; border-radius: 8px; padding: 14px 18px; margin-bottom: 28px; font-size: 0.9rem; color: #14532D; justify-content: space-between; align-items: center;">
     <span>✅ <strong>Pre-filled from your previous submission</strong> — update anything that's changed.</span>
@@ -494,6 +511,26 @@
         <button type="button" onclick="clearCustomStyle()" style="background:none; border:none; color:#dc2626; cursor:pointer; font-size:0.82rem; margin-left:4px;">✕ clear</button>
       </div>
       <p class="field-hint">Use "+ Other" for combos like Garba + Kalbeliya.</p>
+
+      <!-- EXISTING-SUBMISSION PROMPT (2026-07-22).
+           Submissions are keyed on (teacher, style, semester), so a second
+           submission for the same style used to silently REPLACE the first —
+           a teacher adding a second weekly slot lost the original without
+           being told. We can't guess which one it is, so we ask. Only appears
+           when the backend actually finds a matching earlier submission. -->
+      <div id="existing-class-prompt" style="display:none; margin-top:14px; background:#FFF8E5; border:1px solid #F0DDA4; border-radius:8px; padding:14px 18px;">
+        <p style="font-size:0.88rem; color:#5C4400; margin:0 0 4px; font-weight:600;">
+          You already submitted this style for this semester.
+        </p>
+        <p id="existing-class-detail" style="font-size:0.82rem; color:#78490A; margin:0 0 10px;"></p>
+        <div class="chips" data-single id="submission-intent-chips">
+          <div class="chip" onclick="selectSingle(this)" data-intent="update">Update that submission</div>
+          <div class="chip" onclick="selectSingle(this)" data-intent="add">This is an additional class</div>
+        </div>
+        <p style="font-size:0.78rem; color:#78490A; margin:10px 0 0;">
+          Update replaces what you sent before. Additional keeps both — pick this if it's a different day or level.
+        </p>
+      </div>
     </div>
 
     <div class="row">
@@ -704,13 +741,21 @@
 
     <div class="field">
       <label class="field-label">Available dates <span class="badge-new">multi-select</span></label>
+      <!-- 2026-07-22 audit fix. Two bugs were live here:
+           (1) WRONG WEEKDAYS — the chips read "Sat 13 Sep" and "Sun 14 Sep", but
+               13 Sep 2026 is a SUNDAY and 14 Sep is a MONDAY (= semester start).
+           (2) THREE CHIPS WERE PRE-SELECTED, so a teacher who never opened this
+               section still submitted availability they had not chosen, and the
+               labels are stored verbatim downstream.
+           Canonical source: config/semester-config.json → 2026-autumn →
+           open_door_dates = [{ date: 2026-09-13, type: pre-semester }], and
+           opendeurdag_pattern says ONE open door day before each semester start,
+           never calculated from the semester start date. Hence one day, three
+           time-of-day options, nothing pre-selected. -->
       <div class="chips" id="open-house-chips">
-        <div class="chip chip-multi selected" onclick="toggleMulti(this)">Sat 13 Sep — morning</div>
-        <div class="chip chip-multi selected" onclick="toggleMulti(this)">Sat 13 Sep — afternoon</div>
-        <div class="chip chip-multi" onclick="toggleMulti(this)">Sat 13 Sep — evening</div>
-        <div class="chip chip-multi" onclick="toggleMulti(this)">Sun 14 Sep — morning</div>
-        <div class="chip chip-multi" onclick="toggleMulti(this)">Sun 14 Sep — afternoon</div>
-        <div class="chip chip-multi selected" onclick="toggleMulti(this)">Sun 14 Sep — evening</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Sun 13 Sep — morning</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Sun 13 Sep — afternoon</div>
+        <div class="chip chip-multi" onclick="toggleMulti(this)">Sun 13 Sep — evening</div>
       </div>
     </div>
   </div>
@@ -746,6 +791,8 @@
       </div>
     </div>
   </div>
+
+  </div><!-- /#wc-form-content (login gate wrapper, 2026-07-22) -->
 
   <p style="text-align: center; margin-top: 32px; font-size: 0.78rem; color: var(--light);">
     Shoonya Dance Centre · Stapelplein 41, 9000 Gent
@@ -793,24 +840,16 @@ const LEVEL_LABELS = {
   'Open': 'Open level', 'Starter': 'Starter Series',
 };
 
-// TODO (item #17): per-style per-level descriptions. Once wired, these come from
-// (1) teacher's prior submission for that style+level, falling back to
-// (2) WS_STYLE_DATA[style].descriptionsByLevel canonical descriptions.
-const SAMPLE_LEVEL_DESCRIPTIONS = {
-  'Bollywood': {
-    'L1':      { source: 'Shoonya style template', text: "Bollywood Level 1 builds your foundation in Indian dance vocabulary. We focus on basic rhythm, posture, hand-eye coordination, and signature Bollywood movements drawn from folk and semi-classical traditions. No prior experience required — just bring energy and a willingness to move." },
-    'L2':      { source: 'Shoonya style template', text: "Bollywood Level 2 takes your dancing further with longer choreography sequences, classical-folk fusion combinations, and deeper musicality work. Some prior dance experience expected — either Level 1 with us or equivalent." },
-    'L3':      { source: 'Shoonya style template', text: "Bollywood Level 3 is performance-ready training. Full-length choreographies, advanced footwork, expression work (abhinaya), and ensemble-quality formations. Suitable for dancers who've completed Level 2 or have strong Indian dance / contemporary background." },
-    'Open':    { source: 'Shoonya style template', text: "An open-level Bollywood class welcoming all backgrounds. Each week explores a different aspect — folk, classical fusion, film choreography, or pure cardio dance." },
-    'Starter': { source: 'Shoonya style template', text: "A 4-week Bollywood Starter Series for absolute beginners. Builds enough vocabulary to comfortably join the Level 1 class in the following semester." },
-  },
-  'Bhangra': {
-    'L2':      { source: 'Shoonya style template', text: "Bhangra Level 2 — high-energy Punjabi folk dance. Build on the foundation with longer combinations, advanced footwork, and signature shoulder + arm work that make Bhangra unmistakable." },
-    'Starter': { source: 'Shoonya style template', text: "A 4-week Bhangra Starter Series for absolute beginners. Builds rhythm + foundation to comfortably join Level 2 in the next semester." },
-  },
-  // Other styles: no template descriptions — teacher writes their own.
-  // TODO (item #17): fetch prior submission descriptions from teacher profile.
-};
+// REMOVED 2026-07-22 — SAMPLE_LEVEL_DESCRIPTIONS.
+// It held hardcoded Shoonya marketing copy for Bollywood + Bhangra levels, and
+// makeLevelCard rendered it into the textarea under a green "✓ pre-filled" badge
+// reading "Pre-filled from Shoonya style template." Nothing about that text came
+// from the teacher — so a Bollywood teacher who trusted the badge could submit
+// Shoonya's canned copy as their own class description without ever writing one.
+// Every other style already showed the honest "write your own" state.
+// The real feature (TODO item #17) is pre-fill from the teacher's OWN prior
+// submission for that style+level, falling back to WS_STYLE_DATA
+// descriptionsByLevel. Until that exists, showing nothing is the truthful state.
 
 // Styles that have a Squarespace "website note" configured.
 // Source: WS_STYLE_DATA[style].websiteNote in production.
@@ -840,6 +879,12 @@ function selectSingle(el) {
     updateWebsiteNoteVisibility(selectedStyle);
     // FIX F: guard drop-in to allowed styles only.
     updateDropInVisibility(selectedStyle);
+    // 2026-07-22: style changed → re-check for an existing submission.
+    if (typeof wcCheckExistingClass === 'function') wcCheckExistingClass();
+  }
+  // Semester changed → the existing-submission answer no longer applies.
+  if (el.closest('#semester-chips') && typeof wcCheckExistingClass === 'function') {
+    wcCheckExistingClass();
   }
 }
 
@@ -905,32 +950,18 @@ function getCurrentStyle() {
 }
 
 function makeLevelCard(key) {
-  const name = LEVEL_NAMES[key] || LEVEL_LABELS[key] || key;
-  const style = getCurrentStyle();
-  const desc = (SAMPLE_LEVEL_DESCRIPTIONS[style] || {})[key];
-  // Description block — varies by whether we have a pre-fill
-  let descBlock;
-  if (desc) {
-    descBlock = `
-      <details class="collapsible" style="margin-top: 14px;" open>
-        <summary>${name} description <span style="font-size: 0.75rem; color: var(--green); font-weight: 600; margin-left: 8px;">✓ pre-filled</span></summary>
-        <p style="font-size: 0.82rem; color: var(--mid); margin: 8px 0 8px;">
-          Pre-filled from ${desc.source}. Edit if anything's changed.
-        </p>
-        <textarea>${desc.text}</textarea>
-      </details>
-    `;
-  } else {
-    descBlock = `
+  // Escape before interpolating — custom level names come from a prompt() and
+  // land in innerHTML below. Input is sanitised at entry too (belt and braces).
+  const name = _wcEscHtml(LEVEL_NAMES[key] || LEVEL_LABELS[key] || key);
+  const descBlock = `
       <details class="collapsible" style="margin-top: 14px;">
-        <summary>${name} description <span style="font-size: 0.72rem; color: var(--light); margin-left: 8px;">— no prior data for this style + level</span></summary>
+        <summary>${name} description</summary>
         <p style="font-size: 0.82rem; color: var(--mid); margin: 8px 0 8px;">
           Write a description for the Squarespace class page. If left blank, the generic style description is used.
         </p>
         <textarea placeholder="e.g. ${name} focus — technique, choreography, partner work..."></textarea>
       </details>
     `;
-  }
   const card = document.createElement('div');
   card.className = 'level-card';
   card.dataset.level = key;
@@ -1038,10 +1069,18 @@ function toggleLevel(el, levelKey) {
   }
 }
 
+// 2026-07-22: weekly was the ONLY form that never got the 2026-05-24 audit V11
+// fix — workshops and social-nights strip these characters, weekly did not, and
+// makeLevelCard interpolates the level name straight into innerHTML below.
+// Same sanitiser, same 60-char cap, so all three forms behave identically.
+function wcSanitizeCustomName(raw) {
+  return String(raw == null ? '' : raw).replace(/[<>"'`]/g, '').trim().slice(0, 60);
+}
+
 function addCustomLevel() {
   const name = prompt('Custom level name (e.g. "Performance Group", "Auditions only", "Level 7"):');
   if (!name) return;
-  const trimmed = name.trim();
+  const trimmed = wcSanitizeCustomName(name);
   if (!trimmed) return;
   // Use the typed name as both the key and the label (good enough for custom levels)
   const wrap = document.getElementById('level-chips-wrap');
@@ -1070,8 +1109,9 @@ function toggleDropIn(cb) {
 // Custom style — "+ Other..." chip
 function addCustomStyle() {
   const name = prompt('Enter the dance style name:');
-  if (!name || !name.trim()) return;
-  const trimmed = name.trim();
+  if (!name) return;
+  const trimmed = wcSanitizeCustomName(name);
+  if (!trimmed) return;
   // Deselect any currently selected style chip
   document.querySelectorAll('#style-chips .chip').forEach(c => c.classList.remove('selected'));
   // Show custom display
@@ -1116,10 +1156,7 @@ function getSelectedSingle(containerId) {
   return chip ? chip.textContent.replace(/\(.*\)/, '').trim() : '';
 }
 
-function getSelectedMultiByContainer(container) {
-  return Array.from(container.querySelectorAll('.chip.selected'))
-    .map(c => c.textContent.replace(/^⭐\s*/, '').replace(/\(.*\)/, '').trim());
-}
+// REMOVED 2026-07-22 — getSelectedMultiByContainer() had no callers.
 
 // 2026-05-24 audit V7: also surfaces "partial slots" — rows that have some
 // fields filled but not all three (day + start + end). Previously these were
@@ -1189,6 +1226,14 @@ function validate() {
     const summary = partial.map(p => p.level + ' (missing ' + p.missing.join(' + ') + ')').join('; ');
     errs.push('Incomplete slot rows: ' + summary);
   }
+  // 2026-07-22: if we detected an earlier submission for this style+semester we
+  // ASKED whether this replaces it or adds to it. Submitting without answering
+  // would fall back to "replace", which is exactly the silent data loss this
+  // prompt exists to prevent — so the answer is required once asked.
+  if (typeof WC_EXISTING !== 'undefined' && WC_EXISTING &&
+      typeof wcSubmissionIntent === 'function' && !wcSubmissionIntent()) {
+    errs.push('Is this an update to your earlier submission, or an additional class?');
+  }
   return { errs, style, levels };
 }
 
@@ -1231,6 +1276,11 @@ function _reviewJumpTo(selector) {
 }
 
 function _esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+// 2026-07-22: like _esc but ALSO escapes quotes, because makeLevelCard drops the
+// level name inside a placeholder="..." attribute, where a bare quote would
+// break out of the attribute. Function declarations hoist, so makeLevelCard
+// (defined earlier in this file) can call it.
+function _wcEscHtml(s) { return _esc(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 function _reviewRow(label, value, jumpSelector) {
   const empty = value === '' || value == null;
   const display = empty ? '<span class="review-value empty">(not set)</span>' : `<span class="review-value">${_esc(value)}</span>`;
@@ -1523,6 +1573,21 @@ const WEEKLY_SPEC = [
 
   // ── Special notes (section 7) → payload key pricing_notes ──
   { key:'pricing_notes', label:'Special notes', dom:'f-special-notes', kind:'text', jump:'#f-special-notes', section:'Details', reviewMode:'ifset' },
+
+  // 2026-07-22: 'update' | 'add' | '' — only set when the teacher was actually
+  // asked (i.e. an earlier submission exists for this style+semester). The
+  // backend treats an empty value as the historical replace behaviour, so this
+  // is additive and safe for older callers. draft:false — the answer depends on
+  // what is on the server right now, so it must be re-asked, never restored.
+  { key:'submission_intent', payloadKey:'submission_intent', label:'This submission', kind:'custom',
+    draft:false, jump:'#existing-class-prompt', section:'Basics', reviewMode:'ifset',
+    collect: () => (typeof wcSubmissionIntent === 'function' ? wcSubmissionIntent() : ''),
+    reviewValue: () => {
+      const v = (typeof wcSubmissionIntent === 'function') ? wcSubmissionIntent() : '';
+      if (v === 'add')    return 'An additional class (keeps your earlier submission)';
+      if (v === 'update') return 'An update to your earlier submission (replaces it)';
+      return '';
+    } },
 ];
 
 // Meta keys the kernel merges into every weekly payload (routing/internal).
@@ -1653,26 +1718,10 @@ function clearDraftAndReload() {
 }
 
 // ─── RESTORE ─────────────────────────────────────────────────────────────────
-function restoreChip1(id, val) {
-  if (!val) return;
-  const chip = [...(document.getElementById(id)?.querySelectorAll('.chip') || [])]
-    .find(c => c.textContent.trim() === val);
-  if (chip && !chip.classList.contains('selected')) {
-    document.getElementById(id).querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
-    chip.classList.add('selected');
-  }
-}
-
-function restoreChipN(id, vals) {
-  if (!vals || !vals.length) return;
-  const container = document.getElementById(id);
-  if (!container) return;
-  container.querySelectorAll('.chip').forEach(c => {
-    const key = c.textContent.replace(/^⭐\s*/, '').trim();
-    if (vals.includes(key)) c.classList.add('selected');
-    else c.classList.remove('selected');
-  });
-}
+// REMOVED 2026-07-22 — local restoreChip1() / restoreChipN() were shadowed dead
+// code. Every call site goes through FormKernel.restoreChip1/restoreChipN (the
+// kernel owns chip restore since the 2026-06-21 migration); these local copies
+// were never called and could only drift from the kernel's behaviour.
 
 // 2026-06-21 form-kernel migration: restore now iterates WEEKLY_SPEC (same source
 // as collect/payload), so a restored draft can't drift from what's submitted.
@@ -1755,14 +1804,120 @@ function wcApplyStyleFilter(profile) {
   }
 }
 
+// ── EXISTING-SUBMISSION CHECK (2026-07-22) ────────────────────────────────
+// Asks the teacher whether a repeat submission for the same style+semester is a
+// correction or an additional class, instead of silently replacing the earlier
+// one. Fails OPEN: any error leaves the prompt hidden and the form behaves
+// exactly as before, so a broken lookup can never block a submission.
+let WC_EXISTING = null;      // last lookup result
+let _wcExistingSeq = 0;      // guards against out-of-order async responses
+
+function _wcSessionToken() {
+  try {
+    const raw = localStorage.getItem('shoonya_session');
+    const s = raw ? JSON.parse(raw) : null;
+    return (s && s.token) ? s.token : '';
+  } catch (e) { return ''; }
+}
+
+function _wcHideExistingPrompt() {
+  WC_EXISTING = null;
+  const box = document.getElementById('existing-class-prompt');
+  if (box) box.style.display = 'none';
+  document.querySelectorAll('#submission-intent-chips .chip')
+    .forEach(c => c.classList.remove('selected'));
+}
+
+function _wcDescribeSlots(slots) {
+  return (slots || []).map(s => {
+    const when = [s.day, s.start && s.end ? (s.start + '–' + s.end) : s.start].filter(Boolean).join(' ');
+    return s.level ? (s.level + ': ' + when) : when;
+  }).filter(Boolean).join(' · ');
+}
+
+async function wcCheckExistingClass() {
+  const seq = ++_wcExistingSeq;
+  _wcHideExistingPrompt();
+
+  const token = _wcSessionToken();
+  const style = (typeof getCurrentStyle === 'function') ? getCurrentStyle() : '';
+  const semEl = document.querySelector('#semester-chips .chip.selected');
+  const semester = semEl ? semEl.textContent.replace(/\(.*\)/, '').trim() : '';
+  if (!token || !style || !semester) return;
+
+  let json = null;
+  try {
+    const res = await fetch((typeof APPS_SCRIPT_URL !== 'undefined' ? APPS_SCRIPT_URL : ''), {
+      method: 'POST', redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'checkExistingClass', token, dance_style: style, semester_name: semester }),
+    });
+    json = await res.json();
+  } catch (err) {
+    return;   // fail open — silent
+  }
+  if (seq !== _wcExistingSeq) return;            // a newer check superseded this one
+  if (!json || !json.ok || !json.exists) return;
+
+  WC_EXISTING = json;
+  const detail = document.getElementById('existing-class-detail');
+  if (detail) {
+    const desc = _wcDescribeSlots(json.slots);
+    detail.textContent = desc
+      ? ('Currently on file for ' + style + ': ' + desc + '.')
+      : ('Currently on file for ' + style + '.');
+  }
+  const box = document.getElementById('existing-class-prompt');
+  if (box) box.style.display = 'block';
+}
+
+// What the teacher chose — '' when they haven't answered (or weren't asked).
+function wcSubmissionIntent() {
+  if (!WC_EXISTING) return '';
+  const chosen = document.querySelector('#submission-intent-chips .chip.selected');
+  return chosen ? (chosen.dataset.intent || '') : '';
+}
+
+// ── HARD LOGIN GATE (2026-07-22) ──────────────────────────────────────────
+// Mirrors workshops.html. The form body stays hidden until a teacher session
+// exists, so nobody fills 10 minutes of form only to be blocked at submit.
+function wcSetLoginGate(isLoggedIn) {
+  const gate = document.getElementById('wc-login-required');
+  const form = document.getElementById('wc-form-content');
+  if (gate) gate.style.display = isLoggedIn ? 'none' : '';
+  if (form) form.style.display = isLoggedIn ? '' : 'none';
+}
+
+function wcStoredSessionProfile() {
+  try {
+    const raw = localStorage.getItem('shoonya_session');
+    const session = raw ? JSON.parse(raw) : null;
+    return session && session.profile ? session.profile : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // Teacher login — store identity in hidden fields
-window.addEventListener('shoonya:login', function(e) {
-  const p = e.detail;
+function wcApplyLoggedInProfile(p) {
+  if (!p) { wcSetLoginGate(false); return; }
   const nameEl = document.getElementById('f-teacher-name');
   const emailEl = document.getElementById('f-teacher-email');
   if (nameEl) nameEl.value = p.name || '';
   if (emailEl) emailEl.value = p.email || '';
   wcApplyStyleFilter(p);
+  wcSetLoginGate(!!(p.name && p.email));
+  // The existing-submission check needs a session token, so it can only run
+  // once we're logged in — re-run it here in case a style was already picked.
+  if (typeof wcCheckExistingClass === 'function') wcCheckExistingClass();
+}
+
+(function wcInitLoginGate() {
+  wcApplyLoggedInProfile(wcStoredSessionProfile());
+})();
+
+window.addEventListener('shoonya:login', function(e) {
+  wcApplyLoggedInProfile(e.detail);
 });
 </script>
 </body>

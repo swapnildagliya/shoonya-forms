@@ -1114,9 +1114,15 @@ async function renderEvents() {
   container.innerHTML = '<div class="empty-state">Loading your submissions…</div>';
 
   try {
-    const url = (typeof APPS_SCRIPT_URL !== 'undefined' ? APPS_SCRIPT_URL : '')
-      + '?action=getTeacherSubmissions&token=' + encodeURIComponent(token || '');
-    const res  = await fetch(url, { redirect: 'follow' });
+    // 2026-07-22 security pass: sent as a POST body — the session token used to
+    // ride in the query string, which lands in browser history and proxy logs.
+    const url = (typeof APPS_SCRIPT_URL !== 'undefined' ? APPS_SCRIPT_URL : '');
+    const res  = await fetch(url, {
+      method:  'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body:    JSON.stringify({ action: 'getTeacherSubmissions', token: token || '' }),
+      redirect: 'follow'
+    });
     const text = await res.text();
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('Bad response');

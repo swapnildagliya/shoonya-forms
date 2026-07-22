@@ -146,7 +146,7 @@
 <main id="dashboard" style="display:none;">
 
   <div class="page-title">Dashboard</div>
-  <div class="page-sub">School year 2026–2027 · Semester configuration, pricing, and key dates. Last updated 13 April 2026.</div>
+  <div class="page-sub">School year 2026–2027 · Semester configuration, pricing, and key dates. Last updated 22 July 2026.</div>
 
   <!-- ─── QUICK LINKS ──────────────────────────────────────── -->
   <div class="card">
@@ -188,10 +188,12 @@
       <div class="rule-icon">🎫</div>
       <div class="rule-text"><strong>UiTPAS (kansentarief): 80% off</strong> — pay 20% of full price. Must be <strong>EXACT</strong>, never rounded. Formula: full_price × 0.2</div>
     </div>
-    <div class="rule">
-      <div class="rule-icon">📐</div>
-      <div class="rule-text"><strong>Prorated pricing</strong> (late joiners): full_price × (remaining / total sessions), <strong>rounded UP</strong> to nearest euro.</div>
-    </div>
+    <!-- 2026-07-22: removed a "Prorated pricing (late joiners)" rule that
+         contradicted the standing policy. Confirmed with Swapnil — Shoonya has
+         NO prorate model for late joiners. Registration is a 3-week window, and
+         drop-in packs exist only for Dance & Fit / Pilates / Wed Yoga.
+         (Short-semester classes are a different thing: those are priced by
+         session count up front, not prorated for someone joining late.) -->
     <div class="rule">
       <div class="rule-icon">🆓</div>
       <div class="rule-text"><strong>Free trial week</strong>: first week of each semester. Students can attend free — no registration required, just show up if class isn't full.</div>
@@ -322,7 +324,7 @@
         <tr><td>Social Events Sheet</td><td style="font-family:monospace;font-size:.72rem;word-break:break-all;">1xR5Yb6D4vqoX3vY_z0bxvNRi1O5Ir8cECCLQuNeIJZU</td></tr>
         <tr><td>Festivals Sheet</td><td style="font-family:monospace;font-size:.72rem;word-break:break-all;">1eI-yJsdY40HS7_zzgRWm5YfQki_R1sk8AHf1Ed186WA</td></tr>
         <tr><td>Teachers Sheet</td><td style="font-family:monospace;font-size:.72rem;word-break:break-all;">1e6AQU_xOY5f1gBch_yAWsJtw4TsoRUdJJpgDUm0u_oo</td></tr>
-        <tr><td>Apps Script Endpoint</td><td style="font-family:monospace;font-size:.72rem;word-break:break-all;">AKfycbzagQ6DrQzKsNzscEDlXxzMCOLTtJ1MloGm866pkK_Jv3aguggMRlOdr-c_QX0S5zxa</td></tr>
+        <tr><td>Apps Script Endpoint</td><td style="font-family:monospace;font-size:.72rem;word-break:break-all;">AKfycbwh9PSrNxMUkBaMayhyfnU3XDzL76khEm7RL932CJ83qqm7dTG9afA-WB1cZYKSrcs3</td></tr>
         <tr><td>GitHub Pages</td><td style="font-family:monospace;font-size:.72rem;">swapnildagliya.github.io/shoonya-forms/</td></tr>
         <tr><td>Admin Email</td><td>info@shoonyadance.com</td></tr>
       </tbody>
@@ -333,24 +335,50 @@
 
 <script src="../config.js"></script>
 <script>
-const ADMIN_PW = 'Sh00ny@2126';
+// 2026-07-22 security pass: the admin password used to be a literal here.
+// This page ships as PUBLIC source on GitHub Pages, so anyone could read it and
+// publish/unpublish teacher profiles. Now nothing is stored in source — the
+// typed password is verified by the BACKEND (an adminListTeachers call that only
+// succeeds with the right secret) and kept in sessionStorage for the tab only.
+function adminSecret() {
+  return sessionStorage.getItem('shoonya_admin_secret') || '';
+}
 
-function unlock() {
-  const pw = document.getElementById('lock-pw').value;
-  if (pw === ADMIN_PW) {
-    document.getElementById('lock').style.display = 'none';
-    document.getElementById('dashboard').style.display = '';
-    sessionStorage.setItem('shoonya_admin', '1');
-    loadTeachers();
-  } else {
-    document.getElementById('lock-err').style.display = '';
+async function unlock() {
+  const pw     = document.getElementById('lock-pw').value;
+  const errEl  = document.getElementById('lock-err');
+  errEl.textContent = 'Checking…';
+  // `display:''` falls back to the stylesheet's `.lock-err { display:none }`,
+  // so the message never appeared — set an explicit value.
+  errEl.style.display = 'block';
+
+  let ok = false;
+  try {
+    const res  = await fetch(APPS_SCRIPT_URL + '?action=adminListTeachers&secret=' + encodeURIComponent(pw), { redirect: 'follow' });
+    const json = await res.json();
+    ok = json && json.ok === true;
+  } catch (err) {
+    errEl.textContent = 'Could not reach the server. Check your connection and try again.';
+    return;
+  }
+
+  if (!ok) {
+    errEl.textContent = 'Incorrect password. Try again.';
     document.getElementById('lock-pw').value = '';
     document.getElementById('lock-pw').focus();
+    return;
   }
+
+  sessionStorage.setItem('shoonya_admin_secret', pw);
+  errEl.style.display = 'none';
+  errEl.textContent = 'Incorrect password. Try again.';
+  document.getElementById('lock').style.display = 'none';
+  document.getElementById('dashboard').style.display = '';
+  loadTeachers();
 }
 
 function lockOut() {
-  sessionStorage.removeItem('shoonya_admin');
+  sessionStorage.removeItem('shoonya_admin_secret');
   document.getElementById('lock').style.display = '';
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('lock-pw').value = '';
@@ -420,7 +448,7 @@ async function loadTeachers() {
   table.style.display = 'none';
   try {
     const profileMapReady = loadProfileMap(); // fetch preview data in parallel
-    const url = APPS_SCRIPT_URL + '?action=adminListTeachers&secret=' + encodeURIComponent(ADMIN_PW);
+    const url = APPS_SCRIPT_URL + '?action=adminListTeachers&secret=' + encodeURIComponent(adminSecret());
     const res = await fetch(url, { redirect: 'follow' });
     const data = await res.json();
     if (!data.ok) { statusEl.textContent = data.error || 'Could not load teachers.'; return; }
@@ -482,7 +510,7 @@ async function approveAllComplete() {
   btn.disabled = true;
   btn.textContent = 'Publishing…';
   try {
-    const url = APPS_SCRIPT_URL + '?action=adminListTeachers&secret=' + encodeURIComponent(ADMIN_PW);
+    const url = APPS_SCRIPT_URL + '?action=adminListTeachers&secret=' + encodeURIComponent(adminSecret());
     const res = await fetch(url, { redirect: 'follow' });
     const data = await res.json();
     const toApprove = (data.teachers || []).filter(t => !t.approved && t.hasPhoto && t.hasBio);
@@ -490,7 +518,7 @@ async function approveAllComplete() {
       await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify({ action: 'adminSetApproved', secret: ADMIN_PW, email: t.email, approved: true })
+        body: JSON.stringify({ action: 'adminSetApproved', secret: adminSecret(), email: t.email, approved: true })
       });
     }
     loadTeachers();
@@ -509,7 +537,7 @@ async function setApproved(email, approved, btn) {
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'adminSetApproved', secret: ADMIN_PW, email, approved })
+      body: JSON.stringify({ action: 'adminSetApproved', secret: adminSecret(), email, approved })
     });
     const data = await res.json();
     if (data.ok) {

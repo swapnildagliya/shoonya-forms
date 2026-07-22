@@ -456,9 +456,31 @@
 
   <p class="form-legend">Fields marked <span class="req-mark">*</span> are required.</p>
 
-  <!-- TEACHER IDENTITY (hidden — filled by login-panel.js) -->
+  <!-- teacher roster datalist — populated by JS on load (listTeachersPublic) -->
+  <datalist id="sn-teacher-list"></datalist>
+
+  <!-- TEACHER IDENTITY (hidden — filled only by login-panel.js) -->
   <input type="hidden" id="f-teacher-name">
   <input type="hidden" id="f-teacher-email">
+
+  <!-- 2026-07-22: HARD LOGIN GATE (same pattern as workshops.html / Festival).
+       The form used to be fillable logged-out and only failed at submit. -->
+  <div class="section" id="sn-login-required" style="display:none; text-align:center;">
+    <h2 class="section-title">Log in to submit a social night</h2>
+    <p class="section-hint">Use the same teacher login once, then all Shoonya submission forms will recognise you.</p>
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:16px;">
+      <button class="btn-primary" type="button" onclick="slpOpenModal()" style="width:auto; padding:12px 24px;">Log in</button>
+      <button type="button" onclick="window.location.href='../register.html'" style="background:#fff; color:var(--purple); border:2px solid var(--purple); border-radius:8px; font-size:.9rem; font-weight:700; padding:10px 22px; cursor:pointer;">Register →</button>
+    </div>
+  </div>
+
+  <div id="sn-form-content" style="display:none;">
+
+  <!-- LOGGED-IN BANNER -->
+  <div class="auth-banner" id="sn-auth-banner" style="display:none;">
+    <span>Submitting as <strong id="sn-auth-name"></strong></span>
+    <a href="#" onclick="slpLogout(); return false;">Not you?</a>
+  </div>
 
   <!-- DRAFT BANNER -->
   <div id="ss-draft-banner" style="display:none; background:#FFF8E5; border:1px solid #F0DDA4; border-radius:8px; padding:12px 18px; margin-bottom:20px; font-size:0.88rem; color:#5C4400; justify-content:space-between; align-items:center; gap:12px;">
@@ -604,9 +626,9 @@
           <p class="field-hint dn-hint-purple">Not shown publicly.</p>
         </div>
         <div class="field">
-          <label class="field-label dn-label-purple">DJ photo</label>
+          <label class="field-label dn-label-purple dj-photo-label">DJ photo <span class="opt">(optional)</span></label>
           <input type="file" id="f-dj-photo" accept="image/*" style="font-size: 0.85rem; padding: 6px 0;">
-          <p class="field-hint dn-hint-purple">JPEG or PNG.</p>
+          <p class="field-hint dn-hint-purple dj-photo-hint">Add the name above first.</p>
         </div>
       </div>
 
@@ -703,6 +725,8 @@
     </div>
   </div>
 
+  </div><!-- /sn-form-content -->
+
 </div>
 
 <script src="../config.js"></script>
@@ -723,6 +747,121 @@ function ssSetTime(id, val) {
     el.value = val;
     el.dispatchEvent(new Event('change', { bubbles: true }));
   }
+}
+
+// ─── TEACHER ROSTER (2026-07-22) ─────────────────────────────────────────────
+// Fetched once on load and used for two things:
+//  (a) autocomplete on every name field (programme slots + extra DJs)
+//  (b) deciding whether a photo upload is actually needed — a teacher already in
+//      the media library doesn't need one. Defaults to [] on any network error
+//      so the roster can never block the form.
+var SN_TEACHERS = [];
+
+(function ssLoadTeacherRoster() {
+  var url = (typeof APPS_SCRIPT_URL !== 'undefined') ? APPS_SCRIPT_URL : '';
+  if (!url) return;
+  fetch(url + '?action=listTeachersPublic')
+    .then(function(r) { return r.json(); })
+    .then(function(json) {
+      if (!json || !json.ok || !Array.isArray(json.teachers)) return;
+      SN_TEACHERS = json.teachers;
+      var dl = document.getElementById('sn-teacher-list');
+      if (dl) {
+        dl.innerHTML = '';
+        json.teachers.forEach(function(t) {
+          var opt = document.createElement('option');
+          opt.value = t.name;
+          dl.appendChild(opt);
+        });
+      }
+      ssRefreshPhotoHints();   // roster arrived late — re-evaluate every hint
+    })
+    .catch(function() { /* non-blocking — form works without roster */ });
+})();
+
+// Roster lookup for a typed name. Returns { name, hasPhoto } or null.
+// The logged-in teacher's own profile counts as a roster entry.
+function ssKnownTeacher(name) {
+  var typed = String(name || '').trim().toLowerCase();
+  if (!typed) return null;
+  if (SN_LOGGED_IN_PROFILE && String(SN_LOGGED_IN_PROFILE.name || '').trim().toLowerCase() === typed) {
+    return { name: SN_LOGGED_IN_PROFILE.name || '', hasPhoto: !!String(SN_LOGGED_IN_PROFILE.photo_url || '').trim() };
+  }
+  var match = SN_TEACHERS.find(function(t) { return String(t.name || '').trim().toLowerCase() === typed; });
+  return match || null;
+}
+
+// True when we already have a usable photo of this person on file.
+function ssPhotoOnFile(name) {
+  var t = ssKnownTeacher(name);
+  return !!(t && t.hasPhoto);
+}
+
+// Set true when a draft was restored this session. File inputs are NOT persisted
+// in drafts, so a restored draft would otherwise ALWAYS re-fail photo validation
+// with no warning until submit. When true, a missing photo is a visible hint, not
+// a hard block.
+let _ssDraftWasRestored = false;
+
+// Missing photo blocks submit only for a genuinely new name on a fresh session.
+function ssPhotoIsBlocking(name) {
+  if (ssPhotoOnFile(name)) return false;
+  if (_ssDraftWasRestored) return false;
+  return true;
+}
+
+// Live inline hint for one name/photo pair. `labelEl` gets the required/optional
+// marker, `hintEl` gets the explanation — so the teacher sees the state while
+// typing instead of hitting a wall at submit.
+function ssUpdatePhotoHint(name, hasFile, labelEl, hintEl, labelText) {
+  const typed = String(name || '').trim();
+  if (labelEl) {
+    labelEl.innerHTML = labelText + (typed && !hasFile && !ssPhotoOnFile(typed)
+      ? ' <span class="req-mark">*</span>'
+      : ' <span class="opt">(optional)</span>');
+  }
+  if (!hintEl) return;
+  // Remember the hint's original colour once (some rows are inline-styled) so the
+  // neutral states can restore it instead of clearing to the default grey.
+  if (hintEl.dataset.baseColor === undefined) hintEl.dataset.baseColor = hintEl.style.color || '';
+  const base = hintEl.dataset.baseColor;
+  if (!typed) { hintEl.textContent = 'Add the name above first.'; hintEl.style.color = base; return; }
+  if (hasFile) { hintEl.textContent = 'Photo attached.'; hintEl.style.color = base; return; }
+  if (ssPhotoOnFile(typed)) {
+    hintEl.textContent = 'We already have a photo of ' + typed + ' — no upload needed.';
+    hintEl.style.color = base;
+    return;
+  }
+  if (_ssDraftWasRestored) {
+    hintEl.textContent = 'Photos aren’t saved in drafts — re-attach a photo of ' + typed + ' if you have one.';
+    hintEl.style.color = 'var(--amber)';
+    return;
+  }
+  hintEl.textContent = 'We don’t have a photo of ' + typed + ' yet — add one for the event poster.';
+  hintEl.style.color = 'var(--amber)';
+}
+
+// Re-evaluate every name/photo pair on the page (programme slots, extra DJs,
+// main guest DJ). Cheap — called on input, on roster arrival, on login.
+function ssRefreshPhotoHints() {
+  document.querySelectorAll('#programme-rows .prog-card').forEach(card => {
+    const nameEl = card.querySelector('[data-slot="teacher"]');
+    const fileEl = card.querySelector('[data-slot="teacher-photo"]');
+    ssUpdatePhotoHint(nameEl?.value, !!fileEl?.files?.[0],
+      card.querySelector('.prog-photo-label'), card.querySelector('.prog-photo-hint'),
+      'Teacher / performer photo');
+  });
+  document.querySelectorAll('#extra-djs .extra-dj-row').forEach(row => {
+    const nameEl = row.querySelector('[data-extra-dj="name"]');
+    const fileEl = row.querySelector('[data-extra-dj="photo"]');
+    ssUpdatePhotoHint(nameEl?.value, !!fileEl?.files?.[0],
+      row.querySelector('.extra-dj-photo-label'), row.querySelector('.extra-dj-photo-hint'),
+      'Photo');
+  });
+  ssUpdatePhotoHint(document.getElementById('f-dj-name')?.value,
+    !!document.getElementById('f-dj-photo')?.files?.[0],
+    document.querySelector('.dj-photo-label'), document.querySelector('.dj-photo-hint'),
+    'DJ photo');
 }
 
 // 2026-05-24 audit S9: single source-of-truth programme collector. submitForm
@@ -938,14 +1077,15 @@ function addProgrammeSlot() {
       </div>
       <div class="field">
         <label class="field-label prog-teacher-label">Teacher / performer <small style="font-weight:400; color:var(--mid);">(pick type above)</small></label>
-        <input type="text" data-slot="teacher" placeholder="Name(s)">
+        <input type="text" data-slot="teacher" list="sn-teacher-list" placeholder="Name(s)">
       </div>
     </div>
-    <!-- 2026-05-24: per-slot teacher photo so the auto-design generator can pick up each teacher's photo by name. Saved to Drive as "<teacher names>.jpg" with collision suffix. Required when type is workshop/performance AND a teacher name is filled. -->
+    <!-- 2026-05-24: per-slot teacher photo so the auto-design generator can pick up each teacher's photo by name. Saved to Drive as "<teacher names>.jpg" with collision suffix.
+         2026-07-22: no longer required when the name matches a teacher we already have a photo of (roster: listTeachersPublic) — the label + hint below update live as the name is typed. -->
     <div class="field">
-      <label class="field-label">Teacher / performer photo <span class="req-mark">*</span></label>
+      <label class="field-label prog-photo-label">Teacher / performer photo <span class="opt">(optional)</span></label>
       <input type="file" data-slot="teacher-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
-      <p class="field-hint" style="margin: 4px 0 0; font-size: 0.78rem;">Add the name above first.</p>
+      <p class="field-hint prog-photo-hint" style="margin: 4px 0 0; font-size: 0.78rem;">Add the name above first.</p>
     </div>
     <div class="field">
       <label class="field-label prog-topic-label">Topic / description <small style="font-weight:400; font-style:italic; color:var(--mid);">(pick type above)</small></label>
@@ -1011,14 +1151,14 @@ function addExtraDJ() {
   // saved file to "<dj name>.jpg" + disambiguates collisions.
   row.innerHTML = `
     <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-      <input type="text" class="dn-input" data-extra-dj="name" placeholder="DJ name or alias" style="flex: 1; min-width: 180px;">
+      <input type="text" class="dn-input" data-extra-dj="name" list="sn-teacher-list" placeholder="DJ name or alias" style="flex: 1; min-width: 180px;">
       <input type="text" class="dn-input" data-extra-dj="social" placeholder="@handle or link" style="flex: 1; min-width: 180px;">
       <button class="btn-remove-dark" type="button" aria-label="Remove extra DJ" onclick="this.closest('.extra-dj-row').remove()">✕</button>
     </div>
     <div style="margin-top: 8px;">
-      <label class="field-label" style="font-size: 0.78rem; color: #c49cee; margin-bottom: 4px; display: block;">Photo <span class="opt">(optional)</span></label>
+      <label class="field-label extra-dj-photo-label" style="font-size: 0.78rem; color: #c49cee; margin-bottom: 4px; display: block;">Photo <span class="opt">(optional)</span></label>
       <input type="file" data-extra-dj="photo" accept="image/*" class="dn-input" style="font-size: 0.85rem; padding: 6px 8px;">
-      <p class="field-hint" style="margin: 4px 0 0; font-size: 0.78rem; color: #B7A1D6;">Add the DJ's name above first.</p>
+      <p class="field-hint extra-dj-photo-hint" style="margin: 4px 0 0; font-size: 0.78rem; color: #B7A1D6;">Add the DJ's name above first.</p>
     </div>
   `;
   wrap.appendChild(row);
@@ -1089,6 +1229,11 @@ function _reviewSection(title, rows) {
   const visible = rows.filter(Boolean).join('');
   if (!visible) return '';
   return `<div class="review-section"><div class="review-section-title">${_esc(title)}</div>${visible}</div>`;
+}
+
+// 2026-07-22: one wording for every "we need a photo of X" error.
+function _ssPhotoError(prefix, name) {
+  return prefix + 'we don\'t have a photo of "' + name + '" yet — add one, it\'s used to build the event poster.';
 }
 
 // 2026-05-24 audit V1: minimal email-shape regex.
@@ -1182,27 +1327,29 @@ function _collectValidationErrors() {
       const role = type === 'performance' ? 'performer' : 'teacher';
       if (!styleVal)   errors.push('Slot ' + slotNum + ' (' + type + '): style is required.');
       if (!teacherVal) errors.push('Slot ' + slotNum + ' (' + type + '): ' + role + ' name is required.');
-      if (teacherVal && !photoFile) errors.push('Slot ' + slotNum + ': a photo of "' + teacherVal + '" is required — it\'s used to build the event poster.');
+      if (teacherVal && !photoFile && ssPhotoIsBlocking(teacherVal)) errors.push(_ssPhotoError('Slot ' + slotNum + ': ', teacherVal));
     } else if (type === 'other') {
       if (!topicVal) errors.push('Slot ' + slotNum + ' (other): description is required — explain what this slot is.');
       // Style + teacher optional for "other"; photo required only if a teacher name is filled
-      if (teacherVal && !photoFile) errors.push('Slot ' + slotNum + ': a photo of "' + teacherVal + '" is required — it\'s used to build the event poster.');
+      if (teacherVal && !photoFile && ssPhotoIsBlocking(teacherVal)) errors.push(_ssPhotoError('Slot ' + slotNum + ': ', teacherVal));
     }
   });
   // 2026-05-24: DJ photo required when Guest DJ is selected (auto-design needs it).
+  // 2026-07-22: skipped when we already have a photo of that person on file, and
+  // never blocking after a draft restore (file inputs aren't persisted in drafts).
   if (musicSel && musicSel.dataset.val === 'guest-dj') {
     const djName = document.getElementById('f-dj-name').value.trim();
     const djPhoto = document.getElementById('f-dj-photo')?.files?.[0];
-    if (djName && !djPhoto) {
-      errors.push('A photo of DJ "' + djName + '" is required — it\'s used to build the event poster.');
+    if (djName && !djPhoto && ssPhotoIsBlocking(djName)) {
+      errors.push(_ssPhotoError('', djName));
     }
   }
   // 2026-05-24: each extra DJ row with a name must also have a photo.
   document.querySelectorAll('#extra-djs .extra-dj-row').forEach((row, i) => {
     const name = row.querySelector('[data-extra-dj="name"]')?.value?.trim() || '';
     const photo = row.querySelector('[data-extra-dj="photo"]')?.files?.[0];
-    if (name && !photo) {
-      errors.push('Photo for extra DJ "' + name + '" is required.');
+    if (name && !photo && ssPhotoIsBlocking(name)) {
+      errors.push(_ssPhotoError('', name));
     }
   });
   return errors;
@@ -1228,11 +1375,12 @@ function _collectValidationErrors() {
 //    getters (ssCollectProgramme etc.); their draft restore rebuilds the repeater
 //    DOM first, then fills — kept ATOMIC inside each field's draftRestore so the
 //    rebuild-on-restore order can't regress.
-//  • The review modal HTML is still produced by the hand-written
-//    _buildReviewSummaryHtml() below (its conditional row logic is intricate and
-//    user-facing); SOCIAL_SPEC drives collect/draft/payload. Each spec field sets
-//    review:false to stay out of the kernel's buildReview — the bespoke review
-//    function is the single review source, matching pre-migration output exactly.
+//  • 2026-07-22: the review modal is ALSO spec-driven now (FormKernel.buildReview
+//    + per-field section/reviewMode/label/jump), matching workshops.html. The old
+//    hand-written _buildReviewSummaryHtml read the DOM independently of the spec,
+//    so a new spec field silently never showed up in review — it had already
+//    drifted once (extraDjs). Only the photo-status row stays computed: file
+//    inputs hold no state the synchronous kernel collect can read.
 // ═══════════════════════════════════════════════════════════════════════════
 
 // Music type currently selected (DOM is source of truth — no state object).
@@ -1361,91 +1509,146 @@ function _ssRestoreProgramme(v) {
   });
 }
 
-// SOCIAL_SPEC — single source of truth for collect / draft / payload.
-// review:false everywhere — the bespoke _buildReviewSummaryHtml() owns the review
-// UI (its conditional row logic is too intricate to safely re-derive). Field
-// order is restore-safe: chips/identity rebuild before the repeaters' atomic
+// SOCIAL_SPEC — single source of truth for collect / draft / review / payload.
+// 2026-07-22: the review modal is now driven by the spec too (FormKernel.buildReview),
+// the way workshops.html does it — the old hand-written _buildReviewSummaryHtml read
+// the DOM independently, so a new spec field silently never appeared in review (it
+// had already drifted once: extraDjs). Review metadata per field:
+//   section     → which review group the row lands in (_SS_REVIEW_SECTION_ORDER)
+//   reviewMode  → 'always' (row rendered, "(not set)" when empty) | 'ifset' (omitted when empty)
+//   label/jump  → row label + the Edit button's scroll target
+// Field order is restore-safe: chips/identity rebuild before the repeaters' atomic
 // rebuilds; music type is restored before the conditional DJ text fields.
 const SOCIAL_SPEC = [
   // ── Who (hidden identity; filled only by shared teacher login) ──
   // Identity is never restored from drafts. A saved draft must not become a
   // substitute for the shared teacher login session.
-  { key:'teacher_name', payloadKey:'teacher_name', dom:'f-teacher-name', kind:'text', review:false, draft:false },
-  { key:'email', payloadKey:'email', dom:'f-teacher-email', kind:'text', review:false, draft:false },
+  { key:'teacher_name', payloadKey:'teacher_name', dom:'f-teacher-name', kind:'text', draft:false,
+    label:'Submitting as', section:'Who', reviewMode:'always', jump:null },
+  { key:'email', payloadKey:'email', dom:'f-teacher-email', kind:'text', draft:false,
+    label:'Email', section:'Who', reviewMode:'always', jump:null },
 
   // ── Basics ──
   // styles: chip-multi (custom — no state object; reads/writes the DOM directly).
-  { key:'styles', payloadKey:'styles', dom:'style-chips', kind:'custom', review:false,
+  { key:'styles', payloadKey:'styles', dom:'style-chips', kind:'custom',
+    label:'Style(s)', section:'Basics', reviewMode:'always', jump:'#style-chips',
     collect: () => getSelectedStyles(),
+    reviewValue: (v) => (v || []).join(', '),
     draftRestore: (v) => _ssRestoreStyles(v) },
-  { key:'title', payloadKey:'title', dom:'f-title', kind:'text', review:false },
-  { key:'date', payloadKey:'date', dom:'f-date', kind:'text', trim:false, review:false },
-  { key:'doors', payloadKey:'doors', dom:'f-doors', kind:'text', trim:false, review:false },
-  { key:'end', payloadKey:'end', dom:'f-end', kind:'text', trim:false, review:false },
+  { key:'title', payloadKey:'title', dom:'f-title', kind:'text',
+    label:'Title', section:'Basics', reviewMode:'always', jump:'#f-title' },
+  { key:'date', payloadKey:'date', dom:'f-date', kind:'text', trim:false,
+    label:'Date', section:'Basics', reviewMode:'always', jump:'#f-date' },
+  { key:'doors', payloadKey:'doors', dom:'f-doors', kind:'text', trim:false,
+    label:'Doors open', section:'Basics', reviewMode:'always', jump:'#f-doors' },
+  { key:'end', payloadKey:'end', dom:'f-end', kind:'text', trim:false,
+    label:'Event ends', section:'Basics', reviewMode:'always', jump:'#f-end' },
   // dresscode: trimmed, null when blank (legacy parity).
-  { key:'dresscode', payloadKey:'dresscode', dom:'f-dresscode', kind:'custom', review:false,
+  { key:'dresscode', payloadKey:'dresscode', dom:'f-dresscode', kind:'custom',
+    label:'Dress code', section:'Basics', reviewMode:'always', jump:'#f-dresscode',
     collect: () => (FormKernel.byId('f-dresscode')?.value || '').trim(),
     draftCollect: () => (FormKernel.byId('f-dresscode')?.value || ''),
     restore: (v) => { const el = FormKernel.byId('f-dresscode'); if (el && v) el.value = v; },
     payloadValue: (v) => v || null },
 
   // ── Dance floor ──
-  { key:'dnStart', payloadKey:'dnStart', dom:'f-dn-start', kind:'text', trim:false, review:false },
-  { key:'dnEnd', payloadKey:'dnEnd', dom:'f-dn-end', kind:'text', trim:false, review:false },
+  { key:'dnStart', payloadKey:'dnStart', dom:'f-dn-start', kind:'text', trim:false,
+    label:'Floor opens', section:'Dance floor', reviewMode:'always', jump:'#f-dn-start' },
+  { key:'dnEnd', payloadKey:'dnEnd', dom:'f-dn-end', kind:'text', trim:false,
+    label:'Floor closes', section:'Dance floor', reviewMode:'ifset', jump:'#f-dn-end' },
   // musicType: which chip is selected (drives the conditionals below).
-  { key:'musicType', payloadKey:'musicType', dom:'music-type-chips', kind:'custom', review:false,
+  { key:'musicType', payloadKey:'musicType', dom:'music-type-chips', kind:'custom',
+    label:'Music handled by', section:'Dance floor', reviewMode:'always', jump:'#music-type-chips',
     collect: () => _ssMusicType(),
+    reviewValue: (v) => _SS_MUSIC_LABELS[v] || v || '',
     draftRestore: (v) => _ssRestoreMusicType(v) },
   // DJ fields — non-null ONLY when musicType === 'guest-dj' (else null). Verbatim
   // from the pre-migration payload; these conditionals are part of the golden.
-  { key:'djName', payloadKey:'djName', dom:'f-dj-name', kind:'custom', review:false,
+  // In review the DJ name row also carries the fee (same as the pre-kernel modal).
+  { key:'djName', payloadKey:'djName', dom:'f-dj-name', kind:'custom',
+    label:'DJ', section:'Dance floor', reviewMode:'ifset', jump:'#f-dj-name',
     collect: () => (FormKernel.byId('f-dj-name')?.value || '').trim(),
     draftCollect: () => (FormKernel.byId('f-dj-name')?.value || ''),
     restore: (v) => { const el = FormKernel.byId('f-dj-name'); if (el && v) el.value = v; },
+    reviewValue: (v) => {
+      if (_ssMusicType() !== 'guest-dj' || !v) return '';
+      const fee = FormKernel.byId('f-dj-fee')?.value || '';
+      return v + (fee ? ' — €' + fee : '');
+    },
     payloadValue: () => (_ssMusicType() === 'guest-dj' ? (FormKernel.byId('f-dj-name').value.trim() || null) : null) },
-  { key:'djSocials', payloadKey:'djSocials', dom:'f-dj-social', kind:'custom', review:false,
+  { key:'djSocials', payloadKey:'djSocials', dom:'f-dj-social', kind:'custom',
+    label:'DJ socials', section:'Dance floor', reviewMode:'ifset', jump:'#f-dj-social',
     collect: () => (FormKernel.byId('f-dj-social')?.value || '').trim(),
     draftCollect: () => (FormKernel.byId('f-dj-social')?.value || ''),
     restore: (v) => { const el = FormKernel.byId('f-dj-social'); if (el && v) el.value = v; },
+    reviewValue: (v) => (_ssMusicType() === 'guest-dj' ? (v || '') : ''),
     payloadValue: () => (_ssMusicType() === 'guest-dj' ? (FormKernel.byId('f-dj-social').value.trim() || null) : null) },
+  // djFee has no row of its own — it is shown inside the DJ row above.
   { key:'djFee', payloadKey:'djFee', dom:'f-dj-fee', kind:'custom', review:false,
     collect: () => (FormKernel.byId('f-dj-fee')?.value || ''),
     draftCollect: () => (FormKernel.byId('f-dj-fee')?.value || ''),
     restore: (v) => { const el = FormKernel.byId('f-dj-fee'); if (el && v) el.value = v; },
     payloadValue: () => _ssDjFee() },
   // teacherDJ: non-null ONLY when musicType === 'teacher-dj' (else null). Verbatim.
-  { key:'teacherDJ', payloadKey:'teacherDJ', dom:'f-teacher-dj', kind:'custom', review:false,
+  { key:'teacherDJ', payloadKey:'teacherDJ', dom:'f-teacher-dj', kind:'custom',
+    label:'Teacher-DJ', section:'Dance floor', reviewMode:'ifset', jump:'#f-teacher-dj',
     collect: () => (FormKernel.byId('f-teacher-dj')?.value || '').trim(),
     draftCollect: () => (FormKernel.byId('f-teacher-dj')?.value || ''),
     restore: (v) => { const el = FormKernel.byId('f-teacher-dj'); if (el && v) el.value = v; },
+    reviewValue: (v) => (_ssMusicType() === 'teacher-dj' ? (v || '') : ''),
     payloadValue: () => (_ssMusicType() === 'teacher-dj' ? (FormKernel.byId('f-teacher-dj').value.trim() || null) : null) },
+  // extraDjs: text-row repeater (photos handled async outside the spec).
+  { key:'extraDjs', payloadKey:'extraDjs', dom:'extra-djs', kind:'custom',
+    label:'Extra DJ(s)', section:'Dance floor', reviewMode:'ifset', jump:'#extra-djs',
+    collect: () => _ssCollectExtraDjs(),
+    reviewValue: (v) => (v || []).map(d => d.name + (d.social ? ' (' + d.social + ')' : '')).join(', '),
+    draftRestore: (v) => _ssRestoreExtraDjs(v) },
   // genres: chip-multi (custom — DOM-driven; includes custom-added genre chips).
-  { key:'genres', payloadKey:'genres', dom:'genre-chips', kind:'custom', review:false,
+  { key:'genres', payloadKey:'genres', dom:'genre-chips', kind:'custom',
+    label:'Genres', section:'Dance floor', reviewMode:'ifset', jump:'#genre-chips',
     collect: () => [...document.querySelectorAll('#genre-chips .music-chip.selected')].map(c => c.dataset.val || c.textContent.trim()),
+    reviewValue: (v) => (v || []).join(', '),
     draftCollect: () => [...document.querySelectorAll('#genre-chips .music-chip.selected')].map(c => c.dataset.val),
     draftRestore: (v) => _ssRestoreGenres(v) },
-  // extraDjs: text-row repeater (photos handled async outside the spec).
-  { key:'extraDjs', payloadKey:'extraDjs', dom:'extra-djs', kind:'custom', review:false,
-    collect: () => _ssCollectExtraDjs(),
-    draftRestore: (v) => _ssRestoreExtraDjs(v) },
 
   // ── Programme (repeater) ──
   // collect → submit shape (nullTopic:true); draft → '' topics (nullTopic:false).
-  { key:'programme', payloadKey:'programme', dom:'programme-rows', kind:'custom', review:false,
+  { key:'programme', payloadKey:'programme', dom:'programme-rows', kind:'custom',
+    label:'Slots', section:'Programme', reviewMode:'always', jump:'#programme-rows',
     collect: () => ssCollectProgramme({ nullTopic: true }),
+    reviewValue: (v) => (v || []).map(r => [
+      r.type,
+      r.start + (r.end ? '–' + r.end : (r.duration ? ' (' + r.duration + ' min)' : '')),
+      r.style,
+      r.teacher,
+      r.topic,
+    ].filter(Boolean).join(' · ')).join('\n'),
     draftCollect: () => ssCollectProgramme({ nullTopic: false }),
     draftRestore: (v) => _ssRestoreProgramme(v) },
 
   // ── Pricing (repeater) ──
-  { key:'pricing', payloadKey:'pricing', dom:'pricing-rows', kind:'custom', review:false,
+  // P1 (Codex 2026-06-21): review must not render a blank amount as "€0" and must
+  // drop fully empty seeded rows — so the review value is read from the raw inputs
+  // (a labelled tier with no amount is blocked at validation; "—" is the defensive
+  // display).
+  { key:'pricing', payloadKey:'pricing', dom:'pricing-rows', kind:'custom',
+    label:'Tiers', section:'Pricing', reviewMode:'ifset', jump:'#pricing-rows',
     collect: () => _ssCollectPricing(),
+    reviewValue: () => [...document.querySelectorAll('#pricing-rows .pricing-tier')].map(row => {
+      const inputs = row.querySelectorAll('input');
+      const label = (inputs[0]?.value || '').trim();
+      const amount = (inputs[1]?.value || '').trim();
+      if (!label && !amount) return '';
+      return label + (amount ? ': €' + amount : ': —');
+    }).filter(Boolean).join('\n'),
     draftCollect: () => [...document.querySelectorAll('#pricing-rows .pricing-tier')].map(row => {
       const inputs = row.querySelectorAll('input');
       return { label: inputs[0]?.value || '', price: inputs[1]?.value || '' };
     }),
     draftRestore: (v) => _ssRestorePricing(v) },
   // earlyDeadline: ISO date string; '' when blank (legacy parity, NOT null).
-  { key:'earlyDeadline', payloadKey:'earlyDeadline', dom:'f-early-deadline', kind:'custom', review:false,
+  { key:'earlyDeadline', payloadKey:'earlyDeadline', dom:'f-early-deadline', kind:'custom',
+    label:'Early-bird deadline', section:'Pricing', reviewMode:'ifset', jump:'#f-early-deadline',
     collect: () => (FormKernel.byId('f-early-deadline')?.value || ''),
     draftCollect: () => (FormKernel.byId('f-early-deadline')?.value || ''),
     draftRestore: (v) => {
@@ -1456,100 +1659,82 @@ const SOCIAL_SPEC = [
     } },
 
   // ── Notes ── (trimmed, null when blank — legacy parity)
-  { key:'description', payloadKey:'description', dom:'f-description', kind:'custom', review:false,
+  { key:'description', payloadKey:'description', dom:'f-description', kind:'custom',
+    label:'Description', section:'Notes', reviewMode:'ifset', jump:'#f-description',
     collect: () => (FormKernel.byId('f-description')?.value || '').trim(),
     draftCollect: () => (FormKernel.byId('f-description')?.value || ''),
     restore: (v) => { const el = FormKernel.byId('f-description'); if (el && v) el.value = v; },
     payloadValue: (v) => v || null },
-  { key:'notes', payloadKey:'notes', dom:'f-notes', kind:'custom', review:false,
+  { key:'notes', payloadKey:'notes', dom:'f-notes', kind:'custom',
+    label:'Internal notes', section:'Notes', reviewMode:'ifset', jump:'#f-notes',
     collect: () => (FormKernel.byId('f-notes')?.value || '').trim(),
     draftCollect: () => (FormKernel.byId('f-notes')?.value || ''),
     restore: (v) => { const el = FormKernel.byId('f-notes'); if (el && v) el.value = v; },
     payloadValue: (v) => v || null },
 ];
 
-function _buildReviewSummaryHtml() {
-  const styles = getSelectedStyles();
-  const musicSelected = document.querySelector('#music-type-chips .music-chip.selected');
-  const musicVal = musicSelected ? musicSelected.dataset.val : '';
-  const genres = [...document.querySelectorAll('#genre-chips .music-chip.selected')].map(c => c.dataset.val || c.textContent.trim());
-  // FIX E: use ssCollectProgramme (same getter as submit) so review matches payload.
-  // Shows start–end per slot (end is computed via _ssSlotEnd, same as submit path).
-  const programmeRows = ssCollectProgramme({ nullTopic: false }).map(r => {
-    return [
-      r.type,
-      r.start + (r.end ? '–' + r.end : (r.duration ? ' (' + r.duration + ' min)' : '')),
-      r.style,
-      r.teacher,
-      r.topic,
-    ].filter(Boolean).join(' · ');
-  });
-  // P1 (Codex 2026-06-21): don't render a blank amount as "€0", and drop fully
-  // empty seeded rows. A labelled tier with no amount is blocked at validation;
-  // this is the defensive display (shows "—" rather than a fake €0).
-  const pricingRows = [...document.querySelectorAll('#pricing-rows .pricing-tier')].map(row => {
-    const inputs = row.querySelectorAll('input');
-    const label = (inputs[0]?.value || '').trim();
-    const amount = (inputs[1]?.value || '').trim();
-    if (!label && !amount) return '';
-    return label + (amount ? ': €' + amount : ': —');
-  }).filter(Boolean);
-  // FIX E: count photos that will be submitted (DJ + per-slot teachers).
-  // P1 (Codex 2026-06-21): also count extra-DJ photos (were collected into
-  // photos[] but never shown in the review).
-  const djPhotoFile = document.getElementById('f-dj-photo')?.files?.[0];
-  const slotPhotoCount = [...document.querySelectorAll('#programme-rows .prog-card [data-slot="teacher-photo"]')]
-    .filter(el => el.files?.[0]).length;
+const _SS_MUSIC_LABELS = { 'guest-dj': 'Guest DJ', 'teacher-dj': 'A Shoonya teacher', 'playlist': 'Playlist only' };
+const _SS_REVIEW_SECTION_ORDER = ['Who', 'Basics', 'Dance floor', 'Programme', 'Pricing', 'Notes'];
+
+// Photo status is NOT a spec field — file inputs carry no state the kernel can
+// collect — so it stays a computed row, appended to the Dance floor section
+// exactly where the pre-kernel review put it. It now also flags names we have
+// neither an upload nor a library photo for, instead of only counting uploads.
+function _ssPhotoReviewRow() {
+  const parts = [];
+  if (document.getElementById('f-dj-photo')?.files?.[0]) parts.push('DJ photo ✓');
   const extraDjPhotoCount = [...document.querySelectorAll('#extra-djs .extra-dj-row [data-extra-dj="photo"]')]
     .filter(el => el.files?.[0]).length;
-  const extraDjs = _ssCollectExtraDjs();
-  const photoSummaryParts = [];
-  if (djPhotoFile) photoSummaryParts.push('DJ photo ✓');
-  if (extraDjPhotoCount) photoSummaryParts.push(extraDjPhotoCount + ' extra-DJ photo(s) ✓');
-  if (slotPhotoCount) photoSummaryParts.push(slotPhotoCount + ' slot photo(s) ✓');
+  if (extraDjPhotoCount) parts.push(extraDjPhotoCount + ' extra-DJ photo(s) ✓');
+  const slotPhotoCount = [...document.querySelectorAll('#programme-rows .prog-card [data-slot="teacher-photo"]')]
+    .filter(el => el.files?.[0]).length;
+  if (slotPhotoCount) parts.push(slotPhotoCount + ' slot photo(s) ✓');
 
-  const musicLabels = { 'guest-dj': 'Guest DJ', 'teacher-dj': 'A Shoonya teacher', 'playlist': 'Playlist only' };
+  // Names with no upload and no photo in the library — surfaced, never silent.
+  const missing = [];
+  const noteMissing = (name, hasFile) => {
+    const n = String(name || '').trim();
+    if (n && !hasFile && !ssPhotoOnFile(n) && missing.indexOf(n) === -1) missing.push(n);
+  };
+  document.querySelectorAll('#programme-rows .prog-card').forEach(card => {
+    noteMissing(card.querySelector('[data-slot="teacher"]')?.value,
+      !!card.querySelector('[data-slot="teacher-photo"]')?.files?.[0]);
+  });
+  document.querySelectorAll('#extra-djs .extra-dj-row').forEach(row => {
+    noteMissing(row.querySelector('[data-extra-dj="name"]')?.value,
+      !!row.querySelector('[data-extra-dj="photo"]')?.files?.[0]);
+  });
+  if (_ssMusicType() === 'guest-dj') {
+    noteMissing(document.getElementById('f-dj-name')?.value,
+      !!document.getElementById('f-dj-photo')?.files?.[0]);
+  }
+  if (missing.length) parts.push('⚠ no photo yet: ' + missing.join(', '));
 
-  return [
-    _reviewSection('Who', [
-      _reviewRow('Submitting as', document.getElementById('f-teacher-name').value, null),
-      _reviewRow('Email', document.getElementById('f-teacher-email').value, null),
-    ]),
-    _reviewSection('Basics', [
-      _reviewRow('Style(s)', styles.join(', '), '#style-chips'),
-      _reviewRow('Title', document.getElementById('f-title').value, '#f-title'),
-      _reviewRow('Date', document.getElementById('f-date').value, '#f-date'),
-      _reviewRow('Doors open', document.getElementById('f-doors').value, '#f-doors'),
-      _reviewRow('Event ends', document.getElementById('f-end').value || '', '#f-end'),
-      _reviewRow('Dress code', document.getElementById('f-dresscode').value || '', '#f-dresscode'),
-    ]),
-    _reviewSection('Dance floor', [
-      _reviewRow('Floor opens', document.getElementById('f-dn-start').value, '#f-dn-start'),
-      document.getElementById('f-dn-end').value ? _reviewRow('Floor closes', document.getElementById('f-dn-end').value, '#f-dn-end') : '',
-      _reviewRow('Music handled by', musicLabels[musicVal] || musicVal, '#music-type-chips'),
-      // FIX E: show DJ name + fee together (mirrors payload shape)
-      (musicVal === 'guest-dj' && document.getElementById('f-dj-name').value) ?
-        _reviewRow('DJ', document.getElementById('f-dj-name').value + (document.getElementById('f-dj-fee')?.value ? ' — €' + document.getElementById('f-dj-fee').value : ''), '#f-dj-name') : '',
-      (musicVal === 'guest-dj' && document.getElementById('f-dj-social').value) ? _reviewRow('DJ socials', document.getElementById('f-dj-social').value, '#f-dj-social') : '',
-      (musicVal === 'teacher-dj' && document.getElementById('f-teacher-dj').value) ? _reviewRow('Teacher-DJ', document.getElementById('f-teacher-dj').value, '#f-teacher-dj') : '',
-      // P1 (Codex 2026-06-21): extra DJs are collected into payload.extraDjs[] but
-      // were never shown in the review — surface them here.
-      extraDjs.length ? _reviewRow('Extra DJ(s)', extraDjs.map(d => d.name + (d.social ? ' (' + d.social + ')' : '')).join(', '), '#extra-djs') : '',
-      genres.length ? _reviewRow('Genres', genres.join(', '), '#genre-chips') : '',
-      photoSummaryParts.length ? _reviewRow('Photos', photoSummaryParts.join(', '), null) : '',
-    ]),
-    _reviewSection('Programme', [
-      programmeRows.length ? _reviewRow('Slots', programmeRows.join('\n'), '#programme-rows') : _reviewRow('Slots', '', '#programme-rows'),
-    ]),
-    _reviewSection('Pricing', [
-      pricingRows.length ? _reviewRow('Tiers', pricingRows.join('\n'), '#pricing-rows') : '',
-      document.getElementById('f-early-deadline')?.value ? _reviewRow('Early-bird deadline', document.getElementById('f-early-deadline').value, '#f-early-deadline') : '',
-    ]),
-    _reviewSection('Notes', [
-      document.getElementById('f-description').value ? _reviewRow('Description', document.getElementById('f-description').value, '#f-description') : '',
-      document.getElementById('f-notes').value ? _reviewRow('Internal notes', document.getElementById('f-notes').value, '#f-notes') : '',
-    ]),
-  ].filter(Boolean).join('');
+  return parts.length ? _reviewRow('Photos', parts.join(', '), null) : '';
+}
+
+// 2026-07-22: review rows come from FormKernel.buildReview over the SAME
+// SOCIAL_SPEC that builds the payload, grouped by each field's `section` —
+// a new spec field can no longer be missing from the review.
+function _buildReviewSummaryHtml() {
+  const rows = FormKernel.buildReview(SOCIAL_SPEC);
+  const fieldByKey = {};
+  SOCIAL_SPEC.forEach(f => { fieldByKey[f.key] = f; });
+  const grouped = {};
+  rows.forEach(r => {
+    const f = fieldByKey[r.key];
+    if (!f || !f.section) return;
+    (grouped[f.section] = grouped[f.section] || []).push({ row: r, mode: f.reviewMode || 'ifset' });
+  });
+  return _SS_REVIEW_SECTION_ORDER.map(section => {
+    const inner = (grouped[section] || []).map(({ row, mode }) => {
+      const empty = row.value === '' || row.value == null;
+      if (mode === 'ifset' && empty) return '';
+      return _reviewRow(row.label, row.value, row.jump);
+    });
+    if (section === 'Dance floor') inner.push(_ssPhotoReviewRow());
+    return _reviewSection(section, inner);
+  }).filter(Boolean).join('');
 }
 
 // ─── SUBMIT ──────────────────────────────────────────────────────────────────
@@ -1662,12 +1847,14 @@ async function submitForm() {
     submitted_via: 'social-night-v2-form',   // 2026-05-24 audit S8
     // structured photo array (async)
     photos: photos,
-    // Legacy flat fields — kept for back-compat with any backend code path that
-    // still reads them directly. Remove once `photos[]` is fully verified.
-    dj_photo_name:            document.getElementById('f-dj-photo')?.files?.[0]?.name || '',
-    dj_photo_b64:             djB64,
-    guest_teacher_photo_name: document.getElementById('f-guest-teacher-photo')?.files?.[0]?.name || '',
-    guest_teacher_photo_b64:  gtB64,
+    // 2026-07-22: the legacy flat keys (dj_photo_b64 / dj_photo_name /
+    // guest_teacher_photo_b64 / guest_teacher_photo_name) are GONE — they shipped
+    // the exact same base64 image a second time on every submit. Verified against
+    // the backend first: output-generator.gs only reads them when `photos[]` is
+    // absent/empty (`hasStructuredPhotos` gate), and MasterSchedule.gs attaches +
+    // inventories BOTH lists, so the flat copy was producing duplicate email
+    // attachments. Every image this form can send is already in photos[] with a
+    // role (dj / programme_teacher / guest_teacher).
   });
 
   // 2026-05-24 (audit P1): removed `console.log('Social night payload:', …)` — was dumping the full payload (incl. teacher email, DJ fee, internal notes) into the user's browser console on every submit.
@@ -1689,16 +1876,7 @@ async function submitForm() {
   }
 
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload),
-    });
-    // 2026-05-24 audit S2: surface real error reason instead of generic.
-    let json;
-    try { json = await res.json(); }
-    catch (_) { throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + '). Your draft is saved.'); }
-    if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ').'));
+    const json = await FormKernel.submit({ url, payload });
     if (json.testMode && window.shoonyaShowTestPreview) {
       succEl.innerHTML = window.shoonyaShowTestPreview(json);
       succEl.style.display = 'block';
@@ -1805,6 +1983,11 @@ function ssRestoreDraft(d) {
     if (_rBtn && _rTitle && _rTitle.value && _rTitle.value === _rBtn.textContent) {
       _lastAppliedTitleSuggestion = _rTitle.value;
     }
+    // 2026-07-22: file inputs are never serialised into a draft, so a restored
+    // draft can't carry its photos. Flag it (photo checks stop hard-blocking) and
+    // refresh the inline hints so the gap is visible immediately, not at submit.
+    _ssDraftWasRestored = true;
+    ssRefreshPhotoHints();
     showSsDraftBanner(d.savedAt);
   } catch(e) {
     console.warn('Social night draft restore failed:', e);
@@ -1821,6 +2004,10 @@ function ssRestoreDraft(d) {
 
 document.querySelector('.container').addEventListener('input', ssScheduleSave);
 document.querySelector('.container').addEventListener('change', ssScheduleSave);
+// 2026-07-22: keep the per-name photo hints live (delegated, so dynamically added
+// programme slots and extra-DJ rows are covered without re-binding).
+document.querySelector('.container').addEventListener('input', ssRefreshPhotoHints);
+document.querySelector('.container').addEventListener('change', ssRefreshPhotoHints);
 document.querySelector('.container').addEventListener('click', e => {
   if (e.target.classList.contains('chip') || e.target.classList.contains('chip-multi') || e.target.classList.contains('music-chip')) ssScheduleSave();
 });
@@ -1882,13 +2069,54 @@ function ssApplyStyleFilter(profile) {
   }
 }
 
-window.addEventListener('shoonya:login', function(e) {
-  const p = e.detail;
+// ─── HARD LOGIN GATE (2026-07-22) ────────────────────────────────────────────
+// Same pattern as workshops.html / Festival: the form itself is hidden until a
+// teacher session exists, instead of letting someone fill everything logged-out
+// and only failing at submit. The style filter still runs on `shoonya:login`.
+let SN_LOGGED_IN_PROFILE = null;
+let _ssStyleFilterApplied = false;
+
+function ssSetLoginGate(isLoggedIn) {
+  const gate = document.getElementById('sn-login-required');
+  const form = document.getElementById('sn-form-content');
+  if (gate) gate.style.display = isLoggedIn ? 'none' : '';
+  if (form) form.style.display = isLoggedIn ? '' : 'none';
+}
+
+function ssStoredSessionProfile() {
+  try {
+    const raw = localStorage.getItem('shoonya_session');
+    const session = raw ? JSON.parse(raw) : null;
+    return session && session.profile ? session.profile : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function ssApplyLoggedInProfile(p) {
+  if (!p) { ssSetLoginGate(false); return; }
+  SN_LOGGED_IN_PROFILE = p;
   const nameEl = document.getElementById('f-teacher-name');
   const emailEl = document.getElementById('f-teacher-email');
   if (nameEl) nameEl.value = p.name || '';
   if (emailEl) emailEl.value = p.email || '';
-  ssApplyStyleFilter(p);   // 2026-05-24 audit P1-2
+  const banner = document.getElementById('sn-auth-banner');
+  const bannerName = document.getElementById('sn-auth-name');
+  if (bannerName) bannerName.textContent = p.name || p.email || '';
+  if (banner) banner.style.display = (p.name || p.email) ? 'flex' : 'none';
+  // Style filter is idempotent-ish but re-running it re-hides chips the teacher
+  // may have expanded — run it once per page load.
+  if (!_ssStyleFilterApplied) { ssApplyStyleFilter(p); _ssStyleFilterApplied = true; }   // 2026-05-24 audit P1-2
+  ssRefreshPhotoHints();
+  ssSetLoginGate(!!(p.name && p.email));
+}
+
+(function ssInitLoginGate() {
+  ssApplyLoggedInProfile(ssStoredSessionProfile());
+})();
+
+window.addEventListener('shoonya:login', function(e) {
+  ssApplyLoggedInProfile(e.detail);
 });
 </script>
 </body>

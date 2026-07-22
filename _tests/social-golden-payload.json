@@ -5,8 +5,6 @@
   "djFee": null,
   "djName": null,
   "djSocials": null,
-  "dj_photo_b64": null,
-  "dj_photo_name": "",
   "dnEnd": "02:00",
   "dnStart": "22:30",
   "doors": "22:00",
@@ -19,14 +17,18 @@
     "Bachata",
     "Salsa"
   ],
-  "guest_teacher_photo_b64": null,
-  "guest_teacher_photo_name": "",
   "musicType": "teacher-dj",
   "notes": "ZZ QA NOTE FOR SHOONYA.",
   "photos": [],
   "pricing": [
-    { "label": "Advance", "price": 8 },
-    { "label": "Door", "price": 12 }
+    {
+      "label": "Advance",
+      "price": 8
+    },
+    {
+      "label": "Door",
+      "price": 12
+    }
   ],
   "programme": [
     {

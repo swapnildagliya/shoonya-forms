@@ -25,6 +25,12 @@
   setV('f-max-students','12'); setV('f-dropin-price','10'); setV('f-website-note','ZZ QA website note.');
   setV('f-special-notes','ZZ QA NOTE FOR SHOONYA kernel.');
   const dcb=document.getElementById('dropin-cb'); if(dcb&&!dcb.checked){dcb.checked=true;dcb.dispatchEvent(new Event('change',{bubbles:true}));}
+  // 2026-07-22: explicitly pick ONE Open House chip. Until now the fill never
+  // touched this section — the golden's availability came purely from chips that
+  // shipped pre-selected, i.e. data no teacher had chosen. Those defaults are
+  // gone (and the weekday labels were wrong), so the fill now makes a real
+  // choice, which keeps the "Open House availability" contract assertion honest.
+  log.openHouse=(function(){const c=document.querySelector('#open-house-chips .chip');if(c){c.click();return c.textContent.trim();}return null;})();
   window.__cap=null; const of=window.fetch;
   window.fetch=function(u,o){try{window.__cap=JSON.parse(o.body);}catch(e){window.__cap={err:String(e)};}return Promise.resolve(new Response(JSON.stringify({ok:true,testMode:true,preview:{}}),{status:200,headers:{'Content-Type':'application/json'}}));};
   try{await submitForm();}catch(e){log.submitErr=String(e);}

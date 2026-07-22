@@ -1,13 +1,25 @@
 {
-  "_note": "GOLDEN baseline payload for the workshops form captured 2026-06-21 BEFORE the form-kernel migration. The migrated form MUST reproduce this exact payload for the same deterministic fill (see workshop-fill.eval.js). Compare key-by-key (order-independent). 'testMode' is added by ?test=1 and is expected. Photo-free by design (no guest teacher) so b64 are null and photos:[].",
+  "_note": "GOLDEN baseline payload for the workshops form captured 2026-06-21 BEFORE the form-kernel migration. The migrated form MUST reproduce this exact payload for the same deterministic fill (see workshop-fill.eval.js). Compare key-by-key (order-independent). 'testMode' is added by ?test=1 and is expected. Photo-free by design (no guest teacher) so b64 are null and photos:[]. | UPDATED 2026-07-22: teacher_known false → true. This was STALE, not a new regression — it drifted at some point after the 2026-06-21 capture and was never caught because the workshops golden round-trip had not been re-run since. updateHostMediaBlock() marks the host known when the typed name matches the LOGGED-IN profile (workshops.html ~line 910), and the deterministic fill logs in as the same person it names as host — so true is the correct value: a registered teacher submitting their own workshop is known, and host photo/bio come from the media library rather than being asked for. Re-verified in-browser 2026-07-22: 44/44 keys match with this fix.",
   "action": "generateOutputPackage",
   "type": "workshop",
   "title": "ZZ QA Kernel Workshop",
   "style": "Bachata",
-  "styles": ["Bachata", "Salsa"],
-  "levels": ["Beginner", "Open level"],
+  "styles": [
+    "Bachata",
+    "Salsa"
+  ],
+  "levels": [
+    "Beginner",
+    "Open level"
+  ],
   "sessions": [
-    { "date": "2026-10-15", "start": "19:00", "end": "20:30", "topic": "ZZ QA topic", "dropIn": false }
+    {
+      "date": "2026-10-15",
+      "start": "19:00",
+      "end": "20:30",
+      "topic": "ZZ QA topic",
+      "dropIn": false
+    }
   ],
   "format": "Single",
   "format_internal": "single",
@@ -39,7 +51,7 @@
   "earlybird_price": null,
   "earlybird_deadline": "",
   "video_link": "",
-  "teacher_known": false,
+  "teacher_known": true,
   "host_bio": "",
   "host_photo_name": "",
   "host_photo_b64": null,

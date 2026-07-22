@@ -843,12 +843,19 @@ function bindChips(containerId, key, multi=false) {
   });
 }
 
+// Is the early-bird block actually applicable right now? Single source of truth
+// for BOTH the block's visibility and whether its values are collected, so a
+// hidden block can never contribute to the payload (2026-07-22).
+function _wsEarlybirdActive() {
+  var fmt = (typeof state !== 'undefined' && state) ? state.format : '';
+  return !!fmt && fmt !== 'single';
+}
+
 // Early-bird block visibility: show only for series or intensive formats
 function updateEarlybirdVisibility() {
-  var fmt = state.format;
   // Early-bird applies to any multi-session format (series, intensive, bootcamp, 2day) —
   // just not a single workshop. Show for everything except 'single' (and nothing selected).
-  var show = !!fmt && fmt !== 'single';
+  var show = _wsEarlybirdActive();
   var block = document.getElementById('earlybird-block');
   if (block) block.style.display = show ? '' : 'none';
   // Also init flatpickr on the deadline date input when first revealed
@@ -1582,12 +1589,19 @@ const WORKSHOP_SPEC = [
     collect: () => getNum('f-price-couple'),
     restore: (v) => { const el = FormKernel.byId('f-price-couple'); if (el && v != null && v !== '') el.value = v; },
     reviewValue: () => (document.getElementById('f-single-session')?.checked && document.getElementById('f-couple-price')?.checked && getVal('f-price-couple')) ? ('€' + getVal('f-price-couple')) : '' },
+  // 2026-07-22: gate on visibility. The early-bird block is hidden for the
+  // 'single' format, but the inputs keep their values — so a teacher who typed
+  // an early-bird price, then switched the format back to a single workshop,
+  // still submitted that price and deadline invisibly. weekly's dropin_price is
+  // gated the same way; this was the one ungated pair.
   { key:'earlybird_price', label:'Early-bird price', dom:'f-earlybird-price', kind:'custom', jump:'#earlybird-block', section:'Pricing', reviewMode:'ifset',
-    collect: () => getNum('f-earlybird-price'),
+    collect: () => (_wsEarlybirdActive() ? getNum('f-earlybird-price') : null),
     restore: (v) => { const el = FormKernel.byId('f-earlybird-price'); if (el && v != null && v !== '') el.value = v; },
     reviewValue: () => getVal('f-earlybird-price') ? ('€' + getVal('f-earlybird-price') + (getVal('f-earlybird-deadline') ? ' until ' + getVal('f-earlybird-deadline') : '')) : '' },
   // earlybird_deadline: sent in payload, shown as part of the early-bird row above (review:false).
-  { key:'earlybird_deadline', payloadKey:'earlybird_deadline', label:'Early-bird deadline', dom:'f-earlybird-deadline', kind:'text', review:false, jump:'#earlybird-block' },
+  { key:'earlybird_deadline', payloadKey:'earlybird_deadline', label:'Early-bird deadline', dom:'f-earlybird-deadline', kind:'custom', review:false, jump:'#earlybird-block',
+    collect: () => (_wsEarlybirdActive() ? getVal('f-earlybird-deadline') : ''),
+    restore: (v) => { const el = FormKernel.byId('f-earlybird-deadline'); if (el && v != null && v !== '') el.value = v; } },
   { key:'pricing_notes', label:'Pricing notes', dom:'f-pricing-notes', kind:'text', jump:'#f-pricing-notes', section:'Pricing', reviewMode:'ifset' },
 
   // ── Logistics ──
@@ -1727,17 +1741,7 @@ async function submitForm() {
   }
 
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload),
-    });
-    // 2026-05-24 audit S2: surface real error reason instead of generic "Submission failed".
-    // If JSON parse fails (e.g. HTML 500 page), include status + statusText so it's debuggable.
-    let json;
-    try { json = await res.json(); }
-    catch (_) { throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + ').'); }
-    if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ').'));
+    const json = await FormKernel.submit({ url, payload });
     if (json.testMode && window.shoonyaShowTestPreview) {
       okBox.innerHTML = window.shoonyaShowTestPreview(json);
       okBox.style.display = '';
