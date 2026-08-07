@@ -1205,7 +1205,34 @@ function closeReviewModal() {
 
 function confirmSubmit() {
   closeReviewModal();
-  submitForm();
+  // 2026-08-07: submitForm() was fired unawaited, so ANY rejection it didn't
+  // catch itself became a silent unhandled promise rejection — dead button, no
+  // error, nothing sent anywhere. This is the last-resort net: whatever breaks,
+  // the teacher's typed data still reaches the backup sink, they see a real
+  // message, and the button comes back so they can retry.
+  submitForm().catch(function (err) {
+    try {
+      sendToBackup(
+        FormKernel.buildPayload(SOCIAL_SPEC, {
+          action: 'generateOutputPackage',
+          type: 'social-night',
+          submitted_via: 'social-night-v2-form',
+          _clientCrash: true,
+        }),
+        'submitForm crashed before send: ' + (err && err.message ? err.message : String(err))
+      );
+    } catch (_) { /* best effort only — never throw from the net itself */ }
+    const errEl = document.getElementById('error-row');
+    if (errEl) {
+      errEl.innerHTML = '⚠ Something went wrong while preparing your submission' +
+        (err && err.message ? ' (' + err.message + ')' : '') +
+        '.<br><small style="color:var(--mid);">Your details have been sent to Shoonya as a backup and your draft is saved — please try again, or reach us via the <a href="https://www.shoonyadance.com/contact">contact page</a>.</small>';
+      errEl.style.display = 'block';
+      errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    const btn = document.querySelector('.btn-primary');
+    if (btn) { btn.disabled = false; btn.textContent = 'Submit social night →'; }
+  });
 }
 
 function _reviewJumpTo(selector) {
@@ -1779,8 +1806,41 @@ async function submitForm() {
   // that auto-design tools (Canva, etc.) can fetch as an actual image.
   const photos = [];
 
+  // 2026-08-07 DOUBLE-SUBMIT FIX. The button used to be disabled only at the
+  // fetch (see below), i.e. AFTER every `await _fileToB64()` below — and those
+  // reads decode + canvas-resize multi-MB phone photos, which takes SECONDS on
+  // mobile. The button stayed live that whole time, so a second tap started a
+  // second full submitForm() run. Alex's Oefenavond landed twice, 7.35 s apart:
+  // 2 sheet rows, 2 confirmation mails, 4 Drive files ("DJ Kimo 2.jpg"…).
+  // There is no server-side dedup for social-night, so the lock MUST come first.
+  const btn = document.querySelector('.btn-primary');
+  btn.disabled = true;
+  btn.textContent = 'Preparing photos…';
+
+  // 2026-08-07 NOTHING-IS-LOST FIX. `_fileToB64` THROWS on an image the browser
+  // can't decode (HEIC from an iPhone is the common one — see FIX G there), and
+  // every call below sat OUTSIDE the try/catch, which only started at the fetch.
+  // So one unreadable photo = unhandled rejection = submitForm dies right here:
+  // no sheet row, no email, no Drive file, no backup, and no error on screen.
+  // The teacher sees a dead button and assumes it went through.
+  //
+  // A photo must never be able to cost us the submission. _ssSafeB64 downgrades
+  // any encode failure to "that one photo is missing", records it, and lets the
+  // rest of the submission through. The failures ride along in the payload so
+  // the RAW archive mail says which photo to chase.
+  const photoFailures = [];
+  async function _ssSafeB64(input, what) {
+    try {
+      return await _fileToB64(input);
+    } catch (err) {
+      const fname = input?.files?.[0]?.name || '(unknown file)';
+      photoFailures.push(what + ' — ' + fname + ': ' + (err && err.message ? err.message : 'could not be read'));
+      return null;
+    }
+  }
+
   // Main DJ photo — label from `f-dj-name`
-  const djB64 = await _fileToB64(document.getElementById('f-dj-photo'));
+  const djB64 = await _ssSafeB64(document.getElementById('f-dj-photo'), 'DJ photo');
   if (djB64) {
     photos.push({
       role: 'dj',
@@ -1797,7 +1857,7 @@ async function submitForm() {
   for (const card of document.querySelectorAll('#programme-rows .prog-card')) {
     const teacherName = card.querySelector('[data-slot="teacher"]')?.value?.trim() || '';
     const photoEl = card.querySelector('[data-slot="teacher-photo"]');
-    const b64 = await _fileToB64(photoEl);
+    const b64 = await _ssSafeB64(photoEl, 'Programme teacher photo (' + (teacherName || 'unnamed slot') + ')');
     if (b64) {
       photos.push({
         role: 'programme_teacher',
@@ -1811,7 +1871,7 @@ async function submitForm() {
   // Legacy single guest-teacher photo — still collected for back-compat with any
   // existing draft that filled it before per-slot photos shipped. Will land as
   // role='guest_teacher'. New submissions should use the per-slot path above.
-  const gtB64 = await _fileToB64(document.getElementById('f-guest-teacher-photo'));
+  const gtB64 = await _ssSafeB64(document.getElementById('f-guest-teacher-photo'), 'Guest teacher photo');
   if (gtB64) {
     const firstSlotTeacher = document.querySelector('#programme-rows .prog-card [data-slot="teacher"]')?.value?.trim() || '';
     photos.push({
@@ -1826,7 +1886,7 @@ async function submitForm() {
   for (const row of document.querySelectorAll('#extra-djs .extra-dj-row')) {
     const nameEl = row.querySelector('[data-extra-dj="name"]');
     const photoEl = row.querySelector('[data-extra-dj="photo"]');
-    const b64 = await _fileToB64(photoEl);
+    const b64 = await _ssSafeB64(photoEl, 'Extra DJ photo (' + ((nameEl?.value || '').trim() || 'unnamed') + ')');
     if (b64) {
       photos.push({
         role: 'dj',
@@ -1847,6 +1907,11 @@ async function submitForm() {
     submitted_via: 'social-night-v2-form',   // 2026-05-24 audit S8
     // structured photo array (async)
     photos: photos,
+    // 2026-08-07: photos that failed to encode (HEIC, corrupt file…). Non-empty
+    // means the submission went through but an image did NOT — it lands in the
+    // RAW archive mail so the missing photo can be chased instead of discovered
+    // three weeks later when the poster is being built.
+    photo_failures: photoFailures.length ? photoFailures : undefined,
     // 2026-07-22: the legacy flat keys (dj_photo_b64 / dj_photo_name /
     // guest_teacher_photo_b64 / guest_teacher_photo_name) are GONE — they shipped
     // the exact same base64 image a second time on every submit. Verified against
@@ -1862,8 +1927,8 @@ async function submitForm() {
   // Test mode (?test=1): mark the payload so the backend previews instead of saving
   if (window.shoonyaTestMode && window.shoonyaTestMode()) payload.testMode = true;
 
-  const btn = document.querySelector('.btn-primary');
-  btn.disabled = true;
+  // btn is already disabled (locked above, before the photo encode). Just swap
+  // the label now that the network call actually starts.
   btn.textContent = payload.testMode ? 'Testing…' : 'Submitting…';
 
   const url = (typeof APPS_SCRIPT_URL !== 'undefined') ? APPS_SCRIPT_URL : '';

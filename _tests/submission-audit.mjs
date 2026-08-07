@@ -88,6 +88,43 @@ r = audit({ foo: 1 }, 'not-a-real-type');
 ok('unknown submission type audits cleanly (no crash, nothing missing)',
    r.missing.length === 0 && r.subjectTag === '');
 
+// ── 1b. social-night — the 2026-08-07 phantom-key regression ────────────────
+// There were NO social-night cases here, which is exactly why the bug shipped:
+// the table required `event_title`, a key this form has never sent. Every real
+// social night was tagged "⚠ INCOMPLETE: Event title" with the title sitting
+// correctly in sheet column D. These cases pin BOTH spellings.
+const alexOefenavond = {
+  title: 'Oefenavond',
+  date: '2026-09-11',
+  styles: ['Bachata', 'Cuban Salsa', 'Rueda de Casino'],
+};
+r = audit(alexOefenavond, 'social-night');
+ok('social night sending `title` (the real form payload) is NOT flagged incomplete',
+   r.missing.length === 0, JSON.stringify(r.missing));
+ok('a complete social night produces no INCOMPLETE subject tag',
+   !/INCOMPLETE/.test(r.subjectTag), r.subjectTag);
+
+r = audit({ event_title: 'Legacy shape', date: '2026-09-11' }, 'social-night');
+ok('legacy `event_title` spelling is still accepted', r.missing.length === 0, JSON.stringify(r.missing));
+
+r = audit({ date: '2026-09-11' }, 'social-night');
+ok('a genuinely missing title IS still flagged', r.missing.includes('Event title'), JSON.stringify(r.missing));
+
+r = audit({ title: '   ', date: '2026-09-11' }, 'social-night');
+ok('whitespace-only title is flagged for social night too', r.missing.includes('Event title'));
+
+r = audit({ title: 'X' }, 'social-night');
+ok('missing date is flagged for social night', r.missing.includes('Date'), JSON.stringify(r.missing));
+
+// ── 1c. photo_failures → loud subject tag ──────────────────────────────────
+// A photo the browser could not encode must be visible from the inbox list.
+r = audit({ ...alexOefenavond, photo_failures: ['DJ photo — a.heic: unsupported'] }, 'social-night');
+ok('one failed photo produces a 📷 subject tag', /1 PHOTO FAILED/.test(r.subjectTag), r.subjectTag);
+r = audit({ ...alexOefenavond, photo_failures: ['a', 'b'] }, 'social-night');
+ok('two failed photos pluralise correctly', /2 PHOTOS FAILED/.test(r.subjectTag), r.subjectTag);
+r = audit(alexOefenavond, 'social-night');
+ok('no photo_failures key means no 📷 tag', !/PHOTO/.test(r.subjectTag), r.subjectTag);
+
 // ── 2. auditSubmission — new-style detection ────────────────────────────────
 r = audit(completeWeekly, 'weekly-class');
 ok('known style (Bachata) is NOT flagged as new', r.newStyle === null, String(r.newStyle));
@@ -107,6 +144,24 @@ ok('new style produces a NEW STYLE subject tag', /NEW STYLE/.test(r.subjectTag),
 r = audit({ ...completeWeekly, dance_style: '' }, 'weekly-class');
 ok('blank style is reported as missing, not as a new style',
    r.newStyle === null && r.missing.includes('Dance style'));
+
+// 2026-08-07: detection used to read ONLY `dance_style`, so it was dead code on
+// the social-night + festival forms, which send a `styles` ARRAY. Each style
+// must be checked individually — a joined "A, B, C" string matches nothing.
+r = audit({ title: 'X', date: '2026-09-11', styles: ['Bachata', 'Cuban Salsa'] }, 'social-night');
+ok('known styles in a `styles` array are not flagged as new', r.newStyle === null, String(r.newStyle));
+
+r = audit({ title: 'X', date: '2026-09-11', styles: ['Bachata', 'Underwater Basket Weaving'] }, 'social-night');
+ok('a new style inside a `styles` array IS flagged',
+   r.newStyle === 'Underwater Basket Weaving', String(r.newStyle));
+ok('a new style in an array produces a NEW STYLE subject tag', /NEW STYLE/.test(r.subjectTag), r.subjectTag);
+
+r = audit({ title: 'X', date: '2026-09-11', styles: ['Underwater Basket Weaving', 'Competitive Napping'] }, 'social-night');
+ok('multiple new styles are all reported, not just the first',
+   /Underwater Basket Weaving/.test(r.newStyle) && /Competitive Napping/.test(r.newStyle), String(r.newStyle));
+
+r = audit({ title: 'X', date: '2026-09-11', styles: ['Bachata', 'Bachata'] }, 'social-night');
+ok('duplicate styles do not produce duplicate flags', r.newStyle === null, String(r.newStyle));
 
 // ── 3. _semKey — the duplicate-classes fix ─────────────────────────────────
 const semKey = (v) => run(`_semKey(${JSON.stringify(v)})`);
