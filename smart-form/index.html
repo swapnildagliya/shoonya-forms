@@ -125,8 +125,52 @@
     font-size: 0.9rem;
   }
 
-  .note {
+  /* Reference link — not a form, so it reads as a bar, not a card. */
+  .reference-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
     margin-top: 28px;
+    padding: 18px 22px;
+    background: var(--surface);
+    color: inherit;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--purple);
+    border-radius: 8px;
+    text-decoration: none;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+  }
+
+  .reference-bar:hover,
+  .reference-bar:focus-visible {
+    border-color: var(--purple);
+    box-shadow: var(--shadow);
+    outline: none;
+  }
+
+  .reference-bar strong {
+    display: block;
+    margin-bottom: 4px;
+    font-family: 'Marcellus', Georgia, serif;
+    font-size: 1.25rem;
+    font-weight: 400;
+  }
+
+  .reference-bar span { display: block; color: var(--muted); font-size: 0.95rem; }
+
+  .reference-bar em {
+    flex: none;
+    color: var(--purple-dark);
+    border-bottom: 1px solid color-mix(in srgb, var(--purple) 55%, transparent);
+    font-style: normal;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+
+  .note {
+    margin-top: 20px;
     padding: 16px 18px;
     background: var(--purple-soft);
     border: 1px solid #e4cffc;
@@ -198,6 +242,14 @@
       <em>Open form</em>
     </a>
   </nav>
+
+  <a class="reference-bar" href="../semester-dates.html">
+    <span>
+      <strong>Important dates 2026–2027</strong>
+      Semester start and end dates, free trial weeks, Opendeurdag, school holidays and catch-up weeks.
+    </span>
+    <em>View dates</em>
+  </a>
 
   <p class="note">
     Not sure which form to use? Pick the closest one and add the rest in the internal note, or contact

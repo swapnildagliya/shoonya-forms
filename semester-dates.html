@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Important dates 2026–2027 — Shoonya Dance Centre</title>
+<meta name="description" content="Semester start and end dates, free trial weeks, Opendeurdag, school holidays and catch-up weeks for Shoonya Dance Centre, school year 2026–2027.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=PT+Serif:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --muted: #5f5a55;
+    --paper: #faf8f3;
+    --surface: #ffffff;
+    --line: #ded8cf;
+    --purple: #b564f7;
+    --purple-dark: #6d359a;
+    --purple-soft: #f5ecff;
+    --yellow: #fbc70f;
+    --amber-bg: #fdf3d9;
+    --amber-line: #ecd79a;
+    --amber-ink: #6f5200;
+    --green-bg: #e9f4ee;
+    --green-line: #bcdcc9;
+    --green-ink: #1f5c42;
+    --shadow: 0 18px 40px rgba(43, 31, 22, 0.08);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'PT Serif', Georgia, serif;
+    line-height: 1.55;
+  }
+
+  main {
+    width: min(900px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 56px 0 72px;
+  }
+
+  /* ── Hero ─────────────────────────────────── */
+  .hero { display: grid; gap: 12px; max-width: 720px; margin-bottom: 26px; }
+
+  .eyebrow {
+    margin: 0;
+    color: var(--purple-dark);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    margin: 0;
+    font-family: 'Marcellus', Georgia, serif;
+    font-size: clamp(2.3rem, 7vw, 4.2rem);
+    font-weight: 400;
+    line-height: 0.98;
+  }
+
+  .subtitle { margin: 0; max-width: 58ch; color: var(--muted); font-size: 1.05rem; }
+
+  /* ── Legend + print ───────────────────────── */
+  .toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 22px;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; }
+  .key { display: inline-flex; align-items: center; gap: 7px; font-size: 0.85rem; color: var(--muted); }
+  .swatch { width: 13px; height: 13px; border-radius: 3px; border: 1.5px solid; flex: none; }
+  .sw-milestone { background: var(--surface); border-color: var(--purple); }
+  .sw-holiday   { background: var(--amber-bg); border-color: var(--amber-line); }
+  .sw-free      { background: var(--green-bg); border-color: var(--green-line); }
+
+  .print-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 9px 16px;
+    background: var(--surface);
+    color: var(--purple-dark);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-family: inherit; font-size: 0.9rem; font-weight: 700;
+    cursor: pointer;
+  }
+  .print-btn:hover { border-color: var(--purple); }
+  .print-btn:focus-visible { outline: 2px solid var(--purple); outline-offset: 2px; }
+
+  /* ── Semester block ───────────────────────── */
+  .semester {
+    margin-bottom: 26px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .sem-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px;
+    padding: 16px 20px;
+    background: var(--purple-dark);
+    color: #fff;
+  }
+  .sem-head h2 {
+    margin: 0;
+    font-family: 'Marcellus', Georgia, serif;
+    font-size: 1.4rem; font-weight: 400; line-height: 1.15;
+  }
+  .sem-badge {
+    padding: 3px 11px;
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.4);
+    border-radius: 12px;
+    font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+  caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid var(--line); }
+  tbody tr:last-child { border-bottom: none; }
+  td { padding: 13px 20px; vertical-align: middle; }
+
+  td.month {
+    width: 68px;
+    background: var(--purple-soft);
+    border-right: 1px solid var(--line);
+    color: var(--purple-dark);
+    font-family: 'Marcellus', Georgia, serif;
+    font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase;
+    text-align: center;
+  }
+  td.what { font-size: 1.05rem; font-weight: 700; }
+  td.what .note { display: block; font-weight: 400; font-size: 0.88rem; color: var(--muted); margin-top: 2px; }
+  td.when { text-align: right; white-space: nowrap; font-weight: 700; font-size: 1.02rem; }
+
+  tr.milestone td.when { color: var(--purple-dark); }
+
+  tr.holiday td { background: var(--amber-bg); }
+  tr.holiday td.month { background: #f7e9c2; border-right-color: var(--amber-line); color: var(--amber-ink); }
+  tr.holiday td.what, tr.holiday td.when { color: var(--amber-ink); }
+  tr.holiday td.what .note { color: #856526; }
+
+  tr.free td { background: var(--green-bg); }
+  tr.free td.month { background: #d7e9de; border-right-color: var(--green-line); color: var(--green-ink); }
+  tr.free td.what, tr.free td.when { color: var(--green-ink); }
+  tr.free td.what .note { color: #4a7a65; }
+
+  .tag {
+    display: inline-block; margin-left: 8px; vertical-align: 2px;
+    padding: 2px 8px; border-radius: 10px;
+    font-family: 'Marcellus', Georgia, serif;
+    font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .tag-no { background: var(--yellow); color: #4a3600; }
+  .tag-free { background: var(--green-ink); color: #fff; }
+
+  /* ── Summer ───────────────────────────────── */
+  .summer {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px;
+    margin-bottom: 26px; padding: 18px 20px;
+    background: #2a1b3d; color: #fff;
+    border-radius: 8px; box-shadow: var(--shadow);
+  }
+  .summer .label {
+    display: block; margin-bottom: 2px;
+    color: rgba(255,255,255,0.65);
+    font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .summer .name { font-family: 'Marcellus', Georgia, serif; font-size: 1.3rem; }
+  .summer .date { font-weight: 700; font-size: 1.05rem; }
+
+  /* ── Explainers ───────────────────────────── */
+  .explainers { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; margin-bottom: 26px; }
+  .exp {
+    padding: 16px 18px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--purple);
+    border-radius: 8px;
+  }
+  .exp h3 {
+    margin: 0 0 6px;
+    color: var(--purple-dark);
+    font-family: 'Marcellus', Georgia, serif;
+    font-size: 1rem; font-weight: 400;
+  }
+  .exp p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+  .note-box {
+    padding: 16px 18px;
+    background: var(--purple-soft);
+    border: 1px solid #e4cffc;
+    border-radius: 8px;
+    color: #4f3d5f;
+    font-size: 0.95rem;
+  }
+  .note-box a { color: var(--purple-dark); font-weight: 700; }
+
+  .colophon { margin-top: 22px; color: var(--muted); font-size: 0.82rem; }
+
+  /* ── Responsive ───────────────────────────── */
+  @media (max-width: 720px) {
+    .explainers { grid-template-columns: 1fr; }
+    td { padding: 11px 14px; }
+    td.month { width: 54px; font-size: 0.72rem; }
+    td.what { font-size: 1rem; }
+    td.when { font-size: 0.95rem; white-space: normal; }
+  }
+
+  @media (max-width: 560px) {
+    main { width: min(100% - 24px, 900px); padding: 38px 0 52px; }
+    table, tbody, tr, td { display: block; width: 100%; }
+    td { padding: 0 14px; }
+    tbody tr { padding: 12px 0; }
+    td.month {
+      width: auto; text-align: left; background: none; border-right: none;
+      padding-bottom: 2px;
+    }
+    tr.holiday td.month, tr.free td.month { background: none; }
+    td.when { text-align: left; padding-top: 4px; }
+  }
+
+  /* ── Print ────────────────────────────────── */
+  /* Tuned so the whole year prints on ONE A4 sheet — check the page count
+     after adding rows or copy. `.semester` must NOT be break-inside:avoid,
+     or Semester 2 gets pushed to a second page with a half-empty first one. */
+  @media print {
+    @page { size: A4; margin: 11mm; }
+    body { background: #fff; }
+    #shared-header, .print-btn, .note-box, .colophon { display: none !important; }
+    main { width: 100%; padding: 0; }
+    .semester, .summer, .exp { box-shadow: none; }
+    tr, .summer, .exp, .sem-head { break-inside: avoid; }
+
+    .hero { gap: 4px; margin-bottom: 8px; }
+    h1 { font-size: 1.7rem; }
+    .subtitle { font-size: 0.85rem; }
+    .eyebrow { font-size: 0.66rem; }
+    .toolbar { margin-bottom: 7px; }
+    .key { font-size: 0.72rem; }
+
+    .semester { margin-bottom: 8px; }
+    .sem-head { padding: 6px 12px; }
+    .sem-head h2 { font-size: 1.05rem; }
+    .sem-badge { font-size: 0.6rem; }
+
+    td { padding: 3.5px 12px; }
+    td.what { font-size: 0.88rem; }
+    td.what .note { font-size: 0.72rem; margin-top: 0; }
+    td.when { font-size: 0.86rem; }
+    .tag { font-size: 0.58rem; padding: 1px 6px; }
+
+    .summer { padding: 8px 12px; margin-bottom: 8px; }
+    .summer .name { font-size: 1rem; }
+    .summer .date { font-size: 0.88rem; }
+    .summer .label { font-size: 0.6rem; }
+
+    .explainers { gap: 9px; margin-bottom: 0; }
+    .exp { padding: 8px 10px; }
+    .exp h3 { font-size: 0.8rem; }
+    .exp p { font-size: 0.72rem; }
+
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div id="shared-header"></div>
+
+<main>
+  <section class="hero">
+    <p class="eyebrow">Shoonya Dance Centre · Ghent</p>
+    <h1>Important dates</h1>
+    <p class="subtitle">School year 2026&nbsp;–&nbsp;2027. Semester start and end dates, free weeks, school holidays and the catch-up weeks.</p>
+  </section>
+
+  <div class="toolbar">
+    <div class="legend">
+      <span class="key"><span class="swatch sw-milestone"></span> Semester milestone</span>
+      <span class="key"><span class="swatch sw-holiday"></span> Holiday — no classes</span>
+      <span class="key"><span class="swatch sw-free"></span> Free to attend</span>
+    </div>
+    <button type="button" class="print-btn" onclick="window.print()">🖨 Print / save as PDF</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       Dates below are copied from config/semester-config.json
+       (the canonical source). Change them THERE first, then here.
+       Weekdays verified against the calendar — never type them from
+       memory: four wrong day-names sat in our own docs for months.
+       ══════════════════════════════════════════════════════════════ -->
+
+  <section class="semester">
+    <div class="sem-head">
+      <h2>Semester 1 · September 2026 → January 2027</h2>
+      <span class="sem-badge">16 sessions</span>
+    </div>
+    <table>
+      <caption>Important dates for Semester 1, September 2026 to January 2027</caption>
+      <tbody>
+        <tr class="free">
+          <td class="month">Sep</td>
+          <td class="what">Opendeurdag <span class="tag tag-free">Free</span>
+            <span class="note">Open door day, the day before the semester starts</span></td>
+          <td class="when">Sun 13 Sep 2026</td>
+        </tr>
+        <tr class="milestone">
+          <td class="month">Sep</td>
+          <td class="what">Semester starts</td>
+          <td class="when">Mon 14 Sep 2026</td>
+        </tr>
+        <tr class="free">
+          <td class="month">Sep</td>
+          <td class="what">Free trial week <span class="tag tag-free">Free</span>
+            <span class="note">Students may attend before registering</span></td>
+          <td class="when">Mon 14 – Sat 19 Sep 2026</td>
+        </tr>
+        <tr>
+          <td class="month">Oct</td>
+          <td class="what">Registration closes
+            <span class="note">Three weeks after the semester begins (approx.)</span></td>
+          <td class="when">Mon 5 Oct 2026</td>
+        </tr>
+        <tr class="holiday">
+          <td class="month">Nov</td>
+          <td class="what">Herfstvakantie <span class="tag tag-no">No classes</span></td>
+          <td class="when">Sun 1 – Sun 8 Nov 2026</td>
+        </tr>
+        <tr class="holiday">
+          <td class="month">Dec</td>
+          <td class="what">Kerstvakantie <span class="tag tag-no">No classes</span></td>
+          <td class="when">Sun 20 Dec 2026 – Sun 10 Jan 2027</td>
+        </tr>
+        <tr class="milestone">
+          <td class="month">Jan</td>
+          <td class="what">Semester ends</td>
+          <td class="when">Sat 30 Jan 2027</td>
+        </tr>
+        <tr>
+          <td class="month">Feb</td>
+          <td class="what">Catch-up week
+            <span class="note">To give back a class missed through illness or injury</span></td>
+          <td class="when">Mon 1 – Sun 7 Feb 2027</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="semester">
+    <div class="sem-head">
+      <h2>Semester 2 · February → June 2027</h2>
+      <span class="sem-badge">15 sessions</span>
+    </div>
+    <table>
+      <caption>Important dates for Semester 2, February to June 2027</caption>
+      <tbody>
+        <tr class="free">
+          <td class="month">Jan</td>
+          <td class="what">Opendeurdag <span class="tag tag-free">Free</span>
+            <span class="note">Preview of the Semester 2 classes</span></td>
+          <td class="when">Sun 31 Jan 2027</td>
+        </tr>
+        <tr class="holiday">
+          <td class="month">Feb</td>
+          <td class="what">Krokusvakantie <span class="tag tag-no">No classes</span>
+            <span class="note">Falls before the semester — no classes affected</span></td>
+          <td class="when">Mon 8 – Sun 14 Feb 2027</td>
+        </tr>
+        <tr class="milestone">
+          <td class="month">Feb</td>
+          <td class="what">Semester starts</td>
+          <td class="when">Mon 15 Feb 2027</td>
+        </tr>
+        <tr class="free">
+          <td class="month">Feb</td>
+          <td class="what">Free trial week <span class="tag tag-free">Free</span></td>
+          <td class="when">Mon 15 – Sat 20 Feb 2027</td>
+        </tr>
+        <tr>
+          <td class="month">Mar</td>
+          <td class="what">Registration closes
+            <span class="note">Three weeks after the semester begins (approx.)</span></td>
+          <td class="when">Mon 8 Mar 2027</td>
+        </tr>
+        <tr class="holiday">
+          <td class="month">Mar</td>
+          <td class="what">Paasvakantie <span class="tag tag-no">No classes</span></td>
+          <td class="when">Sun 28 Mar – Sun 11 Apr 2027</td>
+        </tr>
+        <tr class="milestone">
+          <td class="month">Jun</td>
+          <td class="what">Semester ends</td>
+          <td class="when">Sat 12 Jun 2027</td>
+        </tr>
+        <tr class="free">
+          <td class="month">Jun</td>
+          <td class="what">Opendeurdag <span class="tag tag-free">Free</span>
+            <span class="note">End of the school year</span></td>
+          <td class="when">Sun 13 Jun 2027</td>
+        </tr>
+        <tr>
+          <td class="month">Jun</td>
+          <td class="what">Catch-up week</td>
+          <td class="when">Mon 14 – Sat 19 Jun 2027</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="summer">
+    <div><span class="label">Summer</span><span class="name">Zomerstage 2027</span></div>
+    <div class="date">Sat 3 – Fri 9 Jul 2027</div>
+  </div>
+
+  <div class="explainers">
+    <div class="exp">
+      <h3>Catch-up week</h3>
+      <p>The week after each semester ends — reserved for giving back a class that was cancelled through illness or injury.</p>
+    </div>
+    <div class="exp">
+      <h3>Free trial week</h3>
+      <p>In the first week of a semester, students may attend a class free of charge before they register.</p>
+    </div>
+    <div class="exp">
+      <h3>Holiday weeks</h3>
+      <p>No classes run during Herfst-, Kerst- or Paasvakantie. They are already excluded from the session counts.</p>
+    </div>
+  </div>
+
+  <p class="note-box">
+    Something look wrong, or a date you need that isn't here? Let
+    <a href="https://www.shoonyadance.com/contact">Shoonya</a> know before you plan around it.
+  </p>
+
+  <p class="colophon">Dates are subject to change; the studio confirms any change by e-mail.</p>
+</main>
+
+<script src="shared-header.js"></script>
+</body>
+</html>
