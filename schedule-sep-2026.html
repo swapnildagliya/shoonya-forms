@@ -950,7 +950,7 @@
       <p class="closing__sub" data-i18n="closing-sub">Click a slot to land on its style page — pricing, teacher bio, full schedule for the season, and a single registration button.</p>
 
       <div class="closing__cta-row">
-        <a class="closing__cta" href="https://www.shoonyadance.com/classes" data-i18n="closing-cta">browse all 24 styles <span aria-hidden="true">→</span></a>
+        <a class="closing__cta" href="https://www.shoonyadance.com/classes" data-i18n="closing-cta">browse all 25 styles <span aria-hidden="true">→</span></a>
         <button class="closing__back" onclick="window.scrollTo({top:0,behavior:'smooth'})" data-i18n="closing-back">back to top</button>
       </div>
     </section>
@@ -1001,7 +1001,7 @@
         'closing-kicker': 'end of season list',
         'closing-h1': 'Found your class?<br/><em>The style page handles the rest.</em>',
         'closing-sub': 'Click a slot to land on its style page — pricing, teacher bio, full schedule for the season, and a single registration button.',
-        'closing-cta': 'browse all 24 styles <span aria-hidden="true">→</span>',
+        'closing-cta': 'browse all 25 styles <span aria-hidden="true">→</span>',
         'closing-back': 'back to top',
         'footer-teachers': 'teachers', 'footer-spring': 'spring 2026',
       },
@@ -1026,7 +1026,7 @@
         'closing-kicker': 'overzicht seizoen',
         'closing-h1': 'Klas gevonden?<br/><em>De stijlpagina regelt de rest.</em>',
         'closing-sub': 'Klik op een tijdslot voor de stijlpagina — prijzen, leraarsprofiel, volledig rooster en een inschrijfknop.',
-        'closing-cta': 'bekijk alle 24 stijlen <span aria-hidden="true">→</span>',
+        'closing-cta': 'bekijk alle 25 stijlen <span aria-hidden="true">→</span>',
         'closing-back': 'naar boven',
         'footer-teachers': 'docenten', 'footer-spring': 'lente 2026',
       }
@@ -1043,6 +1043,8 @@
     // from the Master Schedule sheet after the page paints.
     const SLOTS_FALLBACK = [
       // ─── Monday
+      { day:'mon', time:'10:00–11:15', style:'Ballet',           level:'Int/Adv',      teacher:'Tono Ferriol',              studio:'AKH', studioName:'Aakash',      duration:75, category:'classical-technique', isNew:true },
+      { day:'mon', time:'11:30–12:45', style:'Contemporary dance', level:'Int/Adv',    teacher:'Tono Ferriol',              studio:'AKH', studioName:'Aakash',      duration:75, category:'classical-technique', isNew:true },
       { day:'mon', time:'18:00–19:10', style:'Tap Dance',        level:'L3',           teacher:'Lut',                       studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
       { day:'mon', time:'19:00–20:00', style:'Cuban Salsa',      level:'L1',           teacher:'Alex (Ioanna)',             studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
       { day:'mon', time:'19:00–20:00', style:'Raqs Sharqi',      level:'L1',           teacher:'Lenka Badriyah',            studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
@@ -1087,6 +1089,8 @@
       { day:'wed', time:'21:00–22:00', style:'Kizomba',          level:'L3',           teacher:'Sonja',                     studio:'AD2', studioName:'Art Deco 2',  duration:60, category:'partner-social' },
 
       // ─── Thursday
+      { day:'thu', time:'10:00–11:15', style:'Ballet',           level:'Int/Adv',      teacher:'Tono Ferriol',              studio:'AKH', studioName:'Aakash',      duration:75, category:'classical-technique', isNew:true },
+      { day:'thu', time:'11:30–12:45', style:'Contemporary dance', level:'Int/Adv',    teacher:'Tono Ferriol',              studio:'AKH', studioName:'Aakash',      duration:75, category:'classical-technique', isNew:true },
       { day:'thu', time:'18:30–19:30', style:'Bollywood',        level:'L2',           teacher:'Swapnil',                   studio:'AKH', studioName:'Aakash',      duration:60, category:'culture-wellness' },
       { day:'thu', time:'18:30–19:40', style:'Tap Dance',        level:'L4',           teacher:'Alexandre',                 studio:'AN1', studioName:'Ananta 1',    duration:70, category:'classical-technique' },
       { day:'thu', time:'19:00–20:00', style:'Bachata Solo Style', level:'L1',       teacher:'Ioanna',                    studio:'AN2', studioName:'Ananta 2',    duration:60, category:'partner-social' },
