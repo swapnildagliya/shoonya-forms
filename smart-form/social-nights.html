@@ -630,6 +630,15 @@
           <input type="file" id="f-dj-photo" accept="image/*" style="font-size: 0.85rem; padding: 6px 0;">
           <p class="field-hint dn-hint-purple dj-photo-hint">Add the name above first.</p>
         </div>
+      <!-- 2026-08-15: who took the photo. The credit rule is EXIF -> teachers.md ->
+           ask -> blank, and the form never asked — so every submission arrived
+           credit-unknown and designs inherited the gap. Never invent a credit. -->
+      <div class="field">
+        <label class="field-label">Who took this photo?</label>
+        <input type="text" id="f-photo-credit" placeholder="Photographer's name, or &quot;I don't know&quot;">
+        <p class="field-hint">We print a credit wherever we use it. If you don't know, say so — we'd rather leave it blank than guess wrong.</p>
+      </div>
+
       </div>
 
       <!-- Teacher as DJ -->
@@ -697,6 +706,20 @@
       <label class="field-label">Public description</label>
       <textarea id="f-description" class="large" rows="4" placeholder="The vibe, what to expect, who it's for… Shown on the events page."></textarea>
     </div>
+    <!-- 2026-08-15: which language the description is written in. Every page ships
+         EN+NL (D-029); without this the translation burden lands silently on
+         whoever builds the page, and gets discovered late. -->
+    <div class="field">
+      <label class="field-label">What language did you write that in?</label>
+      <select id="f-copy-source-lang">
+        <option value="">— choose —</option>
+        <option value="EN">English</option>
+        <option value="NL">Nederlands</option>
+        <option value="EN+NL">I wrote both / I can supply both</option>
+      </select>
+      <p class="field-hint">We publish every page in English and Dutch. Knowing your starting language means we translate rather than guess.</p>
+    </div>
+
 
     <div class="field">
       <label class="field-label">Internal notes <span class="opt">(optional)</span></label>
@@ -1060,9 +1083,13 @@ function addProgrammeSlot() {
         </select>
       </div>
       <div class="field">
-        <label class="field-label">Level</label>
+        <label class="field-label prog-level-label">Level <span class="opt">(optional)</span></label>
         <select data-slot="level">
-          <option value="">Open level</option>
+          <!-- 2026-08-15: "Open level" now carries a real value. It was value="" —
+               a legitimate answer that read as "unanswered", so making level
+               required would have rejected it. The blank below is the placeholder. -->
+          <option value="">— choose a level —</option>
+          <option value="Open level">Open level</option>
           <option>Beginner</option>
           <option>Intermediate</option>
           <option>Advanced</option>
@@ -1088,8 +1115,8 @@ function addProgrammeSlot() {
       <p class="field-hint prog-photo-hint" style="margin: 4px 0 0; font-size: 0.78rem;">Add the name above first.</p>
     </div>
     <div class="field">
-      <label class="field-label prog-topic-label">Topic / description <small style="font-weight:400; font-style:italic; color:var(--mid);">(pick type above)</small></label>
-      <input type="text" data-slot="topic" placeholder="e.g. Advanced footwork">
+      <label class="field-label prog-topic-label">Topic / description <span class="req-mark">*</span> <small style="font-weight:400; font-style:italic; color:var(--mid);">(required for workshop &amp; other slots)</small></label>
+      <input type="text" data-slot="topic" placeholder="e.g. Cuban body movement for beginners — what will people learn?">
       <p class="field-hint prog-type-hint" style="margin: 4px 0 0; font-size: 0.78rem;"></p>
     </div>
   `;
@@ -1123,17 +1150,30 @@ function setProgType(el, cardId, type) {
   const styleLabel = card.querySelector('.prog-style-label');
   const teacherLabel = card.querySelector('.prog-teacher-label');
   const topicLabel = card.querySelector('.prog-topic-label');
+  const levelLabel = card.querySelector('.prog-level-label');
   if (type === 'other') {
     if (topicHint) topicHint.textContent = 'Required — what is this slot?';
     if (topicLabel) topicLabel.innerHTML = 'What is this? <span class="req-mark">*</span>';
+    if (levelLabel) levelLabel.innerHTML = 'Level <span class="opt">(optional)</span>';
     if (styleLabel) styleLabel.innerHTML = 'Style <span class="opt">(optional)</span>';
     if (teacherLabel) teacherLabel.innerHTML = 'Teacher / performer <span class="opt">(optional)</span>';
   } else {
-    if (topicHint) topicHint.textContent = '';
     const personLabel = type === 'performance' ? 'Performer' : 'Teacher';
-    if (topicLabel) topicLabel.innerHTML = 'Topic / description <span class="opt">(optional)</span>';
     if (styleLabel) styleLabel.innerHTML = 'Style <span class="req-mark">*</span>';
     if (teacherLabel) teacherLabel.innerHTML = personLabel + ' <span class="req-mark">*</span>';
+    // 2026-08-15 (Swapnil): a WORKSHOP slot must carry a description and a level.
+    // Both feed the page copy and the designs; without them the copy is written
+    // from a guess and "All levels" gets assumed, which is often wrong.
+    // A PERFORMANCE keeps them optional — an act has no level.
+    if (type === 'workshop') {
+      if (topicHint) topicHint.textContent = 'Required — what will people actually learn?';
+      if (topicLabel) topicLabel.innerHTML = 'Topic / description <span class="req-mark">*</span>';
+      if (levelLabel) levelLabel.innerHTML = 'Level <span class="req-mark">*</span>';
+    } else {
+      if (topicHint) topicHint.textContent = '';
+      if (topicLabel) topicLabel.innerHTML = 'Topic / description <span class="opt">(optional)</span>';
+      if (levelLabel) levelLabel.innerHTML = 'Level <span class="opt">(optional)</span>';
+    }
   }
 }
 
@@ -1349,11 +1389,19 @@ function _collectValidationErrors() {
     const teacherVal = card.querySelector('[data-slot="teacher"]')?.value?.trim() || '';
     const topicVal   = card.querySelector('[data-slot="topic"]')?.value?.trim()   || '';
     const photoFile  = card.querySelector('[data-slot="teacher-photo"]')?.files?.[0];
+    const levelVal   = card.querySelector('[data-slot="level"]')?.value?.trim()   || '';
 
     if (type === 'workshop' || type === 'performance') {
       const role = type === 'performance' ? 'performer' : 'teacher';
       if (!styleVal)   errors.push('Slot ' + slotNum + ' (' + type + '): style is required.');
       if (!teacherVal) errors.push('Slot ' + slotNum + ' (' + type + '): ' + role + ' name is required.');
+      // 2026-08-15 (Swapnil): workshop slots must carry a description and a level.
+      // Both feed the page and the designs; without them the copy is written from
+      // a guess and "All levels" gets assumed — which is often wrong.
+      if (type === 'workshop') {
+        if (!topicVal) errors.push('Slot ' + slotNum + ' (workshop): description is required — what will people actually learn?');
+        if (!levelVal) errors.push('Slot ' + slotNum + ' (workshop): level is required — pick one, do not leave it blank.');
+      }
       if (teacherVal && !photoFile && ssPhotoIsBlocking(teacherVal)) errors.push(_ssPhotoError('Slot ' + slotNum + ': ', teacherVal));
     } else if (type === 'other') {
       if (!topicVal) errors.push('Slot ' + slotNum + ' (other): description is required — explain what this slot is.');
@@ -1550,6 +1598,8 @@ const SOCIAL_SPEC = [
   // ── Who (hidden identity; filled only by shared teacher login) ──
   // Identity is never restored from drafts. A saved draft must not become a
   // substitute for the shared teacher login session.
+  { key:'photo_credit', label:'Photo credit', dom:'f-photo-credit', kind:'text', jump:'#f-photo-credit', section:'Details', reviewMode:'ifset' },
+  { key:'copy_source_lang', label:'Description language', dom:'f-copy-source-lang', kind:'text', jump:'#f-copy-source-lang', section:'Details', reviewMode:'ifset' },
   { key:'teacher_name', payloadKey:'teacher_name', dom:'f-teacher-name', kind:'text', draft:false,
     label:'Submitting as', section:'Who', reviewMode:'always', jump:null },
   { key:'email', payloadKey:'email', dom:'f-teacher-email', kind:'text', draft:false,

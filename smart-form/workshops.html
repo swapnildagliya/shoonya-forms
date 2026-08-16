@@ -464,6 +464,15 @@
         <input type="file" id="f-host-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
         <p class="field-hint">JPEG or PNG — for your workshop page.</p>
       </div>
+      <!-- 2026-08-15: who took the photo. The credit rule is EXIF -> teachers.md ->
+           ask -> blank, and the form never asked — so every submission arrived
+           credit-unknown and designs inherited the gap. Never invent a credit. -->
+      <div class="field">
+        <label class="field-label">Who took this photo?</label>
+        <input type="text" id="f-photo-credit" placeholder="Photographer's name, or &quot;I don't know&quot;">
+        <p class="field-hint">We print a credit wherever we use it. If you don't know, say so — we'd rather leave it blank than guess wrong.</p>
+      </div>
+
       <div class="field" id="host-bio-field">
         <label class="field-label">Your short bio</label>
         <textarea id="f-host-bio" rows="2" placeholder="2–3 sentences. Background, style, where you're from."></textarea>
@@ -679,6 +688,20 @@
       <textarea id="f-description" rows="4" placeholder="A 4-day deep dive into Indian dance forms..."></textarea>
       <p class="field-hint">Leave blank and Shoonya drafts it — but your own words work best.</p>
     </div>
+    <!-- 2026-08-15: which language the description is written in. Every page ships
+         EN+NL (D-029); without this the translation burden lands silently on
+         whoever builds the page, and gets discovered late. -->
+    <div class="field">
+      <label class="field-label">What language did you write that in?</label>
+      <select id="f-copy-source-lang">
+        <option value="">— choose —</option>
+        <option value="EN">English</option>
+        <option value="NL">Nederlands</option>
+        <option value="EN+NL">I wrote both / I can supply both</option>
+      </select>
+      <p class="field-hint">We publish every page in English and Dutch. Knowing your starting language means we translate rather than guess.</p>
+    </div>
+
 
     <div class="field">
       <label class="field-label">Prerequisites <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
@@ -1511,6 +1534,8 @@ const WORKSHOP_SPEC = [
   // ── Who (hidden identity; filled only by shared teacher login) ──
   // Identity is never restored from drafts. A saved draft must not become a
   // substitute for the shared teacher login session.
+  { key:'photo_credit', label:'Photo credit', dom:'f-photo-credit', kind:'text', jump:'#f-photo-credit', section:'Teachers', reviewMode:'ifset' },
+  { key:'copy_source_lang', label:'Description language', dom:'f-copy-source-lang', kind:'text', jump:'#f-copy-source-lang', section:'Details', reviewMode:'ifset' },
   { key:'teacher_name', label:'Submitting as', dom:'f-teacher-name', kind:'text', jump:null, section:'Who', reviewMode:'always',
     draft:false },
   { key:'email', label:'Email', dom:'f-teacher-email', kind:'text', jump:null, section:'Who', reviewMode:'always',
