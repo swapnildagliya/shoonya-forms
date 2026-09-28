@@ -421,8 +421,9 @@
         const incomplete = !(p.bio_short && String(p.bio_short).trim()) ||
                            !(p.photo_url && String(p.photo_url).trim());
         if (incomplete) {
-          const base = location.pathname.includes('/smart-form/') ? '../' : '';
-          window.location.href = base + 'profile.html?complete=1';
+          // Root-absolute: this panel runs from /smart-form/ AND /Festival/ —
+          // a relative 'profile.html' 404'd for festival organisers.
+          window.location.href = '/profile.html?complete=1';
           return;
         }
         // Update the top bar to show logged-in state
