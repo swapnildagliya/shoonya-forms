@@ -423,7 +423,9 @@
         if (incomplete) {
           // Root-absolute: this panel runs from /smart-form/ AND /Festival/ —
           // a relative 'profile.html' 404'd for festival organisers.
-          window.location.href = '/profile.html?complete=1';
+          // ?return= brings them back to this form once the profile is set up.
+          window.location.href = '/profile.html?complete=1&return=' +
+            encodeURIComponent(location.pathname + location.search);
           return;
         }
         // Update the top bar to show logged-in state

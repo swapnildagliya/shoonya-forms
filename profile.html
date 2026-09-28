@@ -595,6 +595,15 @@ textarea { resize: vertical; line-height: 1.6; }
     <button class="btn-complete" onclick="openAllEdits()">Complete profile</button>
   </div>
 
+  <!-- Return-to-form banner (arrived from a form via ?return=, shown once complete) -->
+  <div id="return-banner" class="complete-banner" style="display:none">
+    <div class="complete-banner-text">
+      <strong>Your profile is ready</strong>
+      <span id="return-banner-sub">Carry on with your submission.</span>
+    </div>
+    <a id="return-banner-btn" class="btn-complete" href="#" style="text-decoration:none">Back to your form →</a>
+  </div>
+
   <!-- Hero -->
   <div class="profile-hero">
     <div class="avatar-wrap">
@@ -890,11 +899,32 @@ function maybePromptComplete() {
   const banner = document.getElementById('complete-banner');
   if (banner) banner.style.display = incomplete ? '' : 'none';
   if (incomplete || forced) openAllEdits();
+  refreshReturnBanner();
 }
 
 function refreshCompleteBanner() {
   const banner = document.getElementById('complete-banner');
   if (banner) banner.style.display = isProfileIncomplete() ? '' : 'none';
+  refreshReturnBanner();
+}
+
+// ?return=<same-site path> — set by login-panel.js when a form sent the teacher
+// here to finish their profile. Only same-origin paths are honoured.
+function getReturnPath() {
+  const r = new URLSearchParams(location.search).get('return') || '';
+  return (r.startsWith('/') && !r.startsWith('//') && !r.includes('\\')) ? r : '';
+}
+
+function refreshReturnBanner() {
+  const banner = document.getElementById('return-banner');
+  const path = getReturnPath();
+  if (!banner) return;
+  if (!path || isProfileIncomplete()) { banner.style.display = 'none'; return; }
+  const isFestival = /^\/festival\//i.test(path);
+  document.getElementById('return-banner-btn').href = path;
+  document.getElementById('return-banner-btn').textContent = isFestival ? 'Back to the Festival form →' : 'Back to your form →';
+  document.getElementById('return-banner-sub').textContent = isFestival ? 'Carry on with your festival submission.' : 'Carry on with your submission.';
+  banner.style.display = '';
 }
 
 function openAllEdits() {
