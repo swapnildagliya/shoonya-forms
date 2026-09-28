@@ -538,21 +538,35 @@ async function sendToSheet(payload) {
   // old no-cors version, we READ the JSON response so we can tell success from
   // failure. no-cors hid every error and always showed "✅ Saved" even when the
   // backend was down — a teacher would think it worked when it didn't.
+  // 2026-09-28: the backend now requires the login session for a festival. The
+  // token rides ONLY on this request body — never on `payload`, which the backup
+  // sink and the review modal also see.
+  const body = Object.assign({}, payload);
+  try {
+    const sess = JSON.parse(localStorage.getItem('shoonya_session') || 'null');
+    if (sess && sess.token) body.token = sess.token;
+  } catch (_) {}
   try {
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(body)
     });
     let json;
     try { json = await res.json(); }
     catch (_) { throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + ')'); }
+    // Expired/missing login is not an outage: nothing is lost (the draft stays),
+    // so no backup copy — just ask them to log in again and retry.
+    if (json.ok === false && json.authRequired) {
+      if (msg) { msg.style.display = 'block'; msg.style.color = '#c0392b'; msg.innerHTML = '⚠️ Your login has expired. <a href="#" onclick="slpOpenModal();return false;">Log in again</a>, then press <strong>Try again</strong> — your form is kept.'; }
+      return { ok: false, authRequired: true, error: json.error };
+    }
     if (json.ok === false) throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ')'));
     return { ok: true, json: json, testMode: !!json.testMode };
   } catch (err) {
     // Primary failed — save to the independent backup sink so nothing is lost.
     try { if (typeof sendToBackup === 'function') sendToBackup(payload, err.message); } catch(_) {}
-    if (msg) { msg.style.display = 'block'; msg.style.color = '#c0392b'; msg.innerHTML = '⚠️ Could not save right now — but your entry was saved safely. Please try again, or use the <a href="https://www.shoonyadance.com/contact">contact page</a> if it keeps failing.'; }
+    if (msg) { msg.style.display = 'block'; msg.style.color = '#c0392b'; msg.innerHTML = '⚠️ Could not save right now. Your form is kept on this device — please press <strong>Try again</strong>, or use the <a href="https://www.shoonyadance.com/contact">contact page</a> if it keeps failing.'; }
     return { ok: false, error: err && err.message };
   }
 }
