@@ -927,7 +927,7 @@ function refreshReturnBanner() {
   const path = getReturnPath();
   if (!banner) return;
   if (!path || isProfileIncomplete()) { banner.style.display = 'none'; return; }
-  const isFestival = /^\/festival\//i.test(path);
+  const isFestival = /^\/festival\//i.test(new URL(path).pathname);
   document.getElementById('return-banner-btn').href = path;
   document.getElementById('return-banner-btn').textContent = isFestival ? 'Back to the Festival form →' : 'Back to your form →';
   document.getElementById('return-banner-sub').textContent = isFestival ? 'Carry on with your festival submission.' : 'Carry on with your submission.';
