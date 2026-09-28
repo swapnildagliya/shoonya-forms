@@ -912,7 +912,14 @@ function refreshCompleteBanner() {
 // here to finish their profile. Only same-origin paths are honoured.
 function getReturnPath() {
   const r = new URLSearchParams(location.search).get('return') || '';
-  return (r.startsWith('/') && !r.startsWith('//') && !r.includes('\\')) ? r : '';
+  if (!r.startsWith('/')) return '';
+  // Parse, then insist on our own origin — string checks alone let
+  // '/%09//evil.example' through (the browser strips the tab → //evil.example).
+  try {
+    const u = new URL(r, location.origin);
+    // Full absolute href: a bare pathname like '//evil' would read as protocol-relative.
+    return u.origin === location.origin ? u.href : '';
+  } catch (e) { return ''; }
 }
 
 function refreshReturnBanner() {
