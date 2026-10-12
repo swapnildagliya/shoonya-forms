@@ -1205,7 +1205,14 @@ function addExtraDJ() {
 }
 
 // ─── PRICING TIERS ───────────────────────────────────────────────────────────
-function addPricingTier(label, price) {
+// `pricePlaceholder` (2026-09-18, audit #14): lets a caller show an example
+// amount as grey placeholder text without baking a real number into `value`
+// (see the two default-row calls at the bottom of this file, which used to
+// pass a real '8'/'12' as `price` — a teacher who never touched those two
+// fields would silently submit real-looking €8/€12 pricing they never typed).
+// draftRestore (_ssRestorePricing) still passes the REAL saved price as
+// `price` on purpose — that path is restoring what the teacher actually typed.
+function addPricingTier(label, price, pricePlaceholder) {
   const wrap = document.getElementById('pricing-rows');
   const row = document.createElement('div');
   row.className = 'pricing-tier';
@@ -1213,7 +1220,7 @@ function addPricingTier(label, price) {
     <input type="text" placeholder="Label (e.g. Advance, Door, Members)" value="${label||''}">
     <div style="display:flex; align-items:center; gap:4px;">
       <span style="font-weight:600; color:var(--mid);">€</span>
-      <input type="number" min="0" step="0.5" placeholder="0" value="${price||''}" style="padding:10px 8px;">
+      <input type="number" min="0" step="0.5" placeholder="${pricePlaceholder || '0'}" value="${price||''}" style="padding:10px 8px;">
     </div>
     <button class="btn-remove" onclick="this.closest('.pricing-tier').remove()">✕</button>
   `;
@@ -1370,8 +1377,29 @@ function _collectValidationErrors() {
     const priceInput = row.querySelectorAll('input')[1];
     const label = (labelInput?.value || '').trim();
     const raw = priceInput?.value.trim() || '';
-    if (raw && isNaN(parseFloat(raw))) errors.push('Pricing tier ' + (i + 1) + ' ("' + label + '"): the amount must be a number.');
-    else if (label && !raw) errors.push('Pricing tier ' + (i + 1) + ' ("' + label + '"): enter an amount (type 0 if it is free).');
+    // 2026-09-18 (audit #14): the original `isNaN(parseFloat(raw))` branch can
+    // never fire — `priceInput` is `type="number"`, so the browser has ALREADY
+    // sanitized `.value` back to '' the moment something unparseable was
+    // typed/pasted; `raw` is empty by the time this reads it, same as a truly
+    // blank field. `validity.badInput` is the one signal that distinguishes
+    // "typed garbage that got blanked" from "never touched" — check it FIRST
+    // so that case gets "must be a number", not the blank-field message.
+    if (priceInput?.validity?.badInput) {
+      errors.push('Pricing tier ' + (i + 1) + ' ("' + label + '"): the amount must be a number.');
+    } else if (raw && isNaN(parseFloat(raw))) {
+      errors.push('Pricing tier ' + (i + 1) + ' ("' + label + '"): the amount must be a number.');
+    } else if (label && !raw) {
+      errors.push('Pricing tier ' + (i + 1) + ' ("' + label + '"): enter an amount (type 0 if it is free).');
+    } else if (raw && !label) {
+      // F4 P2 (review 2026-09-18): the mirror image of the check above was
+      // missing — a row with an AMOUNT but no label passed straight through
+      // and serialised as {label:'', price:N}. Every consumer downstream
+      // (social-night-submission.ts's mapper) requires a label to classify a
+      // tier as Advance/Door/Member at all, so it is refused here, at the
+      // source, rather than reaching the admin as "A pricing tier is missing
+      // its label" deep in the approval flow.
+      errors.push('Pricing tier ' + (i + 1) + ': enter a label for this amount (e.g. "Advance" or "Door").');
+    }
   });
   // 2026-05-24: full per-slot programme validation. Requirements depend on slot type.
   //   Workshop / Performance: style + teacher/performer name + photo
@@ -1470,9 +1498,18 @@ function _ssCollectPricing() {
   const out = [];
   document.querySelectorAll('#pricing-rows .pricing-tier').forEach(row => {
     const inputs = row.querySelectorAll('input');
+    const label = inputs[0].value.trim();
     const priceRaw = inputs[1]?.value.trim() || '';
+    // 2026-09-18 (audit #14): a row left fully empty (no label, no amount —
+    // e.g. the teacher clicked "+ Add pricing tier" then changed their mind,
+    // or an unmodified seeded row nobody deleted) used to still be pushed as
+    // {label:'', price:null}. lib/social-night-submission.ts (sibling app
+    // repo) reads every pricing[] entry as a real tier — a blank one becomes
+    // an extra, unrecognised public option at the wrong price. Skip it here,
+    // at collection, rather than trying to filter it out downstream.
+    if (!label && !priceRaw) return;
     const priceNum = priceRaw ? parseFloat(priceRaw) : null;
-    out.push({ label: inputs[0].value.trim(), price: isFinite(priceNum) ? priceNum : null });
+    out.push({ label: label, price: isFinite(priceNum) ? priceNum : null });
   });
   return out;
 }
@@ -2023,8 +2060,13 @@ async function submitForm() {
 }
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
-addPricingTier('Advance', '8');
-addPricingTier('Door', '12');
+// 2026-09-18 (audit #14): labels pre-filled as a hint (Advance/Door are the
+// common two tiers); prices start BLANK with an example placeholder — a
+// teacher who never touches these fields now gets "enter an amount" at
+// validation (see the labelled-tier-needs-an-amount check above) instead of
+// silently submitting real €8/€12 pricing they never typed.
+addPricingTier('Advance', '', 'e.g. 8');
+addPricingTier('Door', '', 'e.g. 12');
 
 // 2026-05-24: init flatpickr on the event-date input. Display d/m/Y, store ISO.
 if (typeof flatpickr === 'function') {

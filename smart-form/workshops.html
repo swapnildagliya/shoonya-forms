@@ -715,9 +715,9 @@
 
     <div class="row">
       <div class="field">
-        <label class="field-label">Max students <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+        <label class="field-label">Max students <span class="req-mark">*</span></label>
         <input type="number" id="f-max" placeholder="18" min="0">
-        <p class="field-hint">Shown as "limited places".</p>
+        <p class="field-hint">Shown as "limited places". Required — checkout needs a capacity to sell against.</p>
       </div>
       <div class="field">
         <label class="field-label">Min participants <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
@@ -1253,7 +1253,18 @@ function getVal(id) { return (document.getElementById(id)?.value || '').trim(); 
 // finite number (was returning NaN silently — passed truthy guards and
 // corrupted payloads). Negative numbers clamped to null since every numeric
 // field in this form (price, min, max) should be >= 0.
+// 2026-09-18 (audit #14): check validity.badInput FIRST. For a `type="number"`
+// input, the browser has already sanitized `.value` back to '' the instant it
+// couldn't parse what was typed/pasted, so a plain blank-string check can't
+// tell "never touched" apart from "typed something the browser rejected" —
+// badInput is the one signal that still distinguishes them. This does NOT
+// catch Chrome's silent "15/20" -> "1520" paste-mangling (by the time .value
+// is read, that string IS a valid number as far as the input element is
+// concerned — no badInput flag, nothing client-side to detect); that specific
+// case relies on server-side review before a price/capacity is trusted.
 function getNum(id) {
+  const el = document.getElementById(id);
+  if (el?.validity?.badInput) return null;
   const v = getVal(id);
   if (!v) return null;
   const n = parseFloat(v);
@@ -1330,6 +1341,21 @@ function validate() {
   const sessions = collectSessions();
   if (sessions.length === 0) errs.push('At least one session date');
   if (getNum('f-price-full') === null && !getVal('f-pricing-notes')) errs.push('Full price (or special pricing notes)');
+  // 2026-09-18 (audit #14): the app's checkout refuses a workshop with no
+  // capacity ("No capacity found") — this field was labelled "(optional)"
+  // with no validation at all, so that refusal only ever surfaced to the
+  // office AFTER approval, not to the teacher at submit time. Also refuse
+  // exactly 0: the capacity field's own payloadValue below is `v || ''` —
+  // a real 0 would silently become an empty string there anyway, and a
+  // 0-capacity workshop isn't sellable in the first place.
+  // F4 P3 (review 2026-09-18): `f-max` is `type="number"` with no `step`
+  // restriction, so "5.5" is valid HTML5 input and `getNum` happily returns
+  // 5.5 — workshop-submission.ts already refuses a non-integer capacity
+  // server-side (`!Number.isInteger(capacityField.value)`), but that refusal
+  // only ever surfaced to the office after approval; checked here too so the
+  // teacher sees it at submit time, same reasoning as the capacity-required
+  // check just above.
+  { const cap = getNum('f-max'); if (cap === null || cap < 1 || !Number.isInteger(cap)) errs.push('Max students (capacity, a whole number, at least 1)'); }
   // 2026-05-24: if a guest teacher name is filled, the photo is required so
   // auto-design can produce posters. Skipped when there's no guest teacher.
   if (getVal('f-guest-teacher') && !document.getElementById('f-guest-photo')?.files?.[0]) {
@@ -1605,9 +1631,18 @@ const WORKSHOP_SPEC = [
     collect: () => { const f = getNum('f-price-full'); return f ? Math.round(f * 0.90 * 100) / 100 : null; },
     reviewValue: (v) => v != null ? ('€' + v + ' (auto)') : '' },
   // per-session + couple prices only SHOWN in review when the single-session
-  // (drop-in) toggle / couple toggle are on — but always SENT (legacy parity).
+  // (drop-in) toggle / couple toggle are on. price_couple stays "always SENT
+  // (legacy parity)" — untouched here. price_per_person no longer is (F4 P3,
+  // review 2026-09-18): with drop-in off, its input is hidden but keeps
+  // whatever value a teacher typed before toggling drop-in off (or a value
+  // restored from a draft) — that stale number was still SENT in the
+  // payload, and workshop-submission.ts's fallback chain
+  // (numField(d,'price_full','price_per_person',…)) would use it as the
+  // workshop's FULL price if `price_full` itself were ever absent. Gated the
+  // same way `earlybird_price` already gates on `_wsEarlybirdActive()`
+  // directly above.
   { key:'price_per_person', label:'Per-session price', dom:'f-price-per-person', kind:'custom', jump:'#f-price-per-person', section:'Pricing', reviewMode:'ifset',
-    collect: () => getNum('f-price-per-person'),
+    collect: () => (document.getElementById('f-single-session')?.checked ? getNum('f-price-per-person') : null),
     restore: (v) => { const el = FormKernel.byId('f-price-per-person'); if (el && v != null && v !== '') el.value = v; },
     reviewValue: () => (document.getElementById('f-single-session')?.checked && getVal('f-price-per-person')) ? ('€' + getVal('f-price-per-person')) : '' },
   { key:'price_couple', label:'Couple price', dom:'f-price-couple', kind:'custom', jump:'#f-price-couple', section:'Pricing', reviewMode:'ifset',

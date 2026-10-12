@@ -1571,7 +1571,17 @@ const WEEKLY_SPEC = [
   // riding along after a teacher switches Dance & Fit/Pilates → a non-drop-in style.
   // (Backend already ignores it for non-allowed styles; this keeps the payload clean too.)
   { key:'dropin_price', dom:'f-dropin-price', kind:'number', review:false, jump:'#f-dropin-price',
-    payloadValue: () => (document.getElementById('dropin-cb')?.checked ? (document.getElementById('f-dropin-price')?.value || '') : '') },
+    // 2026-09-18 (audit #14): validity.badInput checked before trusting .value —
+    // a type="number" field the browser rejected outright reads back '' anyway,
+    // but badInput is what tells "rejected garbage" apart from "never touched";
+    // treated the same as blank here (dropin_price already only travels when
+    // dropin-cb is checked, and a blank/refused price is simply not sent).
+    payloadValue: () => {
+      if (!document.getElementById('dropin-cb')?.checked) return '';
+      const el = document.getElementById('f-dropin-price');
+      if (el?.validity?.badInput) return '';
+      return (el?.value || '').trim();
+    } },
 
   // ── Open House (COMPLEX) — chips → { "<label>": true } ──
   { key:'opendeur_availability', label:'Open House availability', dom:'open-house-chips', kind:'custom', jump:'#open-house-chips',
