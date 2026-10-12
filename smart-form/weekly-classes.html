@@ -667,14 +667,14 @@
       <p class="field-hint">Applies to this class only — e.g. drop-ins Wednesday but not Tuesday. Leave unchecked for commitment-only courses.</p>
       <div class="toggle-section hidden" id="drop-in-fields">
         <div class="field">
-          <label class="field-label">Drop-in price (€)</label>
+          <label class="field-label" for="f-dropin-price">Drop-in price (€)</label>
           <input type="number" id="f-dropin-price" placeholder="18" min="0" step="0.5">
         </div>
       </div>
     </div>
 
     <div class="field">
-      <label class="field-label">General class description <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label" for="f-description">General class description <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <textarea class="large" id="f-description" rows="4" placeholder="The class, who it's for, what students will learn."></textarea>
       <p class="field-hint">Used for any level without its own description above.</p>
     </div>
@@ -682,7 +682,7 @@
          EN+NL (D-029); without this the translation burden lands silently on
          whoever builds the page, and gets discovered late. -->
     <div class="field">
-      <label class="field-label">What language did you write that in?</label>
+      <label class="field-label" for="f-copy-source-lang">What language did you write that in?</label>
       <select id="f-copy-source-lang">
         <option value="">— choose —</option>
         <option value="EN">English</option>
@@ -694,17 +694,17 @@
 
 
     <div class="field">
-      <label class="field-label">Prerequisites</label>
+      <label class="field-label" for="f-prereq">Prerequisites</label>
       <textarea id="f-prereq" rows="2" placeholder="L1: open to all. L2: at least one season at L1 or equivalent."></textarea>
     </div>
 
     <div class="field">
-      <label class="field-label">What to bring / dress code</label>
+      <label class="field-label" for="f-bring">What to bring / dress code</label>
       <textarea id="f-bring" rows="2" placeholder="Comfortable dance shoes (or socks for hardwood). Water bottle."></textarea>
     </div>
 
     <div class="field">
-      <label class="field-label">Max students per slot</label>
+      <label class="field-label" for="f-max-students">Max students per slot</label>
       <input type="number" id="f-max-students" placeholder="20" min="0" style="max-width: 160px;">
     </div>
 

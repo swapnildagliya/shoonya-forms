@@ -233,8 +233,8 @@
   <div class="panel-title">⚙ Admin Configuration — Admin Only</div>
   <div style="font-size:.73rem;color:#888;margin-bottom:14px;">Saved in this browser.</div>
   <div class="admin-row">
-    <div><label>Multi-class / Student discount (%)</label><input type="number" id="adm-disc" placeholder="12" /></div>
-    <div><label>UITPAS discount (%)</label><input type="number" id="adm-uitpas" placeholder="80" /></div>
+    <div><label for="adm-disc">Multi-class / Student discount (%)</label><input type="number" id="adm-disc" placeholder="12" /></div>
+    <div><label for="adm-uitpas">UITPAS discount (%)</label><input type="number" id="adm-uitpas" placeholder="80" /></div>
   </div>
   <button class="btn-admin-save" onclick="saveAdminConfig()">Save Settings</button>
   <span id="admin-saved-msg" style="font-size:.74rem;color:#2ecc71;margin-left:10px;display:none;">Saved!</span>
@@ -246,29 +246,29 @@
 
     <div class="row-2">
       <div class="field">
-        <label>First Name <span class="req">*</span></label>
+        <label for="first-name">First Name <span class="req">*</span></label>
         <input type="text" id="first-name" placeholder="e.g. Maria" />
       </div>
       <div class="field">
-        <label>Last Name <span class="req">*</span></label>
+        <label for="last-name">Last Name <span class="req">*</span></label>
         <input type="text" id="last-name" placeholder="e.g. Dupont" />
       </div>
     </div>
 
     <div class="field">
-      <label>Display / Stage Name <span style="font-weight:400;color:#888;">(optional)</span></label>
+      <label for="display-name">Display / Stage Name <span style="font-weight:400;color:#888;">(optional)</span></label>
       <input type="text" id="display-name" placeholder="e.g. El Sol" />
     </div>
 
     <div class="field">
-      <label>Email <span class="req">*</span></label>
+      <label for="email">Email <span class="req">*</span></label>
       <input type="email" id="email" placeholder="your@email.com" />
     </div>
 
     <!-- 2026-06-21: optional co-organiser / partner org (e.g. Ghent Tap Festival
          is run by Shoonya Dance Centre & Tapdance Promotion). -->
     <div class="field">
-      <label>Co-organiser / partner <span style="font-weight:400;color:#888;">(optional)</span></label>
+      <label for="co-organiser">Co-organiser / partner <span style="font-weight:400;color:#888;">(optional)</span></label>
       <input type="text" id="co-organiser" placeholder="e.g. Tapdance Promotion" />
     </div>
   </div>
@@ -278,38 +278,38 @@
     <div class="card-title">2 — Festival Details</div>
 
     <div class="field">
-      <label>Festival Name <span class="req">*</span></label>
+      <label for="festival-name">Festival Name <span class="req">*</span></label>
       <input type="text" id="festival-name" placeholder="e.g. Shoonya Salsa Weekend" />
     </div>
 
     <div class="field">
-      <label>Tagline / Subtitle <span style="font-weight:400;color:#888;">(optional)</span></label>
+      <label for="tagline">Tagline / Subtitle <span style="font-weight:400;color:#888;">(optional)</span></label>
       <input type="text" id="tagline" placeholder="e.g. Three days of dance, music and community" />
     </div>
 
     <div class="row-2">
       <div class="field">
-        <label>Start Date <span class="req">*</span></label>
+        <label for="date-start">Start Date <span class="req">*</span></label>
         <input type="date" id="date-start" onchange="buildDayTabs()" />
       </div>
       <div class="field">
-        <label>End Date <span class="req">*</span></label>
+        <label for="date-end">End Date <span class="req">*</span></label>
         <input type="date" id="date-end" onchange="buildDayTabs()" />
       </div>
     </div>
 
     <div class="field">
-      <label>Dance Style(s) <span class="req">*</span></label>
+      <label for="dance-styles">Dance Style(s) <span class="req">*</span></label>
       <input type="text" id="dance-styles" placeholder="e.g. Salsa, Bachata, Kizomba" />
     </div>
 
     <div class="row-2">
       <div class="field">
-        <label>Venue / Location <span style="font-weight:400;color:#888;">(optional)</span></label>
+        <label for="venue">Venue / Location <span style="font-weight:400;color:#888;">(optional)</span></label>
         <input type="text" id="venue" placeholder="Leave blank if at Shoonya" />
       </div>
       <div class="field">
-        <label>Teaching Language(s)</label>
+        <label for="language">Teaching Language(s)</label>
         <select id="language">
           <option value="">— Select —</option>
           <option>English</option>
@@ -323,7 +323,7 @@
     </div>
 
     <div class="field">
-      <label>Dress Code <span style="font-weight:400;color:#888;">(optional)</span></label>
+      <label for="dress-code">Dress Code <span style="font-weight:400;color:#888;">(optional)</span></label>
       <input type="text" id="dress-code" placeholder="e.g. Real dance shoes, socks, or barefoot" />
     </div>
   </div>
@@ -368,11 +368,11 @@
 
     <div class="row-2" style="margin-top:14px;">
       <div class="field">
-        <label>Early Bird Deadline <span style="font-weight:400;color:#888;">(optional)</span></label>
+        <label for="early-bird-deadline">Early Bird Deadline <span style="font-weight:400;color:#888;">(optional)</span></label>
         <input type="date" id="early-bird-deadline" />
       </div>
       <div class="field">
-        <label>Free Entry Note <span style="font-weight:400;color:#888;">(optional)</span></label>
+        <label for="free-entry-note">Free Entry Note <span style="font-weight:400;color:#888;">(optional)</span></label>
         <input type="text" id="free-entry-note" placeholder="e.g. Free for children under 12" />
       </div>
     </div>
@@ -381,15 +381,15 @@
       <h4>Group Discount (optional)</h4>
       <div class="row-3">
         <div class="field">
-          <label style="font-size:.75rem;font-weight:700;display:block;margin-bottom:3px;">Minimum Group Size</label>
+          <label style="font-size:.75rem;font-weight:700;display:block;margin-bottom:3px;" for="group-min">Minimum Group Size</label>
           <input type="number" id="group-min" placeholder="e.g. 5" min="2" />
         </div>
         <div class="field">
-          <label style="font-size:.75rem;font-weight:700;display:block;margin-bottom:3px;">Group Price per Person (€)</label>
+          <label style="font-size:.75rem;font-weight:700;display:block;margin-bottom:3px;" for="group-price">Group Price per Person (€)</label>
           <input type="number" id="group-price" placeholder="e.g. 180" min="0" />
         </div>
         <div class="field">
-          <label style="font-size:.75rem;font-weight:700;display:block;margin-bottom:3px;">Extra Perk</label>
+          <label style="font-size:.75rem;font-weight:700;display:block;margin-bottom:3px;" for="group-perk">Extra Perk</label>
           <input type="text" id="group-perk" placeholder="e.g. 1 free pass for group leader" />
         </div>
       </div>
@@ -405,17 +405,17 @@
     <div class="card-title">7 — Description</div>
 
     <div class="field">
-      <label>Festival Description <span class="req">*</span></label>
+      <label for="description">Festival Description <span class="req">*</span></label>
       <textarea id="description" rows="4" placeholder="What's this festival about, and what makes it special?"></textarea>
     </div>
 
     <div class="field">
-      <label>Practical Info <span style="font-weight:400;color:#888;">(optional)</span></label>
+      <label for="practical">Practical Info <span style="font-weight:400;color:#888;">(optional)</span></label>
       <textarea id="practical" rows="3" placeholder="e.g. Registration required · No partner needed · Beginner-friendly"></textarea>
     </div>
 
     <div class="field">
-      <label>Anything else? <span style="font-weight:400;color:#888;">(optional)</span></label>
+      <label for="notes">Anything else? <span style="font-weight:400;color:#888;">(optional)</span></label>
       <textarea id="notes" rows="2" placeholder="Setup needs, special requests…"></textarea>
     </div>
   </div>

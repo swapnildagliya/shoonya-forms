@@ -383,7 +383,7 @@
     <p class="section-hint">What's the workshop called and what does it cover?</p>
 
     <div class="field">
-      <label class="field-label">Title <span class="req-mark">*</span></label>
+      <label class="field-label" for="f-title">Title <span class="req-mark">*</span></label>
       <input type="text" id="f-title" placeholder="e.g. Indian Dance Summer Intensive 2026">
     </div>
 
@@ -460,7 +460,7 @@
     <!-- shown only if the logged-in profile is missing reusable media -->
     <div id="host-media-block" style="display:none;">
       <div class="field" id="host-photo-field">
-        <label class="field-label">Your photo</label>
+        <label class="field-label" for="f-host-photo">Your photo</label>
         <input type="file" id="f-host-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
         <p class="field-hint">JPEG or PNG — for your workshop page.</p>
       </div>
@@ -468,42 +468,42 @@
            ask -> blank, and the form never asked — so every submission arrived
            credit-unknown and designs inherited the gap. Never invent a credit. -->
       <div class="field">
-        <label class="field-label">Who took this photo?</label>
-        <input type="text" id="f-photo-credit" placeholder="Photographer's name, or &quot;I don't know&quot;">
-        <p class="field-hint">We print a credit wherever we use it. If you don't know, say so — we'd rather leave it blank than guess wrong.</p>
+        <label class="field-label" for="f-photo-credit">Who took this photo?</label>
+        <input type="text" id="f-photo-credit" placeholder="Photographer's name">
+        <label class="check-inline" style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:0.9rem;"><input type="checkbox" id="f-photo-credit-unknown"> I don't know the photographer</label>
       </div>
 
       <div class="field" id="host-bio-field">
-        <label class="field-label">Your short bio</label>
+        <label class="field-label" for="f-host-bio">Your short bio</label>
         <textarea id="f-host-bio" rows="2" placeholder="2–3 sentences. Background, style, where you're from."></textarea>
       </div>
     </div>
 
     <div class="row">
       <div class="field">
-        <label class="field-label">Co-teacher <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+        <label class="field-label" for="f-co-teacher">Co-teacher <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
         <input type="text" id="f-co-teacher" placeholder="Full name">
       </div>
       <div class="field">
-        <label class="field-label">Guest teacher <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+        <label class="field-label" for="f-guest-teacher">Guest teacher <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
         <input type="text" id="f-guest-teacher" placeholder="e.g. Wilmer Lozano">
       </div>
     </div>
     <div class="field">
-      <label class="field-label">Guest website / Instagram <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label" for="f-guest-web">Guest website / Instagram <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <input type="text" id="f-guest-web" placeholder="https://instagram.com/...">
     </div>
     <div class="field" id="guest-bio-field" style="display:none;">
-      <label class="field-label">Guest teacher — short bio <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label" for="f-guest-bio">Guest teacher — short bio <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <textarea id="f-guest-bio" rows="2" placeholder="2–3 sentences. Background, style, where they're from."></textarea>
     </div>
     <div class="field" id="guest-photo-field" style="display:none;">
-      <label class="field-label">Guest teacher photo <span class="req-mark">*</span></label>
+      <label class="field-label" for="f-guest-photo">Guest teacher photo <span class="req-mark">*</span></label>
       <input type="file" id="f-guest-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
       <p class="field-hint">JPEG or PNG — for the workshop page.</p>
     </div>
     <div class="field">
-      <label class="field-label">Video — Google Drive link <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label" for="f-video-link">Video — Google Drive link <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <input type="url" id="f-video-link" placeholder="https://drive.google.com/file/d/...">
       <p class="field-hint">Share a Google Drive link (set to "anyone with the link"). Leave blank to use existing Shoonya footage.</p>
     </div>
@@ -526,11 +526,11 @@
       <p class="field-hint" style="margin: 0 0 10px;">Consecutive days, e.g. Sat + Sun.</p>
       <div class="row">
         <div class="field">
-          <label class="field-label">First day</label>
+          <label class="field-label" for="f-cont-start">First day</label>
           <input type="date" id="f-cont-start">
         </div>
         <div class="field">
-          <label class="field-label">Last day</label>
+          <label class="field-label" for="f-cont-end">Last day</label>
           <input type="date" id="f-cont-end">
         </div>
       </div>
@@ -540,7 +540,7 @@
       <p class="field-hint" style="margin: 0 0 10px;">Same weekday over a span, e.g. every Wednesday Feb–April.</p>
       <div class="row3">
         <div class="field">
-          <label class="field-label">Day of week</label>
+          <label class="field-label" for="f-rec-dow">Day of week</label>
           <select id="f-rec-dow">
             <!-- 2026-05-24 audit P1-3: changed default from "Wednesday" to a forced-pick placeholder. Was a dev convenience that shipped. -->
             <option value="" selected disabled>— pick day —</option>
@@ -554,11 +554,11 @@
           </select>
         </div>
         <div class="field">
-          <label class="field-label">Start date</label>
+          <label class="field-label" for="f-rec-start">Start date</label>
           <input type="date" id="f-rec-start">
         </div>
         <div class="field">
-          <label class="field-label">End date</label>
+          <label class="field-label" for="f-rec-end">End date</label>
           <input type="date" id="f-rec-end">
         </div>
       </div>
@@ -664,7 +664,7 @@
             <div class="input-wrap" style="display:flex; align-items:center; gap:6px;">€ <input type="number" id="f-earlybird-price" placeholder="95" min="0" step="0.5" style="flex:1;"></div>
           </div>
           <div class="field" style="margin-bottom: 0;">
-            <label class="field-label">Deadline</label>
+            <label class="field-label" for="f-earlybird-deadline">Deadline</label>
             <input type="date" id="f-earlybird-deadline">
           </div>
         </div>
@@ -672,7 +672,7 @@
     </div>
 
     <div class="field" style="margin-top: 8px;">
-      <label class="field-label">Special pricing notes <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label" for="f-pricing-notes">Special pricing notes <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <textarea id="f-pricing-notes" rows="3" placeholder="e.g. 'weekend pass €60', 'group of 4+ pays €260 each', or a registration deadline."></textarea>
     </div>
   </div>
@@ -684,7 +684,7 @@
     <p class="section-hint">A description and the practical details for your workshop page.</p>
 
     <div class="field">
-      <label class="field-label">Description <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label" for="f-description">Description <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <textarea id="f-description" rows="4" placeholder="A 4-day deep dive into Indian dance forms..."></textarea>
       <p class="field-hint">Leave blank and Shoonya drafts it — but your own words work best.</p>
     </div>
@@ -692,7 +692,7 @@
          EN+NL (D-029); without this the translation burden lands silently on
          whoever builds the page, and gets discovered late. -->
     <div class="field">
-      <label class="field-label">What language did you write that in?</label>
+      <label class="field-label" for="f-copy-source-lang">What language did you write that in?</label>
       <select id="f-copy-source-lang">
         <option value="">— choose —</option>
         <option value="EN">English</option>
@@ -704,23 +704,23 @@
 
 
     <div class="field">
-      <label class="field-label">Prerequisites <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label" for="f-prereq">Prerequisites <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <textarea id="f-prereq" rows="2" placeholder="Open to all. Stamina for 3-hour sessions expected."></textarea>
     </div>
 
     <div class="field">
-      <label class="field-label">What to bring / dress code <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label" for="f-bring">What to bring / dress code <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <textarea id="f-bring" rows="2" placeholder="Comfortable dance clothes, water, towel..."></textarea>
     </div>
 
     <div class="row">
       <div class="field">
-        <label class="field-label">Max students <span class="req-mark">*</span></label>
+        <label class="field-label" for="f-max">Max students <span class="req-mark">*</span></label>
         <input type="number" id="f-max" placeholder="18" min="0">
         <p class="field-hint">Shown as "limited places". Required — checkout needs a capacity to sell against.</p>
       </div>
       <div class="field">
-        <label class="field-label">Min participants <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+        <label class="field-label" for="f-min">Min participants <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
         <input type="number" id="f-min" placeholder="6" min="0" oninput="toggleMinConditional()">
         <p class="field-hint">Internal — minimum needed to run.</p>
       </div>
@@ -738,7 +738,7 @@
     </div>
 
     <div class="field">
-      <label class="field-label">Minimum age <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label" for="f-min-age">Minimum age <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
       <input type="number" id="f-min-age" placeholder="e.g. 16" min="0" step="1">
       <p class="field-hint">Blank = all ages.</p>
     </div>
@@ -762,7 +762,7 @@
     </div>
 
     <div class="field">
-      <label class="field-label">Note for Shoonya <small style="font-weight:400; color:var(--mid);">(internal)</small></label>
+      <label class="field-label" for="f-note">Note for Shoonya <small style="font-weight:400; color:var(--mid);">(internal)</small></label>
       <textarea id="f-note" rows="2" placeholder="Setup, travel, equipment..."></textarea>
     </div>
   </div>
@@ -1996,6 +1996,15 @@ function wsApplyLoggedInProfile(p) {
 window.addEventListener('shoonya:login', function(e) {
   wsApplyLoggedInProfile(e.detail);
 });
+</script>
+<script>
+// 2026-10-13 (forms review F0): "I don't know" is a checkbox, never text in the credit field.
+// Unknown stays blank (the credit rule: EXIF -> teachers.md -> ask -> blank).
+(function () {
+  var cb = document.getElementById('f-photo-credit-unknown'), tx = document.getElementById('f-photo-credit');
+  if (!cb || !tx) return;
+  cb.addEventListener('change', function () { if (cb.checked) tx.value = ''; tx.disabled = cb.checked; });
+})();
 </script>
 </body>
 </html>

@@ -517,7 +517,7 @@
     </div>
 
     <div class="field">
-      <label class="field-label">Event title <span class="req-mark">*</span></label>
+      <label class="field-label" for="f-title">Event title <span class="req-mark">*</span></label>
       <input type="text" id="f-title" placeholder="e.g. Salsa &amp; Bachata — Social Night">
       <div class="title-suggestion" id="title-suggestion">
         Use this title: <button onclick="applyTitleSuggestion()" id="title-suggest-btn"></button>
@@ -527,11 +527,11 @@
 
     <div class="row3">
       <div class="field">
-        <label class="field-label">Date <span class="req-mark">*</span></label>
+        <label class="field-label" for="f-date">Date <span class="req-mark">*</span></label>
         <input type="date" id="f-date">
       </div>
       <div class="field">
-        <label class="field-label">Doors open <span class="req-mark">*</span></label>
+        <label class="field-label" for="f-doors">Doors open <span class="req-mark">*</span></label>
         <input type="time" id="f-doors" value="20:00">
         <div class="quick-times">
           <!-- 2026-05-24 audit L9: use ssSetTime so flatpickr's alt-input refreshes too. -->
@@ -542,13 +542,13 @@
         </div>
       </div>
       <div class="field">
-        <label class="field-label">Event ends</label>
+        <label class="field-label" for="f-end">Event ends</label>
         <input type="time" id="f-end" value="01:00">
       </div>
     </div>
 
     <div class="field">
-      <label class="field-label">Dress code <span class="opt">(optional)</span></label>
+      <label class="field-label" for="f-dresscode">Dress code <span class="opt">(optional)</span></label>
       <input type="text" id="f-dresscode" placeholder="e.g. Red &amp; Black · Glitter &amp; Glamour">
     </div>
   </div>
@@ -563,7 +563,7 @@
     <button class="btn-add" onclick="addProgrammeSlot()">+ Add a programme slot</button>
 
     <div id="guest-photo-wrap" style="display:none; margin-top: 16px;">
-      <label class="field-label">Guest teacher photo <span class="opt">(optional)</span></label>
+      <label class="field-label" for="f-guest-teacher-photo">Guest teacher photo <span class="opt">(optional)</span></label>
       <input type="file" id="f-guest-teacher-photo" accept="image/*" style="font-size: 0.85rem; padding: 6px 0;">
       <p class="field-hint">JPEG or PNG — one photo of the main guest teacher.</p>
     </div>
@@ -578,7 +578,7 @@
 
       <div class="row" style="margin-bottom: 18px;">
         <div class="field">
-          <label class="field-label">Floor opens <span class="req-mark">*</span></label>
+          <label class="field-label" for="f-dn-start">Floor opens <span class="req-mark">*</span></label>
           <input type="time" id="f-dn-start" value="22:00">
           <div class="quick-times">
             <!-- 2026-05-24 audit L9: setDate via _flatpickr if present so the
@@ -590,7 +590,7 @@
           </div>
         </div>
         <div class="field">
-          <label class="field-label">Floor closes</label>
+          <label class="field-label" for="f-dn-end">Floor closes</label>
           <input type="time" id="f-dn-end" value="01:00">
         </div>
       </div>
@@ -612,21 +612,21 @@
       <div class="toggle-section hidden dn-section" id="music-guest-dj">
         <div class="row">
           <div class="field">
-            <label class="field-label dn-label-purple">DJ name</label>
+            <label class="field-label dn-label-purple" for="f-dj-name">DJ name</label>
             <input type="text" id="f-dj-name" placeholder="DJ name or alias" class="dn-input">
           </div>
           <div class="field">
-            <label class="field-label dn-label-purple">DJ website / Instagram <span class="opt">(optional)</span></label>
+            <label class="field-label dn-label-purple" for="f-dj-social">DJ website / Instagram <span class="opt">(optional)</span></label>
             <input type="text" id="f-dj-social" placeholder="@handle or link" class="dn-input">
           </div>
         </div>
         <div class="field">
-          <label class="field-label dn-label-purple">DJ fee (€)</label>
+          <label class="field-label dn-label-purple" for="f-dj-fee">DJ fee (€)</label>
           <input type="number" id="f-dj-fee" placeholder="200" min="0" step="0.5" class="dn-input" style="max-width: 140px;">
           <p class="field-hint dn-hint-purple">Not shown publicly.</p>
         </div>
         <div class="field">
-          <label class="field-label dn-label-purple dj-photo-label">DJ photo <span class="opt">(optional)</span></label>
+          <label class="field-label dn-label-purple dj-photo-label" for="f-dj-photo">DJ photo <span class="opt">(optional)</span></label>
           <input type="file" id="f-dj-photo" accept="image/*" style="font-size: 0.85rem; padding: 6px 0;">
           <p class="field-hint dn-hint-purple dj-photo-hint">Add the name above first.</p>
         </div>
@@ -634,9 +634,9 @@
            ask -> blank, and the form never asked — so every submission arrived
            credit-unknown and designs inherited the gap. Never invent a credit. -->
       <div class="field">
-        <label class="field-label">Who took this photo?</label>
-        <input type="text" id="f-photo-credit" placeholder="Photographer's name, or &quot;I don't know&quot;">
-        <p class="field-hint">We print a credit wherever we use it. If you don't know, say so — we'd rather leave it blank than guess wrong.</p>
+        <label class="field-label" for="f-photo-credit">Who took this photo?</label>
+        <input type="text" id="f-photo-credit" placeholder="Photographer's name">
+        <label class="check-inline" style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:0.9rem;"><input type="checkbox" id="f-photo-credit-unknown"> I don't know the photographer</label>
       </div>
 
       </div>
@@ -644,7 +644,7 @@
       <!-- Teacher as DJ -->
       <div class="toggle-section hidden dn-section" id="music-teacher-dj">
         <div class="field">
-          <label class="field-label dn-label-purple">Which teacher?</label>
+          <label class="field-label dn-label-purple" for="f-teacher-dj">Which teacher?</label>
           <input type="text" id="f-teacher-dj" placeholder="Type teacher name…" class="dn-input">
         </div>
       </div>
@@ -686,7 +686,7 @@
     <button class="btn-add" onclick="addPricingTier()" style="margin-top: 4px;">+ Add pricing tier</button>
 
     <div class="field" style="margin-top: 16px;">
-      <label class="field-label">Early-bird deadline <span class="opt">(optional)</span></label>
+      <label class="field-label" for="f-early-deadline">Early-bird deadline <span class="opt">(optional)</span></label>
       <input type="date" id="f-early-deadline">
       <p class="field-hint">When the advance price ends.</p>
     </div>
@@ -703,14 +703,14 @@
     <p class="section-hint">The public blurb, plus anything for Shoonya staff.</p>
 
     <div class="field">
-      <label class="field-label">Public description</label>
+      <label class="field-label" for="f-description">Public description</label>
       <textarea id="f-description" class="large" rows="4" placeholder="The vibe, what to expect, who it's for… Shown on the events page."></textarea>
     </div>
     <!-- 2026-08-15: which language the description is written in. Every page ships
          EN+NL (D-029); without this the translation burden lands silently on
          whoever builds the page, and gets discovered late. -->
     <div class="field">
-      <label class="field-label">What language did you write that in?</label>
+      <label class="field-label" for="f-copy-source-lang">What language did you write that in?</label>
       <select id="f-copy-source-lang">
         <option value="">— choose —</option>
         <option value="EN">English</option>
@@ -722,7 +722,7 @@
 
 
     <div class="field">
-      <label class="field-label">Internal notes <span class="opt">(optional)</span></label>
+      <label class="field-label" for="f-notes">Internal notes <span class="opt">(optional)</span></label>
       <textarea id="f-notes" rows="2" placeholder="Setup needs, special requests… Not shown publicly."></textarea>
     </div>
   </div>
@@ -2275,6 +2275,15 @@ function ssApplyLoggedInProfile(p) {
 window.addEventListener('shoonya:login', function(e) {
   ssApplyLoggedInProfile(e.detail);
 });
+</script>
+<script>
+// 2026-10-13 (forms review F0): "I don't know" is a checkbox, never text in the credit field.
+// Unknown stays blank (the credit rule: EXIF -> teachers.md -> ask -> blank).
+(function () {
+  var cb = document.getElementById('f-photo-credit-unknown'), tx = document.getElementById('f-photo-credit');
+  if (!cb || !tx) return;
+  cb.addEventListener('change', function () { if (cb.checked) tx.value = ''; tx.disabled = cb.checked; });
+})();
 </script>
 </body>
 </html>
