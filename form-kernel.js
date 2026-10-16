@@ -249,10 +249,18 @@
     opts = opts || {};
     var url = opts.url;
     var payload = opts.payload;
+    // 2026-10-16: the backend now requires the login session for workshops and
+    // social nights too (it already did for festivals). The token rides ONLY on
+    // this request body — never on `payload`, which drafts and the backup also see.
+    var body = Object.assign({}, payload);
+    try {
+      var sess = JSON.parse(localStorage.getItem('shoonya_session') || 'null');
+      if (sess && sess.token) body.token = sess.token;
+    } catch (_) {}
     var res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     });
     var json;
     try { json = await res.json(); }
