@@ -28,9 +28,17 @@ const ok = (name, cond, detail) => {
 
 // ── Fake sheet ─────────────────────────────────────────────────────────────
 // Mirrors just enough of the SpreadsheetApp surface that saveToSheet touches.
+// F4 (review 2026-09-18): kept in sync with SUBMISSION_HEADERS['social-event']
+// (SubmissionSheets.gs) — this fixture had drifted since 'Photo Credit'/
+// 'Description Language' were appended 2026-08-15. Out of sync, EVERY save()
+// call in this file found those two canonical headers "missing" from the live
+// sheet and had _ensureSheetHeaders append them — an unconditional row-1
+// header write on every call, polluting `sheet.written` (row 1) ahead of any
+// real data-row write and breaking every `written.length`/`written[0]`
+// assertion below, independent of anything this file is actually testing.
 const HEADERS = ['Timestamp', 'Organiser', 'Email', 'Event Title', 'Dance Style(s)', 'Date',
   'Doors Open', 'End Time', 'Dress Code', 'Programme', 'Pricing', 'Early Bird Deadline',
-  'DJ(s)', 'Music Type', 'Note for Shoonya', 'Description', 'Review status'];
+  'DJ(s)', 'Music Type', 'Note for Shoonya', 'Description', 'Photo Credit', 'Description Language', 'Review status'];
 
 function makeSheet(rows) {
   const grid = [HEADERS.slice()].concat(rows.map(r => r.slice()));
@@ -53,6 +61,8 @@ function makeSheet(rows) {
           }
           return out;
         },
+        // 2026-10-13: _stampCorrects adds the 'Corrects' header with setValue (real Range has it).
+        setValue(v) { grid[startRow - 1][startCol - 1] = v; },
         setValues(vals) {
           self.written.push({ row: startRow, values: vals[0] });
           grid[startRow - 1] = vals[0].slice();
@@ -230,6 +240,49 @@ SHEET = makeSheet([alexStored]);
 const wsRes = vm.runInContext(
   `saveToSheet(${JSON.stringify({ ...ALEX, type: 'workshop' })}, 'workshop')`, ctx);
 ok('workshops do not go through the social-night dedup', wsRes === 'created', String(wsRes));
+
+// ── 9. F4 P2 (review 2026-09-18): the `'` write guard (_sheetSafeCell) must
+// not break the identical-vs-correction comparison, in EITHER cell format.
+//
+// _sheetSafeCell prefixes a formula-looking or leading-zero-numeric string
+// with `'` as a write guard (audit #17). Sheets DROPS that `'` on write for
+// an Automatic-formatted cell — so a value read back from the live sheet
+// never carries it — but KEEPS it literally for a Plain-text-formatted one —
+// so a value read back from THAT sheet still does. `positionedRow` (built
+// fresh in memory, about to be compared) always still carries the `'` when
+// one was added, because it has not gone through Sheets yet. Before the fix,
+// an Automatic-format sheet's read-back cell ("007", no `'`) compared
+// unequal to the freshly-built one ("'007", with it) — an UNCHANGED resubmit
+// misread as a correction: it reopens an already-approved night, sends a
+// second confirmation mail, and duplicates every Drive photo.
+const ALEX_LEADING_ZERO = { ...ALEX, dresscode: '007' };
+const alexLZRaw = vm.runInContext(`buildSheetRow(${JSON.stringify(ALEX_LEADING_ZERO)}, 'social-night')`, ctx);
+
+// Automatic format: Sheets drops the `'` on write — the stored/read-back row
+// is identical to the RAW (unsanitized) buildSheetRow output.
+const automaticStored = alexLZRaw.concat(['Pending']);
+r = save(ALEX_LEADING_ZERO, [automaticStored]);
+ok('Automatic-format sheet: an unchanged resubmit with a leading-zero field ("007") is STILL a duplicate, not a correction',
+   r.result === 'duplicate' && r.sheet.written.length === 0,
+   r.result + ' / written=' + r.sheet.written.length);
+
+// Plain-text format: Sheets keeps the `'` literally on write — the stored/
+// read-back row is the SANITIZED (`'`-prefixed) buildSheetRow output.
+const alexLZPlainText = vm.runInContext(`_sheetSafeRow(${JSON.stringify(alexLZRaw)})`, ctx);
+ok('sanity: _sheetSafeRow actually added the `\'` prefix to the leading-zero cell (proves this test exercises the real guard)',
+   alexLZPlainText[HEADERS.indexOf('Dress Code')] === "'007", JSON.stringify(alexLZPlainText[HEADERS.indexOf('Dress Code')]));
+const plainTextStored = alexLZPlainText.concat(['Pending']);
+r = save(ALEX_LEADING_ZERO, [plainTextStored]);
+ok('Plain-text-format sheet: an unchanged resubmit with a leading-zero field is STILL a duplicate — a stored "\'007" must not be misread as different from a fresh "\'007"',
+   r.result === 'duplicate' && r.sheet.written.length === 0,
+   r.result + ' / written=' + r.sheet.written.length);
+
+// A genuinely CHANGED leading-zero field must still be a correction — the
+// fix strips the write-guard artifact before comparing, it does not stop
+// comparing altogether.
+r = save({ ...ALEX_LEADING_ZERO, dresscode: '008' }, [automaticStored]);
+ok('a genuinely different leading-zero value is still read as a correction, not swallowed by the strip',
+   r.result === 'updated', r.result);
 
 console.log('\n' + (fail ? '✗' : '✓') + ' social-night dedup: ' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);
