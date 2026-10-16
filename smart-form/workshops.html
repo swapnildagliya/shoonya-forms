@@ -1819,6 +1819,15 @@ async function submitForm() {
     btn.textContent = 'Submitted ✓';
     try { localStorage.removeItem(WS_DRAFT_KEY); } catch(e) {}
   } catch (e) {
+    // 2026-10-16: expired login is not an outage — the draft stays on this device,
+    // so no backup copy and no alert; just ask for a re-login (mirrors Festival).
+    if (e.authRequired) {
+      errBox.innerHTML = '⚠ Your login has expired. <a href="#" onclick="slpOpenModal();return false;">Log in again</a>, then press Submit — your form is kept.';
+      errBox.style.display = '';
+      btn.disabled = false;
+      btn.textContent = 'Review & submit →';
+      return;
+    }
     // Primary submission failed — fire the data to the independent backup sink
     // so nothing is lost even if the main backend is down.
     try { if (typeof sendToBackup === 'function') sendToBackup(payload, e.message); } catch(_) {}

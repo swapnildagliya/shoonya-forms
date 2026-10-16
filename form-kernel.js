@@ -268,7 +268,11 @@
       throw new Error('Server returned non-JSON (HTTP ' + res.status + ' ' + res.statusText + '). Your draft is saved.');
     }
     if (json && json.ok === false) {
-      throw new Error(json.error || ('Submission failed (HTTP ' + res.status + ').'));
+      // 2026-10-16: flag an expired/missing login so forms can ask for a re-login
+      // instead of treating it as an outage (no backup copy, no alert email).
+      var err = new Error(json.error || ('Submission failed (HTTP ' + res.status + ').'));
+      if (json.authRequired) err.authRequired = true;
+      throw err;
     }
     return json;
   }
