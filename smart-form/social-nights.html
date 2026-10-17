@@ -732,7 +732,7 @@
   <div id="success-row" class="success-msg" style="display:none;"></div>
   <div class="submit-row">
     <!-- 2026-05-24 (#21): button opens review modal; modal's Submit calls submitForm() -->
-    <button class="btn-primary" onclick="openReviewModal()">Review &amp; submit →</button>
+    <button class="btn-primary" id="sn-submit-btn" onclick="openReviewModal()">Review &amp; submit →</button>
 
     <!-- 2026-05-24 (#21): review-before-submit modal. -->
     <div class="review-overlay" id="review-overlay" onclick="if(event.target===this)closeReviewModal()">
@@ -1277,7 +1277,7 @@ function confirmSubmit() {
       errEl.style.display = 'block';
       errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-    const btn = document.querySelector('.btn-primary');
+    const btn = document.getElementById('sn-submit-btn');
     if (btn) { btn.disabled = false; btn.textContent = 'Submit social night →'; }
   });
 }
@@ -1900,7 +1900,7 @@ async function submitForm() {
   // second full submitForm() run. Alex's Oefenavond landed twice, 7.35 s apart:
   // 2 sheet rows, 2 confirmation mails, 4 Drive files ("DJ Kimo 2.jpg"…).
   // There is no server-side dedup for social-night, so the lock MUST come first.
-  const btn = document.querySelector('.btn-primary');
+  const btn = document.getElementById('sn-submit-btn');
   btn.disabled = true;
   btn.textContent = 'Preparing photos…';
 

@@ -1673,6 +1673,15 @@ async function submitForm() {
     // via a monkey-patched wrapper at module bottom that easily breaks on edit.
     try { if (typeof clearDraft === 'function') clearDraft(); } catch(_) {}
   } catch (e) {
+    // 2026-10-17: expired login is not an outage — the draft stays on this device,
+    // so no backup copy and no alert; just ask for a re-login (mirrors Workshops).
+    if (e.authRequired) {
+      errBox.innerHTML = '⚠ Your login has expired. <a href="#" onclick="slpOpenModal();return false;">Log in again</a>, then press Submit — your form is kept.';
+      errBox.style.display = '';
+      btn.disabled = false;
+      btn.textContent = 'Submit weekly class →';
+      return;
+    }
     // Primary submission failed — fire the data to the independent backup sink
     // so nothing is lost even if the main backend is down.
     try { if (typeof sendToBackup === 'function') sendToBackup(payload, e.message); } catch(_) {}

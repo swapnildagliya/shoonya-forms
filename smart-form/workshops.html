@@ -1758,8 +1758,23 @@ async function submitForm() {
   // the spec because (a) the kernel's collect is synchronous and (b) photos[]
   // composes other fields. The legacy flat photo fields + structured photos[]
   // here reproduce the EXACT shape the old inline payload sent.
-  const guestPhotoB64 = await _fileToB64(document.getElementById('f-guest-photo'));
-  const hostPhotoB64  = await _fileToB64(document.getElementById('f-host-photo'));
+  // 2026-10-17 DOUBLE-SUBMIT FIX: lock the button BEFORE the photo encodes. `_fileToB64` decodes + resizes
+  // multi-MB phone photos (seconds on mobile); the button used to stay live that whole time, so a second tap
+  // started a second submit. Every early return below restores it.
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Preparing photos…';
+  let guestPhotoB64, hostPhotoB64;
+  try {
+    guestPhotoB64 = await _fileToB64(document.getElementById('f-guest-photo'));
+    hostPhotoB64  = await _fileToB64(document.getElementById('f-host-photo'));
+  } catch (e) {
+    errBox.innerHTML = '⚠ A photo could not be read (' + ((e && e.message) || 'unknown error') + '). Try another photo, or remove it and submit without.';
+    errBox.style.display = '';
+    btn.disabled = false;
+    btn.textContent = 'Review & submit →';
+    return;
+  }
   const guestPhotoName = document.getElementById('f-guest-photo')?.files?.[0]?.name || '';
   const hostPhotoName  = document.getElementById('f-host-photo')?.files?.[0]?.name || '';
   const photos = [];
@@ -1787,8 +1802,7 @@ async function submitForm() {
   // Test mode (?test=1): mark the payload so the backend previews instead of saving
   if (window.shoonyaTestMode && window.shoonyaTestMode()) payload.testMode = true;
 
-  const btn = document.getElementById('submit-btn');
-  btn.disabled = true;
+  // btn is already disabled (locked above, before the photo encode). Just swap the label.
   btn.textContent = payload.testMode ? 'Testing…' : 'Submitting…';
 
   const url = (typeof APPS_SCRIPT_URL !== 'undefined') ? APPS_SCRIPT_URL : '';

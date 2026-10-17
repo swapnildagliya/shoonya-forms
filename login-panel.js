@@ -88,6 +88,29 @@
     return JSON.parse(match[0]);
   }
 
+  // ── Stored-session check (2026-10-17) ────────────────────
+  // A session in localStorage can outlive its token on the server. The forms now REQUIRE a login, so a
+  // stale session used to show the form as open and fail only at submit. Ask the backend once per page load
+  // (GET ?action=getProfile&token=); when it says the session expired, clear it and fall back to the
+  // logged-out state (the same path as "Log out": clear + reload, so every form's login gate closes).
+  // A network failure, a non-JSON reply or any other backend error NEVER logs the teacher out.
+  async function verifyStoredSession(token) {
+    try {
+      const url = (typeof APPS_SCRIPT_URL !== 'undefined') ? APPS_SCRIPT_URL : '';
+      if (!url || !token) return;
+      const res  = await fetch(url + '?action=getProfile&token=' + encodeURIComponent(token), { redirect: 'follow' });
+      const text = await res.text();
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) return;
+      const json = JSON.parse(match[0]);
+      if (json && json.ok === false && /session expired/i.test(String(json.error || '')) && currentToken === token) {
+        clearSession();
+        window.dispatchEvent(new CustomEvent('shoonya:logout'));
+        location.reload();
+      }
+    } catch (e) { /* offline / backend hiccup: keep the session */ }
+  }
+
   // ── Inject styles ────────────────────────────────────────
   function injectStyles() {
     const style = document.createElement('style');
@@ -282,6 +305,7 @@
       currentProfile = session.profile;
       currentToken   = session.token;
       panel.innerHTML = loggedInBarHTML(session.profile);
+      verifyStoredSession(session.token);
     } else {
       panel.innerHTML = `
 <div id="slp-prompt" onclick="slpOpenModal()">
