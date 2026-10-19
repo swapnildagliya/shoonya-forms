@@ -678,7 +678,7 @@
   <div class="section">
     <span class="section-num">3</span>
     <h2 class="section-title">Pricing</h2>
-    <p class="section-hint">One row per price (e.g. advance, door, members).</p>
+    <p class="section-hint">One row per price. Start each label with Advance or Door, followed by the ticket option: e.g. Advance Workshop + Party, Door Workshop + Party, Advance Party only, Door Party only.</p>
 
     <div id="pricing-rows">
       <!-- seeded with two default rows -->
@@ -1492,13 +1492,23 @@ function _ssMusicType() {
   return sel ? sel.dataset.val : '';
 }
 
+// Keep option-first labels from saved drafts/teacher input compatible with
+// the app importer. Only these complete form labels are reordered; unknown,
+// member and early-bird labels retain their meaning for office review.
+function _ssNormalisePricingLabel(label) {
+  const match = label.trim().match(/^(workshop\s*[+&]\s*party|only\s+party|party\s+only)\s+(advance|door)[.!?,;:]*$/i);
+  if (!match) return label.trim();
+  const option = /^workshop/i.test(match[1]) ? 'Workshop + Party' : 'Party only';
+  return (/^advance$/i.test(match[2]) ? 'Advance' : 'Door') + ' ' + option;
+}
+
 // Collect the pricing tiers in the EXACT submit shape (label + numeric/null price).
 // Lifted verbatim from the pre-migration submit loop (2026-05-24 audit V8).
 function _ssCollectPricing() {
   const out = [];
   document.querySelectorAll('#pricing-rows .pricing-tier').forEach(row => {
     const inputs = row.querySelectorAll('input');
-    const label = inputs[0].value.trim();
+    const label = _ssNormalisePricingLabel(inputs[0].value);
     const priceRaw = inputs[1]?.value.trim() || '';
     // 2026-09-18 (audit #14): a row left fully empty (no label, no amount —
     // e.g. the teacher clicked "+ Add pricing tier" then changed their mind,

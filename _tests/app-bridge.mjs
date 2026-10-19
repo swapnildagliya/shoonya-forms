@@ -78,6 +78,12 @@
 //        `action:'submit'`, and the implicit-default no-`action` case) still
 //        reach handleSubmit — the fix must not have broken the real path.
 //
+// 2026-10-18-teacher-profiles-1 (forms -> portal F1):
+//   T22 — POST listTeacherProfiles: the Teachers sheet's public profile fields, found by HEADER NAME (columns shuffled on
+//        purpose), never pin_hash / last_login / role, skips '@pending.shoonya' and role=admin rows, parses JSON and
+//        comma lists, the photos[] cell and a legacy photo_url, 'yes' -> approved, bridge:3 on success AND on every
+//        refusal (no secret configured / no key / wrong key).
+//
 // 2026-09-18-app-bridge-4 — THE GAP (two independent reviewers): a teacher
 // correcting a submission AFTER the office approved/rejected it used to
 // overwrite the row in place while it kept its terminal "Review status" — so
@@ -149,6 +155,7 @@ function makeGrid(headers, rows) {
 
 // ── Sandbox state, swapped per test ─────────────────────────────────────────
 let REVIEW_SHEET = makeGrid(['Timestamp'], []);
+let TEACHERS_SHEET = makeGrid(['email'], []);
 let LOG_SHEET = makeGrid(['Timestamp', 'Type', 'Teacher', 'Email', 'Full JSON (photos stripped)'], []);
 let PROPS = {}; // Script Properties store
 let SPREADSHEET_OPEN_CALLS = []; // every SpreadsheetApp.openById(id) call, in order — P2-f read-count check
@@ -187,6 +194,8 @@ const ctx = vm.createContext({
   WEEKLY_CLASS_SHEET_ID: 'WEEKLY_ID', WORKSHOP_SHEET_ID: 'WORKSHOP_ID',
   SOCIAL_EVENT_SHEET_ID: 'SOCIAL_ID', FESTIVAL_SHEET_ID: 'FESTIVAL_ID',
   BACKEND_VERSION: 'test-version',
+  // TeacherPortal.gs (not loaded here) owns the real one; T22 swaps TEACHERS_SHEET per test.
+  getTeachersSheet: () => TEACHERS_SHEET,
 });
 
 // Load the REAL sources — TeacherAdmin.gs for _reviewSheetIdFor /
@@ -1475,6 +1484,55 @@ console.log('\nT21 — F4 P2 (review 2026-09-18): the `\'` write guard (_sheetSa
   ok('the raw-log payload is matched despite the sheet\'s literally-quoted title (a field that ONLY exists on the raw payload, never the flattened fallback, is present)',
     r21.ok && r21.rows.length === 1 && r21.rows[0].data?.teacherDJ === GOLDEN.teacherDJ,
     JSON.stringify(r21.rows?.[0]?.data));
+}
+
+// ============================================================================
+console.log('\nT22 — listTeacherProfiles (forms -> portal F1)\n');
+// ============================================================================
+{
+  PROPS = { APP_BRIDGE_SECRET: 'test-secret' };
+  // Column order deliberately NOT the order the real sheet uses: the handler must read by header name.
+  const H = ['approved', 'photos', 'bio_long', 'email', 'pin_hash', 'role', 'name', 'photo_url', 'bio_short', 'dance_styles', 'teaching_languages',
+    'instagram', 'facebook', 'youtube', 'website', 'last_login', 'registered_at', 'associated_events', 'photo_credit'];
+  const row = (o) => H.map((h) => (o[h] === undefined ? '' : o[h]));
+  TEACHERS_SHEET = makeGrid(H, [
+    row({ email: 'Sonja@Example.BE ', pin_hash: 'SECRETHASH1', name: 'Sonja S', role: 'teacher', approved: 'yes', bio_short: 'Short', bio_long: 'Long\nbio',
+      dance_styles: '["Salsa","Bachata"]', teaching_languages: 'NL, EN', instagram: '@sonja', photo_url: 'https://drive.google.com/thumbnail?id=FILE1&sz=w1000',
+      photos: JSON.stringify([{ url: 'https://drive.google.com/thumbnail?id=FILE1&sz=w1000', fileId: 'FILE1', label: 'main' }, { url: 'https://drive.google.com/thumbnail?id=FILE2&sz=w1000', label: '' }, 'junk', { nothing: true }]),
+      photo_credit: 'Jan Peeters', last_login: '2026-10-01', registered_at: '2026-01-01', associated_events: '["x"]' }),
+    row({ email: 'placeholder@pending.shoonya', pin_hash: 'SECRETHASH2', name: 'Placeholder', role: 'teacher' }),
+    row({ email: 'boss@example.be', pin_hash: 'SECRETHASH3', name: 'Admin Boss', role: 'Admin' }),
+    row({ email: '', pin_hash: 'SECRETHASH4', name: 'No email' }),
+    row({ email: 'bare@example.be', name: 'Bare', approved: '', dance_styles: 'not json, Kizomba', photos: 'not json' }),
+    row({ email: 'ok@example.be', name: 'Boolean', approved: true, photos: '[]' }),
+  ]);
+  const LIST = (key) => call(`handleAppBridgeListTeacherProfiles(${JSON.stringify({ key })})`);
+  const r = LIST('test-secret');
+  ok('ok + bridge:3 + version + a teachers array', r.ok === true && r.bridge === 3 && r.version === 'test-version' && Array.isArray(r.teachers), JSON.stringify(r).slice(0, 200));
+  ok('placeholder, admin and e-mail-less rows are skipped', r.teachers.map((t) => t.email).join('|') === 'sonja@example.be|bare@example.be|ok@example.be', r.teachers.map((t) => t.email).join('|'));
+  const so = r.teachers[0];
+  ok('fields are read by header name and the e-mail is lower-cased + trimmed',
+    so.name === 'Sonja S' && so.bioShort === 'Short' && so.bioLong === 'Long\nbio' && so.instagram === '@sonja' && so.photoCredit === 'Jan Peeters' && so.approved === true, JSON.stringify(so));
+  ok('JSON list and comma list both become arrays', JSON.stringify(so.danceStyles) === '["Salsa","Bachata"]' && JSON.stringify(so.teachingLanguages) === '["NL","EN"]', JSON.stringify([so.danceStyles, so.teachingLanguages]));
+  ok('photos[]: bad entries dropped, a missing fileId is taken from the URL, label kept', JSON.stringify(so.photos) === JSON.stringify([
+    { url: 'https://drive.google.com/thumbnail?id=FILE1&sz=w1000', fileId: 'FILE1', label: 'main' },
+    { url: 'https://drive.google.com/thumbnail?id=FILE2&sz=w1000', fileId: 'FILE2', label: '' },
+  ]), JSON.stringify(so.photos));
+  ok('legacy photo_url is returned on its own', so.photoUrl === 'https://drive.google.com/thumbnail?id=FILE1&sz=w1000');
+  ok('a plain comma list and an unparseable photos cell do not throw', JSON.stringify(r.teachers[1].danceStyles) === '["not json","Kizomba"]' && JSON.stringify(r.teachers[1].photos) === '[]' && r.teachers[1].approved === false);
+  ok('a boolean TRUE in approved counts as approved', r.teachers[2].approved === true);
+  ok('pin_hash (and other private columns) never appear anywhere in the reply',
+    !/SECRETHASH|pin_hash|last_login|registered_at|associated_events|2026-10-01/.test(JSON.stringify(r)), JSON.stringify(r).slice(0, 300));
+  ok('no key, wrong key and an unset secret are refused WITH bridge:3 and no teachers',
+    (() => { const a = LIST(undefined), b = LIST('nope'); PROPS = {}; const c = LIST('test-secret'); PROPS = { APP_BRIDGE_SECRET: 'test-secret' };
+      return a.error === 'unauthorised' && b.error === 'unauthorised' && c.error === 'bridge not configured' && [a, b, c].every((x) => x.bridge === 3 && x.ok === false && !x.teachers); })());
+  TEACHERS_SHEET = makeGrid(['email', 'name'], []);
+  ok('an empty sheet is ok:true with an empty list', (() => { const e = LIST('test-secret'); return e.ok === true && Array.isArray(e.teachers) && e.teachers.length === 0; })());
+  TEACHERS_SHEET = makeGrid(['name'], [['x']]);
+  ok('a sheet without an email column is refused, not guessed at', LIST('test-secret').ok === false);
+  // routed from doPost?
+  const codeSrc = fs.readFileSync(path.join(ROOT, 'backend/code.gs'), 'utf8');
+  ok("code.gs routes 'listTeacherProfiles' to the handler and bumps BACKEND_VERSION", /case 'listTeacherProfiles':\s+return handleAppBridgeListTeacherProfiles\(data\);/.test(codeSrc) && /BACKEND_VERSION = '2026-10-18-teacher-profiles-1'/.test(codeSrc));
 }
 
 console.log('\n' + (fail ? '✗' : '✓') + ' app-bridge: ' + pass + ' passed, ' + fail + ' failed');
