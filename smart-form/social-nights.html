@@ -542,8 +542,8 @@
         </div>
       </div>
       <div class="field">
-        <label class="field-label" for="f-end">Event ends</label>
-        <input type="time" id="f-end" value="01:00">
+        <label class="field-label" for="f-end">Event ends <span class="req-mark">*</span></label>
+        <input type="time" id="f-end">
       </div>
     </div>
 
@@ -630,15 +630,6 @@
           <input type="file" id="f-dj-photo" accept="image/*" style="font-size: 0.85rem; padding: 6px 0;">
           <p class="field-hint dn-hint-purple dj-photo-hint">Add the name above first.</p>
         </div>
-      <!-- 2026-08-15: who took the photo. The credit rule is EXIF -> teachers.md ->
-           ask -> blank, and the form never asked — so every submission arrived
-           credit-unknown and designs inherited the gap. Never invent a credit. -->
-      <div class="field">
-        <label class="field-label" for="f-photo-credit">Who took this photo?</label>
-        <input type="text" id="f-photo-credit" placeholder="Photographer's name">
-        <label class="check-inline" style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:0.9rem;"><input type="checkbox" id="f-photo-credit-unknown"> I don't know the photographer</label>
-      </div>
-
       </div>
 
       <!-- Teacher as DJ -->
@@ -672,18 +663,36 @@
       </div>
     </div>
     <!-- end dance night block -->
+
+    <!-- 2026-08-15: who took the photo. The credit rule is EXIF -> teachers.md ->
+         ask -> blank, and the form never asked — so every submission arrived
+         credit-unknown and designs inherited the gap. Never invent a credit.
+         2026-10-26: one shared field for every photo on this form (slots, DJs), shown and
+         required only while a photo is selected; "I don't know" is the honest way out (stays blank). -->
+    <div class="field" id="photo-credit-field" style="display:none; margin-top: 16px;">
+      <label class="field-label" for="f-photo-credit">Who took the photo(s)? <span class="req-mark">*</span></label>
+      <input type="text" id="f-photo-credit" placeholder="Photographer's name">
+      <label class="check-inline" style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:0.9rem;"><input type="checkbox" id="f-photo-credit-unknown"> I don't know the photographer</label>
+    </div>
   </div>
 
   <!-- SECTION 3: PRICING -->
   <div class="section">
     <span class="section-num">3</span>
-    <h2 class="section-title">Pricing</h2>
+    <h2 class="section-title">Pricing <span class="req-mark">*</span></h2>
     <p class="section-hint">One row per price. Start each label with Advance or Door, followed by the ticket option: e.g. Advance Workshop + Party, Door Workshop + Party, Advance Party only, Door Party only.</p>
 
+    <!-- 2026-10-26: a night needs at least one price row, or an explicit "free" tick. -->
+    <label class="checkbox-row" style="margin: 0 0 12px;">
+      <input type="checkbox" id="f-free" onchange="ssToggleFree(this)">
+      This night is free
+    </label>
+    <div id="pricing-tiers-wrap">
     <div id="pricing-rows">
       <!-- seeded with two default rows -->
     </div>
     <button class="btn-add" onclick="addPricingTier()" style="margin-top: 4px;">+ Add pricing tier</button>
+    </div>
 
     <div class="field" style="margin-top: 16px;">
       <label class="field-label" for="f-early-deadline">Early-bird deadline <span class="opt">(optional)</span></label>
@@ -703,14 +712,14 @@
     <p class="section-hint">The public blurb, plus anything for Shoonya staff.</p>
 
     <div class="field">
-      <label class="field-label" for="f-description">Public description</label>
+      <label class="field-label" for="f-description">Public description <span class="req-mark">*</span></label>
       <textarea id="f-description" class="large" rows="4" placeholder="The vibe, what to expect, who it's for… Shown on the events page."></textarea>
     </div>
     <!-- 2026-08-15: which language the description is written in. Every page ships
          EN+NL (D-029); without this the translation burden lands silently on
          whoever builds the page, and gets discovered late. -->
     <div class="field">
-      <label class="field-label" for="f-copy-source-lang">What language did you write that in?</label>
+      <label class="field-label" for="f-copy-source-lang">What language did you write that in? <span class="req-mark">*</span></label>
       <select id="f-copy-source-lang">
         <option value="">— choose —</option>
         <option value="EN">English</option>
@@ -1204,6 +1213,24 @@ function addExtraDJ() {
   wrap.appendChild(row);
 }
 
+// ─── FREE NIGHT + PHOTO CREDIT (2026-10-26) ──────────────────────────────────
+// "This night is free" replaces the price rows (hidden, not required). The payload then
+// carries pricing [{label:'Free', price:0}] plus isFree:true — the app already treats
+// amount 0 as free.
+function ssToggleFree(cb) {
+  const wrap = document.getElementById('pricing-tiers-wrap');
+  if (wrap) wrap.style.display = cb.checked ? 'none' : '';
+}
+function ssIsFree() { return !!document.getElementById('f-free')?.checked; }
+// Photo credit is shown (and required) only while any photo on the form is selected.
+function ssSyncPhotoCredit() {
+  const has = [...document.querySelectorAll('input[type="file"]')].some(el => el.files && el.files[0]);
+  const box = document.getElementById('photo-credit-field');
+  if (box) box.style.display = has ? '' : 'none';
+  return has;
+}
+document.addEventListener('change', e => { if (e.target && e.target.type === 'file') ssSyncPhotoCredit(); });
+
 // ─── PRICING TIERS ───────────────────────────────────────────────────────────
 // `pricePlaceholder` (2026-09-18, audit #14): lets a caller show an example
 // amount as grey placeholder text without baking a real number into `value`
@@ -1326,6 +1353,7 @@ function _collectValidationErrors() {
   if (!document.getElementById('f-date').value) errors.push('Date is required.');
   if (!document.getElementById('f-doors').value) errors.push('Doors open time is required.');
   if (!document.getElementById('f-dn-start').value) errors.push('Dance floor start time is required.');
+  if (!document.getElementById('f-end').value) errors.push('End time is required.');
   // FIX B: time sanity validation. Convert HH:MM to minutes-since-midnight;
   // times below 07:00 are treated as next-morning (add 24×60) so after-midnight
   // end times compare correctly against same-evening doors/floor times.
@@ -1372,7 +1400,10 @@ function _collectValidationErrors() {
   // P1 (Codex 2026-06-21): a tier with a label but a BLANK amount used to pass —
   // it serialised as {label, price:null} and rendered as "€0" in review. Now a
   // labelled tier MUST carry an amount (type 0 for a free tier).
-  document.querySelectorAll('#pricing-rows .pricing-tier').forEach((row, i) => {
+  const isFree = ssIsFree();
+  // 2026-10-26: at least one price row (checked row by row below), or the explicit "free" tick.
+  if (!isFree && _ssCollectPricing().length === 0) errors.push('Add at least one price, or tick "This night is free".');
+  if (!isFree) document.querySelectorAll('#pricing-rows .pricing-tier').forEach((row, i) => {
     const labelInput = row.querySelectorAll('input')[0];
     const priceInput = row.querySelectorAll('input')[1];
     const label = (labelInput?.value || '').trim();
@@ -1389,7 +1420,7 @@ function _collectValidationErrors() {
     } else if (raw && isNaN(parseFloat(raw))) {
       errors.push('Pricing tier ' + (i + 1) + ' ("' + label + '"): the amount must be a number.');
     } else if (label && !raw) {
-      errors.push('Pricing tier ' + (i + 1) + ' ("' + label + '"): enter an amount (type 0 if it is free).');
+      errors.push('Pricing tier ' + (i + 1) + ' ("' + label + '"): enter an amount, or tick "This night is free".');
     } else if (raw && !label) {
       // F4 P2 (review 2026-09-18): the mirror image of the check above was
       // missing — a row with an AMOUNT but no label passed straight through
@@ -1437,6 +1468,12 @@ function _collectValidationErrors() {
       if (teacherVal && !photoFile && ssPhotoIsBlocking(teacherVal)) errors.push(_ssPhotoError('Slot ' + slotNum + ': ', teacherVal));
     }
   });
+  // 2026-10-26: required-field set approved by the owner.
+  if (!document.getElementById('f-description').value.trim()) errors.push('Public description is required.');
+  if (!document.getElementById('f-copy-source-lang').value) errors.push('Pick the language your description is written in.');
+  if (ssSyncPhotoCredit() && !document.getElementById('f-photo-credit').value.trim() && !document.getElementById('f-photo-credit-unknown').checked) {
+    errors.push('Photo credit is required when you add a photo (or tick "I don\'t know the photographer").');
+  }
   // 2026-05-24: DJ photo required when Guest DJ is selected (auto-design needs it).
   // 2026-07-22: skipped when we already have a photo of that person on file, and
   // never blocking after a draft restore (file inputs aren't persisted in drafts).
@@ -1758,7 +1795,8 @@ const SOCIAL_SPEC = [
   { key:'pricing', payloadKey:'pricing', dom:'pricing-rows', kind:'custom',
     label:'Tiers', section:'Pricing', reviewMode:'ifset', jump:'#pricing-rows',
     collect: () => _ssCollectPricing(),
-    reviewValue: () => [...document.querySelectorAll('#pricing-rows .pricing-tier')].map(row => {
+    payloadValue: (v) => (ssIsFree() ? [{ label: 'Free', price: 0 }] : v),
+    reviewValue: () => ssIsFree() ? 'Free night' : [...document.querySelectorAll('#pricing-rows .pricing-tier')].map(row => {
       const inputs = row.querySelectorAll('input');
       const label = (inputs[0]?.value || '').trim();
       const amount = (inputs[1]?.value || '').trim();
@@ -1770,6 +1808,9 @@ const SOCIAL_SPEC = [
       return { label: inputs[0]?.value || '', price: inputs[1]?.value || '' };
     }),
     draftRestore: (v) => _ssRestorePricing(v) },
+  // 2026-10-26: explicit "free" tick. Draft/restore only; the payload flag isFree is added in submitForm (only when true).
+  { key:'isFree', dom:'f-free', kind:'checkbox', payload:false, review:false,
+    onToggle: (cb) => ssToggleFree(cb) },
   // earlyDeadline: ISO date string; '' when blank (legacy parity, NOT null).
   { key:'earlyDeadline', payloadKey:'earlyDeadline', dom:'f-early-deadline', kind:'custom',
     label:'Early-bird deadline', section:'Pricing', reviewMode:'ifset', jump:'#f-early-deadline',
@@ -2002,6 +2043,8 @@ async function submitForm() {
     action: 'generateOutputPackage',
     type: 'social-night',
     submitted_via: 'social-night-v2-form',   // 2026-05-24 audit S8
+    // 2026-10-26: explicit free night (pricing then carries [{label:'Free', price:0}]). Absent otherwise.
+    isFree: ssIsFree() ? true : undefined,
     // structured photo array (async)
     photos: photos,
     // 2026-08-07: photos that failed to encode (HEIC, corrupt file…). Non-empty

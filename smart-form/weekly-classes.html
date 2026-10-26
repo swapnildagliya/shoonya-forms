@@ -541,9 +541,9 @@
         </div>
       </div>
       <div class="field">
-        <label class="field-label">Teaching language</label>
+        <label class="field-label">Teaching language <span class="req-mark">*</span></label>
         <div class="chips" data-single id="lang-chips">
-          <div class="chip selected" onclick="selectSingle(this)">EN</div>
+          <div class="chip" onclick="selectSingle(this)">EN</div>
           <div class="chip" onclick="selectSingle(this)">NL</div>
           <div class="chip" onclick="selectSingle(this)">FR</div>
         </div>
@@ -674,7 +674,7 @@
     </div>
 
     <div class="field">
-      <label class="field-label" for="f-description">General class description <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label" for="f-description">General class description <span class="req-mark">*</span></label>
       <textarea class="large" id="f-description" rows="4" placeholder="The class, who it's for, what students will learn."></textarea>
       <p class="field-hint">Used for any level without its own description above.</p>
     </div>
@@ -682,7 +682,7 @@
          EN+NL (D-029); without this the translation burden lands silently on
          whoever builds the page, and gets discovered late. -->
     <div class="field">
-      <label class="field-label" for="f-copy-source-lang">What language did you write that in?</label>
+      <label class="field-label" for="f-copy-source-lang">What language did you write that in? <span class="req-mark">*</span></label>
       <select id="f-copy-source-lang">
         <option value="">— choose —</option>
         <option value="EN">English</option>
@@ -721,9 +721,9 @@
     </div>
 
     <div class="field">
-      <label class="field-label">Studio preference</label>
+      <label class="field-label">Studio preference <span class="req-mark">*</span></label>
       <div class="chips" data-single id="studio-pref-chips">
-        <div class="chip selected" onclick="selectSingle(this)">No preference</div>
+        <div class="chip" onclick="selectSingle(this)">No preference</div>
         <div class="chip" onclick="selectSingle(this)">Studio Ananta</div>
         <div class="chip" onclick="selectSingle(this)">Studio Aakash</div>
         <div class="chip" onclick="selectSingle(this)">Studio Art Deco</div>
@@ -982,7 +982,7 @@ function makeLevelCard(key) {
       <span class="level-card-title">${name}</span>
       <span style="font-size: 0.8rem; color: var(--mid);" data-slot-summary>1 slot · — min</span>
     </div>
-    <label class="field-label" style="margin-bottom: 10px;">Schedule</label>
+    <label class="field-label" style="margin-bottom: 10px;">Schedule — day, start and end time <span class="req-mark">*</span></label>
     <div class="slot-row">
       <select class="day-pick">
         <option value="" selected disabled>Day →</option>
@@ -1177,6 +1177,7 @@ function getSelectedSingle(containerId) {
 function collectLevels() {
   const levels = [];
   const partialSlots = [];   // {level, missing: ['day'|'start'|'end']}
+  const emptyLevels = [];    // 2026-10-26: selected level cards with no slot filled in at all
   document.querySelectorAll('.level-card').forEach(card => {
     const levelKey = card.dataset.level;
     const titleEl = card.querySelector('.level-card-title');
@@ -1198,13 +1199,15 @@ function collectLevels() {
       }
     });
     const desc = card.querySelector('textarea')?.value.trim() || '';
+    if (slots.length === 0 && !partialSlots.some(p => p.level === levelName)) emptyLevels.push(levelName);
     if (slots.length > 0) {
       // display_label is '' for ALL levels (built-in AND custom) — this matches the
       // pre-migration payload exactly; `level` already carries the custom name. (Not a bug.)
       levels.push({ level: levelName, display_label: '', slots, description: desc });
     }
   });
-  collectLevels._partialSlots = partialSlots;   // 2026-05-24 audit V7: validate() reads this
+  collectLevels._partialSlots = partialSlots;
+  collectLevels._emptyLevels = emptyLevels;   // 2026-05-24 audit V7: validate() reads this
   return levels;
 }
 
@@ -1238,6 +1241,15 @@ function validate() {
     const summary = partial.map(p => p.level + ' (missing ' + p.missing.join(' + ') + ')').join('; ');
     errs.push('Incomplete slot rows: ' + summary);
   }
+  // 2026-10-26: a ticked level needs a complete day + start + end (untick the level if you don't teach it).
+  const emptyLv = collectLevels._emptyLevels || [];
+  if (emptyLv.length > 0) errs.push('No day and time yet for: ' + emptyLv.join(', ') + ' (or untick the level)');
+  if (!getSelectedSingle('lang-chips')) errs.push('Teaching language');
+  { const general = (document.getElementById('f-description')?.value || '').trim();
+    const everyLevelHasOne = levels.length > 0 && levels.every(l => l.description);
+    if (!general && !everyLevelHasOne) errs.push('Class description (general, or one for every level)'); }
+  if (!(document.getElementById('f-copy-source-lang')?.value || '')) errs.push('Description language');
+  if (!getSelectedSingle('studio-pref-chips')) errs.push('Studio preference');
   // 2026-07-22: if we detected an earlier submission for this style+semester we
   // ASKED whether this replaces it or adds to it. Submitting without answering
   // would fall back to "replace", which is exactly the silent data loss this
@@ -1507,7 +1519,7 @@ const WEEKLY_SPEC = [
     section:'Basics', reviewMode:'always',
     payloadValue: (v) => String(v || 'Sep 2026').replace(/\s*\(current\)/, '') },
   { key:'teaching_language', label:'Teaching language', dom:'lang-chips', kind:'chip-single',
-    jump:'#lang-chips', default:'EN', section:'Basics', reviewMode:'always' },
+    jump:'#lang-chips', section:'Basics', reviewMode:'always' },   // 2026-10-26: no default — the teacher picks
   // co_teacher: free-text → split/trim/filter → joined with " · " in payload.
   { key:'co_teacher', label:'Co-teacher(s)', dom:'coteacher-freetext', kind:'custom', jump:'#coteacher-freetext',
     section:'Basics', reviewMode:'ifset',
@@ -1554,7 +1566,7 @@ const WEEKLY_SPEC = [
   // the review modal only lists meaningful/filled fields, not default-y values like
   // "No preference" / partner=No. They ARE still sent in the payload. (Not a bug.)
   { key:'preferred_studio', label:'Studio preference', dom:'studio-pref-chips', kind:'chip-single',
-    review:false, jump:'#studio-pref-chips', default:'No preference' },
+    review:false, jump:'#studio-pref-chips' },   // 2026-10-26: no default — "No preference" is a chip the teacher picks
   { key:'partner_required', label:'Partner registration', dom:'partner-chips', kind:'custom',
     review:false, jump:'#partner-chips',
     collect: () => (getSelectedSingle('partner-chips') || 'No'),

@@ -322,6 +322,18 @@
       </div>
     </div>
 
+    <div class="row-2">
+      <div class="field">
+        <label for="capacity">Max Attendees <span class="req" id="capacity-req">*</span></label>
+        <input type="number" id="capacity" placeholder="e.g. 120" min="1" step="1" />
+      </div>
+      <div class="field">
+        <label for="age-min">Minimum Age <span class="req">*</span></label>
+        <input type="number" id="age-min" placeholder="e.g. 16" min="1" step="1" />
+        <label style="display:flex;gap:8px;align-items:center;margin-top:6px;font-weight:400;"><input type="checkbox" id="age-all" style="width:auto;" onchange="document.getElementById('age-min').disabled=this.checked" /> All ages</label>
+      </div>
+    </div>
+
     <div class="field">
       <label for="dress-code">Dress Code <span style="font-weight:400;color:#888;">(optional)</span></label>
       <input type="text" id="dress-code" placeholder="e.g. Real dance shoes, socks, or barefoot" />
@@ -360,11 +372,14 @@
 
   <!-- Section 6: Pricing -->
   <div class="card">
-    <div class="card-title">6 — Pricing</div>
+    <div class="card-title">6 — Pricing <span class="req" style="color:var(--red);">*</span></div>
     <div class="info-box">One tier per pass or ticket type.</div>
 
+    <label style="display:flex;gap:8px;align-items:center;margin:0 0 12px;font-size:.86rem;font-weight:700;"><input type="checkbox" id="is-free" style="width:auto;" onchange="festToggleFree(this.checked)" /> This festival is free</label>
+    <div id="price-tiers-wrap">
     <div id="price-tiers"></div>
     <button class="btn-add-row" onclick="addPriceTier()" style="margin-top:4px;">+ Add Pricing Tier</button>
+    </div>
 
     <div class="row-2" style="margin-top:14px;">
       <div class="field">
@@ -410,6 +425,17 @@
     </div>
 
     <div class="field">
+      <label for="copy-source-lang">What language did you write that in? <span class="req">*</span></label>
+      <select id="copy-source-lang">
+        <option value="">— choose —</option>
+        <option value="EN">English</option>
+        <option value="NL">Nederlands</option>
+        <option value="EN+NL">I wrote both / I can supply both</option>
+      </select>
+      <p class="hint" style="font-size:.75rem;color:#888;margin-top:4px;">We publish every page in English and Dutch.</p>
+    </div>
+
+    <div class="field">
       <label for="practical">Practical Info <span style="font-weight:400;color:#888;">(optional)</span></label>
       <textarea id="practical" rows="3" placeholder="e.g. Registration required · No partner needed · Beginner-friendly"></textarea>
     </div>
@@ -444,6 +470,13 @@
         <p>Upload more images<br><span style="font-size:.73rem;">Select multiple files</span></p>
       </div>
       <div class="up-preview" id="extra-preview"></div>
+    </div>
+
+    <!-- 2026-10-26: one credit for every image on this form; shown and required only while an image is selected. "I don't know" stays blank (never invent a credit). -->
+    <div class="field" id="photo-credit-field" style="display:none;">
+      <label for="photo-credit">Who took the photo(s)? <span class="req">*</span></label>
+      <input type="text" id="photo-credit" placeholder="Photographer's name" />
+      <label style="display:flex;gap:8px;align-items:center;margin-top:6px;font-weight:400;"><input type="checkbox" id="photo-credit-unknown" style="width:auto;" /> I don't know the photographer</label>
     </div>
   </div>
 
@@ -801,6 +834,38 @@ function addDjCard() {
   list.appendChild(div);
 }
 
+// ── FREE FESTIVAL + PHOTO CREDIT + AGE (2026-10-26) ──────────────────────────
+// "This festival is free" hides the pricing tiers and drops the capacity requirement (nothing is ticketed).
+function festToggleFree(on) {
+  const wrap = document.getElementById('price-tiers-wrap');
+  if (wrap) wrap.style.display = on ? 'none' : '';
+  const star = document.getElementById('capacity-req');
+  if (star) star.style.display = on ? 'none' : '';
+}
+function festIsFree() { return !!document.getElementById('is-free')?.checked; }
+// Minimum age: a whole number, or the text "All ages" when the box is ticked.
+function festAgeValue() { return document.getElementById('age-all')?.checked ? 'All ages' : val('age-min'); }
+function festRestoreAge(v) {
+  const cb = document.getElementById('age-all'), el = document.getElementById('age-min');
+  if (v === 'All ages' && cb) { cb.checked = true; if (el) el.disabled = true; }
+  else if (el && v) el.value = v;
+}
+// Photo credit is shown (and required) only while an image is selected.
+function festSyncPhotoCredit() {
+  const has = ['banner-input', 'extra-input'].some(id => { const f = document.getElementById(id)?.files; return f && f.length > 0; });
+  const box = document.getElementById('photo-credit-field');
+  if (box) box.style.display = has ? '' : 'none';
+  return has;
+}
+document.addEventListener('change', e => {
+  if (e.target && e.target.type === 'file') festSyncPhotoCredit();
+  if (e.target && e.target.id === 'photo-credit-unknown') {
+    const tx = document.getElementById('photo-credit');
+    if (e.target.checked && tx) tx.value = '';
+    if (tx) tx.disabled = e.target.checked;
+  }
+});
+
 // ── PRICING TIERS ─────────────────────────────────────────────────────────────
 let tierCount = 0;
 function addPriceTier(label='', desc='', regular='', earlybird='', member='') {
@@ -1127,6 +1192,8 @@ function festBuildSubmissionText(slots, teachersArr, djsArr, pricingArr) {
   lines.push(`  Style(s):    ${val('dance-styles')}`);
   if (val('venue')) lines.push(`  Venue:       ${val('venue')}`);
   if (val('language')) lines.push(`  Language:    ${val('language')}`);
+  lines.push(`  Capacity:    ${festIsFree() && !val('capacity') ? '(free — not ticketed)' : val('capacity')}`);
+  lines.push(`  Min age:     ${festAgeValue()}`);
   if (val('dress-code')) lines.push(`  Dress Code:  ${val('dress-code')}`);
   lines.push('');
 
@@ -1216,6 +1283,7 @@ function festBuildSubmissionText(slots, teachersArr, djsArr, pricingArr) {
   // Description
   lines.push('▌ DESCRIPTION');
   lines.push(val('description').split('\n').map(l=>'  '+l).join('\n'));
+  lines.push(`  (written in: ${val('copy-source-lang')})`);
   if (val('practical')) {
     lines.push('');
     lines.push('▌ PRACTICAL INFO');
@@ -1276,6 +1344,15 @@ const FESTIVAL_SPEC = [
   { key:'dance_style', payloadKey:'dance_style', dom:'dance-styles', kind:'text', review:false },
   { key:'venue', payloadKey:'venue', dom:'venue', kind:'text', review:false },
   { key:'language', payloadKey:'language', dom:'language', kind:'text', review:false },
+  // 2026-10-26: required-field set. capacity = whole number (blank when free); age_min = number or "All ages";
+  // copy_source_lang = EN | NL | EN+NL; photo_credit = blank when "I don't know" (never invented).
+  { key:'capacity', payloadKey:'capacity', dom:'capacity', kind:'text', review:false },
+  { key:'age_min', payloadKey:'age_min', dom:'age-min', kind:'custom', review:false,
+    collect: () => festAgeValue(), restore: (v) => festRestoreAge(v) },
+  { key:'copy_source_lang', payloadKey:'copy_source_lang', dom:'copy-source-lang', kind:'text', review:false },
+  { key:'photo_credit', payloadKey:'photo_credit', dom:'photo-credit', kind:'text', review:false },
+  // Draft only: the payload flag is_free is added in submitForm, and only when true.
+  { key:'is_free', dom:'is-free', kind:'checkbox', payload:false, review:false, onToggle: (cb) => festToggleFree(cb.checked) },
   { key:'dress_code', payloadKey:'dress_code', dom:'dress-code', kind:'text', review:false },
 
   // ── Structured collections (repeaters) — reuse the shared typed collectors ──
@@ -1291,6 +1368,8 @@ const FESTIVAL_SPEC = [
     draftRestore: (arr) => festRestoreDjs(arr) },
   { key:'pricing', payloadKey:'pricing', dom:'price-tiers', kind:'custom', review:false,
     collect: () => festCollectPricing(),
+    // A free festival sends one explicit "Free" tier at €0 (the tiers themselves are hidden and not required).
+    payloadValue: (arr) => (festIsFree() ? [{ label: 'Free', description: '', regular: '0', early_bird: '', member: '' }] : arr),
     draftRestore: (arr) => festRestorePricing(arr) },
 
   // ── Pricing meta + group discount ──
@@ -1353,7 +1432,8 @@ async function submitForm() {
   const required = [
     ['first-name','First Name'],['last-name','Last Name'],['email','Email'],
     ['festival-name','Festival Name'],['date-start','Start Date'],['date-end','End Date'],
-    ['dance-styles','Dance Style(s)'],['description','Festival Description']
+    ['dance-styles','Dance Style(s)'],['description','Festival Description'],
+    ['copy-source-lang','Description language']
   ];
   for (const [id, label] of required) {
     if (!val(id)) { festShowError('Please fill in:', label, id); return; }
@@ -1362,6 +1442,19 @@ async function submitForm() {
   if (!_festEmailRe.test(val('email'))) {
     festShowError('Please check your email address —', 'it looks like a typo.', 'email');
     return;
+  }
+  // 2026-10-26: capacity (ticketed festivals), minimum age (or "All ages"), photo credit (only if an image is added).
+  const isFree = festIsFree();
+  if (!isFree) {
+    const cap = Number(val('capacity'));
+    if (!val('capacity') || !Number.isInteger(cap) || cap < 1) { festShowError('Please fill in:', 'Max Attendees (a whole number, at least 1) — or tick "This festival is free"', 'capacity'); return; }
+  }
+  if (!document.getElementById('age-all').checked) {
+    const age = Number(val('age-min'));
+    if (!val('age-min') || !Number.isInteger(age) || age < 1) { festShowError('Please fill in:', 'Minimum Age (a whole number) — or tick "All ages"', 'age-min'); return; }
+  }
+  if (festSyncPhotoCredit() && !val('photo-credit') && !document.getElementById('photo-credit-unknown').checked) {
+    festShowError('Please fill in:', 'Who took the photo(s) — or tick "I don\'t know the photographer"', 'photo-credit'); return;
   }
   if (val('date-start') > val('date-end')) {
     festShowError('Please check the dates —', 'the end date must be on or after the start date.', 'date-end');
@@ -1414,7 +1507,8 @@ async function submitForm() {
   // least one of regular/early_bird/member per tier (or an explicit "free"
   // indication in the label/description). Empty tiers are dropped, not pushed.
   const priceErrors = [];
-  document.querySelectorAll('#price-tiers .price-tier').forEach((tier, i) => {
+  let hasPrice = false;
+  if (!isFree) document.querySelectorAll('#price-tiers .price-tier').forEach((tier, i) => {
     const label   = tier.querySelector('.tier-label').value.trim();
     const desc    = tier.querySelector('.tier-desc').value.trim();
     const regular = tier.querySelector('.tier-regular').value.trim();
@@ -1425,7 +1519,10 @@ async function submitForm() {
     if (label && !hasAmount && !looksFree) {
       priceErrors.push(`Pricing "${label}": enter at least one price (regular / early bird / member), or write "free" if it's free.`);
     }
+    if (hasAmount || looksFree) hasPrice = true;
   });
+  // 2026-10-26: a festival needs at least one price, or the explicit "free" tick.
+  if (!isFree && !hasPrice && !priceErrors.length) priceErrors.push('Add at least one price (regular / early bird / member), or tick "This festival is free".');
   if (priceErrors.length) { festShowError('Please fix the pricing:', priceErrors, 'price-tiers'); return; }
 
   const uitpasPct = CONFIG.uitpasDiscount || 80;
@@ -1439,7 +1536,8 @@ async function submitForm() {
   const pricingArr  = festCollectPricing();
 
   // Human-readable backup blob — built from the SAME typed arrays the payload uses.
-  const submissionText = festBuildSubmissionText(slots, teachersArr, djsArr, pricingArr);
+  const submissionText = festBuildSubmissionText(slots, teachersArr, djsArr,
+    isFree ? [{ label: 'Free', description: '', regular: '0', early_bird: '', member: '' }] : pricingArr);
 
   // 2026-06-21 form-kernel migration: the structured payload is now built
   // declaratively from FESTIVAL_SPEC (single source for collect/payload of every
@@ -1453,6 +1551,7 @@ async function submitForm() {
     type: 'festival',
     festival_days: festivalDays,
     uitpas_pct: uitpasPct,
+    is_free: isFree ? true : undefined,   // 2026-10-26: explicit free festival (pricing then carries one "Free" tier at €0). Absent otherwise.
     structured: true,
     // Backup text blob — kept so Swapnil's raw email contains the readable
     // submission and the generated content package still has full context.

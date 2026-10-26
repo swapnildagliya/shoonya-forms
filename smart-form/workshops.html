@@ -441,7 +441,7 @@
     </div>
 
     <div class="field">
-      <label class="field-label">Teaching language <span class="badge-new">multi-select</span></label>
+      <label class="field-label">Teaching language <span class="req-mark">*</span> <span class="badge-new">multi-select</span></label>
       <div class="chips" id="lang-chips">
         <div class="chip chip-multi" data-val="EN">EN</div>
         <div class="chip chip-multi" data-val="NL">NL</div>
@@ -464,15 +464,6 @@
         <input type="file" id="f-host-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
         <p class="field-hint">JPEG or PNG — for your workshop page.</p>
       </div>
-      <!-- 2026-08-15: who took the photo. The credit rule is EXIF -> teachers.md ->
-           ask -> blank, and the form never asked — so every submission arrived
-           credit-unknown and designs inherited the gap. Never invent a credit. -->
-      <div class="field">
-        <label class="field-label" for="f-photo-credit">Who took this photo?</label>
-        <input type="text" id="f-photo-credit" placeholder="Photographer's name">
-        <label class="check-inline" style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:0.9rem;"><input type="checkbox" id="f-photo-credit-unknown"> I don't know the photographer</label>
-      </div>
-
       <div class="field" id="host-bio-field">
         <label class="field-label" for="f-host-bio">Your short bio</label>
         <textarea id="f-host-bio" rows="2" placeholder="2–3 sentences. Background, style, where you're from."></textarea>
@@ -501,6 +492,16 @@
       <label class="field-label" for="f-guest-photo">Guest teacher photo <span class="req-mark">*</span></label>
       <input type="file" id="f-guest-photo" accept="image/*" style="font-size: 0.88rem; padding: 6px 0;">
       <p class="field-hint">JPEG or PNG — for the workshop page.</p>
+    </div>
+    <!-- 2026-08-15: who took the photo. The credit rule is EXIF -> teachers.md ->
+         ask -> blank, and the form never asked — so every submission arrived
+         credit-unknown and designs inherited the gap. Never invent a credit.
+         2026-10-26: one shared field for the host AND guest photo, shown and required
+         only while a photo is selected; "I don't know" is the honest way out (stays blank). -->
+    <div class="field" id="photo-credit-field" style="display:none;">
+      <label class="field-label" for="f-photo-credit">Who took the photo(s)? <span class="req-mark">*</span></label>
+      <input type="text" id="f-photo-credit" placeholder="Photographer's name">
+      <label class="check-inline" style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:0.9rem;"><input type="checkbox" id="f-photo-credit-unknown"> I don't know the photographer</label>
     </div>
     <div class="field">
       <label class="field-label" for="f-video-link">Video — Google Drive link <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
@@ -574,10 +575,10 @@
 
     <!-- Time -->
     <div class="field" style="margin-top: 24px;">
-      <label class="field-label">Time (applies to all sessions by default)</label>
+      <label class="field-label">Start and end time <span class="req-mark">*</span> <small style="font-weight:400; color:var(--mid);">(applies to all sessions by default)</small></label>
       <div class="row">
-        <input type="time" id="f-default-start" value="19:00">
-        <input type="time" id="f-default-end" value="20:30">
+        <input type="time" id="f-default-start">
+        <input type="time" id="f-default-end">
       </div>
       <label class="checkbox-row">
         <input type="checkbox" id="f-times-differ" onchange="toggleSessionTimes(this)">
@@ -587,7 +588,7 @@
 
     <div class="toggle-section hidden" id="per-session-times">
       <strong style="font-size: 0.9rem;">Per-session times</strong>
-      <p class="field-hint" style="margin: 4px 0 12px;">Leave blank to use the default times above.</p>
+      <p class="field-hint" style="margin: 4px 0 12px;">Leave blank to use the times above.</p>
       <div id="per-session-times-list"></div>
     </div>
 
@@ -684,15 +685,15 @@
     <p class="section-hint">A description and the practical details for your workshop page.</p>
 
     <div class="field">
-      <label class="field-label" for="f-description">Description <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label" for="f-description">Description <span class="req-mark">*</span></label>
       <textarea id="f-description" rows="4" placeholder="A 4-day deep dive into Indian dance forms..."></textarea>
-      <p class="field-hint">Leave blank and Shoonya drafts it — but your own words work best.</p>
+      <p class="field-hint">Your own words — shown on the workshop page.</p>
     </div>
     <!-- 2026-08-15: which language the description is written in. Every page ships
          EN+NL (D-029); without this the translation burden lands silently on
          whoever builds the page, and gets discovered late. -->
     <div class="field">
-      <label class="field-label" for="f-copy-source-lang">What language did you write that in?</label>
+      <label class="field-label" for="f-copy-source-lang">What language did you write that in? <span class="req-mark">*</span></label>
       <select id="f-copy-source-lang">
         <option value="">— choose —</option>
         <option value="EN">English</option>
@@ -704,13 +705,15 @@
 
 
     <div class="field">
-      <label class="field-label" for="f-prereq">Prerequisites <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label" for="f-prereq">Prerequisites <span class="req-mark">*</span></label>
       <textarea id="f-prereq" rows="2" placeholder="Open to all. Stamina for 3-hour sessions expected."></textarea>
+      <label class="check-inline" style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:0.9rem;"><input type="checkbox" id="f-prereq-none" onchange="wsEscapeToggle('f-prereq', this)"> None</label>
     </div>
 
     <div class="field">
-      <label class="field-label" for="f-bring">What to bring / dress code <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label" for="f-bring">What to bring / dress code <span class="req-mark">*</span></label>
       <textarea id="f-bring" rows="2" placeholder="Comfortable dance clothes, water, towel..."></textarea>
+      <label class="check-inline" style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:0.9rem;"><input type="checkbox" id="f-bring-none" onchange="wsEscapeToggle('f-bring', this)"> Nothing special</label>
     </div>
 
     <div class="row">
@@ -727,9 +730,9 @@
     </div>
 
     <div id="min-conditional-wrap" style="display:none; margin-top: 8px;">
-      <label class="field-label" style="font-size: 0.82rem; color: var(--mid);">If this minimum isn't reached…</label>
+      <label class="field-label" style="font-size: 0.82rem; color: var(--mid);">If this minimum isn't reached… <span class="req-mark">*</span></label>
       <div class="chips" id="min-cond-chips" style="margin-top: 4px;">
-        <div class="chip selected" data-val="false" onclick="selectMinCond(this)">Run regardless</div>
+        <div class="chip" data-val="false" onclick="selectMinCond(this)">Run regardless</div>
         <div class="chip" data-val="true" onclick="selectMinCond(this)">Cancel + notify students</div>
       </div>
       <p id="min-cond-note" class="field-hint" style="display:none; color: #9C3D1C; background:#FBEEEA; border:1px solid #E5B5A5; border-radius:6px; padding:8px 12px; margin-top: 8px;">
@@ -738,13 +741,13 @@
     </div>
 
     <div class="field">
-      <label class="field-label" for="f-min-age">Minimum age <small style="font-weight:400; color:var(--mid);">(optional)</small></label>
+      <label class="field-label" for="f-min-age">Minimum age <span class="req-mark">*</span></label>
       <input type="number" id="f-min-age" placeholder="e.g. 16" min="0" step="1">
-      <p class="field-hint">Blank = all ages.</p>
+      <label class="check-inline" style="display:flex;gap:8px;align-items:center;margin-top:6px;font-size:0.9rem;"><input type="checkbox" id="f-age-all" onchange="wsEscapeToggle('f-min-age', this)"> All ages</label>
     </div>
 
     <div class="field">
-      <label class="field-label">Preferred studio</label>
+      <label class="field-label">Preferred studio <span class="req-mark">*</span></label>
       <div class="chips" id="studio-chips">
         <div class="chip" data-val="No preference">No preference</div>
         <div class="chip" data-val="Studio Ananta">Studio Ananta</div>
@@ -837,7 +840,7 @@ const state = {
   styles: [],
   levels: [],
   langs: [],
-  studio: 'No preference',
+  studio: '',
   partner: false,
   datePattern: 'specific',   // 2026-05-24: default to Specific dates — most workshops are single-day
   specificDates: [],
@@ -902,9 +905,7 @@ bindChips('lang-chips', 'langs', true);
 bindChips('studio-chips', 'studio', false);
 bindChips('partner-chips', 'partner', false);
 
-// preset defaults
-document.querySelector('#lang-chips .chip[data-val="EN"]')?.click();
-document.querySelector('#studio-chips .chip[data-val="No preference"]')?.click();
+// preset default (partner = No). Language and studio are NOT preset: the teacher must pick (2026-10-26).
 document.querySelector('#partner-chips .chip[data-val="false"]')?.click();
 
 // Show/hide guest bio + photo when guest name is filled
@@ -1069,8 +1070,8 @@ const _sessionsHint = { reason: '', dateShift: null };
 function generateSessions() {
   const mode = state.datePattern;
   const sessions = [];
-  const defStart = document.getElementById('f-default-start').value || '19:00';
-  const defEnd = document.getElementById('f-default-end').value || '20:30';
+  const defStart = document.getElementById('f-default-start').value || '';
+  const defEnd = document.getElementById('f-default-end').value || '';
   _sessionsHint.reason = '';
   _sessionsHint.dateShift = null;
 
@@ -1234,6 +1235,29 @@ function toggleSingleSession(cb) {
 }
 function toggleCouplePrice(cb) { document.getElementById('couple-price-row').classList.toggle('hidden', !cb.checked); }
 
+// 2026-10-26: a required text field with an honest way out ("None", "Nothing special", "All ages").
+// Ticking the box greys the field; the payload then carries the box's wording, never a blank.
+function wsEscapeToggle(inputId, cb) {
+  const el = document.getElementById(inputId);
+  if (el) el.disabled = cb.checked;
+}
+function _wsTextOrEscape(textId, cbId, escapeText) {
+  return document.getElementById(cbId)?.checked ? escapeText : getVal(textId);
+}
+function _wsRestoreTextOrEscape(textId, cbId, escapeText, v) {
+  const el = document.getElementById(textId), cb = document.getElementById(cbId);
+  if (v === escapeText && cb) { cb.checked = true; wsEscapeToggle(textId, cb); }
+  else if (el && v != null && v !== '') el.value = v;
+}
+// Photo credit is shown (and required) only while a host or guest photo is selected.
+function wsSyncPhotoCredit() {
+  const has = !!(document.getElementById('f-host-photo')?.files?.[0] || document.getElementById('f-guest-photo')?.files?.[0]);
+  const box = document.getElementById('photo-credit-field');
+  if (box) box.style.display = has ? '' : 'none';
+  return has;
+}
+document.addEventListener('change', e => { if (e.target && e.target.type === 'file') wsSyncPhotoCredit(); });
+
 function toggleMinConditional() {
   const val = document.getElementById('f-min').value;
   document.getElementById('min-conditional-wrap').style.display = val ? '' : 'none';
@@ -1340,6 +1364,7 @@ function validate() {
   if (state.levels.length === 0) errs.push('At least one level');
   const sessions = collectSessions();
   if (sessions.length === 0) errs.push('At least one session date');
+  if (sessions.length > 0 && sessions.some(s => !s.start || !s.end)) errs.push('Start and end time for every session');
   if (getNum('f-price-full') === null && !getVal('f-pricing-notes')) errs.push('Full price (or special pricing notes)');
   // 2026-09-18 (audit #14): the app's checkout refuses a workshop with no
   // capacity ("No capacity found") — this field was labelled "(optional)"
@@ -1361,6 +1386,16 @@ function validate() {
   if (getVal('f-guest-teacher') && !document.getElementById('f-guest-photo')?.files?.[0]) {
     errs.push('Guest teacher photo (required for auto-design)');
   }
+  // 2026-10-26: required-field set approved by the owner. Each one has a visible * and an honest way out where it makes sense.
+  if (state.langs.length === 0) errs.push('Teaching language');
+  if (!getVal('f-description')) errs.push('Description');
+  if (!getVal('f-copy-source-lang')) errs.push('Description language');
+  if (!getVal('f-prereq') && !document.getElementById('f-prereq-none')?.checked) errs.push('Prerequisites (or tick "None")');
+  if (!getVal('f-bring') && !document.getElementById('f-bring-none')?.checked) errs.push('What to bring (or tick "Nothing special")');
+  { const age = getNum('f-min-age'); if (!document.getElementById('f-age-all')?.checked && (age === null || age < 1 || !Number.isInteger(age))) errs.push('Minimum age (a whole number, or tick "All ages")'); }
+  if (!state.studio) errs.push('Preferred studio');
+  if (getVal('f-min') && !document.querySelector('#min-cond-chips .chip.selected')) errs.push('What happens if the minimum is not reached');
+  if (wsSyncPhotoCredit() && !getVal('f-photo-credit') && !document.getElementById('f-photo-credit-unknown')?.checked) errs.push('Who took the photo(s) (or tick "I don\'t know the photographer")');
   // Oversized photos are auto-shrunk client-side before upload (see image-resize.js),
   // so no size limit is enforced here — any photo a teacher picks goes through.
   return errs;
@@ -1689,21 +1724,29 @@ const WORKSHOP_SPEC = [
     reviewValue: () => getNum('f-min') ? getNum('f-min') : '',
     payloadValue: (v) => v || '' },
   { key:'age_min', label:'Min age', dom:'f-min-age', kind:'custom', jump:'#f-min-age', section:'Logistics', reviewMode:'ifset',
-    collect: () => getNum('f-min-age'),
-    restore: (v) => { const el = FormKernel.byId('f-min-age'); if (el && v != null && v !== '') el.value = v; },
-    reviewValue: () => getNum('f-min-age') ? getNum('f-min-age') : '',
+    // 2026-10-26: required; "All ages" is the way out and travels as that text (a number otherwise).
+    collect: () => (document.getElementById('f-age-all')?.checked ? 'All ages' : getNum('f-min-age')),
+    restore: (v) => _wsRestoreTextOrEscape('f-min-age', 'f-age-all', 'All ages', v),
+    reviewValue: (v) => v || '',
     payloadValue: (v) => v || '' },
   { key:'min_cancel_if_under', label:'Cancel if under min', dom:'min-cond-chips', kind:'custom', jump:'#min-cond-chips', section:'Logistics', reviewMode:'ifset',
-    collect: () => (document.querySelector('#min-cond-chips .chip.selected')?.dataset.val === 'true') || false,
-    // default 'Run regardless' chip is preselected on load; only restore the 'true' state.
-    draftRestore: (v) => { if (v === true) { const chip = document.querySelector('#min-cond-chips .chip[data-val="true"]'); if (chip) selectMinCond(chip); } },
-    reviewValue: () => { const chip = document.querySelector('#min-cond-chips .chip.selected'); return chip ? (chip.dataset.val === 'true' ? 'Yes' : 'No') : ''; },
+    // 2026-10-26: only meaningful once Min participants is filled; with no minimum it is always false,
+    // even if a chip was clicked before the minimum was cleared. No chip is preselected — the teacher picks.
+    collect: () => !!getVal('f-min') && (document.querySelector('#min-cond-chips .chip.selected')?.dataset.val === 'true'),
+    draftRestore: (v) => { if (typeof v === 'boolean' && getVal('f-min')) { const chip = document.querySelector('#min-cond-chips .chip[data-val="' + v + '"]'); if (chip) selectMinCond(chip); } },
+    reviewValue: () => { if (!getVal('f-min')) return ''; const chip = document.querySelector('#min-cond-chips .chip.selected'); return chip ? (chip.dataset.val === 'true' ? 'Yes' : 'No') : ''; },
     payloadValue: (v) => v },
 
   // ── Content ──
   { key:'approved_description', label:'Description', dom:'f-description', kind:'text', jump:'#f-description', section:'Content', reviewMode:'ifset' },
-  { key:'prerequisites', label:'Prerequisites', dom:'f-prereq', kind:'text', jump:'#f-prereq', section:'Content', reviewMode:'ifset' },
-  { key:'what_to_bring', label:'What to bring', dom:'f-bring', kind:'text', jump:'#f-bring', section:'Content', reviewMode:'ifset' },
+  { key:'prerequisites', label:'Prerequisites', dom:'f-prereq', kind:'custom', jump:'#f-prereq', section:'Content', reviewMode:'ifset',
+    collect: () => _wsTextOrEscape('f-prereq', 'f-prereq-none', 'None'),
+    restore: (v) => _wsRestoreTextOrEscape('f-prereq', 'f-prereq-none', 'None', v),
+    reviewValue: (v) => v || '' },
+  { key:'what_to_bring', label:'What to bring', dom:'f-bring', kind:'custom', jump:'#f-bring', section:'Content', reviewMode:'ifset',
+    collect: () => _wsTextOrEscape('f-bring', 'f-bring-none', 'Nothing special'),
+    restore: (v) => _wsRestoreTextOrEscape('f-bring', 'f-bring-none', 'Nothing special', v),
+    reviewValue: (v) => v || '' },
   { key:'note_shoonya', label:'Note to Shoonya', dom:'f-note', kind:'text', jump:'#f-note', section:'Content', reviewMode:'ifset' },
 ];
 
